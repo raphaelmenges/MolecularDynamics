@@ -14,7 +14,7 @@ out vec4 fragUVCoord;
 out vec4 fragNormal;
 
 void main() {
-    fragColor = mix(texture(tex, passUVCoord.xy), color, blendColor);
+    fragColor = color; //mix(texture(tex, passUVCoord.xy), color, blendColor);
     fragPosition = passPosition;
     fragUVCoord = vec4(passUVCoord,0,0);
     fragNormal = passNormal;

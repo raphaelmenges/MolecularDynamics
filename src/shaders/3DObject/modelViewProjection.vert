@@ -13,6 +13,7 @@ out vec4 passPosition;
 out vec2 passUVCoord;
 out vec3 passWorldNormal;
 out vec3 passNormal;
+out vec4 passColor;
 
 void main(){
     passUVCoord = uvCoordAttribute;
@@ -22,5 +23,7 @@ void main(){
     gl_Position =  projection * view * model * positionAttribute;
 
     passWorldNormal = ( transpose( inverse( model ) ) * normalAttribute).xyz;
-	passNormal = ( transpose( inverse( view * model ) ) * normalAttribute ).xyz;
+        passNormal = ( transpose( inverse( view * model ) ) * normalAttribute ).xyz;
+
+
 }
