@@ -4,6 +4,7 @@ uniform vec4 color;
 uniform mat4 view;
 uniform mat4 model;
 uniform mat4 projection;
+uniform float sphereRadius;
 
 in vec4 passPosition;
 
@@ -12,7 +13,7 @@ out vec4 fragColor;
 uniform vec4 lightSrc = vec4(0,100,0,1);
 bool stop = false;
 
-layout(depth_any) out float gl_FragDepth;
+layout(depth_less) out float gl_FragDepth;
 
 void hit(vec3 hitPos)
 {
@@ -21,24 +22,19 @@ void hit(vec3 hitPos)
     hitPos = vec4(view * model * vec4(hitPos,1)).xyz;
     normal =  transpose(inverse(view * model)) * normal;
 
-
     // Beleuchtung
     vec3 light_v = vec3(view * lightSrc).xyz;
     vec3 L = normalize(vec3(light_v - hitPos.xyz));
     vec3 finalColor = color.xyz * max(dot(normal.xyz,L), 0.0);
     finalColor = clamp(finalColor, 0.0, 1.0);
 
-    //gl_FragDepth = hitPos.z / 99.0f; // far plane is at 100, near at 1
     float far = 100;
     float near = 1;
     vec4 clip_space_pos = projection * vec4(hitPos,1);
-
     float ndc_depth = clip_space_pos.z / clip_space_pos.w;
 
-    //float depth = (((far-near) * ndc_depth) + near + far) / 2.0;
     gl_FragDepth = ndc_depth;
     fragColor = vec4(finalColor, 1);
-    //fragColor = vec4(vec3(ndc_depth), 1);
 }
 
 void main() {
@@ -68,7 +64,7 @@ void main() {
         if( abs(stepPos.x) > 1 + error || abs(stepPos.y) > 1  + error || abs(stepPos.z) > 1  + error)
             break;
 
-        float radius = 0.999;
+        float radius = sphereRadius;
 
         // Abstand toroidalPoint zu aktuellem Testpunkt
         float dist = abs(length(stepPos));
@@ -83,11 +79,10 @@ void main() {
         }
         stepPos += view_w * stepSize;
     }
-    //gl_FragDepth = passPosition.z / 101.0f; // far plane is at 100, near at 1
+
     // Kugel nicht getroffen, Impostor zeichnen oder verwerfen
     if(!stop)
     {
-        //gl_FragDepth = passPosition.z / 101.0f;
         discard;
         //fragColor = vec4(1);
     }
