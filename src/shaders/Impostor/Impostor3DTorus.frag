@@ -55,22 +55,21 @@ void main() {
     // Analog könnte man jetzt auch andere Oberflächen testen, solange man weiß wo diese relativ zum Ursprung des Impostor/Model-Koordinatensystems liegen
 
     // Schrittweise durch den Impostor laufen und auf Oberfläche testen
-    float stepSize = 0.001;
+    float stepSize = 0.02;
     vec3 stepPos = frag_w.xyz;
-    float error = 0.001;
-    for (int i = 0; i < 10000; i++)
+    float error = 0.01;
+
+    // für Torus welcher durch Kreis auf YZ Ebene des Impostors läuft
+    // toroidal Radius (Kreis)
+    float t_radius = toroidalRadius;
+    // poloidal Radius (Kugel auf Kreis)
+    float p_radius = probeRadius;
+    for (int i = 0; i < 100; i++)
     {
         // testen ob der gefundene Punkt noch im Impostor liegt
         // dazu müssen Ausmaße in xyz bekannt sein, hier -1..1
         if( abs(stepPos.x) > 1 + error || abs(stepPos.y) > 1 + error || abs(stepPos.z) > 1 + error)
             break;
-
-
-        // für Torus welcher durch Kreis auf YZ Ebene des Impostors läuft
-        // toroidal Radius (Kreis)
-        float t_radius = toroidalRadius;
-        // poloidal Radius (Kugel auf Kreis)
-        float p_radius = probeRadius;
 
         // Testpunkt auf YZ Ebene projizieren
         vec3 stepPos_p = vec3(0, stepPos.yz);

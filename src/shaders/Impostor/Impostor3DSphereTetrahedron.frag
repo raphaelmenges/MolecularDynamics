@@ -54,33 +54,34 @@ void main() {
     // Analog könnte man jetzt auch andere Oberflächen testen, solange man weiß wo diese relativ zum Ursprung des Impostor/Model-Koordinatensystems liegen
 
     // Schrittweise durch den Impostor laufen und auf Oberfläche testen
-    float stepSize = 0.001;
+    float stepSize = 0.01;
     vec3 stepPos = frag_w.xyz;
-    float error = 0.001;
+    float error = 0.01;
     vec3 norm_1;
     vec3 norm_2;
     vec3 norm_3;
     vec3 norm_4;
-    for (int i = 0; i < 10000; i++)
+
+    // testen ob der gefundene Punkt noch im Impostor liegt
+    // Tetraeder Punkte:
+    // 1: 0,0,1.393
+    // 2: 1.609,0,-1.393
+    // 3: -1.609,0,-1.393
+    // 4: 0, 1.3027, -0.46433
+    vec3 p1 = vec3(0,0,1.393);
+    vec3 p2 = vec3(1.609,0,-1.393);
+    vec3 p3 = vec3(-1.609,0,-1.393);
+    vec3 p4 = vec3(0, 1.3027, -0.46433);
+
+    // Normalen berechnen
+    norm_1 = normalize( cross(vec3(p1-p4), vec3(p3-p4)));
+    norm_2 = normalize( cross(vec3(p2-p4), vec3(p1-p4)));
+    norm_3 = normalize( cross(vec3(p3-p4), vec3(p2-p4)));
+    norm_4 = normalize( cross(vec3(p2-p1), vec3(p3-p1)));
+
+
+    for (int i = 0; i < 200; i++)
     {
-        // testen ob der gefundene Punkt noch im Impostor liegt
-        // Tetraeder Punkte:
-        // 1: 0,0,1.393
-        // 2: 1.609,0,-1.393
-        // 3: -1.609,0,-1.393
-        // 4: 0, 1.3027, -0.46433
-
-        vec3 p1 = vec3(0,0,1.393);
-        vec3 p2 = vec3(1.609,0,-1.393);
-        vec3 p3 = vec3(-1.609,0,-1.393);
-        vec3 p4 = vec3(0, 1.3027, -0.46433);
-
-        // Normalen berechnen
-        norm_1 = normalize( cross(vec3(p1-p4), vec3(p3-p4)));
-        norm_2 = normalize( cross(vec3(p2-p4), vec3(p1-p4)));
-        norm_3 = normalize( cross(vec3(p3-p4), vec3(p2-p4)));
-        norm_4 = normalize( cross(vec3(p2-p1), vec3(p3-p1)));
-
         stepPos += view_w * stepSize;
         if( !(dot((stepPos-p4),norm_1) > 0 && dot((stepPos-p4),norm_2) > 0 && dot((stepPos-p4),norm_3) > 0 && dot((stepPos-p1), norm_4) > 0) )
             break;
@@ -105,7 +106,7 @@ void main() {
     if(!stop)
     {
         discard;
-        fragColor = vec4(abs(norm_4.x),abs(norm_4.y),abs(norm_4.z),0);
+        fragColor = vec4(0,0,1,0);
     }
 }
 
