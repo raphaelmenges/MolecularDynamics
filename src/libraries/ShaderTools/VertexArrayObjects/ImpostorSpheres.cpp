@@ -8,9 +8,12 @@ float r_pos(float size) {
     return size * static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 }
 
-ImpostorSpheres::ImpostorSpheres():
-num_balls(1000000){
+ImpostorSpheres::ImpostorSpheres()
+{
     mode = GL_TRIANGLE_STRIP;
+
+
+    glGenQueries(1, &occlusionQuery);
 
     glGenVertexArrays(1, &vertexArrayObjectHandle);
     glBindVertexArray(vertexArrayObjectHandle);
@@ -28,17 +31,17 @@ num_balls(1000000){
     std::vector<GLfloat> instance_colors;
     std::vector<GLfloat> instance_positions;
 
-        for (int i = 0; i < num_balls*4; i+=4) {
-            instance_colors.push_back(r_pos(1.0));
-            instance_colors.push_back(r_pos(1.0));
-            instance_colors.push_back(r_pos(1.0));
-            instance_colors.push_back(1);
+    for (int i = 0; i < num_balls*4; i+=4) {
+        instance_colors.push_back(r_pos(1.0));
+        instance_colors.push_back(r_pos(1.0));
+        instance_colors.push_back(r_pos(1.0));
+        instance_colors.push_back(1);
 
-            instance_positions.push_back(r_equ(30));
-            instance_positions.push_back(r_equ(30));
-            instance_positions.push_back(r_equ(30));
-            instance_positions.push_back(1 + r_equ(0.5));
-        }
+        instance_positions.push_back(r_equ(30));
+        instance_positions.push_back(r_equ(30));
+        instance_positions.push_back(r_equ(30));
+        instance_positions.push_back(1 + r_equ(0.5));
+    }
 
     glBufferData(GL_ARRAY_BUFFER,
                  sizeof(positions) +
@@ -67,7 +70,26 @@ num_balls(1000000){
 }
 
 void ImpostorSpheres::draw() {
+    glBeginQuery(GL_ANY_SAMPLES_PASSED, occlusionQuery);
     this->drawInstanced(num_balls);
+    glEndQuery(GL_ANY_SAMPLES_PASSED);
+
+    GLuint passed = INT_MAX;
+    GLuint available = 0;
+
+    glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT_AVAILABLE, &available);
+    //if(available)
+    //{
+        passed = 0;
+        glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT, &passed);
+        bool visible = (passed) ? true : false;
+    //}
+
+    int i = 0;
+}
+
+void ImpostorSpheres::doOcclusionQuery()
+{
 }
 
 void ImpostorSpheres::drawInstanced(int countInstances) {

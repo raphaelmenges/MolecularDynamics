@@ -13,6 +13,8 @@ out vec4 passColor;
 out vec3 passWorldNormal;
 out vec4 passWorldPosition;
 
+flat out int passInstanceID;
+
 uniform mat4 view;
 uniform mat4 projection;
 uniform vec2 scale;
@@ -46,4 +48,7 @@ void main() {
 
     // color has to be transferred to the fragment shader
     passColor = colorAttribute;
+
+    // forward instanceID to FS
+    passInstanceID = gl_InstanceID;
 }

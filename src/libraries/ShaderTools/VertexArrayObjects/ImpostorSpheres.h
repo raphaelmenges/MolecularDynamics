@@ -7,8 +7,14 @@ class ImpostorSpheres : public VertexArrayObject {
 public:
     ImpostorSpheres();
     void draw();
+    void doOcclusionQuery();
     void drawInstanced(int countInstances);
-    int num_balls;
+
+    GLuint occlusionQuery;
+
+
+
+    const int num_balls = 1000;
 };
 
 #endif // ImpostorSpheres_H

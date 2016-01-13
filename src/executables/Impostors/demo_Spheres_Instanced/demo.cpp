@@ -27,14 +27,26 @@ int main(int argc, char *argv[]) {
     mat4 projection = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
 
 
+
+
     ShaderProgram spRenderImpostor = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Filters/solidColor.frag");
     ShaderProgram spRenderDiscs = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Impostor/impostorSpheres_discardFragments_Instanced.frag");
     ShaderProgram spRenderBalls = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Impostor/impostorSpheres_Instanced.frag");
     
     RenderPass* renderBalls = new RenderPass(
                 new ImpostorSpheres(),
-                &spRenderBalls
-                );
+                &spRenderBalls,
+                getWidth(window),
+                getHeight(window));
+
+    // get the texture the instanceID is rendered to and modify its properties
+    GLuint IDTextureHandle = renderBalls->get("InstanceID");
+    glBindTexture(GL_TEXTURE_2D, IDTextureHandle);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32UI, getWidth(window), getHeight(window), 0, GL_R, GL_UNSIGNED_INT, 0);
+    GLuint currentAttachment = GL_COLOR_ATTACHMENT0 + renderBalls->getShaderProgram()->outputMap.at("InstanceID").location;
+    glFramebufferTexture2D(GL_FRAMEBUFFER, currentAttachment, GL_TEXTURE_2D, IDTextureHandle, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
     renderBalls->update("projection", projection);
 
     // define projection matrix for other shader programs
@@ -43,17 +55,37 @@ int main(int argc, char *argv[]) {
     renderBalls->setShaderProgram(&spRenderImpostor);
     renderBalls->update("projection", projection);
 
-    mat4 projectionInv = inverse(projection);
-
-    auto SSAO = (new RenderPass(
-        new Quad(),
-        new ShaderProgram("/Filters/fullscreen.vert","/Filters/toneMapperLinear.frag")))
-            ->texture("tex", renderBalls->get("fragColor"))
-            ->update("projectionInv", projectionInv);
+    auto result = (new RenderPass(
+                       new Quad(),
+                       new ShaderProgram("/Filters/fullscreen.vert","/Filters/toneMapperLinear.frag")));
+    result->texture("tex", renderBalls->get("fragColor"));
 
     bool animate = false;
     float lastTime = 0;
     float elapsedTime = 0;
+
+
+    // SSBO stuff
+
+//    const int n =ImpostorSpheres::num_balls;
+
+//    struct drawCounterData
+//    {
+//        std::vector<int> drawCount;
+//    }drawCounterData_SSBO;
+
+//    drawCounterData_SSBO.drawCount.resize(n);
+
+//    GLuint m_drawCounterSSBO = 0;
+//    glGenBuffers(1, &m_drawCounterSSBO);
+//    glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_drawCounterSSBO);
+//    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(drawCounterData_SSBO), &drawCounterData_SSBO, GL_DYNAMIC_COPY);
+//    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+//    glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_drawCounterSSBO);
+//    GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+//    memcpy(p, &drawCounterData_SSBO, sizeof(drawCounterData_SSBO))
+//            glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
 
     glEnable(GL_DEPTH_TEST);
@@ -66,9 +98,35 @@ int main(int argc, char *argv[]) {
         if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS) distance = max(distance - deltaTime * 3, 0.0f);
         if (glfwGetKey(window, GLFW_KEY_PERIOD) == GLFW_PRESS) scale += deltaTime;
         if (glfwGetKey(window, GLFW_KEY_COMMA) == GLFW_PRESS) scale = glm::max(scale - deltaTime, 0.01f);
-        if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) renderBalls->setShaderProgram(&spRenderImpostor);
-        if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) renderBalls->setShaderProgram(&spRenderDiscs);
-        if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS) renderBalls->setShaderProgram(&spRenderBalls);
+
+        // Render impostor geometry
+        if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+        {
+            renderBalls->setShaderProgram(&spRenderImpostor);
+            result->update("maxRange", 1.0f);
+            result->texture("tex", renderBalls->get("fragColor"));
+        }
+        // Render impostor geometry as disc
+        if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
+        {
+            renderBalls->setShaderProgram(&spRenderDiscs);
+            result->update("maxRange", 1.0f);
+            result->texture("tex", renderBalls->get("fragColor"));
+        }
+        // Render faked geometry
+        if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
+        {
+            renderBalls->setShaderProgram(&spRenderBalls);
+            result->update("maxRange", 1.0f);
+            result->texture("tex", renderBalls->get("fragColor"));
+        }
+        // Render instance IDs geometry
+        if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
+        {
+            renderBalls->setShaderProgram(&spRenderBalls);
+            result->update("maxRange", 1000.0f);
+            result->texture("tex", renderBalls->get("InstanceID"));
+        }
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
         {
             if(animate)
@@ -103,7 +161,10 @@ int main(int argc, char *argv[]) {
         renderBalls->update("view", view);
         //renderBalls->update("xyzOffset", xyzOffset);
         renderBalls->update("elapsedTime", elapsedTime);
+
         renderBalls->run();
+        result->clear();
+        result->run();
     });
 }
 

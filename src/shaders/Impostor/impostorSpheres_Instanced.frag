@@ -6,6 +6,8 @@ in vec4 eye_pos;
 in float size;
 in vec4 passColor;
 out vec4 fragColor;
+flat in int passInstanceID;
+out vec4 InstanceID;
 
 #define PI = 3.1415926535897932384626433832795;
 #define PIh = PI/2;
@@ -48,5 +50,6 @@ void main() {
     Idiff = passColor.xyz * max(dot(N,L), 0.0);
     Idiff = clamp(Idiff, 0.0, 1.0);
 
-    fragColor = vec4(Idiff, modifiedDepth / 100.0f);
+    fragColor = vec4(Idiff, 0);
+    InstanceID = vec4(passInstanceID);
 }
