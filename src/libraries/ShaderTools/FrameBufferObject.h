@@ -18,6 +18,8 @@ public:
 	GLuint getFrameBufferObjectHandle() const;
 	void setFrameBufferObjectHandle(GLuint frameBufferObjectHandle);
 
+    FrameBufferObject* addTexture(std::string name, GLuint handle);
+
 
 	GLuint getHandle();
 

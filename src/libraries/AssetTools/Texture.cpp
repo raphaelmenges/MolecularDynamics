@@ -2,24 +2,33 @@
 
 Texture::Texture(std::string path) {
 
-	textureHandle = load(path);
+    textureHandle = load(path);
+}
+
+Texture::Texture() {
 }
 
 Texture::~Texture() {
 
 }
 
+Texture::Texture(int w, int h) {
+    this->w = w;
+    this->h = h;
+    textureHandle = this->genTexture(w, h);
+}
+
 GLuint Texture::getHandle() {
-	return textureHandle;
+    return textureHandle;
 }
 
 GLuint Texture::load(std::string path) {
-	if (!devILInitialized) {
-		ilInit();
-		iluInit();
-		ilutRenderer(ILUT_OPENGL);
-		devILInitialized = true;
-	}
+    if (!devILInitialized) {
+        ilInit();
+        iluInit();
+        ilutRenderer(ILUT_OPENGL);
+        devILInitialized = true;
+    }
 
     ILuint iid;
     ilGenImages(1, &iid);
@@ -39,9 +48,82 @@ GLuint Texture::load(std::string path) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w, h, 0, GL_RGB, GL_FLOAT, pixels);
     glBindImageTexture(0, t, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
+
+    return t;
+}
+
+void Texture::clear() {
+    //glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textureHandle);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w, h, 0, GL_RGBA, GL_FLOAT, pixels);
+    glBindImageTexture(0, textureHandle, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA16F);
+}
+
+GLuint Texture::genTexture(int w, int h) {
+
+    byteCount = sizeof(float) * 4 * w * h;
+    pixels = new unsigned char[byteCount];
+
+    float f = 1000.0f;
+
+    unsigned char const * p = reinterpret_cast<unsigned char const *>(&f);
+
+    for (int i = 0; i < byteCount; i+=4)
+    {
+        pixels[i] = p[0];
+        pixels[i+1] = p[1];
+        pixels[i+2] = p[2];
+        pixels[i+3] = p[3];
+    }
+
+    GLuint t;
+    glGenTextures(1, &t);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, t);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w, h, 0, GL_RGBA, GL_FLOAT, pixels);
+    glBindImageTexture(0, t, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA16F);
+
+    return t;
+}
+
+GLuint Texture::genUimageBuffer(int size)
+{
+    byteCount = sizeof(float) * 4 * size;
+    pixels = new unsigned char[byteCount];
+
+    float f = 1000.0f;
+
+    unsigned char const * p = reinterpret_cast<unsigned char const *>(&f);
+
+    for (int i = 0; i < byteCount; i+=4)
+    {
+        pixels[i] = p[0];
+        pixels[i+1] = p[1];
+        pixels[i+2] = p[2];
+        pixels[i+3] = p[3];
+    }
+
+    GLuint t;
+    glGenTextures(1, &t);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_1D, t);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_1D, 0, GL_RGBA16F, w, h, 0, GL_RGBA, GL_FLOAT, pixels);
+    glBindImageTexture(0, t, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA16F);
+
+    textureHandle = t;
 
     return t;
 }

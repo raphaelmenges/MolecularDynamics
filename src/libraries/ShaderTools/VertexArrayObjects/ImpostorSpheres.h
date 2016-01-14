@@ -14,7 +14,7 @@ public:
 
 
 
-    const int num_balls = 1000;
+    static const int num_balls = 1000;
 };
 
 #endif // ImpostorSpheres_H
