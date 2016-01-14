@@ -12,13 +12,16 @@ ImpostorSpheres::ImpostorSpheres()
 {
     mode = GL_TRIANGLE_STRIP;
 
+    // initially all instances are visible
+    visibilityMap.resize(num_balls);
+    std::fill(visibilityMap.begin(), visibilityMap.end(), 1);
 
     glGenQueries(1, &occlusionQuery);
 
     glGenVertexArrays(1, &vertexArrayObjectHandle);
     glBindVertexArray(vertexArrayObjectHandle);
 
-    GLuint positionBuffer;
+
     glGenBuffers(1, &positionBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
     GLfloat positions[] = {
@@ -46,7 +49,8 @@ ImpostorSpheres::ImpostorSpheres()
     glBufferData(GL_ARRAY_BUFFER,
                  sizeof(positions) +
                  sizeof(GLfloat) * instance_colors.size() +
-                 sizeof(GLfloat) * instance_positions.size(), NULL, GL_STATIC_DRAW);
+                 sizeof(GLfloat) * instance_positions.size() +
+                 sizeof(GLfloat) * visibilityMap.size(), NULL, GL_STATIC_DRAW);
 
     GLuint offset = 0;
     glBufferSubData(GL_ARRAY_BUFFER, offset, sizeof(positions), positions);
@@ -55,45 +59,51 @@ ImpostorSpheres::ImpostorSpheres()
     offset += sizeof(GLfloat) * instance_colors.size();
     glBufferSubData(GL_ARRAY_BUFFER, offset, sizeof(GLfloat) * instance_positions.size(), &instance_positions[0]);
     offset += sizeof(GLfloat) * instance_positions.size();
+    glBufferSubData(GL_ARRAY_BUFFER, offset, sizeof(GLfloat) * visibilityMap.size(), &visibilityMap[0]);
+    visibilityBufferOffset = offset; // need that for update of the buffer
 
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)sizeof(positions));
     glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)(sizeof(positions) + sizeof(GLfloat) * instance_colors.size()));
+    glVertexAttribPointer(3, 1, GL_INT, GL_FALSE, 0, (GLvoid*)(sizeof(positions) + sizeof(GLfloat) * instance_colors.size() + sizeof(GLfloat) * instance_positions.size()));
+
+//    glVertexAttribPointer(m_positionAttr, 2, GL_FLOAT, GL_FALSE, 0, &m_uniformQuad[0]);
+//    glVertexAttribPointer(m_colorAttr, 4, GL_FLOAT, GL_FALSE, 0, &m_instance_colors[m_currentFrame][0]);
+//    glVertexAttribPointer(m_instancePositionAttr, 4, GL_FLOAT, GL_FALSE, 0, &m_instance_positions[m_currentFrame][0]);
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(3);
 
     glVertexAttribDivisor(0,0);
     glVertexAttribDivisor(1,1);
     glVertexAttribDivisor(2,1);
+    glVertexAttribDivisor(3,1);
 }
 
 void ImpostorSpheres::draw() {
-    glBeginQuery(GL_ANY_SAMPLES_PASSED, occlusionQuery);
     this->drawInstanced(num_balls);
-    glEndQuery(GL_ANY_SAMPLES_PASSED);
-
-    GLuint passed = INT_MAX;
-    GLuint available = 0;
-
-    glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT_AVAILABLE, &available);
-    //if(available)
-    //{
-        passed = 0;
-        glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT, &passed);
-        bool visible = (passed) ? true : false;
-    //}
-
-    int i = 0;
 }
 
 void ImpostorSpheres::doOcclusionQuery()
 {
 }
 
-void ImpostorSpheres::drawInstanced(int countInstances) {
+void ImpostorSpheres::drawInstanced(int countInstances)
+{
     glBindVertexArray(vertexArrayObjectHandle);
     glDrawArraysInstanced(mode, 0, 4, countInstances);
+}
+
+void ImpostorSpheres::updateVisibilityMap(std::vector<GLint> map)
+{
+    visibilityMap = map;
+    glBindVertexArray(vertexArrayObjectHandle);
+    glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
+    glBufferSubData(GL_ARRAY_BUFFER, visibilityBufferOffset, sizeof(GLfloat) * visibilityMap.size(), &visibilityMap[0]);
+    glVertexAttribPointer(3, 1, GL_INT, GL_FALSE, 0, (GLvoid*)(visibilityBufferOffset));
+    glEnableVertexAttribArray(3);
+    glVertexAttribDivisor(3,1);
 }
 

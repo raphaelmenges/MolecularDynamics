@@ -11,10 +11,14 @@ public:
     void drawInstanced(int countInstances);
 
     GLuint occlusionQuery;
+    GLuint positionBuffer;
 
+    std::vector<GLint> visibilityMap;
+    GLuint visibilityBufferOffset;
 
+    void updateVisibilityMap(std::vector<GLint> map);
 
-    static const int num_balls = 1000;
+    static const int num_balls = 15000;
 };
 
 #endif // ImpostorSpheres_H

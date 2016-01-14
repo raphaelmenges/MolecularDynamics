@@ -71,7 +71,7 @@ GLuint Texture::genTexture(int w, int h) {
     byteCount = sizeof(float) * 4 * w * h;
     pixels = new unsigned char[byteCount];
 
-    float f = 1000.0f;
+    float f = -1000.0f;
 
     unsigned char const * p = reinterpret_cast<unsigned char const *>(&f);
 
@@ -102,7 +102,7 @@ GLuint Texture::genUimageBuffer(int size)
     byteCount = sizeof(float) * 4 * size;
     pixels = new unsigned char[byteCount];
 
-    float f = 1000.0f;
+    float f = -1000.0f;
 
     unsigned char const * p = reinterpret_cast<unsigned char const *>(&f);
 
