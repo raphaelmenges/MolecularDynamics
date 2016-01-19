@@ -99,10 +99,10 @@ GLuint Texture::genTexture(int w, int h) {
 
 GLuint Texture::genUimageBuffer(int size)
 {
-    byteCount = sizeof(float) * 4 * size;
+    byteCount = sizeof(float) * size;
     pixels = new unsigned char[byteCount];
 
-    float f = -1000.0f;
+    float f = 1000.0f;
 
     unsigned char const * p = reinterpret_cast<unsigned char const *>(&f);
 
@@ -120,8 +120,8 @@ GLuint Texture::genUimageBuffer(int size)
     glBindTexture(GL_TEXTURE_1D, t);
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA16F, size, 0, GL_RGBA, GL_FLOAT, pixels);
-    glBindImageTexture(0, t, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA16F);
+    glTexImage1D(GL_TEXTURE_1D, 0, GL_R16F, size, 0, GL_RED, GL_FLOAT, pixels);
+    glBindImageTexture(0, t, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R16F);
 
     textureHandle = t;
 

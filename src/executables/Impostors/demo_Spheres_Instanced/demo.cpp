@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
     ShaderProgram spRenderImpostor = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Filters/solidColorInstanceCount.frag");
     ShaderProgram spRenderDiscs = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Impostor/impostorSpheres_discardFragments_Instanced.frag");
     ShaderProgram spRenderBalls = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Impostor/impostorSpheres_Instanced.frag");
-    
+
 
     // Renderpass to render impostors/fake geometry
     RenderPass* renderBalls = new RenderPass(
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
 
 
     // prepare data to reset the buffer that holds the visible instance IDs
-    int byteCount = sizeof(float) * 4 * num_balls;
+    int byteCount = sizeof(float)* num_balls;
     unsigned char * data = new unsigned char[byteCount];
     float f = 0.0f;
     unsigned char const * p = reinterpret_cast<unsigned char const *>(&f);
@@ -174,14 +174,14 @@ int main(int argc, char *argv[]) {
         result->run();
 
         // detect visible instances
-        GLfloat *iPixel= new GLfloat[ImpostorSpheres::num_balls * 4];
+        GLfloat iPixel[ImpostorSpheres::num_balls];
         // why use RGBA float?
         // ToDo: use GL_R and GL_INT
         //      glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, num_entries, 0, GL_R, GL_UNSIGNED_INT, data);
 
         // reset the detected instance IDs
         glBindTexture(GL_TEXTURE_1D, bufferTex->getHandle());
-        glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA16F, num_balls, 0, GL_RGBA, GL_FLOAT, data);
+        glTexImage1D(GL_TEXTURE_1D, 0, GL_R16F, num_balls, 0, GL_RED, GL_FLOAT, data);
         glBindTexture(GL_TEXTURE_1D, 0);
 
         // the following shaders in detectVisible look at what has been written to the screen (framebuffer0)
@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
 
         // get the visible instance IDs
         glBindTexture(GL_TEXTURE_1D, bufferTex->getHandle());
-        glGetTexImage(GL_TEXTURE_1D, 0, GL_RGBA, GL_FLOAT, iPixel);
+        glGetTexImage(GL_TEXTURE_1D, 0, GL_RED, GL_FLOAT, iPixel);
         glBindTexture(GL_TEXTURE_1D, 0);
 
 
@@ -199,14 +199,13 @@ int main(int argc, char *argv[]) {
         if (updateVisibilityMap && !pingPongOff)
         {
             // copy visible instance information to a vector with size = num_balls
-            // since we are currently working on RGBA ( size = num_balls*4)
             int num_vis = 0;
             std::vector<GLint> newMap;
             newMap.resize(num_balls);
             for (int i = 0; i < num_balls; i++)
             {
-                newMap[i] = (int)iPixel[i*4];
-                if(iPixel[i*4] != 0)
+                newMap[i] = (int)iPixel[i];
+                if(iPixel[i] != 0)
                     num_vis++;
             }
             // print number of visible instances
@@ -222,7 +221,7 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        delete iPixel;
+        //delete iPixel;
     });
 }
 
