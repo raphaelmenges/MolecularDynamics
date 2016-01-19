@@ -18,7 +18,7 @@ public:
 
     void updateVisibilityMap(std::vector<GLint> map);
 
-    static const int num_balls = 15000;
+    static const int num_balls = 16384;
 };
 
 #endif // ImpostorSpheres_H

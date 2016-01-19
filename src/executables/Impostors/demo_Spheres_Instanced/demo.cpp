@@ -72,10 +72,13 @@ int main(int argc, char *argv[]) {
 
 
     // prepare data to reset the buffer that holds the visible instance IDs
-    int byteCount = sizeof(float)* num_balls;
+    int byteCount = sizeof(unsigned int)* num_balls;
     unsigned char * data = new unsigned char[byteCount];
-    float f = 0.0f;
+    unsigned int f = 0;
     unsigned char const * p = reinterpret_cast<unsigned char const *>(&f);
+
+    int asd;
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &asd);
 
     for (int i = 0; i < byteCount; i+=4)
     {
@@ -174,14 +177,14 @@ int main(int argc, char *argv[]) {
         result->run();
 
         // detect visible instances
-        GLfloat iPixel[ImpostorSpheres::num_balls];
+        GLuint iPixel[ImpostorSpheres::num_balls];
         // why use RGBA float?
         // ToDo: use GL_R and GL_INT
         //      glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, num_entries, 0, GL_R, GL_UNSIGNED_INT, data);
 
         // reset the detected instance IDs
         glBindTexture(GL_TEXTURE_1D, bufferTex->getHandle());
-        glTexImage1D(GL_TEXTURE_1D, 0, GL_R16F, num_balls, 0, GL_RED, GL_FLOAT, data);
+        glTexImage1D(GL_TEXTURE_1D, 0, GL_R8UI, num_balls, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, data);
         glBindTexture(GL_TEXTURE_1D, 0);
 
         // the following shaders in detectVisible look at what has been written to the screen (framebuffer0)
@@ -190,7 +193,7 @@ int main(int argc, char *argv[]) {
 
         // get the visible instance IDs
         glBindTexture(GL_TEXTURE_1D, bufferTex->getHandle());
-        glGetTexImage(GL_TEXTURE_1D, 0, GL_RED, GL_FLOAT, iPixel);
+        glGetTexImage(GL_TEXTURE_1D, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, iPixel);
         glBindTexture(GL_TEXTURE_1D, 0);
 
 
