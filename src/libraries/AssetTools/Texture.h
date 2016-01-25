@@ -21,6 +21,7 @@ public:
     static GLuint load(std::string path);
     GLuint genTexture(int w, int h);
     GLuint genUimageBuffer(int size);
+    GLuint genUimageBuffer2(int size);
 
     Texture();
 protected:

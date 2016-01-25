@@ -4,7 +4,7 @@ in flat int passInstanceID;
 out vec4 fragColor;
 
 //coherent layout(rgba16f, binding = 0) uniform uimageBuffer visibilityBuffer;
-layout(r16ui) uniform uimage1D visibilityBuffer;
+layout(r16ui) uniform coherent uimage1D visibilityBuffer;
 
 uniform sampler2D tex;
 uniform int level = 0;

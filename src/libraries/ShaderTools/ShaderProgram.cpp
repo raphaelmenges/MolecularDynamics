@@ -8,6 +8,17 @@ using namespace glm;
 ShaderProgram::ShaderProgram(){
 }
 
+ShaderProgram::ShaderProgram(string a)
+{
+    shaderProgramHandle = glCreateProgram();
+
+    attachShader(SHADERS_PATH + a);
+
+    link();
+
+    mapShaderProperties(GL_UNIFORM, &uniformMap);
+}
+
 // ShaderProgram::ShaderProgram(vector<string> attachShaders) {
 //     shaderProgramHandle = glCreateProgram();
 
@@ -338,6 +349,10 @@ void ShaderProgram::attachShader(string filename) {
 		attachShader(GL_GEOMETRY_SHADER, filename);
 		return;
 	}
+    if (hasValidType(filename, ".comp .cs")) {
+        attachShader(GL_COMPUTE_SHADER, filename);
+        return;
+    }
 	cerr << "ERROR IN SHADER PROGRAM " << shaderProgramHandle << std::endl
     	<< filename << " filetype invalid" << endl;
     errorOccured = true;
