@@ -44,6 +44,7 @@ ShaderProgram::ShaderProgram(string a, string b) {
     mapShaderProperties(GL_UNIFORM, &uniformMap);
     mapShaderProperties(GL_PROGRAM_INPUT, &inputMap);
     mapShaderProperties(GL_PROGRAM_OUTPUT, &outputMap);
+    mapShaderProperties(GL_SHADER_STORAGE_BLOCK, &SSBOMap);
 }
 
 ShaderProgram::ShaderProgram(string a, string b, string c) {
@@ -58,6 +59,7 @@ ShaderProgram::ShaderProgram(string a, string b, string c) {
     mapShaderProperties(GL_UNIFORM, &uniformMap);
     mapShaderProperties(GL_PROGRAM_INPUT, &inputMap);
     mapShaderProperties(GL_PROGRAM_OUTPUT, &outputMap);
+    mapShaderProperties(GL_SHADER_STORAGE_BLOCK, &SSBOMap);
 }
 
 ShaderProgram::ShaderProgram(string a, string b, string c, string d) {
@@ -73,6 +75,7 @@ ShaderProgram::ShaderProgram(string a, string b, string c, string d) {
     mapShaderProperties(GL_UNIFORM, &uniformMap);
     mapShaderProperties(GL_PROGRAM_INPUT, &inputMap);
     mapShaderProperties(GL_PROGRAM_OUTPUT, &outputMap);
+    mapShaderProperties(GL_SHADER_STORAGE_BLOCK, &SSBOMap);
 }
 
 ShaderProgram::ShaderProgram(string a, string b, string c, string d, string e) {
@@ -89,6 +92,7 @@ ShaderProgram::ShaderProgram(string a, string b, string c, string d, string e) {
     mapShaderProperties(GL_UNIFORM, &uniformMap);
     mapShaderProperties(GL_PROGRAM_INPUT, &inputMap);
     mapShaderProperties(GL_PROGRAM_OUTPUT, &outputMap);
+    mapShaderProperties(GL_SHADER_STORAGE_BLOCK, &SSBOMap);
 }
 
 ShaderProgram::ShaderProgram(GLenum type, string path){
@@ -100,12 +104,22 @@ ShaderProgram::ShaderProgram(GLenum type, string path){
 	mapShaderProperties(GL_UNIFORM, &uniformMap);
 	mapShaderProperties(GL_PROGRAM_INPUT, &inputMap);
 	mapShaderProperties(GL_PROGRAM_OUTPUT, &outputMap);
+    mapShaderProperties(GL_SHADER_STORAGE_BLOCK, &SSBOMap);
 }
 
 void ShaderProgram::use() {
 	for (int i = 0; i < textureList.size(); i++) {
 		glActiveTexture(GL_TEXTURE0 + i);
-	    glBindTexture(GL_TEXTURE_2D, textureList[i].textureHandle);
+        glBindTexture(GL_TEXTURE_2D, textureList[i].textureHandle);
+
+        TextureObject o = textureList[i];
+
+        // TODO
+        // generalize this!
+        if (o.name.compare("visibilityBuffer") == 0)
+        glBindImageTexture(i, textureList[i].textureHandle, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R8UI);
+        if (o.name.compare("visibleIDsBuff") == 0)
+        glBindImageTexture(i, textureList[i].textureHandle, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32UI);
 	    glBindSampler(i, textureList[i].samplerHandle);
 	}
 	glUseProgram(shaderProgramHandle);
@@ -124,7 +138,7 @@ ShaderProgram* ShaderProgram::texture(std::string name, GLuint textureHandle, GL
 		o.name = name;
 		for (int i = 0; i < textureList.size(); i++) {
 			if (o.equals(textureList[i])) {
-				glUniform1i(updateInfo->location, i);
+                glUniform1i(updateInfo->location, i);
 				textureList[i] = o;
 				return this;
 			}
@@ -305,7 +319,13 @@ void ShaderProgram::printInputInfo() {
 
 void ShaderProgram::printOutputInfo() {
 	cout << "SHADER PROGRAM " << shaderProgramHandle << " OUTPUT INFO" << endl << endl;
-	printInfo(&outputMap);
+    printInfo(&outputMap);
+}
+
+void ShaderProgram::printSSBOInfo()
+{
+    cout << "SHADER PROGRAM " << shaderProgramHandle << " SSBO INFO" << endl << endl;
+    printInfo(&SSBOMap);
 }
 
 bool ShaderProgram::hasValidType(string filename, string typeLine) {

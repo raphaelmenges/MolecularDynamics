@@ -5,7 +5,7 @@
 
 class ImpostorSpheres : public VertexArrayObject {
 public:
-    ImpostorSpheres();
+    ImpostorSpheres(bool prepareWithAttribDivisor);
     void draw();
     void doOcclusionQuery();
     void drawInstanced(int countInstances);
@@ -19,6 +19,26 @@ public:
     void updateVisibilityMap(std::vector<GLint> map);
 
     static const int num_balls = 16384;
+
+    void prepareWithAttribDivisor();
+    void prepareWithoutAttribDivisor();
+
+    std::vector<glm::vec4> instance_colors;
+    std::vector<glm::vec4> instance_positions;
+
+    struct instance_colors_t
+    {
+        std::vector<glm::vec4> instance_colors;
+    };
+    struct instance_positions_t
+    {
+        std::vector<glm::vec4> instance_positions;
+    };
+
+    instance_colors_t instance_colors_s;
+    instance_positions_t instance_positions_s;
+
+    unsigned int instancesToRender;
 };
 
 #endif // ImpostorSpheres_H

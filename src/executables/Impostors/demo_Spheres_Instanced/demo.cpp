@@ -9,6 +9,8 @@
 
 using namespace glm;
 
+bool useAtomicCounters = true;
+
 float r(float size) {
     return size * 2 * static_cast <float> (rand()) / static_cast <float> (RAND_MAX) - size;
 }
@@ -56,13 +58,16 @@ int main(int argc, char *argv[]) {
     bool updateVisibilityMapLock = false; // L: lock U: unlock reduced elements for current frame
     bool pingPongOff = true; // reduce number of elements every other frame O: off P: Pingpong On
 
-    ImpostorSpheres *impSph = new ImpostorSpheres();
+    ImpostorSpheres *impSph = new ImpostorSpheres(!useAtomicCounters);
     int num_balls = ImpostorSpheres::num_balls;
     mat4 projection = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
 
-    ShaderProgram spRenderImpostor = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Filters/solidColorInstanceCount.frag");
-    ShaderProgram spRenderDiscs = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Impostor/impostorSpheres_discardFragments_Instanced.frag");
-    ShaderProgram spRenderBalls = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Impostor/impostorSpheres_Instanced.frag");
+    ShaderProgram spRenderImpostor = ShaderProgram("/Impostor/impostorSpheres_InstancedUA.vert", "/Filters/solidColorInstanceCount.frag");
+    ShaderProgram spRenderDiscs = ShaderProgram("/Impostor/impostorSpheres_InstancedUA.vert", "/Impostor/impostorSpheres_discardFragments_Instanced.frag");
+    ShaderProgram spRenderBalls = ShaderProgram("/Impostor/impostorSpheres_InstancedUA.vert", "/Impostor/impostorSpheres_Instanced.frag");
+//    ShaderProgram spRenderImpostor = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Filters/solidColorInstanceCount.frag");
+//    ShaderProgram spRenderDiscs = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Impostor/impostorSpheres_discardFragments_Instanced.frag");
+//    ShaderProgram spRenderBalls = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Impostor/impostorSpheres_Instanced.frag");
 
 
     // Renderpass to render impostors/fake geometry
@@ -116,6 +121,55 @@ int main(int argc, char *argv[]) {
     glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), NULL, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
 
+    int positions_size = sizeof(glm::vec4) * impSph->instance_positions_s.instance_positions.size();
+    int colors_size = sizeof(glm::vec4) * impSph->instance_colors_s.instance_colors.size();
+
+    // SSBO setup
+    GLuint SSBO[2];
+    glGenBuffers(2, SSBO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, SSBO[0]);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, positions_size, &impSph->instance_positions_s.instance_positions[0], GL_DYNAMIC_COPY);
+    glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, SSBO[0], 0, positions_size);
+    //glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, SSBO[0]);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, SSBO[1]);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, colors_size, &impSph->instance_colors_s.instance_colors[0], GL_DYNAMIC_COPY);
+    glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 1, SSBO[1], 0, colors_size);
+    //glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SSBO[1]);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    // SSBO copy data
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, SSBO[0]);
+    GLvoid* p_ = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+    memcpy(p_, &impSph->instance_positions_s.instance_positions[0], positions_size);
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, SSBO[1]);
+    p_ = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+    memcpy(p_, &impSph->instance_colors_s.instance_colors[0], colors_size);
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+    // SSBO bind to shaders
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, SSBO[0]);
+    GLuint block_index = 0;
+    block_index = glGetProgramResourceIndex(spRenderBalls.getProgramHandle(), GL_SHADER_STORAGE_BLOCK, "instance_positions_t");
+    glShaderStorageBlockBinding(spRenderBalls.getProgramHandle(), block_index, 0);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, SSBO[1]);
+    block_index = glGetProgramResourceIndex(spRenderBalls.getProgramHandle(), GL_SHADER_STORAGE_BLOCK, "instance_colors_t");
+    glShaderStorageBlockBinding(spRenderBalls.getProgramHandle(), block_index, 1);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, SSBO[0]);
+    block_index = glGetProgramResourceIndex(spRenderDiscs.getProgramHandle(), GL_SHADER_STORAGE_BLOCK, "instance_positions_t");
+    glShaderStorageBlockBinding(spRenderBalls.getProgramHandle(), block_index, 0);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, SSBO[1]);
+    block_index = glGetProgramResourceIndex(spRenderDiscs.getProgramHandle(), GL_SHADER_STORAGE_BLOCK, "instance_colors_t");
+    glShaderStorageBlockBinding(spRenderBalls.getProgramHandle(), block_index, 1);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, SSBO[0]);
+    block_index = glGetProgramResourceIndex(spRenderImpostor.getProgramHandle(), GL_SHADER_STORAGE_BLOCK, "instance_positions_t");
+    glShaderStorageBlockBinding(spRenderBalls.getProgramHandle(), block_index, 0);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, SSBO[1]);
+    block_index = glGetProgramResourceIndex(spRenderImpostor.getProgramHandle(), GL_SHADER_STORAGE_BLOCK, "instance_colors_t");
+    glShaderStorageBlockBinding(spRenderBalls.getProgramHandle(), block_index, 1);
 
 
     // prepare data to reset the buffer that holds the visible instance IDs
@@ -133,6 +187,12 @@ int main(int argc, char *argv[]) {
         zeros[i+3] = p[3];
     }
 
+    // prepare data to reset the visible instance ID list to identity
+    std::vector<GLuint> identityInstancesMap;
+    identityInstancesMap.clear();
+    for (GLuint i = 0; i < num_balls; i++)
+        identityInstancesMap.push_back(i);
+
     // map to set all instances visible
     std::vector<GLint> mapAllVisible;
     mapAllVisible.resize(num_balls);
@@ -141,6 +201,9 @@ int main(int argc, char *argv[]) {
     bool animate = false;
     float lastTime = 0;
     float elapsedTime = 0;
+
+    glBindTexture(GL_TEXTURE_1D, visibleIDsBuff->getHandle());
+    glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, num_balls, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, &identityInstancesMap[0]);
 
     glEnable(GL_DEPTH_TEST);
     render(window, [&] (float deltaTime) {
@@ -161,6 +224,7 @@ int main(int argc, char *argv[]) {
         if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
         {
             renderBalls->setShaderProgram(&spRenderImpostor);
+            renderBalls->texture("visibleIDsBuff", visibleIDsBuff->getHandle());
             result->update("maxRange", 1.0f);
             result->texture("tex", renderBalls->get("fragColor"));
         }
@@ -168,6 +232,7 @@ int main(int argc, char *argv[]) {
         if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
         {
             renderBalls->setShaderProgram(&spRenderDiscs);
+            renderBalls->texture("visibleIDsBuff", visibleIDsBuff->getHandle());
             result->update("maxRange", 1.0f);
             result->texture("tex", renderBalls->get("fragColor"));
         }
@@ -175,6 +240,7 @@ int main(int argc, char *argv[]) {
         if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
         {
             renderBalls->setShaderProgram(&spRenderBalls);
+            renderBalls->texture("visibleIDsBuff", visibleIDsBuff->getHandle());
             result->update("maxRange", 1.0f);
             result->texture("tex", renderBalls->get("fragColor"));
         }
@@ -182,6 +248,7 @@ int main(int argc, char *argv[]) {
         if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
         {
             renderBalls->setShaderProgram(&spRenderBalls);
+            renderBalls->texture("visibleIDsBuff", visibleIDsBuff->getHandle());
             result->update("maxRange", float(ImpostorSpheres::num_balls));
             result->texture("tex", renderBalls->get("InstanceID"));
         }
@@ -211,49 +278,56 @@ int main(int argc, char *argv[]) {
 
         mat4 view = translate(mat4(1), vec3(0,0,-distance)) * eulerAngleXY(-rotX, -rotY);
 
+        // reset the detected instance IDs
+        glBindTexture(GL_TEXTURE_1D, bufferTex->getHandle());
+        glTexImage1D(GL_TEXTURE_1D, 0, GL_R8UI, num_balls, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, zeros);
+        //glBindTexture(GL_TEXTURE_1D, visibleIDsBuff->getHandle());
+        //glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, num_balls, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, &identityInstancesMap[0]);
+
+        glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomBuff);
+        glClearBufferSubData(GL_ATOMIC_COUNTER_BUFFER, GL_R32UI, 0, sizeof(GLuint), GL_RED_INTEGER, GL_UNSIGNED_INT, zero);
+
         renderBalls->clear(-1,-1,-1,-1); // the clear color may not interfere with the detected instance IDs
         renderBalls->clearDepth();
         renderBalls->update("scale", vec2(scale));
         renderBalls->update("view", view);
-        renderBalls->update("elapsedTime", elapsedTime);
+        //renderBalls->update("elapsedTime", elapsedTime);
         renderBalls->run();
 
-        result->clear(num_balls,num_balls,num_balls,num_balls);
-        result->run();
-
-        // detect visible instances
-        GLuint visibilityMapFromBuff[ImpostorSpheres::num_balls];
-        GLuint visibleIDsFromBuff[ImpostorSpheres::num_balls];
-
-        // reset the detected instance IDs
-        glBindTexture(GL_TEXTURE_1D, bufferTex->getHandle());
-        glTexImage1D(GL_TEXTURE_1D, 0, GL_R8UI, num_balls, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, zeros);
-        glBindTexture(GL_TEXTURE_1D, visibleIDsBuff->getHandle());
-        glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, num_balls, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, zeros);
-
-        glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomBuff);
-        //glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint), zero);
-        glClearBufferSubData(GL_ATOMIC_COUNTER_BUFFER, GL_R32UI, 0, sizeof(GLuint), GL_RED_INTEGER, GL_UNSIGNED_INT, zero);
 
 
-
-        // the following shaders in detectVisible look at what has been written to the screen (framebuffer0)
-        // better render the instance stuff to a texture and read from there
-        detectVisible->run();
-        glMemoryBarrier(GL_UNIFORM_BARRIER_BIT | GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
-        computeVisibleIDs->run(1024,1,1); // 1024 work groups * 16 work items = 16384 atoms and IDs
-
-        // get the visible instance IDs
-        glBindTexture(GL_TEXTURE_1D, bufferTex->getHandle());
-        glGetTexImage(GL_TEXTURE_1D, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, visibilityMapFromBuff);
-        glBindTexture(GL_TEXTURE_1D, visibleIDsBuff->getHandle());
-        glGetTexImage(GL_TEXTURE_1D, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, visibleIDsFromBuff);
 
 
         // Depending on user input: sort out instances for the next frame or not,
         // or lock the current set of visible instances
+
         if (updateVisibilityMap && !pingPongOff)
         {
+            // detect visible instances
+            GLuint visibilityMapFromBuff[ImpostorSpheres::num_balls];
+            GLuint visibleIDsFromBuff[ImpostorSpheres::num_balls];
+
+            // the following shaders in detectVisible look at what has been written to the screen (framebuffer0)
+            // better render the instance stuff to a texture and read from there
+            detectVisible->run();
+            computeVisibleIDs->run(1024,1,1); // 1024 work groups * 16 work items = 16384 atoms and IDs
+            glMemoryBarrier(GL_UNIFORM_BARRIER_BIT | GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT);
+
+            // get the visible instance IDs
+            glBindTexture(GL_TEXTURE_1D, bufferTex->getHandle());
+            glGetTexImage(GL_TEXTURE_1D, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, visibilityMapFromBuff);
+            glBindTexture(GL_TEXTURE_1D, visibleIDsBuff->getHandle());
+            glGetTexImage(GL_TEXTURE_1D, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, visibleIDsFromBuff);
+
+            //get the value of the atomic counter
+            glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomBuff);
+            GLuint* counterVal = (GLuint*) glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint),  GL_MAP_READ_BIT );
+            glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+
+            impSph->instancesToRender = *counterVal;
+            std::cout << "Number of visible instances by atomic Counter: " << *counterVal << std::endl;
+
+
             // copy visible instance information to a vector with size = num_balls
             int num_vis = 0;
             std::vector<GLint> newMap;
@@ -273,9 +347,20 @@ int main(int argc, char *argv[]) {
             if(!updateVisibilityMapLock)
             {
                 impSph->updateVisibilityMap(mapAllVisible);
+
+                glBindTexture(GL_TEXTURE_1D, visibleIDsBuff->getHandle());
+                glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, num_balls, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, &identityInstancesMap[0]);
+                impSph->instancesToRender = impSph->num_balls;
+
                 updateVisibilityMap = true; // sort out every other frame
             }
         }
+
+
+        //impSph->instancesToRender = *counterVal;
+        result->clear(num_balls,num_balls,num_balls,num_balls);
+
+        result->run();
 
         //delete iPixel;
     });

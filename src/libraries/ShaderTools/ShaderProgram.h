@@ -223,6 +223,10 @@ public:
 	 * @brief Logs all active bound output buffers to the console
 	 */
 	void printOutputInfo();
+    /**
+     * @brief Logs all active bound SSBO to the console
+     */
+    void printSSBOInfo();
 	/**
 	 * @brief Returns the shader program handle
 	 * @return Handle of the shader program
@@ -243,11 +247,15 @@ public:
 	/**
 	 * @brief Maintains all used input buffers
 	 */
-	std::map<std::string, Info> inputMap;
-	/**
-	 * @brief Maintains all used output buffers
-	 */
-	std::map<std::string, Info> outputMap;
+    std::map<std::string, Info> inputMap;
+    /**
+     * @brief Maintains all used output buffers
+     */
+    std::map<std::string, Info> outputMap;
+    /**
+     * @brief Maintains all used shader storage blocks
+     */
+    std::map<std::string, Info> SSBOMap;
 
 	struct TextureObject{
 		GLenum textureHandle;

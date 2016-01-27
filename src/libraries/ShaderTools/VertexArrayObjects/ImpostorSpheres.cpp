@@ -8,10 +8,44 @@ float r_pos(float size) {
     return size * static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 }
 
-ImpostorSpheres::ImpostorSpheres()
+ImpostorSpheres::ImpostorSpheres(bool prepareWithAttribDivisor)
+    :instancesToRender(num_balls)
 {
     mode = GL_TRIANGLE_STRIP;
 
+    if (prepareWithAttribDivisor)
+        this->prepareWithAttribDivisor();
+    else
+        prepareWithoutAttribDivisor();
+}
+
+void ImpostorSpheres::draw() {
+    this->drawInstanced(instancesToRender);
+}
+
+void ImpostorSpheres::doOcclusionQuery()
+{
+}
+
+void ImpostorSpheres::drawInstanced(int countInstances)
+{
+    glBindVertexArray(vertexArrayObjectHandle);
+    glDrawArraysInstanced(mode, 0, 4, countInstances);
+}
+
+void ImpostorSpheres::updateVisibilityMap(std::vector<GLint> map)
+{
+    visibilityMap = map;
+    glBindVertexArray(vertexArrayObjectHandle);
+    glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
+    glBufferSubData(GL_ARRAY_BUFFER, visibilityBufferOffset, sizeof(GLfloat) * visibilityMap.size(), &visibilityMap[0]);
+    glVertexAttribPointer(3, 1, GL_INT, GL_FALSE, 0, (GLvoid*)(visibilityBufferOffset));
+    glEnableVertexAttribArray(3);
+    glVertexAttribDivisor(3,1);
+}
+
+void ImpostorSpheres::prepareWithAttribDivisor()
+{
     // initially all instances are visible
     visibilityMap.resize(num_balls);
     std::fill(visibilityMap.begin(), visibilityMap.end(), 1);
@@ -82,28 +116,36 @@ ImpostorSpheres::ImpostorSpheres()
     glVertexAttribDivisor(3,1);
 }
 
-void ImpostorSpheres::draw() {
-    this->drawInstanced(num_balls);
-}
-
-void ImpostorSpheres::doOcclusionQuery()
+void ImpostorSpheres::prepareWithoutAttribDivisor()
 {
-}
-
-void ImpostorSpheres::drawInstanced(int countInstances)
-{
+    glGenVertexArrays(1, &vertexArrayObjectHandle);
     glBindVertexArray(vertexArrayObjectHandle);
-    glDrawArraysInstanced(mode, 0, 4, countInstances);
-}
 
-void ImpostorSpheres::updateVisibilityMap(std::vector<GLint> map)
-{
-    visibilityMap = map;
-    glBindVertexArray(vertexArrayObjectHandle);
+
+    glGenBuffers(1, &positionBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
-    glBufferSubData(GL_ARRAY_BUFFER, visibilityBufferOffset, sizeof(GLfloat) * visibilityMap.size(), &visibilityMap[0]);
-    glVertexAttribPointer(3, 1, GL_INT, GL_FALSE, 0, (GLvoid*)(visibilityBufferOffset));
-    glEnableVertexAttribArray(3);
-    glVertexAttribDivisor(3,1);
+    GLfloat positions[] = {
+        -1.0f, -1.0f,
+        -1.0f, 1.0f,
+        1.0f, -1.0f,
+        1.0f, 1.0f
+    };
+
+    instance_colors.clear();
+    instance_positions.clear();
+    for (int i = 0; i < num_balls*4; i+=4) {
+        instance_colors.push_back(glm::vec4(r_pos(1.0),r_pos(1.0),r_pos(1.0),1));
+        instance_positions.push_back(glm::vec4(r_equ(30),r_equ(30),r_equ(30), 1 + r_equ(0.5)));
+    }
+
+    instance_colors_s.instance_colors = instance_colors;
+    instance_positions_s.instance_positions = instance_positions;
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(positions), NULL, GL_STATIC_DRAW);
+    GLuint offset = 0;
+    glBufferSubData(GL_ARRAY_BUFFER, offset, sizeof(positions), positions);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+    glEnableVertexAttribArray(0);
+    glVertexAttribDivisor(0,0);
 }
 
