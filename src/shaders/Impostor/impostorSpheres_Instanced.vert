@@ -41,7 +41,7 @@ void main() {
 
         // apply offset
         int groupID = gl_InstanceID % 62;
-        eye_pos = eye_pos + vec4(sin(elapsedTime + groupID * 10),cos((elapsedTime + groupID * 10)/2),sin((elapsedTime + groupID * 10)/3),0);
+        //eye_pos = eye_pos + vec4(sin(elapsedTime + groupID * 10),cos((elapsedTime + groupID * 10)/2),sin((elapsedTime + groupID * 10)/3),0);
 
         // for phong lighting shader
         passWorldPosition = eye_pos;
