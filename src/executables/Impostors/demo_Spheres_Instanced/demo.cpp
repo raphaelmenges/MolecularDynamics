@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
                 getHeight(window));
 
     // prepare 1D buffer for entries
-    Texture* bufferTex = new Texture;
+    Texture* bufferTex = new Texture(GL_R8UI, GL_RED_INTEGER, GL_UNSIGNED_INT);
     bufferTex->genUimageBuffer(num_balls);
     detectVisible->texture("visibilityBuffer", bufferTex->getHandle());
     detectVisible->texture("tex", renderBalls->get("InstanceID"));
@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
     auto computeVisibleIDs = new ComputeProgram(new ShaderProgram("/RenderTechniques/DetectVisible/CreateVisibleIDList.comp"));
 
     // 1D buffer for visible IDs
-    Texture* visibleIDsBuff = new Texture;
+    Texture* visibleIDsBuff = new Texture(GL_R32UI, GL_RED_INTEGER, GL_UNSIGNED_INT);
     visibleIDsBuff->genUimageBuffer(num_balls);
 
     computeVisibleIDs->texture("visibilityBuffer", bufferTex->getHandle());

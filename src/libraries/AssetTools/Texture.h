@@ -13,6 +13,7 @@ class Texture
 public:
     Texture(std::string path);
     Texture(int w, int h);
+    Texture(GLuint internalFormat, GLuint format, GLuint type);
     ~Texture();
 
     GLuint getHandle();
@@ -21,7 +22,6 @@ public:
     static GLuint load(std::string path);
     GLuint genTexture(int w, int h);
     GLuint genUimageBuffer(int size);
-    GLuint genUimageBuffer2(int size);
 
     Texture();
 protected:
@@ -30,6 +30,11 @@ protected:
     int h;
     int byteCount;
     unsigned char* pixels;
+
+    GLuint internalFormat;
+    GLuint format;
+    GLuint type;
+    GLuint target;
 };
 
 static bool devILInitialized = false;

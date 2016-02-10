@@ -18,6 +18,14 @@ Texture::Texture(int w, int h) {
     textureHandle = this->genTexture(w, h);
 }
 
+Texture::Texture(GLuint internalFormat, GLuint format, GLuint type):
+    type(type),
+    internalFormat(internalFormat),
+    format(format)
+{
+
+}
+
 GLuint Texture::getHandle() {
     return textureHandle;
 }
@@ -99,6 +107,8 @@ GLuint Texture::genTexture(int w, int h) {
 
 GLuint Texture::genUimageBuffer(int size)
 {
+    target = GL_TEXTURE_1D;
+
     byteCount = sizeof(unsigned int) * size;
     pixels = new unsigned char[byteCount];
 
@@ -117,42 +127,11 @@ GLuint Texture::genUimageBuffer(int size)
     GLuint t;
     glGenTextures(1, &t);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_1D, t);
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage1D(GL_TEXTURE_1D, 0, GL_R8UI, size, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, pixels);
-    glBindImageTexture(0, t, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R8UI);
-
-    textureHandle = t;
-
-    return t;
-}
-
-GLuint Texture::genUimageBuffer2(int size)
-{
-    byteCount = sizeof(unsigned int) * size;
-    pixels = new unsigned char[byteCount];
-
-    unsigned int f = 0;
-
-    unsigned char const * p = reinterpret_cast<unsigned char const *>(&f);
-
-    for (int i = 0; i < byteCount; i+=4)
-    {
-        pixels[i] = p[0];
-        pixels[i+1] = p[1];
-        pixels[i+2] = p[2];
-        pixels[i+3] = p[3];
-    }
-
-    GLuint t;
-    glGenTextures(1, &t);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_1D, t);
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, size, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, pixels);
-    glBindImageTexture(1, t, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32UI);
+    glBindTexture(target, t);
+    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage1D(target, 0, internalFormat, size, 0, format, type, pixels);
+    glBindImageTexture(0, t, 0, GL_FALSE, 0, GL_READ_WRITE, internalFormat);
 
     textureHandle = t;
 
