@@ -59,6 +59,7 @@ int main(int argc, char *argv[]) {
     ImpostorSpheres *impSph = new ImpostorSpheres(!useAtomicCounters);
     int num_balls = ImpostorSpheres::num_balls;
     mat4 projection = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
+    float asd = getRatio(window);
 
     ShaderProgram spRenderImpostor;
     ShaderProgram spRenderDiscs;
@@ -116,7 +117,7 @@ int main(int argc, char *argv[]) {
 
     // 1D buffer for visible IDs
     Texture* visibleIDsBuff = new Texture;
-    visibleIDsBuff->genUimageBuffer2(num_balls);
+    visibleIDsBuff->genUimageBuffer(num_balls);
 
     computeVisibleIDs->texture("visibilityBuffer", bufferTex->getHandle());
     computeVisibleIDs->texture("visibleIDsBuff", visibleIDsBuff->getHandle());

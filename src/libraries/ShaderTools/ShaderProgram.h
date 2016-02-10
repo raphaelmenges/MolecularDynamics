@@ -261,8 +261,7 @@ public:
 		GLenum textureHandle;
 		GLenum samplerHandle;
 		std::string name;
-		bool equals(TextureObject o) {
-			// return textureHandle == o.textureHandle && samplerHandle == o.textureHandle;
+        bool equals(TextureObject o) {
 			return name == o.name;
 		}
 	};
