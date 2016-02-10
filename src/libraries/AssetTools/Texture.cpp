@@ -8,6 +8,31 @@ Texture::Texture(std::string path) {
 Texture::Texture() {
 }
 
+GLuint Texture::getInternalFormat() const
+{
+    return internalFormat;
+}
+
+GLuint Texture::getFormat() const
+{
+    return format;
+}
+
+GLuint Texture::getType() const
+{
+    return type;
+}
+
+GLuint Texture::getTarget() const
+{
+    return target;
+}
+
+bool Texture::getIsImageTex() const
+{
+    return isImageTex;
+}
+
 Texture::~Texture() {
 
 }
@@ -21,7 +46,8 @@ Texture::Texture(int w, int h) {
 Texture::Texture(GLuint internalFormat, GLuint format, GLuint type):
     type(type),
     internalFormat(internalFormat),
-    format(format)
+    format(format),
+    isImageTex(false)
 {
 
 }
@@ -108,6 +134,7 @@ GLuint Texture::genTexture(int w, int h) {
 GLuint Texture::genUimageBuffer(int size)
 {
     target = GL_TEXTURE_1D;
+    isImageTex = true;
 
     byteCount = sizeof(unsigned int) * size;
     pixels = new unsigned char[byteCount];

@@ -14,6 +14,7 @@
 
 #include "VertexArrayObject.h"
 #include "FrameBufferObject.h"
+#include "AssetTools/Texture.h"
 
 class RenderPass
 {
@@ -57,9 +58,11 @@ class RenderPass
 		 */
 		RenderPass* clear(float r, float g, float b, float a);
 		RenderPass* clear();
-		RenderPass* clearDepth();
-		RenderPass* texture(std::string name, GLuint textureID);
-		RenderPass* texture(std::string name, GLuint textureID, GLuint samplerID);
+        RenderPass* clearDepth();
+        RenderPass* texture(std::string name, GLuint textureID);
+        RenderPass* texture(std::string name, GLuint textureID, GLuint samplerHandle);
+        RenderPass* texture(std::string name, Texture *texture);
+        RenderPass* texture(std::string name, Texture *texture, GLuint samplerHandle);
 
 		template <class T>
 		RenderPass* update(std::string name, T value) {

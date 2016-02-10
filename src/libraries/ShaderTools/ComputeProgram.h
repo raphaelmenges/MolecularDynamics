@@ -14,6 +14,7 @@
 
 #include "VertexArrayObject.h"
 #include "FrameBufferObject.h"
+#include "AssetTools/Texture.h"
 
 class ComputeProgram
 {
@@ -33,10 +34,13 @@ class ComputeProgram
         ComputeProgram* update(std::string name, T value) {
 			shaderProgram->update(name, value);
 			return this;
-		}
+        }
 
         ComputeProgram* texture(std::string name, GLuint textureID);
-        ComputeProgram* texture(std::string name, GLuint textureID, GLuint samplerID);
+        ComputeProgram* texture(std::string name, GLuint textureID, GLuint samplerHandle);
+
+        ComputeProgram* texture(std::string name, Texture* texture);
+        ComputeProgram* texture(std::string name, Texture* texture, GLuint samplerHandle);
 
 	// private:
 		// Shader program to use within a render pass

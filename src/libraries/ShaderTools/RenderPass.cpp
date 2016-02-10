@@ -37,7 +37,19 @@ RenderPass* RenderPass::texture(std::string name, GLuint textureHandle) {
 
 RenderPass* RenderPass::texture(std::string name, GLuint textureHandle, GLuint samplerHandle) {
 	shaderProgram->texture(name, textureHandle, samplerHandle);
-	return this;
+    return this;
+}
+
+RenderPass *RenderPass::texture(std::string name, Texture *texture)
+{
+    shaderProgram->texture(name, texture);
+    return this;
+}
+
+RenderPass *RenderPass::texture(std::string name, Texture *texture, GLuint samplerHandle)
+{
+    shaderProgram->texture(name, texture, samplerHandle);
+    return this;
 }
 
 RenderPass* RenderPass::clear(float r, float g, float b, float a) {

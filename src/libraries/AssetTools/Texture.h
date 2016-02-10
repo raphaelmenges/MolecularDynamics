@@ -24,6 +24,16 @@ public:
     GLuint genUimageBuffer(int size);
 
     Texture();
+    GLuint getInternalFormat() const;
+
+    GLuint getFormat() const;
+
+    GLuint getType() const;
+
+    GLuint getTarget() const;
+
+    bool getIsImageTex() const;
+
 protected:
     GLuint textureHandle;
     int w;
@@ -35,6 +45,7 @@ protected:
     GLuint format;
     GLuint type;
     GLuint target;
+    bool isImageTex;
 };
 
 static bool devILInitialized = false;

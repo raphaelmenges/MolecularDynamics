@@ -23,6 +23,8 @@
 #include <glm/ext.hpp>
 #include <map>
 
+#include "AssetTools/Texture.h"
+
 
 /**
  * @brief 	Verwaltet ein Shader Programm
@@ -63,8 +65,10 @@ public:
 	 */
 	void use();
 
-	virtual ShaderProgram* texture(std::string name, GLuint textureHandle);
-	virtual ShaderProgram* texture(std::string name, GLuint textureHandle, GLuint samplerHandle);
+    virtual ShaderProgram* texture(std::string name, GLuint textureHandle);
+    virtual ShaderProgram* texture(std::string name, GLuint textureHandle, GLuint samplerHandle);
+    virtual ShaderProgram* texture(std::string name, Texture* texture);
+    virtual ShaderProgram* texture(std::string name, Texture* texture, GLuint samplerHandle);
 
 	/**
 	 * @brief Updates a boolean uniform variable
@@ -264,6 +268,7 @@ public:
         bool equals(TextureObject o) {
 			return name == o.name;
 		}
+        Texture* texture = nullptr;
 	};
 	std::vector<TextureObject> textureList;
 

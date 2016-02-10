@@ -31,3 +31,15 @@ ComputeProgram* ComputeProgram::texture(std::string name, GLuint textureHandle, 
     this->shaderProgram->texture(name, textureHandle, samplerHandle);
     return this;
 }
+
+ComputeProgram *ComputeProgram::texture(std::string name, Texture *texture)
+{
+    this->shaderProgram->texture(name, texture);
+    return this;
+}
+
+ComputeProgram *ComputeProgram::texture(std::string name, Texture *texture, GLuint samplerHandle)
+{
+    this->shaderProgram->texture(name, texture, samplerHandle);
+    return this;
+}

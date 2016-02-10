@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
     // prepare 1D buffer for entries
     Texture* bufferTex = new Texture(GL_R8UI, GL_RED_INTEGER, GL_UNSIGNED_INT);
     bufferTex->genUimageBuffer(num_balls);
-    detectVisible->texture("visibilityBuffer", bufferTex->getHandle());
+    detectVisible->texture("visibilityBuffer", bufferTex);
     detectVisible->texture("tex", renderBalls->get("InstanceID"));
 
     /// renderpass to display result frame
@@ -119,8 +119,8 @@ int main(int argc, char *argv[]) {
     Texture* visibleIDsBuff = new Texture(GL_R32UI, GL_RED_INTEGER, GL_UNSIGNED_INT);
     visibleIDsBuff->genUimageBuffer(num_balls);
 
-    computeVisibleIDs->texture("visibilityBuffer", bufferTex->getHandle());
-    computeVisibleIDs->texture("visibleIDsBuff", visibleIDsBuff->getHandle());
+    computeVisibleIDs->texture("visibilityBuffer", bufferTex);
+    computeVisibleIDs->texture("visibleIDsBuff", visibleIDsBuff);
 
     // atomic counter buffer for consecutive index access in compute shader
     GLuint atomBuff;
@@ -258,7 +258,7 @@ int main(int argc, char *argv[]) {
         if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
         {
             renderBalls->setShaderProgram(&spRenderImpostor);
-            renderBalls->texture("visibleIDsBuff", visibleIDsBuff->getHandle());
+            renderBalls->texture("visibleIDsBuff", visibleIDsBuff);
             result->update("maxRange", 1.0f);
             result->texture("tex", renderBalls->get("fragColor"));
         }
@@ -266,7 +266,7 @@ int main(int argc, char *argv[]) {
         if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
         {
             renderBalls->setShaderProgram(&spRenderDiscs);
-            renderBalls->texture("visibleIDsBuff", visibleIDsBuff->getHandle());
+            renderBalls->texture("visibleIDsBuff", visibleIDsBuff);
             result->update("maxRange", 1.0f);
             result->texture("tex", renderBalls->get("fragColor"));
         }
@@ -274,7 +274,7 @@ int main(int argc, char *argv[]) {
         if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
         {
             renderBalls->setShaderProgram(&spRenderBalls);
-            renderBalls->texture("visibleIDsBuff", visibleIDsBuff->getHandle());
+            renderBalls->texture("visibleIDsBuff", visibleIDsBuff);
             result->update("maxRange", 1.0f);
             result->texture("tex", renderBalls->get("fragColor"));
         }
@@ -282,7 +282,7 @@ int main(int argc, char *argv[]) {
         if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
         {
             renderBalls->setShaderProgram(&spRenderBalls);
-            renderBalls->texture("visibleIDsBuff", visibleIDsBuff->getHandle());
+            renderBalls->texture("visibleIDsBuff", visibleIDsBuff);
             result->update("maxRange", float(ImpostorSpheres::num_balls));
             result->texture("tex", renderBalls->get("InstanceID"));
         }
