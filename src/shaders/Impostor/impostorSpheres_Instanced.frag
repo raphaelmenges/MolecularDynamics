@@ -35,7 +35,8 @@ void main() {
         if (scaledDepthOffset < abs(depth - cutPlaneDistance)) discard;
     }
 
-    gl_FragDepth = modifiedDepth / 100.0f; // far plane is at 100, near at 0.1
+
+
     if (modifiedDepth > cutPlaneDistance){
         vec4 normal = vec4(texCoord.xy, depthOffset,0);
         N = normalize(normal.xyz);
@@ -45,13 +46,15 @@ void main() {
         N = vec3(0,0,1);
     }
 
-    vec4 corrected_pos = vec4(eye_pos.xy, eye_pos.z + depthOffset * size / 2, 1);
+    vec4 corrected_pos = vec4(eye_pos.xy, eye_pos.z + scaledDepthOffset, 1);
     vec3 light_eyePos = vec3(view * vec4(lightSrc, 1)).xyz;
     vec3 L = normalize(vec3(light_eyePos - corrected_pos.xyz));
+
+    gl_FragDepth = modifiedDepth / 100.0f; // far plane is at 100, near at 0.1
 
     Idiff = passColor.xyz * max(dot(N,L), 0.0);
     Idiff = clamp(Idiff, 0.0, 1.0);
 
-    fragColor = vec4(Idiff, 1);
+    fragColor = vec4(Idiff,1);
     InstanceID = vec4(passInstanceID);
 }

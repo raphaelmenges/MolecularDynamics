@@ -30,7 +30,7 @@ void ImpostorSpheres::doOcclusionQuery()
 void ImpostorSpheres::drawInstanced(int countInstances)
 {
     glBindVertexArray(vertexArrayObjectHandle);
-    glDrawArraysInstanced(mode, 0, 4, countInstances);
+    glDrawArraysInstanced(mode, 0, 36, countInstances);
 }
 
 void ImpostorSpheres::updateVisibilityMap(std::vector<GLint> map)
@@ -58,11 +58,32 @@ void ImpostorSpheres::prepareWithAttribDivisor()
 
     glGenBuffers(1, &positionBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
+//    GLfloat positions[] = {
+//        -1.0f, -1.0f,
+//        -1.0f, 1.0f,
+//        1.0f, -1.0f,
+//        1.0f, 1.0f
+//    };
+
+    float size = 1;
     GLfloat positions[] = {
-        -1.0f, -1.0f,
-        -1.0f, 1.0f,
-        1.0f, -1.0f,
-        1.0f, 1.0f
+                -size,-size,size, size,-size,size, size,size,size,
+                size,size,size, -size,size,size, -size,-size,size,
+                // Right face
+                size,-size,size, size,-size,-size, size,size,-size,
+                size,size,-size, size,size,size, size,-size,size,
+                // Back face
+                -size,-size,-size, size,-size,-size, size,size,-size,
+                size,size,-size, -size,size,-size, -size,-size,-size,
+                // Left face
+                -size,-size,size, -size,-size,-size, -size,size,-size,
+                -size,size,-size, -size,size,size, -size,-size,size,
+                // Bottom face
+                -size,-size,size, size,-size,size, size,-size,-size,
+                size,-size,-size, -size,-size,-size, -size,-size,size,
+                // Top Face
+                -size,size,size, size,size,size, size,size,-size,
+                size,size,-size, -size,size,-size, -size,size,size,
     };
 
     std::vector<GLfloat> instance_colors;
@@ -96,7 +117,7 @@ void ImpostorSpheres::prepareWithAttribDivisor()
     glBufferSubData(GL_ARRAY_BUFFER, offset, sizeof(GLfloat) * visibilityMap.size(), &visibilityMap[0]);
     visibilityBufferOffset = offset; // need that for update of the buffer
 
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)sizeof(positions));
     glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)(sizeof(positions) + sizeof(GLfloat) * instance_colors.size()));
     glVertexAttribPointer(3, 1, GL_INT, GL_FALSE, 0, (GLvoid*)(sizeof(positions) + sizeof(GLfloat) * instance_colors.size() + sizeof(GLfloat) * instance_positions.size()));
@@ -124,11 +145,32 @@ void ImpostorSpheres::prepareWithoutAttribDivisor()
 
     glGenBuffers(1, &positionBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
+//    GLfloat positions[] = {
+//        -1.0f, -1.0f,
+//        -1.0f, 1.0f,
+//        1.0f, -1.0f,
+//        1.0f, 1.0f
+//    };
+
+    float size = 1;
     GLfloat positions[] = {
-        -1.0f, -1.0f,
-        -1.0f, 1.0f,
-        1.0f, -1.0f,
-        1.0f, 1.0f
+                -size,-size,size, size,-size,size, size,size,size,
+                size,size,size, -size,size,size, -size,-size,size,
+                // Right face
+                size,-size,size, size,-size,-size, size,size,-size,
+                size,size,-size, size,size,size, size,-size,size,
+                // Back face
+                -size,-size,-size, size,-size,-size, size,size,-size,
+                size,size,-size, -size,size,-size, -size,-size,-size,
+                // Left face
+                -size,-size,size, -size,-size,-size, -size,size,-size,
+                -size,size,-size, -size,size,size, -size,-size,size,
+                // Bottom face
+                -size,-size,size, size,-size,size, size,-size,-size,
+                size,-size,-size, -size,-size,-size, -size,-size,size,
+                // Top Face
+                -size,size,size, size,size,size, size,size,-size,
+                size,size,-size, -size,size,-size, -size,size,size,
     };
 
     instance_colors.clear();
@@ -144,7 +186,7 @@ void ImpostorSpheres::prepareWithoutAttribDivisor()
     glBufferData(GL_ARRAY_BUFFER, sizeof(positions), NULL, GL_STATIC_DRAW);
     GLuint offset = 0;
     glBufferSubData(GL_ARRAY_BUFFER, offset, sizeof(positions), positions);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
     glEnableVertexAttribArray(0);
     glVertexAttribDivisor(0,0);
 }

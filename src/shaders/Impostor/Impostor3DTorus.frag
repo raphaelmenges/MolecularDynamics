@@ -14,7 +14,7 @@ out vec4 fragColor;
 uniform vec4 lightSrc = vec4(0,100,0,1);
 bool stop = false;
 
-layout(depth_less) out float gl_FragDepth;
+layout(depth_greater) out float gl_FragDepth;
 
 void hit(vec3 hitPos, vec3 toroidalPoint)
 {
@@ -32,7 +32,7 @@ void hit(vec3 hitPos, vec3 toroidalPoint)
    float far = 100;
    float near = 1;
    vec4 clip_space_pos = projection * vec4(hitPos,1);
-   float ndc_depth = clip_space_pos.z / clip_space_pos.w;
+   float ndc_depth = 0.5 * clip_space_pos.z / clip_space_pos.w + 0.5;
 
    gl_FragDepth = ndc_depth;
    fragColor = vec4(finalColor, 1);

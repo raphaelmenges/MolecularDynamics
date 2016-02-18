@@ -40,6 +40,27 @@ void printProperties()
     int maxTexture;
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexture);
     std::cout << "Max texture size: " << maxTexture << std::endl;
+
+    int maxTexture3D;
+    glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &maxTexture3D);
+    std::cout << "Max 3D texture size: " << maxTexture3D << std::endl;
+
+//    GLuint tex3d;
+//    glGenTextures(1, &tex3d);
+//    glBindTexture(GL_TEXTURE_3D, tex3d);
+//    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA16F, maxTexture3D, maxTexture3D, 64, 0, GL_RGBA, GL_FLOAT, 0);
+
+    int err = glGetError();
+    printf("%d\n", err);
+
+
+//    int maxAtomicCountersFrag;
+//    glGetIntegerv(GL_MAX_FRAGMENT_ATOMIC_COUNTER_BUFFERS, &maxAtomicCountersFrag);
+//    std::cout << "GL_MAX_FRAGMENT_ATOMIC_COUNTER_BUFFERS: " << maxAtomicCountersFrag << std::endl;
+
+
 }
 
 
@@ -58,8 +79,9 @@ int main(int argc, char *argv[]) {
 
     ImpostorSpheres *impSph = new ImpostorSpheres(!useAtomicCounters);
     int num_balls = ImpostorSpheres::num_balls;
-    mat4 projection = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
-    float asd = getRatio(window);
+    //mat4 projection = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
+    mat4 projection = ortho(-30.0f, 30.0f, -30.0f, 30.0f, 0.0f, 100.0f);
+
 
     ShaderProgram spRenderImpostor;
     ShaderProgram spRenderDiscs;
@@ -68,13 +90,14 @@ int main(int argc, char *argv[]) {
     {
         spRenderImpostor = ShaderProgram("/Impostor/impostorSpheres_InstancedUA.vert", "/Filters/solidColorInstanceCount.frag");
         spRenderDiscs = ShaderProgram("/Impostor/impostorSpheres_InstancedUA.vert", "/Impostor/impostorSpheres_discardFragments_Instanced.frag");
-        spRenderBalls = ShaderProgram("/Impostor/impostorSpheres_InstancedUA.vert", "/Impostor/impostorSpheres_Instanced.frag");
+        //spRenderBalls = ShaderProgram("/Impostor/impostorSpheres_InstancedUA.vert", "/Impostor/impostorSpheres_Instanced.frag");
+        spRenderBalls = ShaderProgram("/3DObject/modelViewProjectionInstancedUA.vert", "/Impostor/Impostor3DSphere_Ortho.frag");
     }
     else
     {
         spRenderImpostor = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Filters/solidColorInstanceCount.frag");
         spRenderDiscs = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Impostor/impostorSpheres_discardFragments_Instanced.frag");
-        spRenderBalls = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Impostor/impostorSpheres_Instanced.frag");
+        spRenderBalls = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Impostor/Impostor3DSphere.frag");
     }
 
 
@@ -244,8 +267,8 @@ int main(int argc, char *argv[]) {
         if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) (rotY + deltaTime > 6.283)? rotY += deltaTime - 6.283 : rotY += deltaTime;
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) (rotX - deltaTime < 0)? rotX -= deltaTime + 6.283 : rotX -= deltaTime;
         if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) (rotX + deltaTime > 6.283)? rotX += deltaTime - 6.283 : rotX += deltaTime;
-        if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) distance += deltaTime * 5;
-        if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS) distance = max(distance - deltaTime * 5, 0.0f);
+        if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) distance += deltaTime * 50;
+        if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS) distance = max(distance - deltaTime * 50, 0.0f);
         if (glfwGetKey(window, GLFW_KEY_PERIOD) == GLFW_PRESS) scale += deltaTime*4;
         if (glfwGetKey(window, GLFW_KEY_COMMA) == GLFW_PRESS) scale = glm::max(scale - deltaTime*4, 0.01f);
         if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {updateVisibilityMapLock = true; updateVisibilityMap = true;}

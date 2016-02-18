@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
     float scale = 1.0;
 
     mat4 projection = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
-    
+
     RenderPass* renderBalls = new RenderPass(
         new Quad(),
         new ShaderProgram("/Impostor/impostorSpheres.vert", "/Impostor/impostorSpheres.frag"),
