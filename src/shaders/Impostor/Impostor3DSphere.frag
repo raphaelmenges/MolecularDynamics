@@ -2,58 +2,48 @@
 
 uniform vec4 color;
 uniform mat4 view;
-//uniform mat4 model;
+uniform mat4 model;
 uniform mat4 projection;
 uniform float sphereRadius;
 
-flat in int passInstanceID;
-
 in vec4 passPosition;
-in vec4 passColor;
-flat in mat4 model;
-flat in vec3 center;
-in float size;
 
 out vec4 fragColor;
-out vec4 InstanceID;
 
-vec3 center_v;
-
-uniform vec4 lightSrc = vec4(0,100,50,1);
+uniform vec4 lightSrc = vec4(0,100,0,1);
 bool stop = false;
 
-layout(depth_greater) out float gl_FragDepth;
-vec3 view_w;
+layout(depth_less) out float gl_FragDepth;
+
 void hit(vec3 hitPos)
 {
-    // Normale Berechnen
-    vec4 normal = normalize(vec4(hitPos -center_v,0));
+    // Normale Berechnen und dann alles von Welt wieder in View-Koordinaten transformieren
+    vec4 normal = normalize(vec4(hitPos,0));
+    hitPos = vec4(view * model * vec4(hitPos,1)).xyz;
+    normal =  transpose(inverse(view * model)) * normal;
 
     // Beleuchtung
-    vec3 light_v = lightSrc.xyz;//vec3(view * lightSrc).xyz;
+    vec3 light_v = vec3(view * lightSrc).xyz;
     vec3 L = normalize(vec3(light_v - hitPos.xyz));
-    vec3 finalColor = passColor.xyz * max(dot(normal.xyz,L), 0.0);
+    vec3 finalColor = color.xyz * max(dot(normal.xyz,L), 0.0);
     finalColor = clamp(finalColor, 0.0, 1.0);
 
     float far = 100;
     float near = 1;
     vec4 clip_space_pos = projection * vec4(hitPos,1);
-    float ndc_depth = 0.5 * clip_space_pos.z / clip_space_pos.w + 0.5;
+    float ndc_depth = clip_space_pos.z / clip_space_pos.w;
 
     gl_FragDepth = ndc_depth;
     fragColor = vec4(finalColor, 1);
-    InstanceID = vec4(passInstanceID);
 }
 
 void main() {
 
-    // Kamera in Kamera
-    vec4 cam_w = vec4(0,0,0,1);
+    // Kamera in Welt
+    vec4 cam_w = inverse(view * model) * vec4(0,0,0,1);
 
-    // Fragment in Kamera
-    vec4 frag_w = passPosition;
-
-    center_v = vec4(view*model*vec4(0,0,0,1)).xyz;
+    // Fragment in Welt
+    vec4 frag_w = inverse(view * model) * passPosition;
 
     // Sehstrahl in Welt
     vec3 view_w = normalize((frag_w - cam_w).xyz);
@@ -63,27 +53,38 @@ void main() {
     // dann liegt diese jetzt auch im Ursprung der Weltkoordinaten
     // Analog könnte man jetzt auch andere Oberflächen testen, solange man weiß wo diese relativ zum Ursprung des Impostor/Model-Koordinatensystems liegen
 
-    float radius = size/2;//sphereRadius;    
-
-    float a = dot(view_w, -center_v.xyz);
-    float b = a * a - length(center_v.xyz) * length(center_v.xyz) + radius * radius;
-
-    if (b < 0)
+    // Schrittweise durch den Impostor laufen und auf Oberfläche testen (ToDo: pq-Formel)
+    float stepSize = 0.01;
+    vec3 stepPos = frag_w.xyz;
+    float error = 0.01;
+    float radius = sphereRadius;
+    for (int i = 0; i < 100; i++)
     {
-        discard; // no intersections
-    }
-    else
-    {
-        float d = -a - sqrt(b); // just substract (+ lies always behind front point)
-        vec3 real_hit_position_cam = d * view_w;
-        hit(real_hit_position_cam);
-        stop = true;
+        // testen ob der gefundene Punkt noch im Impostor liegt
+        // dazu müssen Ausmaße in xyz bekannt sein, hier -1..1
+        if( abs(stepPos.x) > 1 + error || abs(stepPos.y) > 1  + error || abs(stepPos.z) > 1  + error)
+            break;
+
+        // Abstand toroidalPoint zu aktuellem Testpunkt
+        float dist = abs(length(stepPos));
+
+        // Auf korrekten Abstand testen
+        if (abs(dist - radius) < error)
+        {
+            // getroffen
+            hit(stepPos);
+            stop = true;
+            break;
+        }
+        stepPos += view_w * stepSize;
     }
 
     // Kugel nicht getroffen, Impostor zeichnen oder verwerfen
     if(!stop)
     {
         discard;
-        fragColor = vec4(1,0,0,1);
+        fragColor = vec4(1,0,0,0);
     }
 }
+
+

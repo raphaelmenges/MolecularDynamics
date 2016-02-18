@@ -22,9 +22,9 @@ void VisibilityExtractionDemo::init()
         spRenderImpostor = ShaderProgram("/SurfaceAtomDetection/Impostor/impostorSpheres_InstancedUA.vert", "/SurfaceAtomDetection/Detection/solidColorInstanceCount.frag");
         spRenderDiscs = ShaderProgram("/SurfaceAtomDetection//Impostor/impostorSpheres_InstancedUA.vert", "/SurfaceAtomDetection//Impostor/impostorSpheres_discardFragments_Instanced.frag");
         if(perspectiveProj)
-            spRenderBalls = ShaderProgram("/3DObject/modelViewProjectionInstancedUA.vert", "/SurfaceAtomDetection/Impostor/Impostor3DSphere.frag");
+            spRenderBalls = ShaderProgram("/SurfaceAtomDetection/Base/modelViewProjectionInstancedUA.vert", "/SurfaceAtomDetection/Impostor/Impostor3DSphere.frag");
         else
-            spRenderBalls = ShaderProgram("/3DObject/modelViewProjectionInstancedUA.vert", "/SurfaceAtomDetection/Impostor/Impostor3DSphere_Ortho.frag");
+            spRenderBalls = ShaderProgram("/SurfaceAtomDetection/Base/modelViewProjectionInstancedUA.vert", "/SurfaceAtomDetection/Impostor/Impostor3DSphere_Ortho.frag");
     }
     else
     {
@@ -406,7 +406,7 @@ void printProperties()
 
 int main(int argc, char *argv[]) {
     VisibilityExtractionDemo demo;
-    demo.perspectiveProj = true;
+    demo.perspectiveProj = false;
 
     demo.init();
 
