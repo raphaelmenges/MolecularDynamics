@@ -21,16 +21,13 @@ vec3 center_v;
 
 uniform vec4 lightSrc = vec4(0,100,50,1);
 bool stop = false;
-bool iterate = false;
 
 layout(depth_greater) out float gl_FragDepth;
 vec3 view_w;
 void hit(vec3 hitPos)
 {
-    // Normale Berechnen und dann alles von Welt wieder in View-Koordinaten transformieren
+    // Normale Berechnen
     vec4 normal = normalize(vec4(hitPos -center_v,0));
-    //hitPos = vec4(view * model * vec4(hitPos,1)).xyz;
-    //normal =  transpose(inverse(view * model)) * normal;
 
     // Beleuchtung
     vec3 light_v = lightSrc.xyz;//vec3(view * lightSrc).xyz;
@@ -50,15 +47,13 @@ void hit(vec3 hitPos)
 
 void main() {
 
-    // Kamera in Welt
-    vec4 cam_w = /*inverse(view * model) **/ vec4(0,0,0,1);
+    // Kamera in Kamera
+    vec4 cam_w = vec4(0,0,0,1);
 
-    // Fragment in Welt
-    vec4 frag_w = /*inverse(view * model) **/ passPosition;
+    // Fragment in Kamera
+    vec4 frag_w = passPosition;
 
-    center_v = vec4(view*model*vec4(0,0,0,1)).xyz;//vec4(view * vec4(center,1)).xyz;
-
-
+    center_v = vec4(view*model*vec4(0,0,0,1)).xyz;
 
     // Sehstrahl in Welt
     vec3 view_w = normalize((frag_w - cam_w).xyz);
@@ -68,53 +63,21 @@ void main() {
     // dann liegt diese jetzt auch im Ursprung der Weltkoordinaten
     // Analog könnte man jetzt auch andere Oberflächen testen, solange man weiß wo diese relativ zum Ursprung des Impostor/Model-Koordinatensystems liegen
 
-    // Schrittweise durch den Impostor laufen und auf Oberfläche testen (ToDo: pq-Formel)
-    float stepSize = 0.1;
-    vec3 stepPos = frag_w.xyz;
-    float error = 0.1;
-    float radius = size/2;//sphereRadius;
+    float radius = size/2;//sphereRadius;    
 
-    if (iterate)
-    for (int i = 0; i < 10; i++)
+    float a = dot(view_w, -center_v.xyz);
+    float b = a * a - length(center_v.xyz) * length(center_v.xyz) + radius * radius;
+
+    if (b < 0)
     {
-        // testen ob der gefundene Punkt noch im Impostor liegt
-        // dazu müssen Ausmaße in xyz bekannt sein, hier -1..1
-        if( abs(stepPos.x) > radius + error || abs(stepPos.y) > radius  + error || abs(stepPos.z) > radius  + error)
-            break;
-
-        // Abstand Kugel zu aktuellem Testpunkt
-        float dist = abs(length(stepPos));
-
-
-
-        // Auf korrekten Abstand testen
-        if (abs(dist - radius) < error)
-        {
-            // getroffen
-            hit(stepPos);
-            stop = true;
-            break;
-        }
-        stepPos += view_w * stepSize;
+        discard; // no intersections
     }
     else
     {
-
-        float a = dot(view_w, -center_v.xyz);
-        float b = a * a - length(center_v.xyz) * length(center_v.xyz) + radius * radius;
-
-        if (b < 0)
-        {
-            discard; // no intersections
-        }
-        else
-        {
-            float d = -a - sqrt(b); // just substract (+ lies always behind front point)
-            vec3 real_hit_position_cam = d * view_w;
-            hit(real_hit_position_cam);
-            stop = true;
-        }
-
+        float d = -a - sqrt(b); // just substract (+ lies always behind front point)
+        vec3 real_hit_position_cam = d * view_w;
+        hit(real_hit_position_cam);
+        stop = true;
     }
 
     // Kugel nicht getroffen, Impostor zeichnen oder verwerfen
