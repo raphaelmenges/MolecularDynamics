@@ -19,18 +19,18 @@ void VisibilityExtractionDemo::init()
 
     if (useAtomicCounters)
     {
-        spRenderImpostor = ShaderProgram("/Impostor/impostorSpheres_InstancedUA.vert", "/Filters/solidColorInstanceCount.frag");
-        spRenderDiscs = ShaderProgram("/Impostor/impostorSpheres_InstancedUA.vert", "/Impostor/impostorSpheres_discardFragments_Instanced.frag");
+        spRenderImpostor = ShaderProgram("/SurfaceAtomDetection/Impostor/impostorSpheres_InstancedUA.vert", "/SurfaceAtomDetection/Detection/solidColorInstanceCount.frag");
+        spRenderDiscs = ShaderProgram("/SurfaceAtomDetection//Impostor/impostorSpheres_InstancedUA.vert", "/SurfaceAtomDetection//Impostor/impostorSpheres_discardFragments_Instanced.frag");
         if(perspectiveProj)
-            spRenderBalls = ShaderProgram("/3DObject/modelViewProjectionInstancedUA.vert", "/Impostor/Impostor3DSphere.frag");
+            spRenderBalls = ShaderProgram("/3DObject/modelViewProjectionInstancedUA.vert", "/SurfaceAtomDetection/Impostor/Impostor3DSphere.frag");
         else
-            spRenderBalls = ShaderProgram("/3DObject/modelViewProjectionInstancedUA.vert", "/Impostor/Impostor3DSphere_Ortho.frag");
+            spRenderBalls = ShaderProgram("/3DObject/modelViewProjectionInstancedUA.vert", "/SurfaceAtomDetection/Impostor/Impostor3DSphere_Ortho.frag");
     }
     else
     {
-        spRenderImpostor = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Filters/solidColorInstanceCount.frag");
-        spRenderDiscs = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Impostor/impostorSpheres_discardFragments_Instanced.frag");
-        spRenderBalls = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Impostor/Impostor3DSphere.frag");
+        spRenderImpostor = ShaderProgram("/SurfaceAtomDetection/Impostor/impostorSpheres_Instanced.vert", "/SurfaceAtomDetection/Detection/solidColorInstanceCount.frag");
+        spRenderDiscs = ShaderProgram("/SurfaceAtomDetection/Impostor/impostorSpheres_Instanced.vert", "/SurfaceAtomDetection/Impostor/impostorSpheres_discardFragments_Instanced.frag");
+        spRenderBalls = ShaderProgram("/SurfaceAtomDetection/Impostor/impostorSpheres_Instanced.vert", "/SurfaceAtomDetection/Impostor/Impostor3DSphere.frag");
     }
 
     /// Renderpass to render impostors/fake geometry
@@ -51,7 +51,7 @@ void VisibilityExtractionDemo::init()
     /// Renderpass to detect the visible instances
     detectVisible = new RenderPass(
                 new Quad(),
-                new ShaderProgram("/Filters/fullscreen.vert","/RenderTechniques/DetectVisible/DetectVisibleInstanceIDs.frag"),
+                new ShaderProgram("/SurfaceAtomDetection/Base/fullscreen.vert","/SurfaceAtomDetection/Detection/DetectVisibleInstanceIDs.frag"),
                 getWidth(window),
                 getHeight(window));
 
@@ -64,11 +64,11 @@ void VisibilityExtractionDemo::init()
     /// renderpass to display result frame
     result = new RenderPass(
                 new Quad(),
-                new ShaderProgram("/Filters/fullscreen.vert","/Filters/toneMapperLinearInstanceCount.frag"));
+                new ShaderProgram("/SurfaceAtomDetection/Base/fullscreen.vert","/SurfaceAtomDetection/Detection/toneMapperLinearInstanceCount.frag"));
     result->texture("tex", renderBalls->get("fragColor"));
 
     /// compute shader to process a list of visible IDs (with the actual instanceID of the first general draw)
-    computeVisibleIDs = new ComputeProgram(new ShaderProgram("/RenderTechniques/DetectVisible/CreateVisibleIDList.comp"));
+    computeVisibleIDs = new ComputeProgram(new ShaderProgram("/SurfaceAtomDetection/Detection/CreateVisibleIDList.comp"));
 
     // 1D buffer for visible IDs
     visibleIDsBuff = new Texture(GL_R32UI, GL_RED_INTEGER, GL_UNSIGNED_INT);
@@ -406,7 +406,7 @@ void printProperties()
 
 int main(int argc, char *argv[]) {
     VisibilityExtractionDemo demo;
-    demo.perspectiveProj = false;
+    demo.perspectiveProj = true;
 
     demo.init();
 
