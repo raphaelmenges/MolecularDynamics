@@ -117,7 +117,7 @@ void ShaderProgram::use() {
         // if the textureobject needs to be bound as an imagetexture, additional info should be available
         if(!(o.texture == nullptr))
             if(o.texture->getIsImageTex())
-                glBindImageTexture(i, o.textureHandle, 0, GL_FALSE, 0, GL_READ_WRITE, o.texture->getInternalFormat());
+                glBindImageTexture(i, o.textureHandle, 0, o.texture->getIsLayered(), 0, GL_READ_WRITE, o.texture->getInternalFormat());
 
         glBindSampler(i, textureList[i].samplerHandle);
     }

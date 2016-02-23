@@ -263,7 +263,7 @@ public:
 
 	struct TextureObject{
 		GLenum textureHandle;
-		GLenum samplerHandle;
+        GLenum samplerHandle;
 		std::string name;
         bool equals(TextureObject o) {
 			return name == o.name;

@@ -8,8 +8,9 @@ float r_pos(float size) {
     return size * static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 }
 
-ImpostorSpheres::ImpostorSpheres(bool prepareWithAttribDivisor)
-    :instancesToRender(num_balls)
+ImpostorSpheres::ImpostorSpheres(bool prepareWithAttribDivisor, bool frontFacesOnly)
+    :instancesToRender(num_balls),
+      frontFacesOnly(frontFacesOnly)
 {
     mode = GL_TRIANGLE_STRIP;
 
@@ -30,7 +31,11 @@ void ImpostorSpheres::doOcclusionQuery()
 void ImpostorSpheres::drawInstanced(int countInstances)
 {
     glBindVertexArray(vertexArrayObjectHandle);
-    glDrawArraysInstanced(mode, 0, 36, countInstances);
+    if(frontFacesOnly)
+        glDrawArraysInstanced(mode, 0, 6, countInstances);
+    else
+        glDrawArraysInstanced(mode, 0, 36, countInstances);
+
 }
 
 void ImpostorSpheres::updateVisibilityMap(std::vector<GLint> map)
@@ -143,49 +148,64 @@ void ImpostorSpheres::prepareWithoutAttribDivisor()
     glBindVertexArray(vertexArrayObjectHandle);
 
 
+
     glGenBuffers(1, &positionBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
-//    GLfloat positions[] = {
-//        -1.0f, -1.0f,
-//        -1.0f, 1.0f,
-//        1.0f, -1.0f,
-//        1.0f, 1.0f
-//    };
 
     float size = 1;
-    GLfloat positions[] = {
-                -size,-size,size, size,-size,size, size,size,size,
-                size,size,size, -size,size,size, -size,-size,size,
-                // Right face
-                size,-size,size, size,-size,-size, size,size,-size,
-                size,size,-size, size,size,size, size,-size,size,
-                // Back face
-                -size,-size,-size, size,-size,-size, size,size,-size,
-                size,size,-size, -size,size,-size, -size,-size,-size,
-                // Left face
-                -size,-size,size, -size,-size,-size, -size,size,-size,
-                -size,size,-size, -size,size,size, -size,-size,size,
-                // Bottom face
-                -size,-size,size, size,-size,size, size,-size,-size,
-                size,-size,-size, -size,-size,-size, -size,-size,size,
-                // Top Face
-                -size,size,size, size,size,size, size,size,-size,
-                size,size,-size, -size,size,-size, -size,size,size,
-    };
+
+//    int positionsSize = 0;
+//    if (frontFacesOnly)
+//        positionsSize = 18;
+//    else
+//        positionsSize = 18*6;
+    std::vector<GLfloat> positions;
+//    positions.reserve(positionsSize);
+    if(frontFacesOnly){
+        positions = {
+            -size,-size,size, size,-size,size, size,size,size,
+             size,size,size, -size,size,size, -size,-size,size  };
+
+    }
+    else
+    {
+        positions = {
+            -size,-size,size, size,-size,size, size,size,size,
+            size,size,size, -size,size,size, -size,-size,size,
+            // Right face
+            size,-size,size, size,-size,-size, size,size,-size,
+            size,size,-size, size,size,size, size,-size,size,
+            // Back face
+            -size,-size,-size, size,-size,-size, size,size,-size,
+            size,size,-size, -size,size,-size, -size,-size,-size,
+            // Left face
+            -size,-size,size, -size,-size,-size, -size,size,-size,
+            -size,size,-size, -size,size,size, -size,-size,size,
+            // Bottom face
+            -size,-size,size, size,-size,size, size,-size,-size,
+            size,-size,-size, -size,-size,-size, -size,-size,size,
+            // Top Face
+            -size,size,size, size,size,size, size,size,-size,
+            size,size,-size, -size,size,-size, -size,size,size,
+        };
+    }
+
 
     instance_colors.clear();
     instance_positions.clear();
     for (int i = 0; i < num_balls*4; i+=4) {
         instance_colors.push_back(glm::vec4(r_pos(1.0),r_pos(1.0),r_pos(1.0),1));
-        instance_positions.push_back(glm::vec4(r_equ(30),r_equ(30),r_equ(30), 1 + r_equ(0.5)));
+        instance_positions.push_back(glm::vec4(r_equ(10),r_equ(0),r_equ(0), 1 + 1));
     }
 
     instance_colors_s.instance_colors = instance_colors;
     instance_positions_s.instance_positions = instance_positions;
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(positions), NULL, GL_STATIC_DRAW);
+    //glBufferData(GL_ARRAY_BUFFER, sizeof(positions), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * positions.size(), NULL, GL_STATIC_DRAW);
     GLuint offset = 0;
-    glBufferSubData(GL_ARRAY_BUFFER, offset, sizeof(positions), positions);
+    //glBufferSubData(GL_ARRAY_BUFFER, offset, sizeof(positions), &positions[0]);
+    glBufferSubData(GL_ARRAY_BUFFER, offset, sizeof(GLfloat) * positions.size(), &positions[0]);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
     glEnableVertexAttribArray(0);
     glVertexAttribDivisor(0,0);

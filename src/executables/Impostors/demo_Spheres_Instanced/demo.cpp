@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
     ShaderProgram spRenderBalls = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Impostor/impostorSpheres_Instanced.frag");
     
     RenderPass* renderBalls = new RenderPass(
-                new ImpostorSpheres(true),
+                new ImpostorSpheres(true, true),
                 &spRenderBalls,
                 getWidth(window),
                 getHeight(window));

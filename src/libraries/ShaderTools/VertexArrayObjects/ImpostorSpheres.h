@@ -5,7 +5,7 @@
 
 class ImpostorSpheres : public VertexArrayObject {
 public:
-    ImpostorSpheres(bool prepareWithAttribDivisor);
+    ImpostorSpheres(bool prepareWithAttribDivisor, bool frontFacesOnly);
     void draw();
     void doOcclusionQuery();
     void drawInstanced(int countInstances);
@@ -18,7 +18,7 @@ public:
 
     void updateVisibilityMap(std::vector<GLint> map);
 
-    static const int num_balls = 16384;
+    static const int num_balls = 4;//16384;
 
     void prepareWithAttribDivisor();
     void prepareWithoutAttribDivisor();
@@ -39,6 +39,8 @@ public:
     instance_positions_t instance_positions_s;
 
     unsigned int instancesToRender;
+
+    bool frontFacesOnly;
 };
 
 #endif // ImpostorSpheres_H

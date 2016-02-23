@@ -1,0 +1,18 @@
+#version 450
+
+layout(r32ui) uniform uimage1D visibleIDsBuff;
+layout(r8ui) uniform uimage1D visibilityBuffer;
+layout(local_size_x = 1024) in;
+layout(binding = 3) uniform atomic_uint indexCounter;
+
+void main(void)
+{
+    // read from the visibilitybuffer at the location of the work unit's global index
+    // if that index (that instance) was flagged visible, fetch the first free entry in the visibleIDsBuffer and store the index
+    uint visible = imageLoad(visibilityBuffer, int(gl_GlobalInvocationID.x)).r;
+    if (visible == uint(1))
+    {
+        uint i = atomicCounterIncrement(indexCounter);
+        imageStore(visibleIDsBuff, int(i), uvec4(gl_GlobalInvocationID.x));
+    }
+}
