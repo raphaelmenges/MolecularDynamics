@@ -1,0 +1,17 @@
+#version 450
+
+layout(r32ui) uniform uimage1D visibleIDsBuff;
+layout(binding = 0, r8ui) uniform uimage1D visibilityBuffer;
+layout(local_size_x = 256, local_size_y = 256) in;
+layout(binding = 3) uniform atomic_uint indexCounter;
+
+void main(void)
+{
+    // read the number of intervals present for one pixel
+    int numberOfIntervals = imageLoad(intervalBuffer, ivec3(gl_GlobalInvocationID.xy,63)).r;
+    if (numberOfIntervals > 0))
+    {
+        uint i = atomicCounterIncrement(indexCounter);
+        imageStore(visibleIDsBuff, int(i), uvec4(gl_GlobalInvocationID.x));
+    }
+}

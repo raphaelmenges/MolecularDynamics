@@ -27,6 +27,7 @@ vec3 center_v;
 float d_near;
 float d_far;
 bool discardInterval = false;
+ivec2 coord;
 
 uniform vec4 lightSrc = vec4(0,100,0,1);
 bool stop = false;
@@ -41,11 +42,11 @@ void hit(vec3 hitPos)
     // Beleuchtung
     vec3 light_v = vec3(view * lightSrc).xyz;
     vec3 L = normalize(vec3(light_v - hitPos.xyz));
-    //vec3 finalColor = passColor.xyz * max(dot(normal.xyz,L), 0.0);
+    vec3 finalColor = passColor.xyz * max(dot(normal.xyz,L), 0.0);
 
     // for debug:
     vec4 col;
-    if(passInstanceID == 0)
+/*  if(passInstanceID == 0)
       col = vec4(1,0,0,0);
       if(passInstanceID == 1)
         col = vec4(0,1,0,0);
@@ -53,7 +54,7 @@ void hit(vec3 hitPos)
           col = vec4(0,0,1,0);
           if(passInstanceID == 3)
             col = vec4(1,1,0,0);
-    vec3 finalColor = col.xyz * max(dot(normal.xyz,L), 0.0);
+    vec3 finalColor = col.xyz * max(dot(normal.xyz,L), 0.0); */
     finalColor = clamp(finalColor, 0.0, 1.0);
 
     float far = 100;
@@ -128,7 +129,7 @@ void main() {
     {
         bool done = false;
         uint locked = 0;
-        ivec2 coord = ivec2(gl_FragCoord.xy);
+        coord = ivec2(gl_FragCoord.xy);
         while(!done)
         {
             //locked = imageAtomicCompSwap(semaphore, coord, 0u, 1u);
@@ -158,7 +159,7 @@ void main() {
                   // Fall 0: das neue Interval liegt komplett in einem anderen
                   if(d_far <= check_far && d_near >= check_near)
                   {
-                    fragColor = vec4(0.6,0,0.6, 1);
+                    //fragColor = vec4(0.6,0,0.6, 1);
                     discardInterval = true;
                     break;
                   }
@@ -166,7 +167,7 @@ void main() {
                   if (d_far > check_far && d_near < check_near)
                   {
                     // wurde schon ein neuer Platz gefunden?
-                    fragColor = vec4(0,0,1, 1);
+                    //fragColor = vec4(0,0,1, 1);
                     if (newIntervalPosition != -1)
                     {
                       // wenn ja, dann kann das aktuelle Interval mit dem letzten im Buffer überschrieben werden
@@ -193,7 +194,7 @@ void main() {
                   if (d_far > check_near && check_near > d_near)
                   {
                     // wurde schon ein neuer Platz gefunden?
-                    fragColor = vec4(0,1,0, 1);
+                    //fragColor = vec4(0,1,0, 1);
                     if (newIntervalPosition != -1)
                     {
                       // wenn ja, dann kann das aktuelle Interval das neue Interval aktualisieren und mit dem letzten im Buffer überschrieben werden
@@ -225,7 +226,7 @@ void main() {
                     if (d_far > check_far && check_far > d_near)
                     {
                       // wurde schon ein neuer Platz gefunden?
-                      fragColor = vec4(1,0,0, 1);
+                      //fragColor = vec4(1,0,0, 1);
                       if (newIntervalPosition != -1)
                       {
                         // wenn ja, dann kann das aktuelle Interval das neue Interval aktualisieren und mit dem letzten im Buffer überschrieben werden
@@ -265,7 +266,7 @@ void main() {
                   {
                     imageStore(intervalBuffer, ivec3(coord, numIntervals), newInterval);
                     numIntervals++;
-                    fragColor = vec4(1,1,1, 1);
+                    //fragColor = vec4(1,1,1, 1);
                   }
                 }
 
@@ -277,10 +278,11 @@ void main() {
                 imageAtomicExchange(semaphore, coord, 0u);
 
                 done = true;
+                            // "Tiefenkomplexität" Rendern
+                            fragColor = vec4(int(imageLoad(intervalBuffer, ivec3(coord, perPixelDepth-1)).r)/4.0);
 
-                //fragColor = vec4(asdf.y/1.0);
+
             }
         }
     }
-
 }

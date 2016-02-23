@@ -7,9 +7,9 @@ SurfaceExtraction::SurfaceExtraction()
 
 void SurfaceExtraction::init()
 {
-    window = generateWindow(256,256);
+    window = generateWindow(512,512);
 
-    impSph = new ImpostorSpheres(!useAtomicCounters, false);
+    impSph = new ImpostorSpheres(!useAtomicCounters, true);
     num_balls = ImpostorSpheres::num_balls;
 
     if(perspectiveProj)
@@ -23,6 +23,8 @@ void SurfaceExtraction::init()
                                          "/SurfaceAtomsDetection/Detection/solidColorInstanceCount.frag");
         spRenderDiscs = ShaderProgram("/SurfaceAtomsDetection//Impostor/impostorSpheres_InstancedUA.vert",
                                       "/SurfaceAtomsDetection//Impostor/impostorSpheres_discardFragments_Instanced.frag");
+        spRenderBalls_p = ShaderProgram("/SurfaceAtomsDetection/Base/modelViewProjectionInstancedUA.vert",
+                                      "/SurfaceAtomsDetection/Impostor/Impostor3DSphere.frag");
         if(perspectiveProj)
             spRenderBalls = ShaderProgram("/SurfaceAtomsDetection/Base/modelViewProjectionInstancedUA.vert",
                                           "/SurfaceAtomsDetection/Impostor/Impostor3DSphere.frag");
@@ -62,25 +64,28 @@ void SurfaceExtraction::init()
     renderBalls->update("height", getHeight(window));
     renderBalls->update("perPixelDepth", perPixelDepth);
 
+
     // define projection matrix for other shader programs
+    renderBalls->setShaderProgram(&spRenderBalls_p);
+    renderBalls->update("projection", projection);
     renderBalls->setShaderProgram(&spRenderDiscs);
     renderBalls->update("projection", projection);
     renderBalls->setShaderProgram(&spRenderImpostor);
     renderBalls->update("projection", projection);
 
     /// Renderpass to detect the visible instances
-    detectVisible = new RenderPass(
+    detectSurfaceInstances = new RenderPass(
                 new Quad(),
                 new ShaderProgram("/SurfaceAtomsDetection/Base/fullscreen.vert",
-                                  "/SurfaceAtomsDetection/Detection/DetectVisibleInstanceIDs.frag"),
+                                  "/SurfaceAtomsDetection/Detection/DetectSurfaceInstanceIDs.frag"),
                 getWidth(window),
                 getHeight(window));
 
     // prepare 1D buffer for entries
     tex_renderedIDsBuffer = new Texture(GL_R8UI, GL_RED_INTEGER, GL_UNSIGNED_INT);
     tex_renderedIDsBuffer->genUimageBuffer(num_balls);
-    detectVisible->texture("visibilityBuffer", tex_renderedIDsBuffer);
-    detectVisible->texture("tex", renderBalls->get("InstanceID"));
+    detectSurfaceInstances->texture("visibilityBuffer", tex_renderedIDsBuffer);
+    detectSurfaceInstances->texture("intervalBuffer", tex_3DintervalStorageBuffer);
 
     /// renderpass to display result frame
     result = new RenderPass(
@@ -90,14 +95,14 @@ void SurfaceExtraction::init()
     result->texture("tex", renderBalls->get("fragColor"));
 
     /// compute shader to process a list of visible IDs (with the actual instanceID of the first general draw)
-    computeVisibleIDs = new ComputeProgram(new ShaderProgram("/SurfaceAtomsDetection/Detection/CreateVisibleIDList.comp"));
+    computeSurfaceAtoms = new ComputeProgram(new ShaderProgram("/SurfaceAtomsDetection/Detection/CreateVisibleIDList.comp"));
 
     // 1D buffer for visible IDs
     tex_visibleIDsBuffer = new Texture(GL_R32UI, GL_RED_INTEGER, GL_UNSIGNED_INT);
     tex_visibleIDsBuffer->genUimageBuffer(num_balls);
 
-    computeVisibleIDs->texture("visibilityBuffer", tex_renderedIDsBuffer);
-    computeVisibleIDs->texture("visibleIDsBuff", tex_visibleIDsBuffer);
+    computeSurfaceAtoms->texture("visibilityBuffer", tex_renderedIDsBuffer);
+    computeSurfaceAtoms->texture("visibleIDsBuff", tex_visibleIDsBuffer);
 
     // atomic counter buffer for consecutive index access in compute shader
     glGenBuffers(1, &atomBuff);
@@ -217,7 +222,8 @@ void SurfaceExtraction::run()
         if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS) distance = max(distance - deltaTime * 50, 0.0f);
         if (glfwGetKey(window, GLFW_KEY_PERIOD) == GLFW_PRESS) scale += deltaTime*4;
         if (glfwGetKey(window, GLFW_KEY_COMMA) == GLFW_PRESS) scale = glm::max(scale - deltaTime*4, 0.01f);
-        if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {updateVisibilityMapLock = true; updateVisibilityMap = true;}
+        if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {pingPongOff = true; updateVisibilityMapLock = true; updateVisibilityMap = true; projection = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
+            renderBalls->setShaderProgram(&spRenderBalls_p);renderBalls->update("projection", projection); }
         if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) updateVisibilityMapLock = false;
         if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) pingPongOff = false;
         if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) pingPongOff = true;
@@ -309,10 +315,10 @@ void SurfaceExtraction::run()
             {
                 // the following shaders in detectVisible look at what has been written to the screen (framebuffer0)
                 // better render the instance stuff to a texture and read from there
-                detectVisible->run();
+                detectSurfaceInstances->run();
                 glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT|GL_BUFFER_UPDATE_BARRIER_BIT);
                 glBeginQuery(GL_TIME_ELAPSED, timeQuery);
-                computeVisibleIDs->run(16,1,1); // 16 work groups * 1024 work items = 16384 atoms and IDs
+                computeSurfaceAtoms->run(16,1,1); // 16 work groups * 1024 work items = 16384 atoms and IDs
                 glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT|GL_SHADER_IMAGE_ACCESS_BARRIER_BIT|GL_BUFFER_UPDATE_BARRIER_BIT);
                 glEndQuery(GL_TIME_ELAPSED);
 
@@ -388,7 +394,7 @@ void SurfaceExtraction::run()
         else
             if (updateVisibilityMap && !pingPongOff)
             {
-                detectVisible->run();
+                detectSurfaceInstances->run();
                 // detect visible instances
                 glBeginQuery(GL_TIME_ELAPSED, timeQuery);
                 GLuint visibilityMapFromBuff[ImpostorSpheres::num_balls];

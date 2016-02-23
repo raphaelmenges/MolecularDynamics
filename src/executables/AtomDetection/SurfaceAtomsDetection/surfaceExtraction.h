@@ -29,14 +29,15 @@ public:
     // Shader Programs
     ShaderProgram spRenderDiscs;
     ShaderProgram spRenderBalls;
+    ShaderProgram spRenderBalls_p;
     ShaderProgram spRenderImpostor;
 
     // Render Passes
     RenderPass* renderBalls;
-    RenderPass* detectVisible;
+    RenderPass* detectSurfaceInstances;
     RenderPass* result;
 
-    ComputeProgram* computeVisibleIDs;
+    ComputeProgram* computeSurfaceAtoms;
 
     // Textures/Buffers
     Texture* tex_renderedIDsBuffer;
