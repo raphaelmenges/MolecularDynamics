@@ -18,7 +18,7 @@ public:
 
     void updateVisibilityMap(std::vector<GLint> map);
 
-    static const int num_balls = 4;//16384;
+    static const int num_balls = 1000;//16384;
 
     void prepareWithAttribDivisor();
     void prepareWithoutAttribDivisor();
@@ -41,6 +41,8 @@ public:
     unsigned int instancesToRender;
 
     bool frontFacesOnly;
+
+    void surfaceDetectionTestSet();
 };
 
 #endif // ImpostorSpheres_H

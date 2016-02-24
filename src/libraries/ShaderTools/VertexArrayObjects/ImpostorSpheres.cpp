@@ -195,8 +195,9 @@ void ImpostorSpheres::prepareWithoutAttribDivisor()
     instance_positions.clear();
     for (int i = 0; i < num_balls*4; i+=4) {
         instance_colors.push_back(glm::vec4(r_pos(1.0),r_pos(1.0),r_pos(1.0),1));
-        instance_positions.push_back(glm::vec4(r_equ(10),r_equ(0),r_equ(0), 1 + 1));
+        instance_positions.push_back(glm::vec4(r_equ(30),r_equ(30),r_equ(30), 10 /*+ r_equ(0.5)*/));
     }
+    //this->surfaceDetectionTestSet();
 
     instance_colors_s.instance_colors = instance_colors;
     instance_positions_s.instance_positions = instance_positions;
@@ -209,5 +210,56 @@ void ImpostorSpheres::prepareWithoutAttribDivisor()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
     glEnableVertexAttribArray(0);
     glVertexAttribDivisor(0,0);
+}
+
+void ImpostorSpheres::surfaceDetectionTestSet()
+{
+    instance_positions.clear();
+    instance_colors.clear();
+
+    for(int n = 0; n < num_balls; n++)
+    {
+        instance_colors.push_back(glm::vec4((n%3)/3.0,((n+1)%3)/3.0,((n+2)%3)/3.0,1));
+    }
+    //left bottom
+    instance_positions.push_back(glm::vec4(-1,-1,-1,2));
+    instance_positions.push_back(glm::vec4(-1,-1,1,2));
+    instance_positions.push_back(glm::vec4(-1,-1,0,2));
+    //left middle
+    instance_positions.push_back(glm::vec4(-1,0,-1,2));
+    instance_positions.push_back(glm::vec4(-1,0,1,2));
+    instance_positions.push_back(glm::vec4(-1,0,0,2));
+    //left top
+    instance_positions.push_back(glm::vec4(-1,1,-1,2));
+    instance_positions.push_back(glm::vec4(-1,1,1,2));
+    instance_positions.push_back(glm::vec4(-1,1,0,2));
+
+
+    //middle bottom
+    instance_positions.push_back(glm::vec4(0,-1,-1,2));
+    instance_positions.push_back(glm::vec4(0,-1,1,2));
+    instance_positions.push_back(glm::vec4(0,-1,0,2));
+    //middle middle
+    instance_positions.push_back(glm::vec4(0,0,-1,2));
+    instance_positions.push_back(glm::vec4(0,0,1,2));
+    instance_positions.push_back(glm::vec4(0,0,0,2));
+    //middle top
+    instance_positions.push_back(glm::vec4(0,1,-1,2));
+    instance_positions.push_back(glm::vec4(0,1,1,2));
+    instance_positions.push_back(glm::vec4(0,1,0,2));
+
+
+    //right bottom
+    instance_positions.push_back(glm::vec4(1,-1,-1,2));
+    instance_positions.push_back(glm::vec4(1,-1,1,2));
+    instance_positions.push_back(glm::vec4(1,-1,0,2));
+    //right middle
+    instance_positions.push_back(glm::vec4(1,0,-1,2));
+    instance_positions.push_back(glm::vec4(1,0,1,2));
+    instance_positions.push_back(glm::vec4(1,0,0,2));
+    //right top
+    instance_positions.push_back(glm::vec4(1,1,-1,2));
+    instance_positions.push_back(glm::vec4(1,1,1,2));
+    instance_positions.push_back(glm::vec4(1,1,0,2));
 }
 

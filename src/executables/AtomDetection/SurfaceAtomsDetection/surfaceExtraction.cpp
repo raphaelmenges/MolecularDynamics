@@ -13,9 +13,9 @@ void SurfaceExtraction::init()
     num_balls = ImpostorSpheres::num_balls;
 
     if(perspectiveProj)
-        projection = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
+        projection = perspective(45.0f, getRatio(window), 0.1f, 300.0f);
     else
-        projection = ortho(-32.0f, 32.0f, -32.0f, 32.0f, 1.0f, 200.0f);
+        projection = ortho(-32.0f, 32.0f, -32.0f, 32.0f, 1.0f, 300.0f);
 
     if (useAtomicCounters)
     {
@@ -192,7 +192,7 @@ void SurfaceExtraction::init()
     glGenQueries(1, &timeQuery);
 
     glEnable(GL_DEPTH_TEST);
-    glDisable(GL_DEPTH_TEST);
+    //glDisable(GL_DEPTH_TEST);
 }
 
 void SurfaceExtraction::run()
@@ -224,7 +224,7 @@ void SurfaceExtraction::run()
         if (glfwGetKey(window, GLFW_KEY_COMMA) == GLFW_PRESS) scale = glm::max(scale - deltaTime*4, 0.01f);
         if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {pingPongOff = true; updateVisibilityMapLock = true; updateVisibilityMap = true; projection = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
             renderBalls->setShaderProgram(&spRenderBalls_p);renderBalls->update("projection", projection); }
-        if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) updateVisibilityMapLock = false;
+        if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {updateVisibilityMapLock = false; projection = ortho(-32.0f, 32.0f, -32.0f, 32.0f, 1.0f, 300.0f); renderBalls->setShaderProgram(&spRenderBalls);renderBalls->update("projection", projection);}
         if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) pingPongOff = false;
         if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) pingPongOff = true;
         if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) { vsync = !vsync; vsync ? glfwSwapInterval(1) : glfwSwapInterval(0); vsync ? std::cout << "VSync enabled\n" : std::cout << "VSync disabled\n"; }
@@ -323,51 +323,69 @@ void SurfaceExtraction::run()
                 glEndQuery(GL_TIME_ELAPSED);
 
                 glGetQueryObjectuiv(timeQuery, GL_QUERY_RESULT, &queryTime);
-                std::cout << "compute shader time: " << queryTime << std::endl;
+                //std::cout << "compute shader time: " << queryTime << std::endl;
 
-                int x = tex_3DintervalStorageBuffer->getX();
-                int y = tex_3DintervalStorageBuffer->getY();
-                int z = tex_3DintervalStorageBuffer->getZ();
-                int slice = 0;
-                // Check buffer data
-                GLfloat *bufferData = new GLfloat[4 * x * y * z];
-                glBindTexture(GL_TEXTURE_3D, tex_3DintervalStorageBuffer->getHandle());
-                //glBindImageTexture(0, tex_3DintervalStorageBuffer->getHandle(), 0, GL_TRUE, 0, GL_READ_WRITE, tex_3DintervalStorageBuffer->getInternalFormat());
-                glGetTexImage(GL_TEXTURE_3D, 0, GL_RGBA, GL_FLOAT, bufferData);
+//                int x = tex_3DintervalStorageBuffer->getX();
+//                int y = tex_3DintervalStorageBuffer->getY();
+//                int z = tex_3DintervalStorageBuffer->getZ();
+//                int slice = 0;
+//                // Check buffer data
+//                GLfloat *bufferData = new GLfloat[4 * x * y * z];
+//                glBindTexture(GL_TEXTURE_3D, tex_3DintervalStorageBuffer->getHandle());
+//                //glBindImageTexture(0, tex_3DintervalStorageBuffer->getHandle(), 0, GL_TRUE, 0, GL_READ_WRITE, tex_3DintervalStorageBuffer->getInternalFormat());
+//                glGetTexImage(GL_TEXTURE_3D, 0, GL_RGBA, GL_FLOAT, bufferData);
 
-                int numIntervals_3_0 = 0;
-                int numIntervals_0_3 = 0;
-                int numIntervals_1_3 = 0;
-                int numIntervals_3_1 = 0;
-                int maxIntervals = 0;
-                for(int i = 0; i < y; i++){
-                    for(int j = 0; j < x; j++){
+//                int numIntervals_3_0 = 0;
+//                int numIntervals_0_3 = 0;
+//                int numIntervals_1_3 = 0;
+//                int numIntervals_3_1 = 0;
+//                int numIntervals_0_0 = 0;
+//                int maxIntervals = 0;
+//                GLuint visibleIDsFromBuff[ImpostorSpheres::num_balls];
+//                for(int i = 0; i < y; i++){
+//                    for(int j = 0; j < x; j++){
 
-                        int start =  ((x * y * slice) + (i * x) + j) * 4;
-//                        if ((float)bufferData[start] == 0 /*|| (float)bufferData[start+2] == (float)bufferData[start+3]*/)
-//                            continue;
-                        //std::cout << "Texel at " << i << " " << j << " " << slice << " has color " << (float)bufferData[start] << " " << (float)bufferData[start + 1] << " " << (float)bufferData[start + 2] << " " << (float)bufferData[start + 3] << std::endl;
-                        //std::cout << "Number of intervals: " << (float)bufferData[((x * y * 62) + (i * x) + j) * 4] << std::endl;
-                        maxIntervals = max(maxIntervals, (int)bufferData[((x * y * 63) + (i * x) + j) * 4]);
+//                        int start =  ((x * y * slice) + (i * x) + j) * 4;
+////                        if ((float)bufferData[start] == 0 /*|| (float)bufferData[start+2] == (float)bufferData[start+3]*/)
+////                            continue;
+//                        //std::cout << "Texel at " << i << " " << j << " " << slice << " has color " << (float)bufferData[start] << " " << (float)bufferData[start + 1] << " " << (float)bufferData[start + 2] << " " << (float)bufferData[start + 3] << std::endl;
+//                        //std::cout << "Number of intervals: " << (float)bufferData[((x * y * 62) + (i * x) + j) * 4] << std::endl;
+////                        if( (float)bufferData[((x * y * 63) + (i * x) + j) * 4] == 4)
+////                        {
+////                            for( int n = 0; n < 4; n++)
+////                            {
+////                              int start =  ((x * y * n) + (i * x) + j) * 4;
+////                              std::cout << "Slice " << n << std::endl;
+////                              std::cout << "Texel at " << i << " " << j << " " << slice << " has color " << (float)bufferData[start] << " " << (float)bufferData[start + 1] << " " << (float)bufferData[start + 2] << " " << (float)bufferData[start + 3] << std::endl;
+////                            }
+////                        }
+//                        maxIntervals = max(maxIntervals, (int)bufferData[((x * y * 63) + (i * x) + j) * 4]);
 
-                        if((float)bufferData[start+2] == 0 && (float)bufferData[start+3] == 3)
-                            numIntervals_0_3++;
-                        if((float)bufferData[start+2] == 3 && (float)bufferData[start+3] == 0)
-                            numIntervals_3_0++;
-                        if((float)bufferData[start+2] == 1 && (float)bufferData[start+3] == 3)
-                            numIntervals_1_3++;
-                        if((float)bufferData[start+2] == 3 && (float)bufferData[start+3] == 1)
-                            numIntervals_3_1++;
-                    }
-                }
+//        //                  Check buffer data
+//                        //glBindTexture(GL_TEXTURE_1D, tex_visibleIDsBuffer->getHandle());
+//                        //glGetTexImage(GL_TEXTURE_1D, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, visibleIDsFromBuff);
 
-                std::cout << "number of 3_0 intervals: " << numIntervals_3_0 << std::endl;
-                std::cout << "number of 0_3 intervals: " << numIntervals_0_3 << std::endl;
-                std::cout << "number of 1_3 intervals: " << numIntervals_1_3 << std::endl;
-                std::cout << "number of 3_1 intervals: " << numIntervals_3_1 << std::endl;
-                std::cout << "max intervals: " << maxIntervals << std::endl;
+//                        if((float)bufferData[start+2] == 0 && (float)bufferData[start+3] == 3)
+//                            numIntervals_0_3++;
+//                        if((float)bufferData[start+2] == 3 && (float)bufferData[start+3] == 0)
+//                            numIntervals_3_0++;
+//                        if((float)bufferData[start+2] == 1 && (float)bufferData[start+3] == 3)
+//                            numIntervals_1_3++;
+//                        if((float)bufferData[start+2] == 3 && (float)bufferData[start+3] == 1)
+//                            numIntervals_3_1++;
+//                        if((float)bufferData[start+2] == 0&& (float)bufferData[start+3] == 0)
+//                            numIntervals_0_0++;
+//                    }
+//                }
 
-                delete(bufferData);
+//                std::cout << "number of 3_0 intervals: " << numIntervals_3_0 << std::endl;
+//                std::cout << "number of 0_3 intervals: " << numIntervals_0_3 << std::endl;
+//                std::cout << "number of 1_3 intervals: " << numIntervals_1_3 << std::endl;
+//                std::cout << "number of 3_1 intervals: " << numIntervals_3_1 << std::endl;
+//                std::cout << "number of 0_0 intervals: " << numIntervals_0_0 << std::endl;
+//                std::cout << "max intervals: " << maxIntervals << std::endl;
+
+//                delete(bufferData);
 
                 //get the value of the atomic counter
                 glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomBuff);

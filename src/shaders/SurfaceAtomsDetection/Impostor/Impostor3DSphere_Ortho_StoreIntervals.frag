@@ -57,8 +57,6 @@ void hit(vec3 hitPos)
     vec3 finalColor = col.xyz * max(dot(normal.xyz,L), 0.0); */
     finalColor = clamp(finalColor, 0.0, 1.0);
 
-    float far = 100;
-    float near = 1;
     vec4 clip_space_pos = projection * vec4(hitPos,1);
     float ndc_depth = 0.5 * clip_space_pos.z / clip_space_pos.w + 0.5;
 
@@ -137,11 +135,12 @@ void main() {
             if (locked == 0)
             {
                 // kritischer Bereich
+                memoryBarrier();
                 // Anzahl der vorhandenen Intervalle aus letzter Stelle in der 3D Textur lesen
                 int numIntervals = int(imageLoad(intervalBuffer, ivec3(coord, perPixelDepth-1)).r);
 
-              //vec4 asdf = imageLoad(intervalBuffer, ivec3(coord, perPixelDepth-2));
-              //  asdf.y = asdf.y+1;
+                //vec4 asdf = imageLoad(intervalBuffer, ivec3(coord, perPixelDepth-2));
+                //asdf.y = asdf.y+1;
                 //imageStore(intervalBuffer, ivec3(coord, perPixelDepth-2), asdf);
 
                 int newIntervalPosition = -1; // dem neuen Interval ist noch keine Position im Buffer zugeordnet
@@ -156,10 +155,12 @@ void main() {
                   float check_near_ID = currentIntervalToCheck.z;
                   float check_far_ID = currentIntervalToCheck.w;
 
+
+
                   // Fall 0: das neue Interval liegt komplett in einem anderen
                   if(d_far <= check_far && d_near >= check_near)
                   {
-                    //fragColor = vec4(0.6,0,0.6, 1);
+                    //fragColor = vec4(0.6,1,0.6, 1);
                     discardInterval = true;
                     break;
                   }
@@ -190,8 +191,9 @@ void main() {
                     }
                   }
 
+
                   // Fall 2: das neue Interval überschneidet sich mit einem anderen "near"
-                  if (d_far > check_near && check_near > d_near)
+                  if ((d_far > check_near) && (check_near > d_near))
                   {
                     // wurde schon ein neuer Platz gefunden?
                     //fragColor = vec4(0,1,0, 1);
@@ -210,7 +212,6 @@ void main() {
                       // wenn der neue Eintrag = dem letzten Eintrag ist, Index updaten:
                       if((numIntervals-1) == newIntervalPosition)
                         newIntervalPosition = i;
-
                       numIntervals--;
                     }
                     else
@@ -221,41 +222,41 @@ void main() {
                       imageStore(intervalBuffer, ivec3(coord, i), newInterval);
                       newIntervalPosition = i; // neue Position gefunden
                     }
+                  }
 
-                    // Fall 3: das neue Interval überschneidet sich mit einem anderen "far"
-                    if (d_far > check_far && check_far > d_near)
+                  // Fall 3: das neue Interval überschneidet sich mit einem anderen "far"
+                  if ((d_far > check_far) && (check_far > d_near))
+                  {
+                    // wurde schon ein neuer Platz gefunden?
+                    //fragColor = vec4(1,0,0, 1);
+
+                    if (newIntervalPosition != -1)
                     {
-                      // wurde schon ein neuer Platz gefunden?
-                      //fragColor = vec4(1,0,0, 1);
-                      if (newIntervalPosition != -1)
-                      {
-                        // wenn ja, dann kann das aktuelle Interval das neue Interval aktualisieren und mit dem letzten im Buffer überschrieben werden
-                        // aktualisieren
-                        d_near = check_near;
-                        newInterval = vec4(d_near, d_far, check_near_ID, passInstanceID);
-                        imageStore(intervalBuffer, ivec3(coord, newIntervalPosition), newInterval);
+                      // wenn ja, dann kann das aktuelle Interval das neue Interval aktualisieren und mit dem letzten im Buffer überschrieben werden
+                      // aktualisieren
+                      d_near = check_near;
+                      newInterval = vec4(d_near, d_far, check_near_ID, passInstanceID);
+                      imageStore(intervalBuffer, ivec3(coord, newIntervalPosition), newInterval);
 
-                        // alten Eintrag löschen
-                        vec4 lastInterval = imageLoad(intervalBuffer, ivec3(coord, numIntervals-1));
+                      // alten Eintrag löschen
+                      vec4 lastInterval = imageLoad(intervalBuffer, ivec3(coord, numIntervals-1));
+                      imageStore(intervalBuffer, ivec3(coord, i), lastInterval);
 
-                        imageStore(intervalBuffer, ivec3(coord, i), lastInterval);
-
-                        // wenn der neue Eintrag = dem letzten Eintrag ist, Index updaten:
-                        if((numIntervals-1) == newIntervalPosition)
-                          newIntervalPosition = i;
-
-                        numIntervals--;
-                      }
-                      else
-                      {
-                        // wenn nicht, kann das neue Interval die aktuelle Stelle aktualisieren
-                        d_near = check_near;
-                        newInterval = vec4(d_near, d_far, check_near_ID, passInstanceID);
-                        imageStore(intervalBuffer, ivec3(coord, i), newInterval);
-                        newIntervalPosition = i; // neue Position gefunden
-                      }
+                      // wenn der neue Eintrag = dem letzten Eintrag ist, Index updaten:
+                      if((numIntervals-1) == newIntervalPosition)
+                        newIntervalPosition = i;
+                      numIntervals--;
+                    }
+                    else
+                    {
+                      // wenn nicht, kann das neue Interval die aktuelle Stelle aktualisieren
+                      d_near = check_near;
+                      newInterval = vec4(d_near, d_far, check_near_ID, passInstanceID);
+                      imageStore(intervalBuffer, ivec3(coord, i), newInterval);
+                      newIntervalPosition = i; // neue Position gefunden
                     }
                   }
+
                 }
 
                 // wurde eine Position gefunden?
@@ -279,7 +280,8 @@ void main() {
 
                 done = true;
                             // "Tiefenkomplexität" Rendern
-                            fragColor = vec4(int(imageLoad(intervalBuffer, ivec3(coord, perPixelDepth-1)).r)/4.0);
+                            //fragColor = vec4(int(imageLoad(intervalBuffer, ivec3(coord, perPixelDepth-1)).r)/6.0);
+                          //fragColor = vec4(numIntervals/4.0);
 
 
             }
