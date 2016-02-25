@@ -11,7 +11,7 @@ layout(std430, binding = 1) buffer instance_colors_t
 vec4 instance_colors[];
 };
 
-layout(binding = 1, r32ui) uniform uimage1D visibleIDsBuff;
+layout(binding = 1, r32ui) uniform uimage1D sortedVisibleIDsBuffer;
 
 out vec2 texCoord;
 out float depth;
@@ -35,7 +35,7 @@ uniform float elapsedTime;
 void main() {
 
     // read which sphere ID this instance will draw
-    uint sphereID = imageLoad(visibleIDsBuff, gl_InstanceID).r;
+    uint sphereID = imageLoad(sortedVisibleIDsBuffer, gl_InstanceID).r;
 
     // model size is found at instance_positionAttribute.w,
     // resize it according to input

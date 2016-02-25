@@ -34,14 +34,14 @@ public:
 
     // Render Passes
     RenderPass* renderBalls;
-    RenderPass* detectSurfaceInstances;
+    RenderPass* collectSurfaceIDs;
     RenderPass* result;
 
-    ComputeProgram* computeSurfaceAtoms;
+    ComputeProgram* computeSortedIDs;
 
     // Textures/Buffers
-    Texture* tex_renderedIDsBuffer;
-    Texture* tex_visibleIDsBuffer;
+    Texture* tex_collectedIDsBuffer;
+    Texture* tex_sortedVisibleIDsBuffer;
     Texture* tex_3DintervalStorageBuffer;
     Texture* tex_Semaphore;
 
