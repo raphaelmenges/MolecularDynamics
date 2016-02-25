@@ -195,7 +195,7 @@ void ImpostorSpheres::prepareWithoutAttribDivisor()
     instance_positions.clear();
     for (int i = 0; i < num_balls*4; i+=4) {
         instance_colors.push_back(glm::vec4(r_pos(1.0),r_pos(1.0),r_pos(1.0),1));
-        instance_positions.push_back(glm::vec4(r_equ(30),r_equ(30),r_equ(30), 10 /*+ r_equ(0.5)*/));
+        instance_positions.push_back(glm::vec4(r_equ(20),r_equ(20),r_equ(20), 10 /*+ r_equ(0.5)*/));
     }
     //this->surfaceDetectionTestSet();
 
