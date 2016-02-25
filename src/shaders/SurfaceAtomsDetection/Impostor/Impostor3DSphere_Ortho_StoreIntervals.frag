@@ -26,11 +26,15 @@ out vec4 InstanceID;
 vec3 center_v;
 float d_near;
 float d_far;
+int ID_near;
+int ID_far;
 bool discardInterval = false;
 ivec2 coord;
 
 uniform vec4 lightSrc = vec4(0,100,0,1);
 bool stop = false;
+
+vec4 debugColor;
 
 layout(depth_greater) out float gl_FragDepth;
 vec3 view_w;
@@ -145,22 +149,24 @@ void main() {
 
                 int newIntervalPosition = -1; // dem neuen Interval ist noch keine Position im Buffer zugeordnet
 
+                ID_near = ID_far = passInstanceID;
                 vec4 newInterval = vec4(d_near, d_far, passInstanceID, passInstanceID);
+                gl_FragDepth = newInterval.r/300.0;
 
+                debugColor = vec4(1);
                 for (int i = 0; i < numIntervals; i++)
                 {
+                  debugColor = vec4(0,1,1,1); // Schleife betreten
                   vec4 currentIntervalToCheck = imageLoad(intervalBuffer, ivec3(coord, i));
                   float check_near = currentIntervalToCheck.x;
                   float check_far = currentIntervalToCheck.y;
-                  float check_near_ID = currentIntervalToCheck.z;
-                  float check_far_ID = currentIntervalToCheck.w;
-
-
+                  int check_near_ID = int(currentIntervalToCheck.z);
+                  int check_far_ID = int(currentIntervalToCheck.w);
 
                   // Fall 0: das neue Interval liegt komplett in einem anderen
                   if(d_far <= check_far && d_near >= check_near)
                   {
-                    //fragColor = vec4(0.6,1,0.6, 1);
+                    debugColor = vec4(0.6,1,0.6, 1);
                     discardInterval = true;
                     break;
                   }
@@ -168,7 +174,7 @@ void main() {
                   if (d_far > check_far && d_near < check_near)
                   {
                     // wurde schon ein neuer Platz gefunden?
-                    //fragColor = vec4(0,0,1, 1);
+                    debugColor = vec4(0,0,1, 1);
                     if (newIntervalPosition != -1)
                     {
                       // wenn ja, dann kann das aktuelle Interval mit dem letzten im Buffer überschrieben werden
@@ -180,6 +186,7 @@ void main() {
                         newIntervalPosition = i;
 
                       numIntervals--;
+                      i--;
                       continue;
                     }
                     else
@@ -196,13 +203,14 @@ void main() {
                   if ((d_far > check_near) && (check_near > d_near))
                   {
                     // wurde schon ein neuer Platz gefunden?
-                    //fragColor = vec4(0,1,0, 1);
+                    debugColor = vec4(0,1,0, 1);
                     if (newIntervalPosition != -1)
                     {
                       // wenn ja, dann kann das aktuelle Interval das neue Interval aktualisieren und mit dem letzten im Buffer überschrieben werden
                       // aktualisieren
                       d_far = check_far;
-                      newInterval = vec4(d_near, d_far, passInstanceID, check_far_ID);
+                      ID_far = check_far_ID;
+                      newInterval = vec4(d_near, d_far, ID_near, check_far_ID);
                       imageStore(intervalBuffer, ivec3(coord, newIntervalPosition), newInterval);
 
                       // alten Eintrag löschen
@@ -211,16 +219,20 @@ void main() {
 
                       // wenn der neue Eintrag = dem letzten Eintrag ist, Index updaten:
                       if((numIntervals-1) == newIntervalPosition)
-                        newIntervalPosition = i;
+                        newIntervalPosition = ++i;
                       numIntervals--;
+                      i--;
+                      continue;
                     }
                     else
                     {
                       // wenn nicht, kann das neue Interval die aktuelle Stelle aktualisieren
                       d_far = check_far;
-                      newInterval = vec4(d_near, d_far, passInstanceID, check_far_ID);
+                      ID_far = check_far_ID;
+                      newInterval = vec4(d_near, d_far, ID_near, check_far_ID);
                       imageStore(intervalBuffer, ivec3(coord, i), newInterval);
                       newIntervalPosition = i; // neue Position gefunden
+                      continue;
                     }
                   }
 
@@ -228,14 +240,17 @@ void main() {
                   if ((d_far > check_far) && (check_far > d_near))
                   {
                     // wurde schon ein neuer Platz gefunden?
-                    //fragColor = vec4(1,0,0, 1);
+                    debugColor = vec4(1,0,0, 1);
 
                     if (newIntervalPosition != -1)
                     {
                       // wenn ja, dann kann das aktuelle Interval das neue Interval aktualisieren und mit dem letzten im Buffer überschrieben werden
                       // aktualisieren
+                      //gl_FragDepth = newInterval.r/300.0;
                       d_near = check_near;
-                      newInterval = vec4(d_near, d_far, check_near_ID, passInstanceID);
+                      ID_near = check_near_ID;
+                      newInterval = vec4(d_near, d_far, check_near_ID, ID_far);
+                      //gl_FragDepth = (newInterval.r+0.1)/300.0;
                       imageStore(intervalBuffer, ivec3(coord, newIntervalPosition), newInterval);
 
                       // alten Eintrag löschen
@@ -244,16 +259,22 @@ void main() {
 
                       // wenn der neue Eintrag = dem letzten Eintrag ist, Index updaten:
                       if((numIntervals-1) == newIntervalPosition)
-                        newIntervalPosition = i;
+                        newIntervalPosition = ++i;
                       numIntervals--;
+                      i--;
+                      continue;
                     }
                     else
                     {
                       // wenn nicht, kann das neue Interval die aktuelle Stelle aktualisieren
+                      //gl_FragDepth = (newInterval.r+1)/300.0;
                       d_near = check_near;
-                      newInterval = vec4(d_near, d_far, check_near_ID, passInstanceID);
+                      ID_near = check_near_ID;
+                      newInterval = vec4(d_near, d_far, check_near_ID, ID_far);
+                      //gl_FragDepth = (newInterval.r+0.1)/300.0;
                       imageStore(intervalBuffer, ivec3(coord, i), newInterval);
                       newIntervalPosition = i; // neue Position gefunden
+                      continue;
                     }
                   }
 
@@ -266,22 +287,33 @@ void main() {
                   if(numIntervals < perPixelDepth - 1) // letzter Platz ist für Anzahl der Intervalle reserviert
                   {
                     imageStore(intervalBuffer, ivec3(coord, numIntervals), newInterval);
+                    newIntervalPosition = numIntervals;
+                    debugColor = vec4(0.5) * debugColor;
                     numIntervals++;
-                    //fragColor = vec4(1,1,1, 1);
                   }
                 }
 
                 // Anzahl der Intervalle speichern
                 imageStore(intervalBuffer, ivec3(coord, perPixelDepth-1), vec4(numIntervals));
+                //gl_FragDepth = newInterval.r/300.0;
+                //fragColor = debugColor;
 
                 memoryBarrier();
+                //gl_FragDepth = newInterval.r/300.0;
+
+                //debugColor = vec4(imageLoad(intervalBuffer, ivec3(coord, newIntervalPosition)).r+1)/200.0;
+                //debugColor = vec4(newInterval.r/300.0);
+              /*  if(gl_FragCoord.x < 140 || gl_FragCoord.x > 220)
+                  debugColor = vec4(0);
+                  if(gl_FragCoord.y < 300 || gl_FragCoord.y > 400)
+                    debugColor = vec4(0);*/
 
                 imageAtomicExchange(semaphore, coord, 0u);
 
                 done = true;
                             // "Tiefenkomplexität" Rendern
-                            //fragColor = vec4(int(imageLoad(intervalBuffer, ivec3(coord, perPixelDepth-1)).r)/6.0);
-                          //fragColor = vec4(numIntervals/4.0);
+                            //debugColor = vec4(int(imageLoad(intervalBuffer, ivec3(coord, perPixelDepth-1)).r)/6.0);
+                          //debugColor = vec4(numIntervals/4.0);
 
 
             }

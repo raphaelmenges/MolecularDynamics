@@ -193,6 +193,7 @@ void SurfaceExtraction::init()
 
     glEnable(GL_DEPTH_TEST);
     //glDisable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
 }
 
 void SurfaceExtraction::run()
@@ -329,7 +330,7 @@ void SurfaceExtraction::run()
 //                int y = tex_3DintervalStorageBuffer->getY();
 //                int z = tex_3DintervalStorageBuffer->getZ();
 //                int slice = 0;
-//                // Check buffer data
+////                // Check buffer data
 //                GLfloat *bufferData = new GLfloat[4 * x * y * z];
 //                glBindTexture(GL_TEXTURE_3D, tex_3DintervalStorageBuffer->getHandle());
 //                //glBindImageTexture(0, tex_3DintervalStorageBuffer->getHandle(), 0, GL_TRUE, 0, GL_READ_WRITE, tex_3DintervalStorageBuffer->getInternalFormat());
@@ -343,22 +344,28 @@ void SurfaceExtraction::run()
 //                int maxIntervals = 0;
 //                GLuint visibleIDsFromBuff[ImpostorSpheres::num_balls];
 //                for(int i = 0; i < y; i++){
+//                    if (!(300 < i && i < 400))
+//                        continue;
 //                    for(int j = 0; j < x; j++){
-
-//                        int start =  ((x * y * slice) + (i * x) + j) * 4;
-////                        if ((float)bufferData[start] == 0 /*|| (float)bufferData[start+2] == (float)bufferData[start+3]*/)
-////                            continue;
-//                        //std::cout << "Texel at " << i << " " << j << " " << slice << " has color " << (float)bufferData[start] << " " << (float)bufferData[start + 1] << " " << (float)bufferData[start + 2] << " " << (float)bufferData[start + 3] << std::endl;
-//                        //std::cout << "Number of intervals: " << (float)bufferData[((x * y * 62) + (i * x) + j) * 4] << std::endl;
-////                        if( (float)bufferData[((x * y * 63) + (i * x) + j) * 4] == 4)
-////                        {
-////                            for( int n = 0; n < 4; n++)
-////                            {
-////                              int start =  ((x * y * n) + (i * x) + j) * 4;
-////                              std::cout << "Slice " << n << std::endl;
-////                              std::cout << "Texel at " << i << " " << j << " " << slice << " has color " << (float)bufferData[start] << " " << (float)bufferData[start + 1] << " " << (float)bufferData[start + 2] << " " << (float)bufferData[start + 3] << std::endl;
-////                            }
-////                        }
+//                        if (!(140 < j && j < 220))
+//                            continue;
+//                   //     int start =  ((x * y * slice) + (i * x) + j) * 4;
+//      //                  if ((float)bufferData[start] == 0 /*|| (float)bufferData[start+2] == (float)bufferData[start+3]*/)
+//      //                      continue;
+//                //        std::cout << "Texel at " << i << " " << j << " " << slice << " has color " << (float)bufferData[start] << " " << (float)bufferData[start + 1] << " " << (float)bufferData[start + 2] << " " << (float)bufferData[start + 3] << std::endl;
+//                 //       std::cout << "Number of intervals: " << (float)bufferData[((x * y * 62) + (i * x) + j) * 4] << std::endl;
+//                        if( (float)bufferData[((x * y * 63) + (i * x) + j) * 4] != 0)
+//                        {
+//                            float slices = (float)bufferData[((x * y * 63) + (i * x) + j) * 4];
+//                            for( int n = 0; n < 1; n++)
+//                            {
+//                              int start =  ((x * y * n) + (i * x) + j) * 4;
+//                              if(!((float)bufferData[start + 2] == (float)bufferData[start + 3]))
+//                                  continue;
+//                              std::cout << "Slice " << n << std::endl;
+//                              std::cout << "Texel at " << i << " " << j << " " << slice << " has color " << (float)bufferData[start] << " " << (float)bufferData[start + 1] << " " << (float)bufferData[start + 2] << " " << (float)bufferData[start + 3] << std::endl;
+//                            }
+//                        }
 //                        maxIntervals = max(maxIntervals, (int)bufferData[((x * y * 63) + (i * x) + j) * 4]);
 
 //        //                  Check buffer data

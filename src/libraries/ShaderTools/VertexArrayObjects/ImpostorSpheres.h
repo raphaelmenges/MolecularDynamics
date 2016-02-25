@@ -18,7 +18,7 @@ public:
 
     void updateVisibilityMap(std::vector<GLint> map);
 
-    static const int num_balls = 1000;//16384;
+    static const int num_balls = 2000;//16384;
 
     void prepareWithAttribDivisor();
     void prepareWithoutAttribDivisor();
