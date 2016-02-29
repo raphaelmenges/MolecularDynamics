@@ -13,9 +13,9 @@ void SurfaceExtraction::init()
     num_balls = ImpostorSpheres::num_balls;
 
     if(perspectiveProj)
-        projection = perspective(45.0f, getRatio(window), 0.1f, 300.0f);
+        projection = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
     else
-        projection = ortho(-32.0f, 32.0f, -32.0f, 32.0f, 1.0f, 300.0f);
+        projection = ortho(-15.0f, 15.0f, -15.0f, 15.0f, 1.0f, 100.0f);
 
     if (useAtomicCounters)
     {
@@ -224,7 +224,7 @@ void SurfaceExtraction::run()
         if (glfwGetKey(window, GLFW_KEY_COMMA) == GLFW_PRESS) scale = glm::max(scale - deltaTime*4, 0.01f);
         if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {pingPongOff = true; updateVisibilityMapLock = true; updateVisibilityMap = true; projection = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
             renderBalls->setShaderProgram(&spRenderBalls_p);renderBalls->update("projection", projection); }
-        if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {updateVisibilityMapLock = false; projection = ortho(-32.0f, 32.0f, -32.0f, 32.0f, 1.0f, 300.0f); renderBalls->setShaderProgram(&spRenderBalls);renderBalls->update("projection", projection);}
+        if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {updateVisibilityMapLock = false; projection = ortho(-15.0f, 15.0f, -15.0f, 15.0f, 1.0f, 300.0f); renderBalls->setShaderProgram(&spRenderBalls);renderBalls->update("projection", projection);}
         if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) pingPongOff = false;
         if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) pingPongOff = true;
         if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) { vsync = !vsync; vsync ? glfwSwapInterval(1) : glfwSwapInterval(0); vsync ? std::cout << "VSync enabled\n" : std::cout << "VSync disabled\n"; }
@@ -302,7 +302,12 @@ void SurfaceExtraction::run()
         renderBalls->clearDepth();
         renderBalls->update("scale", vec2(scale));
         renderBalls->update("view", view);
+
+        glBeginQuery(GL_TIME_ELAPSED, timeQuery);
         renderBalls->run();
+        glEndQuery(GL_TIME_ELAPSED);
+        glGetQueryObjectuiv(timeQuery, GL_QUERY_RESULT, &queryTime);
+        std::cout << "render/interval shader time: " << queryTime/1000000000.0 << std::endl;
 
         // Depending on user input: sort out instances for the next frame or not,
         // or lock the current set of visible instances
@@ -311,15 +316,19 @@ void SurfaceExtraction::run()
             {
                 // the following shaders in detectVisible look at what has been written to the screen (framebuffer0)
                 // better render the instance stuff to a texture and read from there
+                glBeginQuery(GL_TIME_ELAPSED, timeQuery);
                 collectSurfaceIDs->run();
-                glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT|GL_BUFFER_UPDATE_BARRIER_BIT);
+                glEndQuery(GL_TIME_ELAPSED);
+                glGetQueryObjectuiv(timeQuery, GL_QUERY_RESULT, &queryTime);
+                std::cout << "collect IDs shader time: " << queryTime/1000000000.0 << std::endl;
+                //glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT|GL_BUFFER_UPDATE_BARRIER_BIT);
                 glBeginQuery(GL_TIME_ELAPSED, timeQuery);
                 computeSortedIDs->run(16,1,1); // 16 work groups * 1024 work items = 16384 atoms and IDs
-                glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT|GL_SHADER_IMAGE_ACCESS_BARRIER_BIT|GL_BUFFER_UPDATE_BARRIER_BIT);
+                //glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT|GL_SHADER_IMAGE_ACCESS_BARRIER_BIT|GL_BUFFER_UPDATE_BARRIER_BIT);
                 glEndQuery(GL_TIME_ELAPSED);
 
                 glGetQueryObjectuiv(timeQuery, GL_QUERY_RESULT, &queryTime);
-                //std::cout << "compute shader time: " << queryTime << std::endl;
+                std::cout << "compute shader time: " << queryTime/1000000000.0 << std::endl;
 
 //                int x = tex_3DintervalStorageBuffer->getX();
 //                int y = tex_3DintervalStorageBuffer->getY();
