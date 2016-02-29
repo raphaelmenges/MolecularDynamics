@@ -10,7 +10,8 @@ void VisibilityExtractionDemo::init()
     window = generateWindow();
 
     impSph = new ImpostorSpheres(!useAtomicCounters, false);
-    num_balls = ImpostorSpheres::num_balls;
+    impSph->init();
+    num_balls = impSph->num_balls;
 
     if(perspectiveProj)
         projection = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
@@ -238,7 +239,7 @@ void VisibilityExtractionDemo::run()
         {
             renderBalls->setShaderProgram(&spRenderBalls);
             renderBalls->texture("visibleIDsBuff", visibleIDsBuff);
-            result->update("maxRange", float(ImpostorSpheres::num_balls));
+            result->update("maxRange", float(impSph->num_balls));
             result->texture("tex", renderBalls->get("InstanceID"));
         }
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
@@ -336,7 +337,7 @@ void VisibilityExtractionDemo::run()
                 detectVisible->run();
                 // detect visible instances
                 glBeginQuery(GL_TIME_ELAPSED, timeQuery);
-                GLuint visibilityMapFromBuff[ImpostorSpheres::num_balls];
+                GLuint visibilityMapFromBuff[impSph->num_balls];
                 glBindTexture(GL_TEXTURE_1D, bufferTex->getHandle());
                 glGetTexImage(GL_TEXTURE_1D, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, visibilityMapFromBuff);
 

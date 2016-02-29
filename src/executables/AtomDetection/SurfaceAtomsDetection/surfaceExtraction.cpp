@@ -1,4 +1,6 @@
 #include "surfaceExtraction.h"
+#include "Molecule/MDtrajLoader/MdTraj/MdTrajWrapper.h"
+#include "Molecule/MDtrajLoader/Data/Protein.h"
 
 SurfaceExtraction::SurfaceExtraction()
 {
@@ -9,13 +11,23 @@ void SurfaceExtraction::init()
 {
     window = generateWindow(512,512);
 
+    // load a file
+    std::vector<std::string> paths;
+    paths.push_back("/home/nlichtenberg/1crn.pdb");
+    //paths.push_back("/home/nlichtenberg/1vis.pdb");
+    //paths.push_back("/home/nlichtenberg/Develop/Mol_Sandbox/resources/TrajectoryFiles/1aon.pdb");
+    MdTrajWrapper mdwrap;
+    Protein* prot = mdwrap.load(paths);
+
     impSph = new ImpostorSpheres(!useAtomicCounters, true);
-    num_balls = ImpostorSpheres::num_balls;
+    impSph->setProteinData(prot);
+    impSph->init();
+    num_balls = impSph->num_balls;
 
     if(perspectiveProj)
         projection = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
     else
-        projection = ortho(-15.0f, 15.0f, -15.0f, 15.0f, 1.0f, 100.0f);
+        projection = ortho(-15.0f, 15.0f, -15.0f, 15.0f, -100.0f, 100.0f);
 
     if (useAtomicCounters)
     {
@@ -258,7 +270,7 @@ void SurfaceExtraction::run()
         {
             renderBalls->setShaderProgram(&spRenderBalls);
             renderBalls->texture("sortedVisibleIDsBuffer", tex_sortedVisibleIDsBuffer);
-            result->update("maxRange", float(ImpostorSpheres::num_balls));
+            result->update("maxRange", float(impSph->num_balls));
             result->texture("tex", renderBalls->get("InstanceID"));
         }
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
@@ -346,7 +358,7 @@ void SurfaceExtraction::run()
 //                int numIntervals_3_1 = 0;
 //                int numIntervals_0_0 = 0;
 //                int maxIntervals = 0;
-//                GLuint visibleIDsFromBuff[ImpostorSpheres::num_balls];
+//                GLuint visibleIDsFromBuff[impSph->num_balls];
 //                for(int i = 0; i < y; i++){
 //                    if (!(300 < i && i < 400))
 //                        continue;
@@ -426,7 +438,7 @@ void SurfaceExtraction::run()
                 collectSurfaceIDs->run();
                 // detect visible instances
                 glBeginQuery(GL_TIME_ELAPSED, timeQuery);
-                GLuint visibilityMapFromBuff[ImpostorSpheres::num_balls];
+                GLuint visibilityMapFromBuff[impSph->num_balls];
                 glBindTexture(GL_TEXTURE_1D, tex_collectedIDsBuffer->getHandle());
                 glGetTexImage(GL_TEXTURE_1D, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, visibilityMapFromBuff);
 
@@ -457,7 +469,7 @@ void SurfaceExtraction::run()
                 }
             }
 
-        result->clear(num_balls,num_balls,num_balls,num_balls);
+        result->clear(0.3,0.3,0.3,1);
         result->run();
     });
 }

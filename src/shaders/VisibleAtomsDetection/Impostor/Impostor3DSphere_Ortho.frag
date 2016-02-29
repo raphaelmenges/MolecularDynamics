@@ -64,7 +64,7 @@ void main() {
     // dann liegt diese jetzt auch im Ursprung der Weltkoordinaten
     // Analog könnte man jetzt auch andere Oberflächen testen, solange man weiß wo diese relativ zum Ursprung des Impostor/Model-Koordinatensystems liegen
 
-    float radius = size/2;//sphereRadius;
+    float radius = size;//sphereRadius;
 
     // Position des Pixels (Bildebene) in Welt
     float width = 1280.0;

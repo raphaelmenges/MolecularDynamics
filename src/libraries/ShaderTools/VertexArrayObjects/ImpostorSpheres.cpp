@@ -1,4 +1,6 @@
 #include "ImpostorSpheres.h"
+#include "Molecule/MDtrajLoader/Data/Atom.h"
+#include "Molecule/MDtrajLoader/Data/AtomLUT.h"
 
 float r_equ(float size) {
     return size * 2 * static_cast <float> (rand()) / static_cast <float> (RAND_MAX) - size;
@@ -8,13 +10,19 @@ float r_pos(float size) {
     return size * static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 }
 
-ImpostorSpheres::ImpostorSpheres(bool prepareWithAttribDivisor, bool frontFacesOnly)
+ImpostorSpheres::ImpostorSpheres(bool prepareWAttribDivisor, bool frontFacesOnly)
     :instancesToRender(num_balls),
-      frontFacesOnly(frontFacesOnly)
+      frontFacesOnly(frontFacesOnly),
+      prepareWAttribDivisor(prepareWAttribDivisor),
+      useProteinData(false)
+{
+}
+
+void ImpostorSpheres::init()
 {
     mode = GL_TRIANGLE_STRIP;
 
-    if (prepareWithAttribDivisor)
+    if (prepareWAttribDivisor)
         this->prepareWithAttribDivisor();
     else
         prepareWithoutAttribDivisor();
@@ -35,6 +43,29 @@ void ImpostorSpheres::drawInstanced(int countInstances)
         glDrawArraysInstanced(mode, 0, 6, countInstances);
     else
         glDrawArraysInstanced(mode, 0, 36, countInstances);
+
+}
+
+void ImpostorSpheres::setProteinData(Protein *prot)
+{
+    this->prot = prot;
+    useProteinData = true;
+}
+
+void ImpostorSpheres::copyProteinData()
+{
+    num_balls = prot->getAtoms()->size();
+    for( int i = 0; i < num_balls; i++)
+    {
+        Atom* a = prot->getAtomAt(i);
+        AtomLUT::colorMap::iterator it = AtomLUT::cpk_colorcode.find(a->getElement());
+        if(it != AtomLUT::cpk_colorcode.end())
+            instance_colors.push_back(glm::vec4(it->second.r,it->second.g,it->second.b,1));
+        else
+            instance_colors.push_back(glm::vec4(AtomLUT::cpk_colorcode.find("other")->second.r,AtomLUT::cpk_colorcode.find("other")->second.g,AtomLUT::cpk_colorcode.find("other")->second.b,1));
+
+        instance_positions.push_back(glm::vec4(a->getPosition(),AtomLUT::vdW_radii_picometer.find(a->getElement())->second/100.0 + 1.4 )); // pico to angstrom + proberadius
+    }
 
 }
 
@@ -63,32 +94,32 @@ void ImpostorSpheres::prepareWithAttribDivisor()
 
     glGenBuffers(1, &positionBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
-//    GLfloat positions[] = {
-//        -1.0f, -1.0f,
-//        -1.0f, 1.0f,
-//        1.0f, -1.0f,
-//        1.0f, 1.0f
-//    };
+    //    GLfloat positions[] = {
+    //        -1.0f, -1.0f,
+    //        -1.0f, 1.0f,
+    //        1.0f, -1.0f,
+    //        1.0f, 1.0f
+    //    };
 
     float size = 1;
     GLfloat positions[] = {
-                -size,-size,size, size,-size,size, size,size,size,
-                size,size,size, -size,size,size, -size,-size,size,
-                // Right face
-                size,-size,size, size,-size,-size, size,size,-size,
-                size,size,-size, size,size,size, size,-size,size,
-                // Back face
-                -size,-size,-size, size,-size,-size, size,size,-size,
-                size,size,-size, -size,size,-size, -size,-size,-size,
-                // Left face
-                -size,-size,size, -size,-size,-size, -size,size,-size,
-                -size,size,-size, -size,size,size, -size,-size,size,
-                // Bottom face
-                -size,-size,size, size,-size,size, size,-size,-size,
-                size,-size,-size, -size,-size,-size, -size,-size,size,
-                // Top Face
-                -size,size,size, size,size,size, size,size,-size,
-                size,size,-size, -size,size,-size, -size,size,size,
+        -size,-size,size, size,-size,size, size,size,size,
+        size,size,size, -size,size,size, -size,-size,size,
+        // Right face
+        size,-size,size, size,-size,-size, size,size,-size,
+        size,size,-size, size,size,size, size,-size,size,
+        // Back face
+        -size,-size,-size, size,-size,-size, size,size,-size,
+        size,size,-size, -size,size,-size, -size,-size,-size,
+        // Left face
+        -size,-size,size, -size,-size,-size, -size,size,-size,
+        -size,size,-size, -size,size,size, -size,-size,size,
+        // Bottom face
+        -size,-size,size, size,-size,size, size,-size,-size,
+        size,-size,-size, -size,-size,-size, -size,-size,size,
+        // Top Face
+        -size,size,size, size,size,size, size,size,-size,
+        size,size,-size, -size,size,-size, -size,size,size,
     };
 
     std::vector<GLfloat> instance_colors;
@@ -127,9 +158,9 @@ void ImpostorSpheres::prepareWithAttribDivisor()
     glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)(sizeof(positions) + sizeof(GLfloat) * instance_colors.size()));
     glVertexAttribPointer(3, 1, GL_INT, GL_FALSE, 0, (GLvoid*)(sizeof(positions) + sizeof(GLfloat) * instance_colors.size() + sizeof(GLfloat) * instance_positions.size()));
 
-//    glVertexAttribPointer(m_positionAttr, 2, GL_FLOAT, GL_FALSE, 0, &m_uniformQuad[0]);
-//    glVertexAttribPointer(m_colorAttr, 4, GL_FLOAT, GL_FALSE, 0, &m_instance_colors[m_currentFrame][0]);
-//    glVertexAttribPointer(m_instancePositionAttr, 4, GL_FLOAT, GL_FALSE, 0, &m_instance_positions[m_currentFrame][0]);
+    //    glVertexAttribPointer(m_positionAttr, 2, GL_FLOAT, GL_FALSE, 0, &m_uniformQuad[0]);
+    //    glVertexAttribPointer(m_colorAttr, 4, GL_FLOAT, GL_FALSE, 0, &m_instance_colors[m_currentFrame][0]);
+    //    glVertexAttribPointer(m_instancePositionAttr, 4, GL_FLOAT, GL_FALSE, 0, &m_instance_positions[m_currentFrame][0]);
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
@@ -154,17 +185,17 @@ void ImpostorSpheres::prepareWithoutAttribDivisor()
 
     float size = 1;
 
-//    int positionsSize = 0;
-//    if (frontFacesOnly)
-//        positionsSize = 18;
-//    else
-//        positionsSize = 18*6;
+    //    int positionsSize = 0;
+    //    if (frontFacesOnly)
+    //        positionsSize = 18;
+    //    else
+    //        positionsSize = 18*6;
     std::vector<GLfloat> positions;
-//    positions.reserve(positionsSize);
+    //    positions.reserve(positionsSize);
     if(frontFacesOnly){
         positions = {
             -size,-size,size, size,-size,size, size,size,size,
-             size,size,size, -size,size,size, -size,-size,size  };
+            size,size,size, -size,size,size, -size,-size,size  };
 
     }
     else
@@ -193,9 +224,14 @@ void ImpostorSpheres::prepareWithoutAttribDivisor()
 
     instance_colors.clear();
     instance_positions.clear();
-    for (int i = 0; i < num_balls*4; i+=4) {
-        instance_colors.push_back(glm::vec4(r_pos(1.0),r_pos(1.0),r_pos(1.0),1));
-        instance_positions.push_back(glm::vec4(r_equ(20),r_equ(20),r_equ(20), 10 /*+ r_equ(0.5)*/));
+    if(!useProteinData)
+        for (int i = 0; i < num_balls*4; i+=4) {
+            instance_colors.push_back(glm::vec4(r_pos(1.0),r_pos(1.0),r_pos(1.0),1));
+            instance_positions.push_back(glm::vec4(r_equ(20),r_equ(20),r_equ(20), 10 /*+ r_equ(0.5)*/));
+        }
+    else
+    {
+        this->copyProteinData();
     }
     //this->surfaceDetectionTestSet();
 

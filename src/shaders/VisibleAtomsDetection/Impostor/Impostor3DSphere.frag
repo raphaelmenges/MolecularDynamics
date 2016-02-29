@@ -63,7 +63,7 @@ void main() {
     // dann liegt diese jetzt auch im Ursprung der Weltkoordinaten
     // Analog könnte man jetzt auch andere Oberflächen testen, solange man weiß wo diese relativ zum Ursprung des Impostor/Model-Koordinatensystems liegen
 
-    float radius = size/2;//sphereRadius;    
+    float radius = size;//sphereRadius;
 
     float a = dot(view_w, -center_v.xyz);
     float b = a * a - length(center_v.xyz) * length(center_v.xyz) + radius * radius;

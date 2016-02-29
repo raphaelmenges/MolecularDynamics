@@ -44,7 +44,7 @@ void main() {
     // expected input vertices (positionAttribute) are a quad defined by [-1..1]²
     // position defines the center of the impostor geometry
     passPosition = view * vec4(instance_positions[sphereID].xyz, 1) +
-    positionAttribute * vec4(size/2, size/2, size/2, 1);
+    positionAttribute * vec4(size, size, size, 1);
 
     // apply offset
     int groupID = gl_InstanceID % 62;

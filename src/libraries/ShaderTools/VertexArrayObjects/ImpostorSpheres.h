@@ -2,13 +2,21 @@
 #define ImpostorSpheres_H
 
 #include "../VertexArrayObject.h"
+#include "Molecule/MDtrajLoader/Data/Protein.h"
 
 class ImpostorSpheres : public VertexArrayObject {
 public:
-    ImpostorSpheres(bool prepareWithAttribDivisor, bool frontFacesOnly);
+    ImpostorSpheres(bool prepareWAttribDivisor, bool frontFacesOnly);
+    void init();
     void draw();
     void doOcclusionQuery();
     void drawInstanced(int countInstances);
+
+    void setProteinData(Protein* prot);
+
+    Protein* prot;
+    bool useProteinData;
+    void copyProteinData();
 
     GLuint occlusionQuery;
     GLuint positionBuffer;
@@ -18,7 +26,7 @@ public:
 
     void updateVisibilityMap(std::vector<GLint> map);
 
-    static const int num_balls = 2000;//16384;
+    int num_balls = 2000;//16384;
 
     void prepareWithAttribDivisor();
     void prepareWithoutAttribDivisor();
@@ -40,6 +48,7 @@ public:
 
     unsigned int instancesToRender;
 
+    bool prepareWAttribDivisor;
     bool frontFacesOnly;
 
     void surfaceDetectionTestSet();

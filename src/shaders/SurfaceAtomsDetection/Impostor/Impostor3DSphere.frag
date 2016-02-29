@@ -34,6 +34,15 @@ void hit(vec3 hitPos)
     vec3 L = normalize(vec3(light_v - hitPos.xyz));
     vec3 finalColor = passColor.xyz * max(dot(normal.xyz,L), 0.0);
     finalColor = clamp(finalColor, 0.0, 1.0);
+    float specularCoefficient = 0.0;
+    float materialShininess = 1;
+    vec3 materialSpecularColor = vec3(0.5);
+
+    specularCoefficient = pow(max(0.0, dot(-normalize(hitPos).xyz, reflect(-L, normal.xyz))), materialShininess);
+    vec3 specular = specularCoefficient * materialSpecularColor;
+
+    finalColor += specular;
+    finalColor = clamp(finalColor, 0.0, 1.0);
 
     float far = 100;
     float near = 1;
@@ -63,7 +72,7 @@ void main() {
     // dann liegt diese jetzt auch im Ursprung der Weltkoordinaten
     // Analog könnte man jetzt auch andere Oberflächen testen, solange man weiß wo diese relativ zum Ursprung des Impostor/Model-Koordinatensystems liegen
 
-    float radius = size/2;//sphereRadius;    
+    float radius = size;//sphereRadius;
 
     float a = dot(view_w, -center_v.xyz);
     float b = a * a - length(center_v.xyz) * length(center_v.xyz) + radius * radius;

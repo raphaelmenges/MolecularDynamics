@@ -20,6 +20,27 @@ link_dependency(DevIL)
 link_dependency(ASSIMP)
 link_dependency(ZLIB)
 
+#set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} $ENV{PythonLibs})
+#find_package(PythonLibs 2.7 REQUIRED)  # cant use macro due to version parameter
+#include(${CMAKE_MODULE_PATH}/LinkPythonLibs27.cmake)
+
+if (NOT PYTHON_INCLUDE_DIRS)
+    find_package(PythonLibs 3 REQUIRED)
+endif()
+
+#link_dependency(NumPy)
+#find_package(NumPy REQUIRED)
+
+include_directories(
+    ${CORE_PATH}
+${PYTHON_INCLUDE_DIRS}
+#${NUMPY_INCLUDE_DIRS}
+)
+link_libraries(
+        ${PYTHON_LIBRARIES}
+)
+
+
 if("${CMAKE_SYSTEM}" MATCHES "Linux")
 	find_package(X11)
 	set(ALL_LIBRARIES ${ALL_LIBRARIES} ${X11_LIBRARIES} Xcursor Xinerama Xrandr Xxf86vm Xi pthread)
@@ -27,6 +48,7 @@ endif()
 
 add_definitions(-DSHADERS_PATH="${SHADERS_PATH}")
 add_definitions(-DRESOURCES_PATH="${RESOURCES_PATH}")
+add_definitions(-DMDTRAJ_PATH="${MDTRAJ_PATH}")
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   # using Clang

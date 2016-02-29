@@ -9,6 +9,8 @@
 #include "ShaderTools/VertexArrayObjects/Quad.h"
 #include "ShaderTools/VertexArrayObjects/ImpostorSpheres.h"
 
+#include "Molecule/MDtrajLoader/Data/Protein.h"
+
 using namespace glm;
 
 class SurfaceExtraction
