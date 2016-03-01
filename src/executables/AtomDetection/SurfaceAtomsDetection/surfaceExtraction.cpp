@@ -314,6 +314,7 @@ void SurfaceExtraction::run()
         renderBalls->clearDepth();
         renderBalls->update("scale", vec2(scale));
         renderBalls->update("view", view);
+        renderBalls->update("probeRadius", probeRadius);
 
         glBeginQuery(GL_TIME_ELAPSED, timeQuery);
         renderBalls->run();

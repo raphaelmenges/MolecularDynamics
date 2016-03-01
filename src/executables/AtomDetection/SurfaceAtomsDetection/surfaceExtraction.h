@@ -58,6 +58,7 @@ public:
     float rotY = 0.0f;
     float distance = 80.0;
     float scale = 1.0;
+    float probeRadius = 1.4; // standard proberadius
     bool updateVisibilityMap = false;
     bool updateVisibilityMapLock = false; // L: lock U: unlock reduced elements for current frame
     bool pingPongOff = true; // reduce number of elements every other frame O: off P: Pingpong On

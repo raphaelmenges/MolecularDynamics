@@ -16,7 +16,8 @@ layout(binding = 1, r32ui) uniform uimage1D visibleIDsBuff;
 out vec2 texCoord;
 out float depth;
 out vec4 eye_pos;
-out float size;
+out float size; // = radius
+uniform float probeRadius = 0.0;
 
 out vec4 passColor;
 out vec3 passWorldNormal;
@@ -36,7 +37,7 @@ void main() {
 
     // model size is found at instance_positionAttribute.w,
     // resize it according to input
-    size = instance_positions[sphereID].w * scale.x;
+    size = instance_positions[sphereID].w * scale.x + probeRadius;
 
     // expected input vertices (positionAttribute) are a quad defined by [-1..1]²
     // position defines the center of the impostor geometry

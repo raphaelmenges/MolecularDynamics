@@ -10,6 +10,7 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 uniform float scale;
+uniform float probeRadius = 0.0;
 
 out vec4 passWorldPosition;
 out vec4 passPosition;
@@ -22,7 +23,7 @@ out vec4 passColor;
 void main(){
     passUVCoord = uvCoordAttribute;
 
-    vec4 modelPos = positionAttribute  * scale * instance_positionAttribute.w;
+    vec4 modelPos = positionAttribute  * (scale+probeRadius) * instance_positionAttribute.w;
     passWorldPosition = modelPos + instance_positionAttribute;
     passPosition = view * vec4(instance_positionAttribute.xyz, 1) + modelPos;
 

@@ -4,7 +4,6 @@ uniform vec4 color;
 uniform mat4 view;
 //uniform mat4 model;
 uniform mat4 projection;
-uniform float sphereRadius;
 uniform int width;
 uniform int height;
 

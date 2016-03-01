@@ -1,4 +1,6 @@
 #include "visibilityextractiondemo.h"
+#include "Molecule/MDtrajLoader/MdTraj/MdTrajWrapper.h"
+#include "Molecule/MDtrajLoader/Data/Protein.h"
 
 VisibilityExtractionDemo::VisibilityExtractionDemo()
 {
@@ -9,7 +11,16 @@ void VisibilityExtractionDemo::init()
 {
     window = generateWindow();
 
+    // load a file
+    std::vector<std::string> paths;
+    //paths.push_back("/home/nlichtenberg/1crn.pdb");
+    paths.push_back("/home/nlichtenberg/1vis.pdb");
+    //paths.push_back("/home/nlichtenberg/Develop/Mol_Sandbox/resources/TrajectoryFiles/1aon.pdb");
+    MdTrajWrapper mdwrap;
+    Protein* prot = mdwrap.load(paths);
+
     impSph = new ImpostorSpheres(!useAtomicCounters, false);
+    impSph->setProteinData(prot);
     impSph->init();
     num_balls = impSph->num_balls;
 
@@ -281,7 +292,7 @@ void VisibilityExtractionDemo::run()
         renderBalls->clearDepth();
         renderBalls->update("scale", vec2(scale));
         renderBalls->update("view", view);
-        //renderBalls->update("elapsedTime", elapsedTime);
+        renderBalls->update("probeRadius", probeRadius);
         renderBalls->run();
 
 

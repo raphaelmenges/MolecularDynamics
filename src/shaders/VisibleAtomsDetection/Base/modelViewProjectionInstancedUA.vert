@@ -31,6 +31,7 @@ uniform mat4 view;
 uniform mat4 projection;
 uniform vec2 scale;
 uniform float elapsedTime;
+uniform float probeRadius = 0.0;
 
 void main() {
 
@@ -39,7 +40,7 @@ void main() {
 
     // model size is found at instance_positionAttribute.w,
     // resize it according to input
-    size = instance_positions[sphereID].w * scale.x;
+    size = instance_positions[sphereID].w * scale.x + probeRadius;
 
     // expected input vertices (positionAttribute) are a quad defined by [-1..1]²
     // position defines the center of the impostor geometry

@@ -4,7 +4,6 @@ uniform vec4 color;
 uniform mat4 view;
 //uniform mat4 model;
 uniform mat4 projection;
-uniform float sphereRadius;
 
 flat in int passInstanceID;
 
@@ -12,7 +11,7 @@ in vec4 passPosition;
 in vec4 passColor;
 flat in mat4 model;
 flat in vec3 center;
-in float size;
+in float size; // = radius
 
 out vec4 fragColor;
 out vec4 InstanceID;

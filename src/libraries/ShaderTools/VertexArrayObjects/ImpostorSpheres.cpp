@@ -64,8 +64,7 @@ void ImpostorSpheres::copyProteinData()
         else
             instance_colors.push_back(glm::vec4(AtomLUT::cpk_colorcode.find("other")->second.r,AtomLUT::cpk_colorcode.find("other")->second.g,AtomLUT::cpk_colorcode.find("other")->second.b,1));
 
-        instance_positions.push_back(glm::vec4(a->getPosition(),AtomLUT::vdW_radii_picometer.find(a->getElement())->second/100.0 + 1.4 )); // pico to angstrom + proberadius
-    }
+        instance_positions.push_back(glm::vec4(a->getPosition(),AtomLUT::vdW_radii_picometer.find(a->getElement())->second/100.0));     }
 
 }
 
