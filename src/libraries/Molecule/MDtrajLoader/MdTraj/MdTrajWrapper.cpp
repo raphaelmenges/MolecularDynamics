@@ -57,12 +57,13 @@ Protein* MdTrajWrapper::load(std::vector<std::string> paths)
     std::vector<std::string> elementNames;
     std::vector<std::string> distinctResidueNames;
     std::vector<std::vector<glm::vec3>> positions;
+    std::vector<float> radii;
     int numAtoms;
     std::string pathTmp = paths[0].substr(paths[0].find_last_of("\\/")+1);
     std::string proteinName = pathTmp.substr(0, pathTmp.size()-4);
     getAllAtomProperties(paths, names,
                          elementNames, residueNames,
-                         indices, bonds, distinctResidueNames, positions, numAtoms);
+                         indices, bonds, distinctResidueNames, positions, radii, numAtoms);
 
     //	pDq->spawnProtein(names, elementNames, residueNames,
     //		indices, bonds, positions, proteinName, numAtoms, distinctResidueNames);
@@ -70,7 +71,7 @@ Protein* MdTrajWrapper::load(std::vector<std::string> paths)
 
     Protein* prot = new Protein(names,
         elementNames, residueNames,
-        indices, bonds, positions, proteinName, numAtoms, distinctResidueNames);
+        indices, bonds, positions, proteinName, numAtoms, distinctResidueNames, radii);
    // proteins_.push_back(prot);
     return prot;
 }
@@ -140,7 +141,7 @@ PyObject *MdTrajWrapper::getTopology(PyObject *file)
 
 void MdTrajWrapper::getAllAtomProperties(std::vector<std::string> &paths, std::vector<std::string> &names,
                                          std::vector<std::string> &elementNames, std::vector<std::string> &residueNames,
-                                         std::vector<int> &indices, std::vector<std::string> &bonds, std::vector<std::string> &distinctResidue, std::vector<std::vector<glm::vec3>> &positions, int &numAtoms)
+                                         std::vector<int> &indices, std::vector<std::string> &bonds, std::vector<std::string> &distinctResidue, std::vector<std::vector<glm::vec3>> &positions, std::vector<float> &radii, int &numAtoms)
 {
     if (paths.size() > 2) {
 //       //UE_LOG(LogTemp, Error, TEXT("Anzahl der zu ladenden Dateien ist > 3"));
@@ -224,10 +225,8 @@ void MdTrajWrapper::getAllAtomProperties(std::vector<std::string> &paths, std::v
         Py_DECREF(element_py);
         distinct_residue_name_py=PyObject_GetAttrString(atom, "residue");
 
-//        atom_radius_py = PyObject_GetAttrString(element_py, "radius");
-
-//        float radius = PyFloat_AsDouble(atom_radius_py);
-
+        atom_radius_py = PyObject_GetAttrString(element_py, "radius");
+        radii.push_back(PyFloat_AsDouble(atom_radius_py) * 10);
 
         PyObject* dist = PyObject_Str(distinct_residue_name_py);
         Py_DECREF(distinct_residue_name_py);

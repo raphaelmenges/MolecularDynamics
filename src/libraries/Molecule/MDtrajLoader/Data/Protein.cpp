@@ -6,8 +6,9 @@
 Protein::Protein(std::vector<std::string> &names,
                  std::vector<std::string> &elementNames, std::vector<std::string> &residueNames,
                  std::vector<int> &indices, std::vector<std::string> &bonds, std::vector<std::vector<glm::vec3>> &positions,
-                 std::string name, int numAtoms, std::vector<std::string> &distinctResidueNames)
+                 std::string name, int numAtoms, std::vector<std::string> &distinctResidueNames, std::vector<float> &radii)
 {
+    radii_ = radii;
     std::string old = distinctResidueNames.at(0);
     std::string newer = distinctResidueNames.at(0);
     std::vector<Atom*> atomVector;
@@ -152,6 +153,16 @@ void Protein::minMax() {
         }
     }
 
+}
+
+std::vector<float> Protein::getRadii() const
+{
+    return radii_;
+}
+
+float Protein::getRadiusAt(int i)
+{
+    return radii_.at(i);
 }
 
 //---------------------------------------------private

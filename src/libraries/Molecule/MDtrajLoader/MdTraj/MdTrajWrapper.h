@@ -32,7 +32,8 @@ public:
 
 	void getAllAtomProperties(std::vector<std::string> &paths, std::vector<std::string> &names, std::vector<std::string> &elementNames
 		, std::vector<std::string> &residueNames, std::vector<int> &indices
-        , std::vector<std::string> &bonds, std::vector<std::string> &distinctResidueNames, std::vector<std::vector<glm::vec3>> &positions, int &numAtoms);
+        , std::vector<std::string> &bonds, std::vector<std::string> &distinctResidueNames,
+                              std::vector<std::vector<glm::vec3>> &positions, std::vector<float> &radii, int &numAtoms);
 
 
 private:
