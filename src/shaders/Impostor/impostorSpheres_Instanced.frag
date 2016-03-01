@@ -1,55 +1,97 @@
-#version 430
+#version 450
 
-in vec2 texCoord;
-in float depth;
-in vec4 eye_pos;
-in float size;
-in vec4 passColor;
-out vec4 fragColor;
+uniform vec4 color;
+uniform mat4 view;
+//uniform mat4 model;
+uniform mat4 projection;
+
 flat in int passInstanceID;
+
+in vec4 passPosition;
+in vec4 passColor;
+flat in mat4 model;
+flat in vec3 center;
+in float size; // = radius
+
+out vec4 fragColor;
 out vec4 InstanceID;
 
-#define PI = 3.1415926535897932384626433832795;
-#define PIh = PI/2;
-uniform mat4 projection;
-uniform mat4 view;
-layout(depth_less) out float gl_FragDepth;
+vec3 center_v;
 
-uniform vec3 lightSrc = vec3(100,100,100);
-uniform float cutPlaneDistance = 2.0f;
-vec3 N;
-vec3 Idiff;
+uniform vec4 lightSrc = vec4(0,100,50,1);
+bool stop = false;
+
+layout(depth_greater) out float gl_FragDepth;
+vec3 view_w;
+void hit(vec3 hitPos)
+{
+    // Normale Berechnen
+    vec4 normal = normalize(vec4(hitPos -center_v,0));
+
+    // Beleuchtung
+    vec3 light_v = lightSrc.xyz;//vec3(view * lightSrc).xyz;
+    vec3 L = normalize(vec3(light_v - hitPos.xyz));
+    vec3 finalColor = passColor.xyz * max(dot(normal.xyz,L), 0.0);
+    finalColor = clamp(finalColor, 0.0, 1.0);
+    float specularCoefficient = 0.0;
+    float materialShininess = 1;
+    vec3 materialSpecularColor = vec3(0.5);
+
+    specularCoefficient = pow(max(0.0, dot(-normalize(hitPos).xyz, reflect(-L, normal.xyz))), materialShininess);
+    vec3 specular = specularCoefficient * materialSpecularColor;
+
+    finalColor += specular;
+    finalColor = clamp(finalColor, 0.0, 1.0);
+
+    float far = 100;
+    float near = 1;
+    vec4 clip_space_pos = projection * vec4(hitPos,1);
+    float ndc_depth = 0.5 * clip_space_pos.z / clip_space_pos.w + 0.5;
+
+    gl_FragDepth = ndc_depth;
+    fragColor = vec4(finalColor, 1);
+    InstanceID = vec4(passInstanceID);
+}
 
 void main() {
-    if (length(texCoord) > 1) discard;
-    ivec2 coords = ivec2(gl_FragCoord);
 
-    float depthOffset = (sin(acos(length(texCoord.xy))));
-    float scaledDepthOffset = depthOffset * size / 2;
-    float modifiedDepth = depth - scaledDepthOffset;
+    // Kamera in Kamera
+    vec4 cam_w = vec4(0,0,0,1);
 
-    if (depth < cutPlaneDistance)
+    // Fragment in Kamera
+    vec4 frag_w = passPosition;
+
+    center_v = vec4(view*model*vec4(0,0,0,1)).xyz;
+
+    // Sehstrahl in Welt
+    vec3 view_w = normalize((frag_w - cam_w).xyz);
+
+    // Der Impostor ist jetzt quasi in Weltkoordinaten (0,0,0) zentriert (Weltkoordinaten und Impostor/model-Koordinaten decken sich
+    // Wenn z.B. eine Kugel gezeichnet werden soll, deren Mittelpunkt dem Ursprung des Impostor entspricht,
+    // dann liegt diese jetzt auch im Ursprung der Weltkoordinaten
+    // Analog könnte man jetzt auch andere Oberflächen testen, solange man weiß wo diese relativ zum Ursprung des Impostor/Model-Koordinatensystems liegen
+
+    float radius = size;//sphereRadius;
+
+    float a = dot(view_w, -center_v.xyz);
+    float b = a * a - length(center_v.xyz) * length(center_v.xyz) + radius * radius;
+
+    if (b < 0)
     {
-        if (scaledDepthOffset < abs(depth - cutPlaneDistance)) discard;
-    }
-
-    gl_FragDepth = modifiedDepth / 100.0f; // far plane is at 100, near at 0.1
-    if (modifiedDepth > cutPlaneDistance){
-        vec4 normal = vec4(texCoord.xy, depthOffset,0);
-        N = normalize(normal.xyz);
+        discard; // no intersections
     }
     else
     {
-        N = vec3(0,0,1);
+        float d = -a - sqrt(b); // just substract (+ lies always behind front point)
+        vec3 real_hit_position_cam = d * view_w;
+        hit(real_hit_position_cam);
+        stop = true;
     }
 
-    vec4 corrected_pos = vec4(eye_pos.xy, eye_pos.z + depthOffset * size / 2, 1);
-    vec3 light_eyePos = vec3(view * vec4(lightSrc, 1)).xyz;
-    vec3 L = normalize(vec3(light_eyePos - corrected_pos.xyz));
-
-    Idiff = passColor.xyz * max(dot(N,L), 0.0);
-    Idiff = clamp(Idiff, 0.0, 1.0);
-
-    fragColor = vec4(Idiff, 0);
-    InstanceID = vec4(passInstanceID);
+    // Kugel nicht getroffen, Impostor zeichnen oder verwerfen
+    if(!stop)
+    {
+        discard;
+        fragColor = vec4(1,0,0,1);
+    }
 }

@@ -6,6 +6,9 @@
 #include "ShaderTools/VertexArrayObjects/Quad.h"
 #include "ShaderTools/VertexArrayObjects/ImpostorSpheres.h"
 
+#include "Molecule/MDtrajLoader/MdTraj/MdTrajWrapper.h"
+#include "Molecule/MDtrajLoader/Data/Protein.h"
+
 using namespace glm;
 
 float r(float size) {
@@ -24,7 +27,7 @@ int main(int argc, char *argv[]) {
     float distance = 40.0;
     float scale = 1.0;
 
-    mat4 projection = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
+    mat4 projection = perspective(45.0f, getRatio(window), 0.1f, 500.0f);
 
 
 
@@ -32,9 +35,22 @@ int main(int argc, char *argv[]) {
     ShaderProgram spRenderImpostor = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Filters/solidColor.frag");
     ShaderProgram spRenderDiscs = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Impostor/impostorSpheres_discardFragments_Instanced.frag");
     ShaderProgram spRenderBalls = ShaderProgram("/Impostor/impostorSpheres_Instanced.vert", "/Impostor/impostorSpheres_Instanced.frag");
+
+    // load a file
+    std::vector<std::string> paths;
+    //paths.push_back("/home/nlichtenberg/1crn.pdb");
+    //paths.push_back("/home/nlichtenberg/1vis.pdb");
+    paths.push_back("/home/nlichtenberg/Develop/Mol_Sandbox/resources/TrajectoryFiles/1aon.pdb");
+    MdTrajWrapper mdwrap;
+    Protein* prot = mdwrap.load(paths);
+
+    ImpostorSpheres* impSph = new ImpostorSpheres(true, true);
+    impSph->setProteinData(prot);
+    //impSph->num_balls = 1000000;
+    impSph->init();
     
     RenderPass* renderBalls = new RenderPass(
-                new ImpostorSpheres(true, true),
+                impSph,
                 &spRenderBalls,
                 getWidth(window),
                 getHeight(window));
@@ -94,8 +110,8 @@ int main(int argc, char *argv[]) {
         if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) (rotY + deltaTime > 6.283)? rotY += deltaTime - 6.283 : rotY += deltaTime;
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) (rotX - deltaTime < 0)? rotX -= deltaTime + 6.283 : rotX -= deltaTime;
         if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) (rotX + deltaTime > 6.283)? rotX += deltaTime - 6.283 : rotX += deltaTime;
-        if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) distance += deltaTime * 3;
-        if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS) distance = max(distance - deltaTime * 3, 0.0f);
+        if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) distance += deltaTime * 30;
+        if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS) distance = max(distance - deltaTime * 30, 0.0f);
         if (glfwGetKey(window, GLFW_KEY_PERIOD) == GLFW_PRESS) scale += deltaTime;
         if (glfwGetKey(window, GLFW_KEY_COMMA) == GLFW_PRESS) scale = glm::max(scale - deltaTime, 0.01f);
 
@@ -153,14 +169,14 @@ int main(int argc, char *argv[]) {
         }
 
         mat4 view = translate(mat4(1), vec3(0,0,-distance)) * eulerAngleXY(-rotX, -rotY);
-        vec3 xyzOffset = vec3(sin(elapsedTime),cos(elapsedTime/2),sin(elapsedTime/3));
+        //vec3 xyzOffset = vec3(sin(elapsedTime),cos(elapsedTime/2),sin(elapsedTime/3));
 
         renderBalls->clear(0,0,0,999);
         renderBalls->clearDepth();
         renderBalls->update("scale", vec2(scale));
         renderBalls->update("view", view);
         //renderBalls->update("xyzOffset", xyzOffset);
-        renderBalls->update("elapsedTime", elapsedTime);
+        //renderBalls->update("elapsedTime", elapsedTime);
 
         renderBalls->run();
         result->clear();

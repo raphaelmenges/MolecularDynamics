@@ -50,6 +50,8 @@ void ImpostorSpheres::setProteinData(Protein *prot)
 {
     this->prot = prot;
     useProteinData = true;
+    num_balls = prot->getAtoms()->size();
+    instancesToRender = num_balls;
 }
 
 void ImpostorSpheres::copyProteinData()
@@ -103,61 +105,67 @@ void ImpostorSpheres::prepareWithAttribDivisor()
     //    };
 
     float size = 1;
-    GLfloat positions[] = {
-        -size,-size,size, size,-size,size, size,size,size,
-        size,size,size, -size,size,size, -size,-size,size,
-        // Right face
-        size,-size,size, size,-size,-size, size,size,-size,
-        size,size,-size, size,size,size, size,-size,size,
-        // Back face
-        -size,-size,-size, size,-size,-size, size,size,-size,
-        size,size,-size, -size,size,-size, -size,-size,-size,
-        // Left face
-        -size,-size,size, -size,-size,-size, -size,size,-size,
-        -size,size,-size, -size,size,size, -size,-size,size,
-        // Bottom face
-        -size,-size,size, size,-size,size, size,-size,-size,
-        size,-size,-size, -size,-size,-size, -size,-size,size,
-        // Top Face
-        -size,size,size, size,size,size, size,size,-size,
-        size,size,-size, -size,size,-size, -size,size,size,
-    };
+    std::vector<GLfloat> positions;
+    //    positions.reserve(positionsSize);
+    if(frontFacesOnly){
+        positions = {
+            -size,-size,size, size,-size,size, size,size,size,
+            size,size,size, -size,size,size, -size,-size,size  };
 
-    std::vector<GLfloat> instance_colors;
-    std::vector<GLfloat> instance_positions;
+    }
+    else
+    {
+        positions = {
+            -size,-size,size, size,-size,size, size,size,size,
+            size,size,size, -size,size,size, -size,-size,size,
+            // Right face
+            size,-size,size, size,-size,-size, size,size,-size,
+            size,size,-size, size,size,size, size,-size,size,
+            // Back face
+            -size,-size,-size, size,-size,-size, size,size,-size,
+            size,size,-size, -size,size,-size, -size,-size,-size,
+            // Left face
+            -size,-size,size, -size,-size,-size, -size,size,-size,
+            -size,size,-size, -size,size,size, -size,-size,size,
+            // Bottom face
+            -size,-size,size, size,-size,size, size,-size,-size,
+            size,-size,-size, -size,-size,-size, -size,-size,size,
+            // Top Face
+            -size,size,size, size,size,size, size,size,-size,
+            size,size,-size, -size,size,-size, -size,size,size,
+        };
+    }
 
-    for (int i = 0; i < num_balls*4; i+=4) {
-        instance_colors.push_back(r_pos(1.0));
-        instance_colors.push_back(r_pos(1.0));
-        instance_colors.push_back(r_pos(1.0));
-        instance_colors.push_back(1);
-
-        instance_positions.push_back(r_equ(30));
-        instance_positions.push_back(r_equ(30));
-        instance_positions.push_back(r_equ(30));
-        instance_positions.push_back(1 + r_equ(0.5));
+    if(!useProteinData)
+        for (int i = 0; i < num_balls*4; i+=4) {
+            instance_colors.push_back(glm::vec4(r_pos(1.0),r_pos(1.0),r_pos(1.0),1));
+            instance_positions.push_back(glm::vec4(r_equ(20),r_equ(20),r_equ(20), + r_equ(0.5)));
+        }
+    else
+    {
+        this->copyProteinData();
     }
 
     glBufferData(GL_ARRAY_BUFFER,
-                 sizeof(positions) +
-                 sizeof(GLfloat) * instance_colors.size() +
-                 sizeof(GLfloat) * instance_positions.size() +
+                 sizeof(GLfloat) * positions.size() +
+                 sizeof(glm::vec4) * instance_colors.size() +
+                 sizeof(glm::vec4) * instance_positions.size() +
                  sizeof(GLfloat) * visibilityMap.size(), NULL, GL_STATIC_DRAW);
 
     GLuint offset = 0;
-    glBufferSubData(GL_ARRAY_BUFFER, offset, sizeof(positions), positions);
-    offset += sizeof(positions);
-    glBufferSubData(GL_ARRAY_BUFFER, offset, sizeof(GLfloat) * instance_colors.size(), &instance_colors[0]);
-    offset += sizeof(GLfloat) * instance_colors.size();
-    glBufferSubData(GL_ARRAY_BUFFER, offset, sizeof(GLfloat) * instance_positions.size(), &instance_positions[0]);
-    offset += sizeof(GLfloat) * instance_positions.size();
+    glBufferSubData(GL_ARRAY_BUFFER, offset, sizeof(GLfloat) * positions.size(), &positions[0]);
+    offset += sizeof(GLfloat) * positions.size();
+    glBufferSubData(GL_ARRAY_BUFFER, offset, sizeof(glm::vec4) * instance_colors.size(), &instance_colors[0]);
+    offset += sizeof(glm::vec4) * instance_colors.size();
+    glBufferSubData(GL_ARRAY_BUFFER, offset, sizeof(glm::vec4) * instance_positions.size(), &instance_positions[0]);
+    offset += sizeof(glm::vec4) * instance_positions.size();
     glBufferSubData(GL_ARRAY_BUFFER, offset, sizeof(GLfloat) * visibilityMap.size(), &visibilityMap[0]);
     visibilityBufferOffset = offset; // need that for update of the buffer
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)sizeof(positions));
-    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)(sizeof(positions) + sizeof(GLfloat) * instance_colors.size()));
-    glVertexAttribPointer(3, 1, GL_INT, GL_FALSE, 0, (GLvoid*)(sizeof(positions) + sizeof(GLfloat) * instance_colors.size() + sizeof(GLfloat) * instance_positions.size()));
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)(sizeof(GLfloat) * positions.size()));
+    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)(sizeof(GLfloat) * positions.size() + sizeof(glm::vec4) * instance_colors.size()));
+    glVertexAttribPointer(3, 1, GL_INT, GL_FALSE, 0, (GLvoid*)(sizeof(GLfloat) * positions.size() + sizeof(glm::vec4) * instance_colors.size() + sizeof(glm::vec4) * instance_positions.size()));
 
     //    glVertexAttribPointer(m_positionAttr, 2, GL_FLOAT, GL_FALSE, 0, &m_uniformQuad[0]);
     //    glVertexAttribPointer(m_colorAttr, 4, GL_FLOAT, GL_FALSE, 0, &m_instance_colors[m_currentFrame][0]);
