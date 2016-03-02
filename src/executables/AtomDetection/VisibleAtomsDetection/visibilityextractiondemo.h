@@ -33,14 +33,14 @@ public:
 
     // Render Passes
     RenderPass* renderBalls;
-    RenderPass* detectVisible;
+    RenderPass* collectSurfaceIDs;
     RenderPass* result;
 
-    ComputeProgram* computeVisibleIDs;
+    ComputeProgram* computeSortedIDs;
 
     // Textures/Buffers
-    Texture* bufferTex;
-    Texture* visibleIDsBuff;
+    Texture* tex_collectedIDsBuffer;
+    Texture* tex_sortedVisibleIDsBuffer;
 
     // Handles
     GLuint atomBuff;

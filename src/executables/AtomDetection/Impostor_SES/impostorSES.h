@@ -23,10 +23,9 @@ public:
     mat4 projection;
 
     // program switches
-    bool useAtomicCounters = true;
     bool perspectiveProj = true;
 
-    bool vsync = true;
+
 
     // Shader Programs
     ShaderProgram spRenderDiscs;
@@ -35,14 +34,14 @@ public:
 
     // Render Passes
     RenderPass* renderBalls;
-    RenderPass* detectVisible;
+    RenderPass* collectSurfaceIDs;
     RenderPass* result;
 
-    ComputeProgram* computeVisibleIDs;
+    ComputeProgram* computeSortedIDs;
 
     // Textures/Buffers
-    Texture* bufferTex;
-    Texture* visibleIDsBuff;
+    Texture* tex_collectedIDsBuffer;
+    Texture* tex_sortedVisibleIDsBuffer;
 
     // Handles
     GLuint atomBuff;
@@ -53,7 +52,7 @@ public:
     // variables
     float rotX = 0.0f;
     float rotY = 0.0f;
-    float distance = 80.0;
+    float distance = 40.0;
     float scale = 1.0;
     float probeRadius = 1.4; // standard proberadius
     bool updateVisibilityMap = false;
@@ -72,7 +71,6 @@ public:
     std::vector<GLint> mapAllVisible;
 
     // frame control
-    bool animate = false;
     float lastTime = 0;
     float elapsedTime = 0;
 
@@ -85,10 +83,6 @@ public:
     void run();
 
     std::shared_ptr<Protein> prot;
-
-    bool renderAtoms = true;
-    bool renderSpherePatches = false;
-    bool renderToroidalPatches = false;
 
     ShaderProgram spAtomImpostorQuad;
     ShaderProgram spAtomImpostorSphere;
@@ -117,6 +111,7 @@ public:
     ShaderProgram spToroidalPatchImpostorFullColored;
 
     RenderPass* rpToroidalPatches;
+
 
 
     float r(float size) {

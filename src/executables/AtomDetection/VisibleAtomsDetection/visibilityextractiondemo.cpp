@@ -68,7 +68,7 @@ void VisibilityExtractionDemo::init()
     renderBalls->update("projection", projection);
 
     /// Renderpass to detect the visible instances
-    detectVisible = new RenderPass(
+    collectSurfaceIDs = new RenderPass(
                 new Quad(),
                 new ShaderProgram("/VisibleAtomsDetection/Base/fullscreen.vert",
                                   "/VisibleAtomsDetection/Detection/DetectVisibleInstanceIDs.frag"),
@@ -76,10 +76,10 @@ void VisibilityExtractionDemo::init()
                 getHeight(window));
 
     // prepare 1D buffer for entries
-    bufferTex = new Texture(GL_R8UI, GL_RED_INTEGER, GL_UNSIGNED_INT);
-    bufferTex->genUimageBuffer(num_balls);
-    detectVisible->texture("visibilityBuffer", bufferTex);
-    detectVisible->texture("tex", renderBalls->get("InstanceID"));
+    tex_collectedIDsBuffer = new Texture(GL_R8UI, GL_RED_INTEGER, GL_UNSIGNED_INT);
+    tex_collectedIDsBuffer->genUimageBuffer(num_balls);
+    collectSurfaceIDs->texture("collectedIDsBuffer", tex_collectedIDsBuffer);
+    collectSurfaceIDs->texture("tex", renderBalls->get("InstanceID"));
 
     /// renderpass to display result frame
     result = new RenderPass(
@@ -89,14 +89,14 @@ void VisibilityExtractionDemo::init()
     result->texture("tex", renderBalls->get("fragColor"));
 
     /// compute shader to process a list of visible IDs (with the actual instanceID of the first general draw)
-    computeVisibleIDs = new ComputeProgram(new ShaderProgram("/VisibleAtomsDetection/Detection/CreateVisibleIDList.comp"));
+    computeSortedIDs = new ComputeProgram(new ShaderProgram("/VisibleAtomsDetection/Detection/CreateVisibleIDList.comp"));
 
     // 1D buffer for visible IDs
-    visibleIDsBuff = new Texture(GL_R32UI, GL_RED_INTEGER, GL_UNSIGNED_INT);
-    visibleIDsBuff->genUimageBuffer(num_balls);
+    tex_sortedVisibleIDsBuffer = new Texture(GL_R32UI, GL_RED_INTEGER, GL_UNSIGNED_INT);
+    tex_sortedVisibleIDsBuffer->genUimageBuffer(num_balls);
 
-    computeVisibleIDs->texture("visibilityBuffer", bufferTex);
-    computeVisibleIDs->texture("visibleIDsBuff", visibleIDsBuff);
+    computeSortedIDs->texture("collectedIDsBuffer", tex_collectedIDsBuffer);
+    computeSortedIDs->texture("sortedVisibleIDsBuffer", tex_sortedVisibleIDsBuffer);
 
     // atomic counter buffer for consecutive index access in compute shader
     glGenBuffers(1, &atomBuff);
@@ -174,7 +174,7 @@ void VisibilityExtractionDemo::init()
     for (GLuint i = 0; i < num_balls; i++)
         identityInstancesMap.push_back(i);
 
-    glBindTexture(GL_TEXTURE_1D, visibleIDsBuff->getHandle());
+    glBindTexture(GL_TEXTURE_1D, tex_sortedVisibleIDsBuffer->getHandle());
     glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, num_balls, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, &identityInstancesMap[0]);
 
     // map to set all instances visible
@@ -225,7 +225,7 @@ void VisibilityExtractionDemo::run()
         if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
         {
             renderBalls->setShaderProgram(&spRenderImpostor);
-            renderBalls->texture("visibleIDsBuff", visibleIDsBuff);
+            renderBalls->texture("sortedVisibleIDsBuffer", tex_sortedVisibleIDsBuffer);
             result->update("maxRange", 1.0f);
             result->texture("tex", renderBalls->get("fragColor"));
         }
@@ -233,7 +233,7 @@ void VisibilityExtractionDemo::run()
         if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
         {
             renderBalls->setShaderProgram(&spRenderDiscs);
-            renderBalls->texture("visibleIDsBuff", visibleIDsBuff);
+            renderBalls->texture("sortedVisibleIDsBuffer", tex_sortedVisibleIDsBuffer);
             result->update("maxRange", 1.0f);
             result->texture("tex", renderBalls->get("fragColor"));
         }
@@ -241,7 +241,7 @@ void VisibilityExtractionDemo::run()
         if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
         {
             renderBalls->setShaderProgram(&spRenderBalls);
-            renderBalls->texture("visibleIDsBuff", visibleIDsBuff);
+            renderBalls->texture("sortedVisibleIDsBuffer", tex_sortedVisibleIDsBuffer);
             result->update("maxRange", 1.0f);
             result->texture("tex", renderBalls->get("fragColor"));
         }
@@ -249,7 +249,7 @@ void VisibilityExtractionDemo::run()
         if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
         {
             renderBalls->setShaderProgram(&spRenderBalls);
-            renderBalls->texture("visibleIDsBuff", visibleIDsBuff);
+            renderBalls->texture("sortedVisibleIDsBuffer", tex_sortedVisibleIDsBuffer);
             result->update("maxRange", float(impSph->num_balls));
             result->texture("tex", renderBalls->get("InstanceID"));
         }
@@ -280,7 +280,7 @@ void VisibilityExtractionDemo::run()
         mat4 view = translate(mat4(1), vec3(0,0,-distance)) * eulerAngleXY(-rotX, -rotY);
 
         // reset the detected instance IDs
-        glBindTexture(GL_TEXTURE_1D, bufferTex->getHandle());
+        glBindTexture(GL_TEXTURE_1D, tex_collectedIDsBuffer->getHandle());
         glTexImage1D(GL_TEXTURE_1D, 0, GL_R8UI, num_balls, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, zeros);
         //glBindTexture(GL_TEXTURE_1D, visibleIDsBuff->getHandle());
         //glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, num_balls, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, &identityInstancesMap[0]);
@@ -303,10 +303,10 @@ void VisibilityExtractionDemo::run()
             {
                 // the following shaders in detectVisible look at what has been written to the screen (framebuffer0)
                 // better render the instance stuff to a texture and read from there
-                detectVisible->run();
+                collectSurfaceIDs->run();
                 glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT|GL_BUFFER_UPDATE_BARRIER_BIT);
                 glBeginQuery(GL_TIME_ELAPSED, timeQuery);
-                computeVisibleIDs->run(16,1,1); // 16 work groups * 1024 work items = 16384 atoms and IDs
+                computeSortedIDs->run(16,1,1); // 16 work groups * 1024 work items = 16384 atoms and IDs
                 glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT|GL_SHADER_IMAGE_ACCESS_BARRIER_BIT|GL_BUFFER_UPDATE_BARRIER_BIT);
                 glEndQuery(GL_TIME_ELAPSED);
 
@@ -336,7 +336,7 @@ void VisibilityExtractionDemo::run()
                 {
                     // ToDo
                     // instead of uploading the data, swap the buffer
-                    glBindTexture(GL_TEXTURE_1D, visibleIDsBuff->getHandle());
+                    glBindTexture(GL_TEXTURE_1D, tex_sortedVisibleIDsBuffer->getHandle());
                     glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, num_balls, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, &identityInstancesMap[0]);
                     impSph->instancesToRender = impSph->num_balls;
                     updateVisibilityMap = true; // sort out every other frame
@@ -345,11 +345,11 @@ void VisibilityExtractionDemo::run()
         else
             if (updateVisibilityMap && !pingPongOff)
             {
-                detectVisible->run();
+                collectSurfaceIDs->run();
                 // detect visible instances
                 glBeginQuery(GL_TIME_ELAPSED, timeQuery);
                 GLuint visibilityMapFromBuff[impSph->num_balls];
-                glBindTexture(GL_TEXTURE_1D, bufferTex->getHandle());
+                glBindTexture(GL_TEXTURE_1D, tex_collectedIDsBuffer->getHandle());
                 glGetTexImage(GL_TEXTURE_1D, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, visibilityMapFromBuff);
 
                 // copy visible instance information to a vector with size = num_balls

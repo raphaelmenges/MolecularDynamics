@@ -122,8 +122,8 @@ void ImpostorSpheres::prepareWithAttribDivisor()
             size,-size,size, size,-size,-size, size,size,-size,
             size,size,-size, size,size,size, size,-size,size,
             // Back face
-            -size,-size,-size, size,-size,-size, size,size,-size,
-            size,size,-size, -size,size,-size, -size,-size,-size,
+            -size,-size,-size, size,size,-size, size,-size,-size,
+            size,size,-size, -size,-size,-size, -size,size,-size,
             // Left face
             -size,-size,size, -size,-size,-size, -size,size,-size,
             -size,size,-size, -size,size,size, -size,-size,size,
@@ -216,8 +216,8 @@ void ImpostorSpheres::prepareWithoutAttribDivisor()
             size,-size,size, size,-size,-size, size,size,-size,
             size,size,-size, size,size,size, size,-size,size,
             // Back face
-            -size,-size,-size, size,-size,-size, size,size,-size,
-            size,size,-size, -size,size,-size, -size,-size,-size,
+            -size,-size,-size, size,size,-size, size,-size,-size,
+            size,size,-size, -size,-size,-size, -size,size,-size,
             // Left face
             -size,-size,size, -size,-size,-size, -size,size,-size,
             -size,size,-size, -size,size,size, -size,-size,size,

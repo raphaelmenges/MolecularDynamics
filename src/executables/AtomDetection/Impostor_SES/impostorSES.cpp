@@ -11,6 +11,28 @@ ImpostorSES::ImpostorSES()
 
 }
 
+bool renderAtoms = true;
+bool renderSpherePatches = false;
+bool renderToroidalPatches = false;
+bool vsync = true;
+bool animate = false;
+
+static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (action == GLFW_PRESS)
+    {
+        switch (key)
+        {
+        case GLFW_KEY_ESCAPE: { glfwSetWindowShouldClose(window, GL_TRUE); break; }
+        case GLFW_KEY_B: { vsync = !vsync; vsync ? glfwSwapInterval(1) : glfwSwapInterval(0); vsync ? std::cout << "VSync enabled\n" : std::cout << "VSync disabled\n"; break; }
+        case GLFW_KEY_F1: { renderAtoms = !renderAtoms; break; }
+        case GLFW_KEY_F2: { renderSpherePatches = !renderSpherePatches; break; }
+        case GLFW_KEY_F3: { renderToroidalPatches = !renderToroidalPatches; break; }
+        case GLFW_KEY_F9: { animate = !animate; break; }
+        }
+    }
+}
+
 void updateInputMapping(RenderPass* rp, ShaderProgram &sp)
 {
     auto vao = static_cast<DynamicVertexArrayObject*>(rp->vertexArrayObject);
@@ -29,9 +51,10 @@ void ImpostorSES::init()
 
     MdTrajWrapper mdwrap;
     prot = mdwrap.load(paths);
+    prot->recenter();
 
 
-    impSph = new ImpostorSpheres(!useAtomicCounters, false);
+    impSph = new ImpostorSpheres(false, false);
     impSph->setProteinData(prot.get());
     impSph->init();
     num_balls = impSph->num_balls;
@@ -41,28 +64,18 @@ void ImpostorSES::init()
     else
         projection = ortho(-30.0f, 30.0f, -30.0f, 30.0f, 0.0f, 100.0f);
 
-    if (useAtomicCounters)
-    {
-        spRenderImpostor = ShaderProgram("/VisibleAtomsDetection/Impostor/impostorSpheres_InstancedUA.vert",
-                                         "/VisibleAtomsDetection/Detection/solidColorInstanceCount.frag");
-        spRenderDiscs = ShaderProgram("/VisibleAtomsDetection//Impostor/impostorSpheres_InstancedUA.vert",
-                                      "/VisibleAtomsDetection//Impostor/impostorSpheres_discardFragments_Instanced.frag");
-        if(perspectiveProj)
-            spRenderBalls = ShaderProgram("/VisibleAtomsDetection/Base/modelViewProjectionInstancedUA.vert",
-                                          "/VisibleAtomsDetection/Impostor/Impostor3DSphere.frag");
-        else
-            spRenderBalls = ShaderProgram("/VisibleAtomsDetection/Base/modelViewProjectionInstancedUA.vert",
-                                          "/VisibleAtomsDetection/Impostor/Impostor3DSphere_Ortho.frag");
-    }
-    else
-    {
-        spRenderImpostor = ShaderProgram("/VisibleAtomsDetection/Impostor/impostorSpheres_Instanced.vert",
-                                         "/VisibleAtomsDetection/Detection/solidColorInstanceCount.frag");
-        spRenderDiscs = ShaderProgram("/VisibleAtomsDetection/Impostor/impostorSpheres_Instanced.vert",
-                                      "/VisibleAtomsDetection/Impostor/impostorSpheres_discardFragments_Instanced.frag");
-        spRenderBalls = ShaderProgram("/VisibleAtomsDetection/Impostor/impostorSpheres_Instanced.vert",
+
+    spRenderImpostor = ShaderProgram("/VisibleAtomsDetection/Impostor/impostorSpheres_InstancedUA.vert",
+                                     "/VisibleAtomsDetection/Detection/solidColorInstanceCount.frag");
+    spRenderDiscs = ShaderProgram("/VisibleAtomsDetection//Impostor/impostorSpheres_InstancedUA.vert",
+                                  "/VisibleAtomsDetection//Impostor/impostorSpheres_discardFragments_Instanced.frag");
+    if(perspectiveProj)
+        spRenderBalls = ShaderProgram("/VisibleAtomsDetection/Base/modelViewProjectionInstancedUA.vert",
                                       "/VisibleAtomsDetection/Impostor/Impostor3DSphere.frag");
-    }
+    else
+        spRenderBalls = ShaderProgram("/VisibleAtomsDetection/Base/modelViewProjectionInstancedUA.vert",
+                                      "/VisibleAtomsDetection/Impostor/Impostor3DSphere_Ortho.frag");
+
 
     /// Renderpass to render impostors/fake geometry
     renderBalls = new RenderPass(
@@ -80,7 +93,7 @@ void ImpostorSES::init()
     renderBalls->update("projection", projection);
 
     /// Renderpass to detect the visible instances
-    detectVisible = new RenderPass(
+    collectSurfaceIDs = new RenderPass(
                 new Quad(),
                 new ShaderProgram("/VisibleAtomsDetection/Base/fullscreen.vert",
                                   "/VisibleAtomsDetection/Detection/DetectVisibleInstanceIDs.frag"),
@@ -88,10 +101,10 @@ void ImpostorSES::init()
                 getHeight(window));
 
     // prepare 1D buffer for entries
-    bufferTex = new Texture(GL_R8UI, GL_RED_INTEGER, GL_UNSIGNED_INT);
-    bufferTex->genUimageBuffer(num_balls);
-    detectVisible->texture("visibilityBuffer", bufferTex);
-    detectVisible->texture("tex", renderBalls->get("InstanceID"));
+    tex_collectedIDsBuffer = new Texture(GL_R8UI, GL_RED_INTEGER, GL_UNSIGNED_INT);
+    tex_collectedIDsBuffer->genUimageBuffer(num_balls);
+    collectSurfaceIDs->texture("collectedIDsBuffer", tex_collectedIDsBuffer);
+    collectSurfaceIDs->texture("tex", renderBalls->get("InstanceID"));
 
     /// renderpass to display result frame
     result = new RenderPass(
@@ -101,14 +114,14 @@ void ImpostorSES::init()
     result->texture("tex", renderBalls->get("fragColor"));
 
     /// compute shader to process a list of visible IDs (with the actual instanceID of the first general draw)
-    computeVisibleIDs = new ComputeProgram(new ShaderProgram("/VisibleAtomsDetection/Detection/CreateVisibleIDList.comp"));
+    computeSortedIDs = new ComputeProgram(new ShaderProgram("/VisibleAtomsDetection/Detection/CreateVisibleIDList.comp"));
 
     // 1D buffer for visible IDs
-    visibleIDsBuff = new Texture(GL_R32UI, GL_RED_INTEGER, GL_UNSIGNED_INT);
-    visibleIDsBuff->genUimageBuffer(num_balls);
+    tex_sortedVisibleIDsBuffer = new Texture(GL_R32UI, GL_RED_INTEGER, GL_UNSIGNED_INT);
+    tex_sortedVisibleIDsBuffer->genUimageBuffer(num_balls);
 
-    computeVisibleIDs->texture("visibilityBuffer", bufferTex);
-    computeVisibleIDs->texture("visibleIDsBuff", visibleIDsBuff);
+    computeSortedIDs->texture("collectedIDsBuffer", tex_collectedIDsBuffer);
+    computeSortedIDs->texture("sortedVisibleIDsBuffer", tex_sortedVisibleIDsBuffer);
 
     // atomic counter buffer for consecutive index access in compute shader
     glGenBuffers(1, &atomBuff);
@@ -186,7 +199,7 @@ void ImpostorSES::init()
     for (GLuint i = 0; i < num_balls; i++)
         identityInstancesMap.push_back(i);
 
-    glBindTexture(GL_TEXTURE_1D, visibleIDsBuff->getHandle());
+    glBindTexture(GL_TEXTURE_1D, tex_sortedVisibleIDsBuffer->getHandle());
     glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, num_balls, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, &identityInstancesMap[0]);
 
     // map to set all instances visible
@@ -198,15 +211,16 @@ void ImpostorSES::init()
     glGenQueries(1, &timeQuery);
 
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
+    //glCullFace(GL_FRONT);
 }
 
 void ImpostorSES::initSES()
 {
     // one timestep so far ...
     //prot->frames.resize(1);
-    prot->setupSimpleAtoms();
     prot->recenter();
+    prot->setupSimpleAtoms();
     prot->calculatePatches(probeRadius);
 
     // --- ATOM
@@ -267,6 +281,7 @@ void ImpostorSES::run()
             numberOfFrames = 0;
             frameInterval = 0.0f;
         }
+        glfwSetKeyCallback(window, keyCallback);
 
         if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) (rotY - deltaTime < 0)? rotY -= deltaTime + 6.283 : rotY -= deltaTime;
         if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) (rotY + deltaTime > 6.283)? rotY += deltaTime - 6.283 : rotY += deltaTime;
@@ -280,13 +295,29 @@ void ImpostorSES::run()
         if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) updateVisibilityMapLock = false;
         if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) pingPongOff = false;
         if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) pingPongOff = true;
-        if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) { vsync = !vsync; vsync ? glfwSwapInterval(1) : glfwSwapInterval(0); vsync ? std::cout << "VSync enabled\n" : std::cout << "VSync disabled\n"; }
+
+        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)         { rpAtoms->setShaderProgram(&spAtomImpostorQuad);                           updateInputMapping(rpAtoms, spAtomImpostorQuad);                           rpAtoms->update("projection", projection); }
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)         { rpAtoms->setShaderProgram(&spAtomImpostorSphere);                         updateInputMapping(rpAtoms, spAtomImpostorSphere);                         rpAtoms->update("projection", projection); }
+        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)         { rpAtoms->setShaderProgram(&spAtomImpostorSphereRaymarching);              updateInputMapping(rpAtoms, spAtomImpostorSphereRaymarching);              rpAtoms->update("projection", projection); }
+        if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)         { rpAtoms->setShaderProgram(&spAtomImpostorNormal);                         updateInputMapping(rpAtoms, spAtomImpostorNormal);                         rpAtoms->update("projection", projection); }
+        if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)         { rpAtoms->setShaderProgram(&spAtomImpostorFull);                           updateInputMapping(rpAtoms, spAtomImpostorFull);                           rpAtoms->update("projection", projection); }
+        if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)         { rpAtoms->setShaderProgram(&spAtomImpostorFullColored);                    updateInputMapping(rpAtoms, spAtomImpostorFullColored);                    rpAtoms->update("projection", projection); }
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)         { rpSpherePatches->setShaderProgram(&spSpherePatchImpostorTriangle);        updateInputMapping(rpSpherePatches, spSpherePatchImpostorTriangle);        rpSpherePatches->update("projection", projection); }
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)         { rpSpherePatches->setShaderProgram(&spSpherePatchImpostorTetrahedron);     updateInputMapping(rpSpherePatches, spSpherePatchImpostorTetrahedron);     rpSpherePatches->update("projection", projection); }
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)         { rpSpherePatches->setShaderProgram(&spSpherePatchImpostorNormal);          updateInputMapping(rpSpherePatches, spSpherePatchImpostorNormal);          rpSpherePatches->update("projection", projection)->update("probe_radius", probeRadius); }
+        if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)         { rpSpherePatches->setShaderProgram(&spSpherePatchImpostorFull);            updateInputMapping(rpSpherePatches, spSpherePatchImpostorFull);            rpSpherePatches->update("projection", projection)->update("probe_radius", probeRadius); }
+        if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)         { rpSpherePatches->setShaderProgram(&spSpherePatchImpostorFullColored);     updateInputMapping(rpSpherePatches, spSpherePatchImpostorFullColored);     rpSpherePatches->update("projection", projection)->update("probe_radius", probeRadius); }
+        if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS)         { rpToroidalPatches->setShaderProgram(&spToroidalPatchImpostorFrustum);     updateInputMapping(rpToroidalPatches, spToroidalPatchImpostorFrustum);     rpToroidalPatches->update("projection", projection); }
+        if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)         { rpToroidalPatches->setShaderProgram(&spToroidalPatchImpostorNormal);      updateInputMapping(rpToroidalPatches, spToroidalPatchImpostorNormal);      rpToroidalPatches->update("projection", projection)->update("probe_radius", probeRadius); }
+        if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)         { rpToroidalPatches->setShaderProgram(&spToroidalPatchImpostorFull);        updateInputMapping(rpToroidalPatches, spToroidalPatchImpostorFull);        rpToroidalPatches->update("projection", projection)->update("probe_radius", probeRadius); }
+        if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS)         { rpToroidalPatches->setShaderProgram(&spToroidalPatchImpostorFullColored); updateInputMapping(rpToroidalPatches, spToroidalPatchImpostorFullColored); rpToroidalPatches->update("projection", projection)->update("probe_radius", probeRadius); }
+
 
         // Render impostor geometry
         if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
         {
             renderBalls->setShaderProgram(&spRenderImpostor);
-            renderBalls->texture("visibleIDsBuff", visibleIDsBuff);
+            renderBalls->texture("sortedVisibleIDsBuffer", tex_sortedVisibleIDsBuffer);
             result->update("maxRange", 1.0f);
             result->texture("tex", renderBalls->get("fragColor"));
         }
@@ -294,7 +325,7 @@ void ImpostorSES::run()
         if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
         {
             renderBalls->setShaderProgram(&spRenderDiscs);
-            renderBalls->texture("visibleIDsBuff", visibleIDsBuff);
+            renderBalls->texture("sortedVisibleIDsBuffer", tex_sortedVisibleIDsBuffer);
             result->update("maxRange", 1.0f);
             result->texture("tex", renderBalls->get("fragColor"));
         }
@@ -302,7 +333,7 @@ void ImpostorSES::run()
         if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
         {
             renderBalls->setShaderProgram(&spRenderBalls);
-            renderBalls->texture("visibleIDsBuff", visibleIDsBuff);
+            renderBalls->texture("sortedVisibleIDsBuffer", tex_sortedVisibleIDsBuffer);
             result->update("maxRange", 1.0f);
             result->texture("tex", renderBalls->get("fragColor"));
         }
@@ -310,7 +341,7 @@ void ImpostorSES::run()
         if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
         {
             renderBalls->setShaderProgram(&spRenderBalls);
-            renderBalls->texture("visibleIDsBuff", visibleIDsBuff);
+            renderBalls->texture("sortedVisibleIDsBuffer", tex_sortedVisibleIDsBuffer);
             result->update("maxRange", float(impSph->num_balls));
             result->texture("tex", renderBalls->get("InstanceID"));
         }
@@ -341,7 +372,7 @@ void ImpostorSES::run()
         mat4 view = translate(mat4(1), vec3(0,0,-distance)) * eulerAngleXY(-rotX, -rotY);
 
         // reset the detected instance IDs
-        glBindTexture(GL_TEXTURE_1D, bufferTex->getHandle());
+        glBindTexture(GL_TEXTURE_1D, tex_collectedIDsBuffer->getHandle());
         glTexImage1D(GL_TEXTURE_1D, 0, GL_R8UI, num_balls, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, zeros);
         //glBindTexture(GL_TEXTURE_1D, visibleIDsBuff->getHandle());
         //glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, num_balls, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, &identityInstancesMap[0]);
@@ -359,109 +390,72 @@ void ImpostorSES::run()
 
         // Depending on user input: sort out instances for the next frame or not,
         // or lock the current set of visible instances
-        if(useAtomicCounters)
-            if (updateVisibilityMap && !pingPongOff)
+        if (updateVisibilityMap && !pingPongOff)
+        {
+            // the following shaders in detectVisible look at what has been written to the screen (framebuffer0)
+            // better render the instance stuff to a texture and read from there
+            collectSurfaceIDs->run();
+            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT|GL_BUFFER_UPDATE_BARRIER_BIT);
+            glBeginQuery(GL_TIME_ELAPSED, timeQuery);
+            computeSortedIDs->run(16,1,1); // 16 work groups * 1024 work items = 16384 atoms and IDs
+            glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT|GL_SHADER_IMAGE_ACCESS_BARRIER_BIT|GL_BUFFER_UPDATE_BARRIER_BIT);
+            glEndQuery(GL_TIME_ELAPSED);
+
+            glGetQueryObjectuiv(timeQuery, GL_QUERY_RESULT, &queryTime);
+            std::cout << "compute shader time: " << queryTime << std::endl;
+
+            // Check buffer data
+            //                GLuint visibilityMapFromBuff[ImpostorSpheres::num_balls];
+            //                GLuint visibleIDsFromBuff[ImpostorSpheres::num_balls];
+            //                glBindTexture(GL_TEXTURE_1D, bufferTex->getHandle());
+            //                glGetTexImage(GL_TEXTURE_1D, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, visibilityMapFromBuff);
+            //                glBindTexture(GL_TEXTURE_1D, visibleIDsBuff->getHandle());
+            //                glGetTexImage(GL_TEXTURE_1D, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, visibleIDsFromBuff);
+
+            //get the value of the atomic counter
+            glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomBuff);
+            GLuint* counterVal = (GLuint*) glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint),  GL_MAP_READ_BIT );
+            glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+
+            impSph->instancesToRender = *counterVal;
+            std::cout << "Number of visible instances by atomic Counter: " << *counterVal << std::endl;
+
+            updateVisibilityMap = false;
+        }else
+        {
+            if(!updateVisibilityMapLock)
             {
-                // the following shaders in detectVisible look at what has been written to the screen (framebuffer0)
-                // better render the instance stuff to a texture and read from there
-                detectVisible->run();
-                glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT|GL_BUFFER_UPDATE_BARRIER_BIT);
-                glBeginQuery(GL_TIME_ELAPSED, timeQuery);
-                computeVisibleIDs->run(16,1,1); // 16 work groups * 1024 work items = 16384 atoms and IDs
-                glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT|GL_SHADER_IMAGE_ACCESS_BARRIER_BIT|GL_BUFFER_UPDATE_BARRIER_BIT);
-                glEndQuery(GL_TIME_ELAPSED);
-
-                glGetQueryObjectuiv(timeQuery, GL_QUERY_RESULT, &queryTime);
-                std::cout << "compute shader time: " << queryTime << std::endl;
-
-                // Check buffer data
-//                GLuint visibilityMapFromBuff[ImpostorSpheres::num_balls];
-//                GLuint visibleIDsFromBuff[ImpostorSpheres::num_balls];
-//                glBindTexture(GL_TEXTURE_1D, bufferTex->getHandle());
-//                glGetTexImage(GL_TEXTURE_1D, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, visibilityMapFromBuff);
-//                glBindTexture(GL_TEXTURE_1D, visibleIDsBuff->getHandle());
-//                glGetTexImage(GL_TEXTURE_1D, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, visibleIDsFromBuff);
-
-                //get the value of the atomic counter
-                glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomBuff);
-                GLuint* counterVal = (GLuint*) glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint),  GL_MAP_READ_BIT );
-                glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
-
-                impSph->instancesToRender = *counterVal;
-                std::cout << "Number of visible instances by atomic Counter: " << *counterVal << std::endl;
-
-                updateVisibilityMap = false;
-            }else
-            {
-                if(!updateVisibilityMapLock)
-                {
-                    // ToDo
-                    // instead of uploading the data, swap the buffer
-                    glBindTexture(GL_TEXTURE_1D, visibleIDsBuff->getHandle());
-                    glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, num_balls, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, &identityInstancesMap[0]);
-                    impSph->instancesToRender = impSph->num_balls;
-                    updateVisibilityMap = true; // sort out every other frame
-                }
+                // ToDo
+                // instead of uploading the data, swap the buffer
+                glBindTexture(GL_TEXTURE_1D, tex_sortedVisibleIDsBuffer->getHandle());
+                glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, num_balls, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, &identityInstancesMap[0]);
+                impSph->instancesToRender = impSph->num_balls;
+                updateVisibilityMap = true; // sort out every other frame
             }
-        else
-            if (updateVisibilityMap && !pingPongOff)
-            {
-                detectVisible->run();
-                // detect visible instances
-                glBeginQuery(GL_TIME_ELAPSED, timeQuery);
-                GLuint visibilityMapFromBuff[impSph->num_balls];
-                glBindTexture(GL_TEXTURE_1D, bufferTex->getHandle());
-                glGetTexImage(GL_TEXTURE_1D, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, visibilityMapFromBuff);
+        }
 
-                // copy visible instance information to a vector with size = num_balls
-                int num_vis = 0;
-                std::vector<GLint> newMap;
-                newMap.resize(num_balls);
-                for (int i = 0; i < num_balls; i++)
-                {
-                    newMap[i] = (int)visibilityMapFromBuff[i];
-                    if(visibilityMapFromBuff[i] != 0)
-                        num_vis++;
-                }
-                glEndQuery(GL_TIME_ELAPSED);
-                glGetQueryObjectuiv(timeQuery, GL_QUERY_RESULT, &queryTime);
-                std::cout << "cpu time: " << queryTime << std::endl;
-
-                // print number of visible instances
-                std::cout << "Number of visible instances: " << num_vis << std::endl;
-                impSph->updateVisibilityMap(newMap);
-                updateVisibilityMap = false;
-            }else
-            {
-                if(!updateVisibilityMapLock)
-                {
-                    impSph->updateVisibilityMap(mapAllVisible);
-                    updateVisibilityMap = true; // sort out every other frame
-                }
-            }
-
-        result->clear(num_balls,num_balls,num_balls,num_balls);
+        result->clear(0.15f, 0.15f, 0.15f, 1.0f);
         result->run();
 
         // just to clear the framebuffer (always)
         rpAtoms
-            ->clear(0.15f, 0.15f, 0.15f, 1.0f)
-            ->clearDepth();
+                ->clear(0.15f, 0.15f, 0.15f, 1.0f)
+                ->clearDepth();
 
         if (renderAtoms)
             rpAtoms
-                ->update("view", view)
-                ->run();
+                    ->update("view", view)
+                    ->run();
 
         if (renderToroidalPatches)
             rpToroidalPatches
-                ->update("view", view)
-                ->run();
+                    ->update("view", view)
+                    ->run();
 
         if (renderSpherePatches)
             rpSpherePatches
-                ->update("view", view)
-                ->run();
+                    ->update("view", view)
+                    ->run();
     });
 }
 
@@ -490,169 +484,29 @@ void printProperties()
     glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &maxTexture3D);
     std::cout << "Max 3D texture size: " << maxTexture3D << std::endl;
 
-//    GLuint tex3d;
-//    glGenTextures(1, &tex3d);
-//    glBindTexture(GL_TEXTURE_3D, tex3d);
-//    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA16F, maxTexture3D, maxTexture3D, 64, 0, GL_RGBA, GL_FLOAT, 0);
+    //    GLuint tex3d;
+    //    glGenTextures(1, &tex3d);
+    //    glBindTexture(GL_TEXTURE_3D, tex3d);
+    //    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    //    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    //    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA16F, maxTexture3D, maxTexture3D, 64, 0, GL_RGBA, GL_FLOAT, 0);
 
     int err = glGetError();
     printf("%d\n", err);
 
 
-//    int maxAtomicCountersFrag;
-//    glGetIntegerv(GL_MAX_FRAGMENT_ATOMIC_COUNTER_BUFFERS, &maxAtomicCountersFrag);
-//    std::cout << "GL_MAX_FRAGMENT_ATOMIC_COUNTER_BUFFERS: " << maxAtomicCountersFrag << std::endl;
+    //    int maxAtomicCountersFrag;
+    //    glGetIntegerv(GL_MAX_FRAGMENT_ATOMIC_COUNTER_BUFFERS, &maxAtomicCountersFrag);
+    //    std::cout << "GL_MAX_FRAGMENT_ATOMIC_COUNTER_BUFFERS: " << maxAtomicCountersFrag << std::endl;
 }
 
-void asdf(){
-
-    bool renderAtoms = true;
-    bool renderSpherePatches = false;
-    bool renderToroidalPatches = false;
-    bool vsync = true;
-    bool animate = false;
-    GLFWwindow* window = generateWindow(600, 600, 400, 100);
-
-    float rotX = 0.0f;
-    float rotY = 0.0f;
-    float distance = 8.0f;
-    float probeRadius = 1.4f;
-
-    mat4 projection = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
-
-    // load a file
-    std::vector<std::string> paths;
-    paths.push_back("/home/nlichtenberg/1crn.pdb");
-    //paths.push_back("/home/nlichtenberg/1vis.pdb");
-    //paths.push_back("/home/nlichtenberg/Develop/Mol_Sandbox/resources/TrajectoryFiles/1aon.pdb");
-
-    MdTrajWrapper mdwrap;
-    std::shared_ptr<Protein>  prot = mdwrap.load(paths);
-    prot->setupSimpleAtoms();
-    prot->recenter();
-    prot->calculatePatches(1.4);
-
-
-    // --- ATOM
-
-    ShaderProgram spAtomImpostorQuad              = ShaderProgram("/SGROSS_Molecules/atom_impostor.vert", "/SGROSS_Molecules/atom_impostor.geom", "/SGROSS_Molecules/atom_impostor__quad.frag");
-    ShaderProgram spAtomImpostorSphere            = ShaderProgram("/SGROSS_Molecules/atom_impostor.vert", "/SGROSS_Molecules/atom_impostor.geom", "/SGROSS_Molecules/atom_impostor__sphere.frag");
-    ShaderProgram spAtomImpostorSphereRaymarching = ShaderProgram("/SGROSS_Molecules/atom_impostor.vert", "/SGROSS_Molecules/atom_impostor.geom", "/SGROSS_Molecules/atom_impostor__sphere_raymarching.frag");
-    ShaderProgram spAtomImpostorNormal            = ShaderProgram("/SGROSS_Molecules/atom_impostor.vert", "/SGROSS_Molecules/atom_impostor.geom", "/SGROSS_Molecules/atom_impostor__normal.frag");
-    ShaderProgram spAtomImpostorFull              = ShaderProgram("/SGROSS_Molecules/atom_impostor.vert", "/SGROSS_Molecules/atom_impostor.geom", "/SGROSS_Molecules/atom_impostor__full.frag");
-    ShaderProgram spAtomImpostorFullColored       = ShaderProgram("/SGROSS_Molecules/atom_impostor.vert", "/SGROSS_Molecules/atom_impostor.geom", "/SGROSS_Molecules/atom_impostor__full_colored.frag");
-
-    RenderPass* rpAtoms = new RenderPass(new MoleculeSESAtomImpostor(prot), &spAtomImpostorQuad);
-
-    updateInputMapping(rpAtoms, spAtomImpostorQuad);
-    rpAtoms->update("projection", projection);
-
-    // --- SPHERE PATCH
-
-    ShaderProgram spSpherePatchImpostorTriangle    = ShaderProgram("/SGROSS_Molecules/sphere_patch_impostor.vert", "/SGROSS_Molecules/sphere_patch_impostor__triangle.geom", "/SGROSS_Molecules/sphere_patch_impostor__triangle.frag");
-    ShaderProgram spSpherePatchImpostorTetrahedron = ShaderProgram("/SGROSS_Molecules/sphere_patch_impostor.vert", "/SGROSS_Molecules/sphere_patch_impostor.geom",           "/SGROSS_Molecules/sphere_patch_impostor__tetrahedron.frag");
-    ShaderProgram spSpherePatchImpostorNormal      = ShaderProgram("/SGROSS_Molecules/sphere_patch_impostor.vert", "/SGROSS_Molecules/sphere_patch_impostor.geom",           "/SGROSS_Molecules/sphere_patch_impostor__normal.frag");
-    ShaderProgram spSpherePatchImpostorFull        = ShaderProgram("/SGROSS_Molecules/sphere_patch_impostor.vert", "/SGROSS_Molecules/sphere_patch_impostor.geom",           "/SGROSS_Molecules/sphere_patch_impostor__full.frag");
-    ShaderProgram spSpherePatchImpostorFullColored = ShaderProgram("/SGROSS_Molecules/sphere_patch_impostor.vert", "/SGROSS_Molecules/sphere_patch_impostor.geom",           "/SGROSS_Molecules/sphere_patch_impostor__full_colored.frag");
-
-    RenderPass* rpSpherePatches = new RenderPass(new MoleculeSESSpherePatchImpostor(prot), &spSpherePatchImpostorTriangle);
-
-    updateInputMapping(rpSpherePatches, spSpherePatchImpostorTriangle);
-    rpSpherePatches->update("projection", projection);
-
-    // --- TOROIDAL PATCH
-
-    ShaderProgram spToroidalPatchImpostorFrustum     = ShaderProgram("/SGROSS_Molecules/toroidal_patch_impostor.vert", "/SGROSS_Molecules/toroidal_patch_impostor.geom", "/SGROSS_Molecules/toroidal_patch_impostor__frustum.frag");
-    ShaderProgram spToroidalPatchImpostorNormal      = ShaderProgram("/SGROSS_Molecules/toroidal_patch_impostor.vert", "/SGROSS_Molecules/toroidal_patch_impostor.geom", "/SGROSS_Molecules/toroidal_patch_impostor__normal.frag");
-    ShaderProgram spToroidalPatchImpostorFull        = ShaderProgram("/SGROSS_Molecules/toroidal_patch_impostor.vert", "/SGROSS_Molecules/toroidal_patch_impostor.geom", "/SGROSS_Molecules/toroidal_patch_impostor__full.frag");
-    ShaderProgram spToroidalPatchImpostorFullColored = ShaderProgram("/SGROSS_Molecules/toroidal_patch_impostor.vert", "/SGROSS_Molecules/toroidal_patch_impostor.geom", "/SGROSS_Molecules/toroidal_patch_impostor__full_colored.frag");
-
-    RenderPass* rpToroidalPatches = new RenderPass(new MoleculeSESToroidalPatchImpostor(prot), &spToroidalPatchImpostorFrustum);
-
-    updateInputMapping(rpToroidalPatches, spToroidalPatchImpostorFrustum);
-    rpToroidalPatches->update("projection", projection);
-
-
-    glEnable(GL_DEPTH_TEST); // partly useless due to custom gl_FragDepth
-    glEnable(GL_CULL_FACE);
-    //glFrontFace(GL_CW);
-
-    float fps           = 0.0f;
-    float frameInterval = 0.0f;
-    int numberOfFrames  = 0;
-
-    render(window, [&] (float deltaTime)
-    {
-        if (animate) rotY += 0.5f * deltaTime;
-
-        numberOfFrames++;
-        frameInterval += deltaTime;
-
-        if (frameInterval > 1.0f)
-        {
-            fps = numberOfFrames / frameInterval;
-
-            std::cout << "FPS: " << fps << std::endl;
-
-            numberOfFrames = 0;
-            frameInterval = 0.0f;
-        }
-
-        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)         { rpAtoms->setShaderProgram(&spAtomImpostorQuad);                           updateInputMapping(rpAtoms, spAtomImpostorQuad);                           rpAtoms->update("projection", projection); }
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)         { rpAtoms->setShaderProgram(&spAtomImpostorSphere);                         updateInputMapping(rpAtoms, spAtomImpostorSphere);                         rpAtoms->update("projection", projection); }
-        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)         { rpAtoms->setShaderProgram(&spAtomImpostorSphereRaymarching);              updateInputMapping(rpAtoms, spAtomImpostorSphereRaymarching);              rpAtoms->update("projection", projection); }
-        if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)         { rpAtoms->setShaderProgram(&spAtomImpostorNormal);                         updateInputMapping(rpAtoms, spAtomImpostorNormal);                         rpAtoms->update("projection", projection); }
-        if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)         { rpAtoms->setShaderProgram(&spAtomImpostorFull);                           updateInputMapping(rpAtoms, spAtomImpostorFull);                           rpAtoms->update("projection", projection); }
-        if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)         { rpAtoms->setShaderProgram(&spAtomImpostorFullColored);                    updateInputMapping(rpAtoms, spAtomImpostorFullColored);                    rpAtoms->update("projection", projection); }
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)         { rpSpherePatches->setShaderProgram(&spSpherePatchImpostorTriangle);        updateInputMapping(rpSpherePatches, spSpherePatchImpostorTriangle);        rpSpherePatches->update("projection", projection); }
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)         { rpSpherePatches->setShaderProgram(&spSpherePatchImpostorTetrahedron);     updateInputMapping(rpSpherePatches, spSpherePatchImpostorTetrahedron);     rpSpherePatches->update("projection", projection); }
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)         { rpSpherePatches->setShaderProgram(&spSpherePatchImpostorNormal);          updateInputMapping(rpSpherePatches, spSpherePatchImpostorNormal);          rpSpherePatches->update("projection", projection)->update("probe_radius", probeRadius); }
-        if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)         { rpSpherePatches->setShaderProgram(&spSpherePatchImpostorFull);            updateInputMapping(rpSpherePatches, spSpherePatchImpostorFull);            rpSpherePatches->update("projection", projection)->update("probe_radius", probeRadius); }
-        if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)         { rpSpherePatches->setShaderProgram(&spSpherePatchImpostorFullColored);     updateInputMapping(rpSpherePatches, spSpherePatchImpostorFullColored);     rpSpherePatches->update("projection", projection)->update("probe_radius", probeRadius); }
-        if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS)         { rpToroidalPatches->setShaderProgram(&spToroidalPatchImpostorFrustum);     updateInputMapping(rpToroidalPatches, spToroidalPatchImpostorFrustum);     rpToroidalPatches->update("projection", projection); }
-        if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)         { rpToroidalPatches->setShaderProgram(&spToroidalPatchImpostorNormal);      updateInputMapping(rpToroidalPatches, spToroidalPatchImpostorNormal);      rpToroidalPatches->update("projection", projection)->update("probe_radius", probeRadius); }
-        if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)         { rpToroidalPatches->setShaderProgram(&spToroidalPatchImpostorFull);        updateInputMapping(rpToroidalPatches, spToroidalPatchImpostorFull);        rpToroidalPatches->update("projection", projection)->update("probe_radius", probeRadius); }
-        if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS)         { rpToroidalPatches->setShaderProgram(&spToroidalPatchImpostorFullColored); updateInputMapping(rpToroidalPatches, spToroidalPatchImpostorFullColored); rpToroidalPatches->update("projection", projection)->update("probe_radius", probeRadius); }
-        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)      rotY -= deltaTime;
-        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)     rotY += deltaTime;
-        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)        rotX -= deltaTime;
-        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)      rotX += deltaTime;
-        if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS)         distance += deltaTime * 3;
-        if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS)         distance = max(distance - deltaTime * 3, 0.0f);
-
-        mat4 view = translate(mat4(1), vec3(0, 0, -distance)) * eulerAngleXY(-rotX, -rotY);
-
-        // just to clear the framebuffer (always)
-        rpAtoms
-            ->clear(0.15f, 0.15f, 0.15f, 1.0f)
-            ->clearDepth();
-
-        if (renderAtoms)
-            rpAtoms
-                ->update("view", view)
-                ->run();
-
-        if (renderToroidalPatches)
-            rpToroidalPatches
-                ->update("view", view)
-                ->run();
-
-        if (renderSpherePatches)
-            rpSpherePatches
-                ->update("view", view)
-                ->run();
-    });
-}
 
 int main(int argc, char *argv[]) {
     ImpostorSES demo;
     demo.perspectiveProj = true;
 
-//    demo.init();
-//    demo.initSES();
-    asdf();
+    demo.init();
+    demo.initSES();
 
     printProperties();
 
