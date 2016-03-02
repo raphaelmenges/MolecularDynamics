@@ -8,6 +8,8 @@
 #include "AssetTools/Mesh.h"
 #include "ShaderTools/VertexArrayObjects/Quad.h"
 #include "ShaderTools/VertexArrayObjects/ImpostorSpheres.h"
+#include "Molecule/MDtrajLoader/Data/Protein.h"
+#include "Molecule/MDtrajLoader/Data/SesPatchesProtein.h"
 
 using namespace glm;
 
@@ -79,7 +81,43 @@ public:
     int numberOfFrames  = 0;
 
     void init();
+    void initSES();
     void run();
+
+    std::shared_ptr<Protein> prot;
+
+    bool renderAtoms = true;
+    bool renderSpherePatches = false;
+    bool renderToroidalPatches = false;
+
+    ShaderProgram spAtomImpostorQuad;
+    ShaderProgram spAtomImpostorSphere;
+    ShaderProgram spAtomImpostorSphereRaymarching;
+    ShaderProgram spAtomImpostorNormal;
+    ShaderProgram spAtomImpostorFull;
+    ShaderProgram spAtomImpostorFullColored;
+
+    RenderPass* rpAtoms;
+
+    // --- SPHERE PATCH
+
+    ShaderProgram spSpherePatchImpostorTriangle;
+    ShaderProgram spSpherePatchImpostorTetrahedron;
+    ShaderProgram spSpherePatchImpostorNormal;
+    ShaderProgram spSpherePatchImpostorFull;
+    ShaderProgram spSpherePatchImpostorFullColored;
+
+    RenderPass* rpSpherePatches;
+
+    // --- TOROIDAL PATCH
+
+    ShaderProgram spToroidalPatchImpostorFrustum;
+    ShaderProgram spToroidalPatchImpostorNormal;
+    ShaderProgram spToroidalPatchImpostorFull;
+    ShaderProgram spToroidalPatchImpostorFullColored;
+
+    RenderPass* rpToroidalPatches;
+
 
     float r(float size) {
         return size * 2 * static_cast <float> (rand()) / static_cast <float> (RAND_MAX) - size;

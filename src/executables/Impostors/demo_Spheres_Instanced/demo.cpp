@@ -42,10 +42,10 @@ int main(int argc, char *argv[]) {
     //paths.push_back("/home/nlichtenberg/1vis.pdb");
     paths.push_back("/home/nlichtenberg/Develop/Mol_Sandbox/resources/TrajectoryFiles/1aon.pdb");
     MdTrajWrapper mdwrap;
-    Protein* prot = mdwrap.load(paths);
+    std::auto_ptr<Protein> prot = mdwrap.load(paths);
 
     ImpostorSpheres* impSph = new ImpostorSpheres(true, true);
-    impSph->setProteinData(prot);
+    impSph->setProteinData(prot.get());
     //impSph->num_balls = 1000000;
     impSph->init();
     

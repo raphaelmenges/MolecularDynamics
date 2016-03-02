@@ -48,7 +48,7 @@ MdTrajWrapper::~MdTrajWrapper()
 * @param vector of paths to xtc and/or pdb
 * if xtc then first argument in vector is path to pdb and second path to xtc
 */
-Protein* MdTrajWrapper::load(std::vector<std::string> paths)
+std::auto_ptr<Protein> MdTrajWrapper::load(std::vector<std::string> paths)
 {
     std::vector<std::string> names;
     std::vector<std::string> bonds;
@@ -69,9 +69,9 @@ Protein* MdTrajWrapper::load(std::vector<std::string> paths)
     //		indices, bonds, positions, proteinName, numAtoms, distinctResidueNames);
 
 
-    Protein* prot = new Protein(names,
+    std::auto_ptr<Protein> prot(  new Protein(names,
         elementNames, residueNames,
-        indices, bonds, positions, proteinName, numAtoms, distinctResidueNames, radii);
+        indices, bonds, positions, proteinName, numAtoms, distinctResidueNames, radii));
    // proteins_.push_back(prot);
     return prot;
 }

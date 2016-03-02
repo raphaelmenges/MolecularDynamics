@@ -263,7 +263,7 @@ void main() {
 
       done = true;
       // "Tiefenkomplexität" Rendern
-       fragColor = vec4(int(imageLoad(intervalBuffer, ivec3(coord, perPixelDepth-1)).r)/10.0);
+      // fragColor = vec4(int(imageLoad(intervalBuffer, ivec3(coord, perPixelDepth-1)).r)/10.0);
       }
       }
       }

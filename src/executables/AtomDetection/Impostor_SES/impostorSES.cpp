@@ -1,10 +1,20 @@
 #include "impostorSES.h"
 #include "Molecule/MDtrajLoader/MdTraj/MdTrajWrapper.h"
-#include "Molecule/MDtrajLoader/Data/Protein.h"
+
+#include "DynamicVertexArrayObject.h"
+#include "MoleculeSESAtomImpostor.h"
+#include "MoleculeSESSpherePatchImpostor.h"
+#include "MoleculeSESToroidalPatchImpostor.h"
 
 ImpostorSES::ImpostorSES()
 {
 
+}
+
+void updateInputMapping(RenderPass* rp, ShaderProgram &sp)
+{
+    auto vao = static_cast<DynamicVertexArrayObject*>(rp->vertexArrayObject);
+    vao->enableVertexAttribArrays(sp.inputMap);
 }
 
 void ImpostorSES::init()
@@ -16,11 +26,13 @@ void ImpostorSES::init()
     paths.push_back("/home/nlichtenberg/1crn.pdb");
     //paths.push_back("/home/nlichtenberg/1vis.pdb");
     //paths.push_back("/home/nlichtenberg/Develop/Mol_Sandbox/resources/TrajectoryFiles/1aon.pdb");
+
     MdTrajWrapper mdwrap;
-    Protein* prot = mdwrap.load(paths);
+    prot = mdwrap.load(paths);
+
 
     impSph = new ImpostorSpheres(!useAtomicCounters, false);
-    impSph->setProteinData(prot);
+    impSph->setProteinData(prot.get());
     impSph->init();
     num_balls = impSph->num_balls;
 
@@ -186,6 +198,55 @@ void ImpostorSES::init()
     glGenQueries(1, &timeQuery);
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+}
+
+void ImpostorSES::initSES()
+{
+    // one timestep so far ...
+    //prot->frames.resize(1);
+    prot->setupSimpleAtoms();
+    prot->recenter();
+    prot->calculatePatches(probeRadius);
+
+    // --- ATOM
+
+    spAtomImpostorQuad              = ShaderProgram("/SGROSS_Molecules/atom_impostor.vert", "/SGROSS_Molecules/atom_impostor.geom", "/SGROSS_Molecules/atom_impostor__quad.frag");
+    spAtomImpostorSphere            = ShaderProgram("/SGROSS_Molecules/atom_impostor.vert", "/SGROSS_Molecules/atom_impostor.geom", "/SGROSS_Molecules/atom_impostor__sphere.frag");
+    spAtomImpostorSphereRaymarching = ShaderProgram("/SGROSS_Molecules/atom_impostor.vert", "/SGROSS_Molecules/atom_impostor.geom", "/SGROSS_Molecules/atom_impostor__sphere_raymarching.frag");
+    spAtomImpostorNormal            = ShaderProgram("/SGROSS_Molecules/atom_impostor.vert", "/SGROSS_Molecules/atom_impostor.geom", "/SGROSS_Molecules/atom_impostor__normal.frag");
+    spAtomImpostorFull              = ShaderProgram("/SGROSS_Molecules/atom_impostor.vert", "/SGROSS_Molecules/atom_impostor.geom", "/SGROSS_Molecules/atom_impostor__full.frag");
+    spAtomImpostorFullColored       = ShaderProgram("/SGROSS_Molecules/atom_impostor.vert", "/SGROSS_Molecules/atom_impostor.geom", "/SGROSS_Molecules/atom_impostor__full_colored.frag");
+
+    rpAtoms = new RenderPass(new MoleculeSESAtomImpostor(prot), &spAtomImpostorQuad);
+
+    updateInputMapping(rpAtoms, spAtomImpostorQuad);
+    rpAtoms->update("projection", projection);
+
+    // --- SPHERE PATCH
+
+    spSpherePatchImpostorTriangle    = ShaderProgram("/SGROSS_Molecules/sphere_patch_impostor.vert", "/SGROSS_Molecules/sphere_patch_impostor__triangle.geom", "/SGROSS_Molecules/sphere_patch_impostor__triangle.frag");
+    spSpherePatchImpostorTetrahedron = ShaderProgram("/SGROSS_Molecules/sphere_patch_impostor.vert", "/SGROSS_Molecules/sphere_patch_impostor.geom",           "/SGROSS_Molecules/sphere_patch_impostor__tetrahedron.frag");
+    spSpherePatchImpostorNormal      = ShaderProgram("/SGROSS_Molecules/sphere_patch_impostor.vert", "/SGROSS_Molecules/sphere_patch_impostor.geom",           "/SGROSS_Molecules/sphere_patch_impostor__normal.frag");
+    spSpherePatchImpostorFull        = ShaderProgram("/SGROSS_Molecules/sphere_patch_impostor.vert", "/SGROSS_Molecules/sphere_patch_impostor.geom",           "/SGROSS_Molecules/sphere_patch_impostor__full.frag");
+    spSpherePatchImpostorFullColored = ShaderProgram("/SGROSS_Molecules/sphere_patch_impostor.vert", "/SGROSS_Molecules/sphere_patch_impostor.geom",           "/SGROSS_Molecules/sphere_patch_impostor__full_colored.frag");
+
+    rpSpherePatches = new RenderPass(new MoleculeSESSpherePatchImpostor(prot), &spSpherePatchImpostorTriangle);
+
+    updateInputMapping(rpSpherePatches, spSpherePatchImpostorTriangle);
+    rpSpherePatches->update("projection", projection);
+
+    // --- TOROIDAL PATCH
+
+    spToroidalPatchImpostorFrustum     = ShaderProgram("/SGROSS_Molecules/toroidal_patch_impostor.vert", "/SGROSS_Molecules/toroidal_patch_impostor.geom", "/SGROSS_Molecules/toroidal_patch_impostor__frustum.frag");
+    spToroidalPatchImpostorNormal      = ShaderProgram("/SGROSS_Molecules/toroidal_patch_impostor.vert", "/SGROSS_Molecules/toroidal_patch_impostor.geom", "/SGROSS_Molecules/toroidal_patch_impostor__normal.frag");
+    spToroidalPatchImpostorFull        = ShaderProgram("/SGROSS_Molecules/toroidal_patch_impostor.vert", "/SGROSS_Molecules/toroidal_patch_impostor.geom", "/SGROSS_Molecules/toroidal_patch_impostor__full.frag");
+    spToroidalPatchImpostorFullColored = ShaderProgram("/SGROSS_Molecules/toroidal_patch_impostor.vert", "/SGROSS_Molecules/toroidal_patch_impostor.geom", "/SGROSS_Molecules/toroidal_patch_impostor__full_colored.frag");
+
+    rpToroidalPatches = new RenderPass(new MoleculeSESToroidalPatchImpostor(prot), &spToroidalPatchImpostorFrustum);
+
+    updateInputMapping(rpToroidalPatches, spToroidalPatchImpostorFrustum);
+    rpToroidalPatches->update("projection", projection);
 }
 
 void ImpostorSES::run()
@@ -381,6 +442,26 @@ void ImpostorSES::run()
 
         result->clear(num_balls,num_balls,num_balls,num_balls);
         result->run();
+
+        // just to clear the framebuffer (always)
+        rpAtoms
+            ->clear(0.15f, 0.15f, 0.15f, 1.0f)
+            ->clearDepth();
+
+        if (renderAtoms)
+            rpAtoms
+                ->update("view", view)
+                ->run();
+
+        if (renderToroidalPatches)
+            rpToroidalPatches
+                ->update("view", view)
+                ->run();
+
+        if (renderSpherePatches)
+            rpSpherePatches
+                ->update("view", view)
+                ->run();
     });
 }
 
@@ -425,11 +506,153 @@ void printProperties()
 //    std::cout << "GL_MAX_FRAGMENT_ATOMIC_COUNTER_BUFFERS: " << maxAtomicCountersFrag << std::endl;
 }
 
+void asdf(){
+
+    bool renderAtoms = true;
+    bool renderSpherePatches = false;
+    bool renderToroidalPatches = false;
+    bool vsync = true;
+    bool animate = false;
+    GLFWwindow* window = generateWindow(600, 600, 400, 100);
+
+    float rotX = 0.0f;
+    float rotY = 0.0f;
+    float distance = 8.0f;
+    float probeRadius = 1.4f;
+
+    mat4 projection = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
+
+    // load a file
+    std::vector<std::string> paths;
+    paths.push_back("/home/nlichtenberg/1crn.pdb");
+    //paths.push_back("/home/nlichtenberg/1vis.pdb");
+    //paths.push_back("/home/nlichtenberg/Develop/Mol_Sandbox/resources/TrajectoryFiles/1aon.pdb");
+
+    MdTrajWrapper mdwrap;
+    std::shared_ptr<Protein>  prot = mdwrap.load(paths);
+    prot->setupSimpleAtoms();
+    prot->recenter();
+    prot->calculatePatches(1.4);
+
+
+    // --- ATOM
+
+    ShaderProgram spAtomImpostorQuad              = ShaderProgram("/SGROSS_Molecules/atom_impostor.vert", "/SGROSS_Molecules/atom_impostor.geom", "/SGROSS_Molecules/atom_impostor__quad.frag");
+    ShaderProgram spAtomImpostorSphere            = ShaderProgram("/SGROSS_Molecules/atom_impostor.vert", "/SGROSS_Molecules/atom_impostor.geom", "/SGROSS_Molecules/atom_impostor__sphere.frag");
+    ShaderProgram spAtomImpostorSphereRaymarching = ShaderProgram("/SGROSS_Molecules/atom_impostor.vert", "/SGROSS_Molecules/atom_impostor.geom", "/SGROSS_Molecules/atom_impostor__sphere_raymarching.frag");
+    ShaderProgram spAtomImpostorNormal            = ShaderProgram("/SGROSS_Molecules/atom_impostor.vert", "/SGROSS_Molecules/atom_impostor.geom", "/SGROSS_Molecules/atom_impostor__normal.frag");
+    ShaderProgram spAtomImpostorFull              = ShaderProgram("/SGROSS_Molecules/atom_impostor.vert", "/SGROSS_Molecules/atom_impostor.geom", "/SGROSS_Molecules/atom_impostor__full.frag");
+    ShaderProgram spAtomImpostorFullColored       = ShaderProgram("/SGROSS_Molecules/atom_impostor.vert", "/SGROSS_Molecules/atom_impostor.geom", "/SGROSS_Molecules/atom_impostor__full_colored.frag");
+
+    RenderPass* rpAtoms = new RenderPass(new MoleculeSESAtomImpostor(prot), &spAtomImpostorQuad);
+
+    updateInputMapping(rpAtoms, spAtomImpostorQuad);
+    rpAtoms->update("projection", projection);
+
+    // --- SPHERE PATCH
+
+    ShaderProgram spSpherePatchImpostorTriangle    = ShaderProgram("/SGROSS_Molecules/sphere_patch_impostor.vert", "/SGROSS_Molecules/sphere_patch_impostor__triangle.geom", "/SGROSS_Molecules/sphere_patch_impostor__triangle.frag");
+    ShaderProgram spSpherePatchImpostorTetrahedron = ShaderProgram("/SGROSS_Molecules/sphere_patch_impostor.vert", "/SGROSS_Molecules/sphere_patch_impostor.geom",           "/SGROSS_Molecules/sphere_patch_impostor__tetrahedron.frag");
+    ShaderProgram spSpherePatchImpostorNormal      = ShaderProgram("/SGROSS_Molecules/sphere_patch_impostor.vert", "/SGROSS_Molecules/sphere_patch_impostor.geom",           "/SGROSS_Molecules/sphere_patch_impostor__normal.frag");
+    ShaderProgram spSpherePatchImpostorFull        = ShaderProgram("/SGROSS_Molecules/sphere_patch_impostor.vert", "/SGROSS_Molecules/sphere_patch_impostor.geom",           "/SGROSS_Molecules/sphere_patch_impostor__full.frag");
+    ShaderProgram spSpherePatchImpostorFullColored = ShaderProgram("/SGROSS_Molecules/sphere_patch_impostor.vert", "/SGROSS_Molecules/sphere_patch_impostor.geom",           "/SGROSS_Molecules/sphere_patch_impostor__full_colored.frag");
+
+    RenderPass* rpSpherePatches = new RenderPass(new MoleculeSESSpherePatchImpostor(prot), &spSpherePatchImpostorTriangle);
+
+    updateInputMapping(rpSpherePatches, spSpherePatchImpostorTriangle);
+    rpSpherePatches->update("projection", projection);
+
+    // --- TOROIDAL PATCH
+
+    ShaderProgram spToroidalPatchImpostorFrustum     = ShaderProgram("/SGROSS_Molecules/toroidal_patch_impostor.vert", "/SGROSS_Molecules/toroidal_patch_impostor.geom", "/SGROSS_Molecules/toroidal_patch_impostor__frustum.frag");
+    ShaderProgram spToroidalPatchImpostorNormal      = ShaderProgram("/SGROSS_Molecules/toroidal_patch_impostor.vert", "/SGROSS_Molecules/toroidal_patch_impostor.geom", "/SGROSS_Molecules/toroidal_patch_impostor__normal.frag");
+    ShaderProgram spToroidalPatchImpostorFull        = ShaderProgram("/SGROSS_Molecules/toroidal_patch_impostor.vert", "/SGROSS_Molecules/toroidal_patch_impostor.geom", "/SGROSS_Molecules/toroidal_patch_impostor__full.frag");
+    ShaderProgram spToroidalPatchImpostorFullColored = ShaderProgram("/SGROSS_Molecules/toroidal_patch_impostor.vert", "/SGROSS_Molecules/toroidal_patch_impostor.geom", "/SGROSS_Molecules/toroidal_patch_impostor__full_colored.frag");
+
+    RenderPass* rpToroidalPatches = new RenderPass(new MoleculeSESToroidalPatchImpostor(prot), &spToroidalPatchImpostorFrustum);
+
+    updateInputMapping(rpToroidalPatches, spToroidalPatchImpostorFrustum);
+    rpToroidalPatches->update("projection", projection);
+
+
+    glEnable(GL_DEPTH_TEST); // partly useless due to custom gl_FragDepth
+    glEnable(GL_CULL_FACE);
+    //glFrontFace(GL_CW);
+
+    float fps           = 0.0f;
+    float frameInterval = 0.0f;
+    int numberOfFrames  = 0;
+
+    render(window, [&] (float deltaTime)
+    {
+        if (animate) rotY += 0.5f * deltaTime;
+
+        numberOfFrames++;
+        frameInterval += deltaTime;
+
+        if (frameInterval > 1.0f)
+        {
+            fps = numberOfFrames / frameInterval;
+
+            std::cout << "FPS: " << fps << std::endl;
+
+            numberOfFrames = 0;
+            frameInterval = 0.0f;
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)         { rpAtoms->setShaderProgram(&spAtomImpostorQuad);                           updateInputMapping(rpAtoms, spAtomImpostorQuad);                           rpAtoms->update("projection", projection); }
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)         { rpAtoms->setShaderProgram(&spAtomImpostorSphere);                         updateInputMapping(rpAtoms, spAtomImpostorSphere);                         rpAtoms->update("projection", projection); }
+        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)         { rpAtoms->setShaderProgram(&spAtomImpostorSphereRaymarching);              updateInputMapping(rpAtoms, spAtomImpostorSphereRaymarching);              rpAtoms->update("projection", projection); }
+        if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)         { rpAtoms->setShaderProgram(&spAtomImpostorNormal);                         updateInputMapping(rpAtoms, spAtomImpostorNormal);                         rpAtoms->update("projection", projection); }
+        if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)         { rpAtoms->setShaderProgram(&spAtomImpostorFull);                           updateInputMapping(rpAtoms, spAtomImpostorFull);                           rpAtoms->update("projection", projection); }
+        if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)         { rpAtoms->setShaderProgram(&spAtomImpostorFullColored);                    updateInputMapping(rpAtoms, spAtomImpostorFullColored);                    rpAtoms->update("projection", projection); }
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)         { rpSpherePatches->setShaderProgram(&spSpherePatchImpostorTriangle);        updateInputMapping(rpSpherePatches, spSpherePatchImpostorTriangle);        rpSpherePatches->update("projection", projection); }
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)         { rpSpherePatches->setShaderProgram(&spSpherePatchImpostorTetrahedron);     updateInputMapping(rpSpherePatches, spSpherePatchImpostorTetrahedron);     rpSpherePatches->update("projection", projection); }
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)         { rpSpherePatches->setShaderProgram(&spSpherePatchImpostorNormal);          updateInputMapping(rpSpherePatches, spSpherePatchImpostorNormal);          rpSpherePatches->update("projection", projection)->update("probe_radius", probeRadius); }
+        if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)         { rpSpherePatches->setShaderProgram(&spSpherePatchImpostorFull);            updateInputMapping(rpSpherePatches, spSpherePatchImpostorFull);            rpSpherePatches->update("projection", projection)->update("probe_radius", probeRadius); }
+        if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)         { rpSpherePatches->setShaderProgram(&spSpherePatchImpostorFullColored);     updateInputMapping(rpSpherePatches, spSpherePatchImpostorFullColored);     rpSpherePatches->update("projection", projection)->update("probe_radius", probeRadius); }
+        if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS)         { rpToroidalPatches->setShaderProgram(&spToroidalPatchImpostorFrustum);     updateInputMapping(rpToroidalPatches, spToroidalPatchImpostorFrustum);     rpToroidalPatches->update("projection", projection); }
+        if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)         { rpToroidalPatches->setShaderProgram(&spToroidalPatchImpostorNormal);      updateInputMapping(rpToroidalPatches, spToroidalPatchImpostorNormal);      rpToroidalPatches->update("projection", projection)->update("probe_radius", probeRadius); }
+        if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)         { rpToroidalPatches->setShaderProgram(&spToroidalPatchImpostorFull);        updateInputMapping(rpToroidalPatches, spToroidalPatchImpostorFull);        rpToroidalPatches->update("projection", projection)->update("probe_radius", probeRadius); }
+        if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS)         { rpToroidalPatches->setShaderProgram(&spToroidalPatchImpostorFullColored); updateInputMapping(rpToroidalPatches, spToroidalPatchImpostorFullColored); rpToroidalPatches->update("projection", projection)->update("probe_radius", probeRadius); }
+        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)      rotY -= deltaTime;
+        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)     rotY += deltaTime;
+        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)        rotX -= deltaTime;
+        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)      rotX += deltaTime;
+        if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS)         distance += deltaTime * 3;
+        if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS)         distance = max(distance - deltaTime * 3, 0.0f);
+
+        mat4 view = translate(mat4(1), vec3(0, 0, -distance)) * eulerAngleXY(-rotX, -rotY);
+
+        // just to clear the framebuffer (always)
+        rpAtoms
+            ->clear(0.15f, 0.15f, 0.15f, 1.0f)
+            ->clearDepth();
+
+        if (renderAtoms)
+            rpAtoms
+                ->update("view", view)
+                ->run();
+
+        if (renderToroidalPatches)
+            rpToroidalPatches
+                ->update("view", view)
+                ->run();
+
+        if (renderSpherePatches)
+            rpSpherePatches
+                ->update("view", view)
+                ->run();
+    });
+}
+
 int main(int argc, char *argv[]) {
     ImpostorSES demo;
     demo.perspectiveProj = true;
 
-    demo.init();
+//    demo.init();
+//    demo.initSES();
+    asdf();
 
     printProperties();
 

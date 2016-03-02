@@ -20,7 +20,7 @@ public:
 	MdTrajWrapper();
 	~MdTrajWrapper();
 
-    Protein* load(std::vector<std::string> paths);
+    std::auto_ptr<Protein> load(std::vector<std::string> paths);
 
 	void importMDTraj();
 
