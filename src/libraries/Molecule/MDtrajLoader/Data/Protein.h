@@ -90,8 +90,10 @@ public:
 
 
     void calculatePatches(float probeRadius);
+    void calculatePatches(float probeRadius, unsigned int *collectedVisibleIDs);
     void recenter();
     void setupSimpleAtoms();
+    void setupSimpleAtoms(unsigned int *collectedVisibleIDs);
 
 protected:
 

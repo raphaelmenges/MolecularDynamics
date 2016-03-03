@@ -10,6 +10,9 @@
 #include "ShaderTools/VertexArrayObjects/ImpostorSpheres.h"
 #include "Molecule/MDtrajLoader/Data/Protein.h"
 #include "Molecule/MDtrajLoader/Data/SesPatchesProtein.h"
+#include "MoleculeSESAtomImpostor.h"
+#include "MoleculeSESSpherePatchImpostor.h"
+#include "MoleculeSESToroidalPatchImpostor.h"
 
 using namespace glm;
 
@@ -91,6 +94,8 @@ public:
     ShaderProgram spAtomImpostorFull;
     ShaderProgram spAtomImpostorFullColored;
 
+    MoleculeSESAtomImpostor* vaAtoms;
+
     RenderPass* rpAtoms;
 
     // --- SPHERE PATCH
@@ -101,6 +106,8 @@ public:
     ShaderProgram spSpherePatchImpostorFull;
     ShaderProgram spSpherePatchImpostorFullColored;
 
+    MoleculeSESSpherePatchImpostor* vaSpherePatches;
+
     RenderPass* rpSpherePatches;
 
     // --- TOROIDAL PATCH
@@ -109,6 +116,8 @@ public:
     ShaderProgram spToroidalPatchImpostorNormal;
     ShaderProgram spToroidalPatchImpostorFull;
     ShaderProgram spToroidalPatchImpostorFullColored;
+
+    MoleculeSESToroidalPatchImpostor* vaToroidalPatches;
 
     RenderPass* rpToroidalPatches;
 

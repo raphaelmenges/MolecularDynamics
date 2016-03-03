@@ -55,3 +55,14 @@ void MoleculeSESSpherePatchImpostor::enableVertexAttribArrays(std::map<std::stri
         glEnableVertexAttribArray(info.location);
     }
 }
+
+void MoleculeSESSpherePatchImpostor::updateSpherePatches()
+{
+    glBindVertexArray(vertexArrayObjectHandle);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObjectHandle);
+
+    numberOfSpherePatches = protein->frames.at(0).spherePatches.size();
+
+    glBufferData(GL_ARRAY_BUFFER, numberOfSpherePatches * sizeof(Protein::SpherePatch), &this->protein->frames.at(0).spherePatches.front(), GL_STATIC_DRAW);
+
+}

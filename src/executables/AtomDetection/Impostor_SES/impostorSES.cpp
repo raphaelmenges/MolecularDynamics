@@ -2,9 +2,6 @@
 #include "Molecule/MDtrajLoader/MdTraj/MdTrajWrapper.h"
 
 #include "DynamicVertexArrayObject.h"
-#include "MoleculeSESAtomImpostor.h"
-#include "MoleculeSESSpherePatchImpostor.h"
-#include "MoleculeSESToroidalPatchImpostor.h"
 
 ImpostorSES::ImpostorSES()
 {
@@ -207,7 +204,6 @@ void ImpostorSES::init()
     std::fill(mapAllVisible.begin(), mapAllVisible.end(), 1);
 
     // time query
-    GLuint timeQuery;
     glGenQueries(1, &timeQuery);
 
     glEnable(GL_DEPTH_TEST);
@@ -222,6 +218,8 @@ void ImpostorSES::initSES()
     prot->recenter();
     prot->setupSimpleAtoms();
     prot->calculatePatches(probeRadius);
+    //Protein::Frame frame;
+    //prot->frames.push_back(frame);
 
     // --- ATOM
 
@@ -232,7 +230,8 @@ void ImpostorSES::initSES()
     spAtomImpostorFull              = ShaderProgram("/SGROSS_Molecules/atom_impostor.vert", "/SGROSS_Molecules/atom_impostor.geom", "/SGROSS_Molecules/atom_impostor__full.frag");
     spAtomImpostorFullColored       = ShaderProgram("/SGROSS_Molecules/atom_impostor.vert", "/SGROSS_Molecules/atom_impostor.geom", "/SGROSS_Molecules/atom_impostor__full_colored.frag");
 
-    rpAtoms = new RenderPass(new MoleculeSESAtomImpostor(prot), &spAtomImpostorQuad);
+    vaAtoms = new MoleculeSESAtomImpostor(prot);
+    rpAtoms = new RenderPass(vaAtoms, &spAtomImpostorQuad);
 
     updateInputMapping(rpAtoms, spAtomImpostorQuad);
     rpAtoms->update("projection", projection);
@@ -245,7 +244,8 @@ void ImpostorSES::initSES()
     spSpherePatchImpostorFull        = ShaderProgram("/SGROSS_Molecules/sphere_patch_impostor.vert", "/SGROSS_Molecules/sphere_patch_impostor.geom",           "/SGROSS_Molecules/sphere_patch_impostor__full.frag");
     spSpherePatchImpostorFullColored = ShaderProgram("/SGROSS_Molecules/sphere_patch_impostor.vert", "/SGROSS_Molecules/sphere_patch_impostor.geom",           "/SGROSS_Molecules/sphere_patch_impostor__full_colored.frag");
 
-    rpSpherePatches = new RenderPass(new MoleculeSESSpherePatchImpostor(prot), &spSpherePatchImpostorTriangle);
+    vaSpherePatches = new MoleculeSESSpherePatchImpostor(prot);
+    rpSpherePatches = new RenderPass(vaSpherePatches, &spSpherePatchImpostorTriangle);
 
     updateInputMapping(rpSpherePatches, spSpherePatchImpostorTriangle);
     rpSpherePatches->update("projection", projection);
@@ -257,7 +257,8 @@ void ImpostorSES::initSES()
     spToroidalPatchImpostorFull        = ShaderProgram("/SGROSS_Molecules/toroidal_patch_impostor.vert", "/SGROSS_Molecules/toroidal_patch_impostor.geom", "/SGROSS_Molecules/toroidal_patch_impostor__full.frag");
     spToroidalPatchImpostorFullColored = ShaderProgram("/SGROSS_Molecules/toroidal_patch_impostor.vert", "/SGROSS_Molecules/toroidal_patch_impostor.geom", "/SGROSS_Molecules/toroidal_patch_impostor__full_colored.frag");
 
-    rpToroidalPatches = new RenderPass(new MoleculeSESToroidalPatchImpostor(prot), &spToroidalPatchImpostorFrustum);
+    vaToroidalPatches = new MoleculeSESToroidalPatchImpostor(prot);
+    rpToroidalPatches = new RenderPass(vaToroidalPatches, &spToroidalPatchImpostorFrustum);
 
     updateInputMapping(rpToroidalPatches, spToroidalPatchImpostorFrustum);
     rpToroidalPatches->update("projection", projection);
@@ -266,17 +267,24 @@ void ImpostorSES::initSES()
 void ImpostorSES::run()
 {
     const GLuint zero = 0;
+    float measuredTimesAcc;
+
+    float glfwTime;
+           int done = 0;
 
     render(window, [&] (float deltaTime) {
 
         numberOfFrames++;
         frameInterval += deltaTime;
 
+        std::cout << "measured time acc: " << measuredTimesAcc << " deltaTime: " << deltaTime << std::endl;
+        measuredTimesAcc = 0;
+
         if (frameInterval > 1.0f)
         {
             fps = numberOfFrames / frameInterval;
 
-            std::cout << "FPS: " << fps << std::endl;
+            std::cout << "FPS: " << fps << std::endl << std::endl;
 
             numberOfFrames = 0;
             frameInterval = 0.0f;
@@ -295,6 +303,9 @@ void ImpostorSES::run()
         if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) updateVisibilityMapLock = false;
         if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) pingPongOff = false;
         if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) pingPongOff = true;
+
+        if (glfwGetKey(window, GLFW_KEY_KP_8) == GLFW_PRESS) probeRadius += deltaTime * 10;
+        if (glfwGetKey(window, GLFW_KEY_KP_2) == GLFW_PRESS) probeRadius = max(probeRadius - deltaTime * 10, 0.0f);
 
         if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)         { rpAtoms->setShaderProgram(&spAtomImpostorQuad);                           updateInputMapping(rpAtoms, spAtomImpostorQuad);                           rpAtoms->update("projection", projection); }
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)         { rpAtoms->setShaderProgram(&spAtomImpostorSphere);                         updateInputMapping(rpAtoms, spAtomImpostorSphere);                         rpAtoms->update("projection", projection); }
@@ -385,7 +396,15 @@ void ImpostorSES::run()
         renderBalls->update("scale", vec2(scale));
         renderBalls->update("view", view);
         renderBalls->update("probeRadius", probeRadius);
+        glBeginQuery(GL_TIME_ELAPSED, timeQuery);
         renderBalls->run();
+        glEndQuery(GL_TIME_ELAPSED);
+        while (!done)
+            glGetQueryObjectiv(timeQuery, GL_QUERY_RESULT_AVAILABLE,
+                         &done);done = 0;
+        glGetQueryObjectuiv(timeQuery, GL_QUERY_RESULT, &queryTime);
+        std::cout << "render spheres + proberadius: \t" << queryTime/1000000.0 << "msec" << std::endl;
+        measuredTimesAcc += queryTime/1000000000.0;
 
 
         // Depending on user input: sort out instances for the next frame or not,
@@ -394,15 +413,24 @@ void ImpostorSES::run()
         {
             // the following shaders in detectVisible look at what has been written to the screen (framebuffer0)
             // better render the instance stuff to a texture and read from there
+            glBeginQuery(GL_TIME_ELAPSED, timeQuery);
             collectSurfaceIDs->run();
+            glEndQuery(GL_TIME_ELAPSED);
+            glGetQueryObjectuiv(timeQuery, GL_QUERY_RESULT, &queryTime);
+            std::cout << "collect surface IDs:  \t" << queryTime/1000000.0 << "msec" << std::endl;
+            measuredTimesAcc += queryTime/1000000000.0;
+
             glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT|GL_BUFFER_UPDATE_BARRIER_BIT);
             glBeginQuery(GL_TIME_ELAPSED, timeQuery);
             computeSortedIDs->run(16,1,1); // 16 work groups * 1024 work items = 16384 atoms and IDs
             glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT|GL_SHADER_IMAGE_ACCESS_BARRIER_BIT|GL_BUFFER_UPDATE_BARRIER_BIT);
             glEndQuery(GL_TIME_ELAPSED);
-
+            while (!done)
+                glGetQueryObjectiv(timeQuery, GL_QUERY_RESULT_AVAILABLE,
+                             &done);done = 0;
             glGetQueryObjectuiv(timeQuery, GL_QUERY_RESULT, &queryTime);
-            std::cout << "compute shader time: " << queryTime << std::endl;
+            std::cout << "sort surface IDs:  \t" << queryTime/1000000.0 << "msec" << std::endl;
+            measuredTimesAcc += queryTime/1000000000.0;
 
             // Check buffer data
             //                GLuint visibilityMapFromBuff[ImpostorSpheres::num_balls];
@@ -412,36 +440,124 @@ void ImpostorSES::run()
             //                glBindTexture(GL_TEXTURE_1D, visibleIDsBuff->getHandle());
             //                glGetTexImage(GL_TEXTURE_1D, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, visibleIDsFromBuff);
 
+            glBeginQuery(GL_TIME_ELAPSED, timeQuery);
+            GLuint collectSurfaceIDsFromBuffer[num_balls];
+            glBindTexture(GL_TEXTURE_1D, tex_collectedIDsBuffer->getHandle());
+            glGetTexImage(GL_TEXTURE_1D, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, collectSurfaceIDsFromBuffer);
+            glEndQuery(GL_TIME_ELAPSED);
+            while (!done)
+                glGetQueryObjectiv(timeQuery, GL_QUERY_RESULT_AVAILABLE,
+                             &done);done = 0;
+            glGetQueryObjectuiv(timeQuery, GL_QUERY_RESULT, &queryTime);
+            std::cout << "download data:  \t" << queryTime/1000000.0 << "msec" << std::endl;
+            measuredTimesAcc += queryTime/1000000000.0;
+
             //get the value of the atomic counter
             glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomBuff);
             GLuint* counterVal = (GLuint*) glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint),  GL_MAP_READ_BIT );
             glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
 
             impSph->instancesToRender = *counterVal;
-            std::cout << "Number of visible instances by atomic Counter: " << *counterVal << std::endl;
+            //std::cout << "Number of visible instances by atomic Counter: " << *counterVal << std::endl;
 
             updateVisibilityMap = false;
+
+
+            /// UPDATE PATCHES
+            ///
+
+            glBeginQuery(GL_TIME_ELAPSED, timeQuery);
+            glfwTime = glfwGetTime();
+            prot->setupSimpleAtoms(collectSurfaceIDsFromBuffer);
+            prot->calculatePatches(probeRadius, collectSurfaceIDsFromBuffer);
+            std::cout << "GLFW: calculate patches:  \t" << glfwGetTime() - glfwTime << std::endl;
+            //prot->calculatePatches(probeRadius);
+            glEndQuery(GL_TIME_ELAPSED);
+            while (!done)
+                glGetQueryObjectiv(timeQuery, GL_QUERY_RESULT_AVAILABLE,
+                             &done);done = 0;
+            glGetQueryObjectuiv(timeQuery, GL_QUERY_RESULT, &queryTime);
+            std::cout << "calculate Patches:  \t" << queryTime/1000000.0 << "msec" << std::endl;
+            measuredTimesAcc += queryTime/1000000000.0;
+
+
+            glBeginQuery(GL_TIME_ELAPSED, timeQuery);
+//            delete(rpAtoms);
+//            rpAtoms = new RenderPass(new MoleculeSESAtomImpostor(prot), &spAtomImpostorFull);
+
+//            updateInputMapping(rpAtoms, spAtomImpostorFull);
+//            rpAtoms->update("projection", projection);
+
+//            delete(rpSpherePatches);
+
+//            rpSpherePatches = new RenderPass(new MoleculeSESSpherePatchImpostor(prot), &spSpherePatchImpostorFullColored);
+
+//            updateInputMapping(rpSpherePatches, spSpherePatchImpostorFullColored);
+//            rpSpherePatches->update("projection", projection)->update("probe_radius", probeRadius);
+
+
+//            delete(rpToroidalPatches);
+//            rpToroidalPatches = new RenderPass(new MoleculeSESToroidalPatchImpostor(prot), &spToroidalPatchImpostorFullColored);
+
+//            updateInputMapping(rpToroidalPatches, spToroidalPatchImpostorFullColored);
+//            rpToroidalPatches->update("projection", projection)->update("probe_radius", probeRadius);
+
+            //update the vertex array object
+            glfwTime = glfwGetTime();
+            vaAtoms->updateAtoms();
+            vaSpherePatches->updateSpherePatches();
+            rpSpherePatches->update("probe_radius", probeRadius);
+            vaToroidalPatches->updateToroidalPatches();
+            rpToroidalPatches->update("probe_radius", probeRadius);
+            std::cout << "GLFW: upload patch data:  \t" << glfwGetTime() - glfwTime << std::endl;
+
+            glEndQuery(GL_TIME_ELAPSED);
+            while (!done)
+                glGetQueryObjectiv(timeQuery, GL_QUERY_RESULT_AVAILABLE,
+                             &done);done = 0;
+            glGetQueryObjectuiv(timeQuery, GL_QUERY_RESULT, &queryTime);
+            std::cout << "upload patch data:  \t" << queryTime/1000000000.0 << "sec" << std::endl;
+            measuredTimesAcc += queryTime/1000000000.0;
+
+            //pingPongOff = true; // do this only once
         }else
         {
             if(!updateVisibilityMapLock)
             {
                 // ToDo
                 // instead of uploading the data, swap the buffer
+
+                glBeginQuery(GL_TIME_ELAPSED, timeQuery);
                 glBindTexture(GL_TEXTURE_1D, tex_sortedVisibleIDsBuffer->getHandle());
                 glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, num_balls, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, &identityInstancesMap[0]);
                 impSph->instancesToRender = impSph->num_balls;
                 updateVisibilityMap = true; // sort out every other frame
+                glEndQuery(GL_TIME_ELAPSED);
+                while (!done)
+                    glGetQueryObjectiv(timeQuery, GL_QUERY_RESULT_AVAILABLE,
+                                 &done);done = 0;
+                glGetQueryObjectuiv(timeQuery, GL_QUERY_RESULT, &queryTime);
+                std::cout << "reset visible instances:  \t" << queryTime/1000000.0 << "msec" << std::endl;
+                measuredTimesAcc += queryTime/1000000000.0;
             }
         }
 
-        result->clear(0.15f, 0.15f, 0.15f, 1.0f);
-        result->run();
+        //result->clear(0.15f, 0.15f, 0.15f, 1.0f);
+        //result->run();
 
         // just to clear the framebuffer (always)
         rpAtoms
                 ->clear(0.15f, 0.15f, 0.15f, 1.0f)
                 ->clearDepth();
 
+        GLuint query;
+        GLuint time;
+
+        glGenQueries(1, &query);
+        int done2 = 0;
+        glQueryCounter(query, GL_TIMESTAMP);
+        glBeginQuery(GL_TIME_ELAPSED, timeQuery);
+        glfwTime = glfwGetTime();
         if (renderAtoms)
             rpAtoms
                     ->update("view", view)
@@ -456,6 +572,23 @@ void ImpostorSES::run()
             rpSpherePatches
                     ->update("view", view)
                     ->run();
+        glEndQuery(GL_TIME_ELAPSED);
+        std::cout << "GLFW: SES render time:  \t" << glfwGetTime() - glfwTime << std::endl;
+        while (!done2) {
+            glGetQueryObjectiv(query,
+                               GL_QUERY_RESULT_AVAILABLE,
+                               &done2);
+        }done2 = 0;
+    glGetQueryObjectuiv(query, GL_QUERY_RESULT, &time);
+        while (!done)
+            glGetQueryObjectiv(timeQuery, GL_QUERY_RESULT_AVAILABLE,
+                         &done);
+        done = 0;
+        glGetQueryObjectuiv(timeQuery, GL_QUERY_RESULT, &queryTime);
+        std::cout << "SES render queryTime:  \t" << queryTime/1000000000.0 << "sec" << std::endl;
+        std::cout << "SES render time:  \t" << time/1000000000.0 << "sec" << std::endl;
+        measuredTimesAcc += queryTime/1000000000.0;
+
     });
 }
 

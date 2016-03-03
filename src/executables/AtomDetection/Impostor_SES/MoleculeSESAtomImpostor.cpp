@@ -10,6 +10,7 @@ MoleculeSESAtomImpostor::MoleculeSESAtomImpostor(std::shared_ptr<Protein> protei
     numberOfAtoms = protein->frames.at(0).atoms.size();
 
     glBufferData(GL_ARRAY_BUFFER, numberOfAtoms * sizeof(Protein::SimpleAtom), &this->protein->frames.at(0).atoms.front(), GL_STATIC_DRAW);
+
 }
 
 MoleculeSESAtomImpostor::~MoleculeSESAtomImpostor()
@@ -41,4 +42,14 @@ void MoleculeSESAtomImpostor::enableVertexAttribArrays(std::map<std::string, Sha
         glVertexAttribPointer(info.location, 1, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(3 * sizeof(float)));
         glEnableVertexAttribArray(info.location);
     }
+}
+
+void MoleculeSESAtomImpostor::updateAtoms()
+{
+    glBindVertexArray(vertexArrayObjectHandle);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObjectHandle);
+
+    numberOfAtoms = protein->frames.at(0).atoms.size();
+
+    glBufferData(GL_ARRAY_BUFFER, numberOfAtoms * sizeof(Protein::SimpleAtom), &this->protein->frames.at(0).atoms.front(), GL_STATIC_DRAW);
 }

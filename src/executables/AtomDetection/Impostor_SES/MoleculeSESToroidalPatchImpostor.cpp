@@ -71,3 +71,14 @@ void MoleculeSESToroidalPatchImpostor::enableVertexAttribArrays(std::map<std::st
         glEnableVertexAttribArray(info.location);
     }
 }
+
+void MoleculeSESToroidalPatchImpostor::updateToroidalPatches()
+{
+    glBindVertexArray(vertexArrayObjectHandle);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObjectHandle);
+
+    numberOfToroidalPatches = protein->frames.at(0).toroidalPatches.size();
+
+    glBufferData(GL_ARRAY_BUFFER, numberOfToroidalPatches * sizeof(Protein::ToroidalPatch), &this->protein->frames.at(0).toroidalPatches.front(), GL_STATIC_DRAW);
+
+}

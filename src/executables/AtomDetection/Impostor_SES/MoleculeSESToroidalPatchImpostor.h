@@ -19,6 +19,7 @@ public:
     virtual void draw();
     virtual void enableVertexAttribArrays(std::map<std::string, ShaderProgram::Info> &inputMap);
 
+    void updateToroidalPatches(/*std::shared_ptr<Protein> protein*/);
 protected:
     std::size_t numberOfToroidalPatches;
     std::shared_ptr<Protein> protein;
