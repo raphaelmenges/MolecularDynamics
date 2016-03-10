@@ -111,7 +111,7 @@ void main() {
     real_hit_position_cam_n.x += 2*ray_eye.x;
     real_hit_position_cam_n.y -= 2*ray_eye.y;
     vec3 real_hit_position_cam_f = d_f * view_w;
-    hit(real_hit_position_cam_n);
+    //hit(real_hit_position_cam_n);
 
     // calculate alternative view hit positions and FragCoords
 

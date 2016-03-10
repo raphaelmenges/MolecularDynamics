@@ -356,18 +356,11 @@ void SurfaceExtraction::run()
             {
                 // the following shaders in detectVisible look at what has been written to the screen (framebuffer0)
                 // better render the instance stuff to a texture and read from there
-                glBeginQuery(GL_TIME_ELAPSED, timeQuery);
                 collectSurfaceIDs->run();
-                glEndQuery(GL_TIME_ELAPSED);
-                glGetQueryObjectuiv(timeQuery, GL_QUERY_RESULT, &queryTime);
                 //std::cout << "collect IDs shader time: " << queryTime/1000000000.0 << std::endl;
                 //glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT|GL_BUFFER_UPDATE_BARRIER_BIT);
-                glBeginQuery(GL_TIME_ELAPSED, timeQuery);
                 computeSortedIDs->run(16,1,1); // 16 work groups * 1024 work items = 16384 atoms and IDs
                 //glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT|GL_SHADER_IMAGE_ACCESS_BARRIER_BIT|GL_BUFFER_UPDATE_BARRIER_BIT);
-                glEndQuery(GL_TIME_ELAPSED);
-
-                glGetQueryObjectuiv(timeQuery, GL_QUERY_RESULT, &queryTime);
                 //std::cout << "compute shader time: " << queryTime/1000000000.0 << std::endl;
 
                 //                int x = tex_3DintervalStorageBuffer->getX();
@@ -497,8 +490,8 @@ void SurfaceExtraction::run()
                 }
             }
 
-        result->clear(0.3,0.3,0.3,1);
-        result->run();
+        //result->clear(0.3,0.3,0.3,1);
+        //result->run();
     });
 }
 
