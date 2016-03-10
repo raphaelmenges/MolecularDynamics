@@ -9,7 +9,6 @@
 #include "ShaderTools/VertexArrayObjects/Quad.h"
 #include "ShaderTools/VertexArrayObjects/ImpostorSpheres.h"
 #include "Molecule/MDtrajLoader/Data/Protein.h"
-#include "Molecule/MDtrajLoader/Data/SesPatchesProtein.h"
 #include "MoleculeSESAtomImpostor.h"
 #include "MoleculeSESSpherePatchImpostor.h"
 #include "MoleculeSESToroidalPatchImpostor.h"

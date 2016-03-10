@@ -5,10 +5,7 @@
 #include <vector>
 #include <string>
 #include <glm/ext.hpp>
-/**
- * 
- */
-//class AAtom_Actor;
+
 class Protein;
 class Atom
 {

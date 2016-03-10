@@ -31,7 +31,7 @@ uniform mat4 view;
 uniform mat4 projection;
 uniform vec2 scale;
 uniform float elapsedTime;
-uniform float probeRadius = 0.0;
+uniform float probeRadius = 1.4;
 
 void main() {
 

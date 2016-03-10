@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-//#include "PharmaCV.h"
 #include "Protein.h"
 #include <iostream>
 
@@ -28,14 +27,6 @@ Protein::Protein(std::vector<std::string> &names,
 
     minMax();
 
-    //UE_LOG(LogTemp, Warning, TEXT("maxx vorher %f"), max_.X);
-    //UE_LOG(LogTemp, Warning, TEXT("maxy %f"), max_.Y);
-    //UE_LOG(LogTemp, Warning, TEXT("maxz %f"), max_.Z);
-
-    //UE_LOG(LogTemp, Warning, TEXT("minx %f"), min_.X);
-    //UE_LOG(LogTemp, Warning, TEXT("miny %f"), min_.Y);
-    //UE_LOG(LogTemp, Warning, TEXT("minz %f"), min_.Z);
-
 
     for (int i = 0; i < names.size(); i++) {
         distinctResidueNames.at(i);
@@ -61,7 +52,6 @@ Protein::Protein(std::vector<std::string> &names,
     for (int i = 0; i < residueNames.size(); i++) {
         aminoAcids.insert(residueNames.at(i));
     }
-    //UE_LOG(LogTemp, Warning, TEXT("size : %d"), positions.size());
 
     // positions per frame
     for (int i = 0; i < positions[0].size(); i++) {
@@ -72,20 +62,17 @@ Protein::Protein(std::vector<std::string> &names,
 
     diffAminos_.assign(aminoAcids.begin(), aminoAcids.end());
 
-    //setBonds(bonds);
-
+    //setBonds(bonds); //slow
 }
 
 Protein::~Protein()
 {
-
     int delete_counter = 0;
     for (auto it = atoms_.begin(); it != atoms_.end(); ) {
         delete *it;
         it = atoms_.erase(it);
         delete_counter++;
     }
-    //UE_LOG(LogTemp, Warning, TEXT("Destroyed %i Atoms of Protein %s."),delete_counter, UTF8_TO_TCHAR(name_.c_str()));
 }
 
 std::string Protein::getName() {
@@ -224,8 +211,6 @@ void Protein::setBonds(std::vector<std::string> bonds) {
     }
 
     numAtoms_ = atoms_.size();
-    //UE_LOG(LogTemp, Warning, TEXT("numAtoms_ : %d"), numAtoms_);
-
 }
 
 void Protein::recenter()
@@ -263,14 +248,12 @@ void Protein::setupSimpleAtoms(unsigned int *collectedVisibleIDs)
     }
     frames.clear();
     frames.push_back(frame);
-    //std::cout << "visible atom count:\t" << frame.atoms.size() << std::endl;
 }
 
 
 
 void Protein::calculatePatches(float probeRadius)
 {
-
     int T = 0; // timestep
 
     std::cout << "overall atom count:\t" << atoms_.size() << std::endl;

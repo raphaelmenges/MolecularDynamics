@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-//#include "PharmaCV.h"
 #include "Atom.h"
 
 Atom::Atom(std::string name, std::string element, int index, glm::vec3 position, std::string aminoDistinctAcid, std::string amino, Protein* parent) :
@@ -11,7 +10,6 @@ name_(name), element_(element), index_(index), aminoDistinctAcid_(aminoDistinctA
 
 Atom::~Atom()
 {
-    //pActor_->Destroy();
 }
 
 int Atom::getIndex() {

@@ -153,7 +153,7 @@ void MdTrajWrapper::getAllAtomProperties(std::vector<std::string> &paths, std::v
 
     if (paths.size() == 1) {
         if (paths[0].substr((paths[0].length() - 3), 3) != "pdb") {
-            //UE_LOG(LogTemp, Error, TEXT("BOAH MAN EY, wir können bisher nur .pdb und .xtc laden!!"));
+            //UE_LOG(LogTemp, Error, TEXT("BOAH MAN EY, wir k?nnen bisher nur .pdb und .xtc laden!!"));
             return;
         }
     }
@@ -301,7 +301,7 @@ void MdTrajWrapper::getAllAtomProperties(std::vector<std::string> &paths, std::v
         else {
             PyObject* traj = loadFileXTC(pathXTC, pathPDB);
             if (traj == NULL) {
-               //UE_LOG(LogTemp, Error, TEXT("Ok, die pdb passt nicht zur xtc, es wurde nur die .pdb geladen. (Wahrscheinlich stimmt die Atomanzahl nicht überein. Vllt Wasser raus schneiden?)"));
+               //UE_LOG(LogTemp, Error, TEXT("Ok, die pdb passt nicht zur xtc, es wurde nur die .pdb geladen. (Wahrscheinlich stimmt die Atomanzahl nicht ?berein. Vllt Wasser raus schneiden?)"));
                 return;
             }
 

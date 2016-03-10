@@ -10,6 +10,8 @@ uniform int width;
 uniform int height;
 uniform int perPixelDepth;
 uniform vec4 lightSrc = vec4(0,100,0,1);
+uniform mat4 rotY;
+uniform mat4 view_second;
 
 flat in int passInstanceID;
 
@@ -22,6 +24,7 @@ flat in vec3 center;
 out vec4 fragColor;
 out vec4 InstanceID;
 
+vec3 center_help;
 vec3 center_v;
 float d_near;
 float d_far;
@@ -35,23 +38,23 @@ layout(depth_greater) out float gl_FragDepth;
 vec3 view_w;
 void hit(vec3 hitPos)
 {
-// Normale Berechnen
-vec4 normal = normalize(vec4(hitPos -center_v,0));
+  // Normale Berechnen
+  vec4 normal = normalize(vec4(hitPos -center_v,0));
 
   // Beleuchtung
   vec3 light_v = vec3(view * lightSrc).xyz;
   vec3 L = normalize(vec3(light_v - hitPos.xyz));
   vec3 finalColor = passColor.xyz * max(dot(normal.xyz,L), 0.0);
 
-    float specularCoefficient = 0.0;
-    float materialShininess = 1;
-    vec3 materialSpecularColor = vec3(0.5);
+  float specularCoefficient = 0.0;
+  float materialShininess = 1;
+  vec3 materialSpecularColor = vec3(0.5);
 
-    specularCoefficient = pow(max(0.0, dot(-normalize(hitPos).xyz, reflect(-L, normal.xyz))), materialShininess);
-    vec3 specular = specularCoefficient * materialSpecularColor;
+  specularCoefficient = pow(max(0.0, dot(-normalize(hitPos).xyz, reflect(-L, normal.xyz))), materialShininess);
+  vec3 specular = specularCoefficient * materialSpecularColor;
 
-    finalColor += specular;
-    finalColor = clamp(finalColor, 0.0, 1.0);
+  finalColor += specular;
+  finalColor = clamp(finalColor, 0.0, 1.0);
 
 
   vec4 clip_space_pos = projection * vec4(hitPos,1);
@@ -60,7 +63,7 @@ vec4 normal = normalize(vec4(hitPos -center_v,0));
   gl_FragDepth = ndc_depth;
   fragColor = vec4(finalColor, 1);
   InstanceID = vec4(passInstanceID);
-  }
+}
 
 void main() {
 
@@ -70,10 +73,14 @@ void main() {
   // Fragment in Kamera
   vec4 frag_w = passPosition;
 
-  center_v = vec4(view*model*vec4(0,0,0,1)).xyz;
+  center_help = vec4(view*model*vec4(0,0,0,1)).xyz;
+  center_v = center_help;
 
   // Sehstrahl in Welt
   view_w = vec4(vec4(0,0,-1,0)).xyz;
+  //view_w = (inverse(view_second) * view_second * vec4(view_w,0)).xyz;
+  //view_w = (inverse(rotY) * rotY * vec4(view_w,0)).xyz;
+
 
   float radius = size;//sphereRadius;
 
@@ -85,29 +92,60 @@ void main() {
   vec4 ray_clip = vec4 (ray_nds.xy, 1.0, 1.0);
   vec4 ray_eye = inverse (projection) * ray_clip;
 
+  // transform the sphere so that the view ray is at (0,0,-1)
+  center_help.x = center_help.x - 2*ray_eye.x;
+  center_help.y = center_help.y + 2*ray_eye.y;
 
-  center_v.x = center_v.x - 2*ray_eye.x;
-  center_v.y = center_v.y + 2*ray_eye.y;
-
-  float a = dot(view_w, -center_v.xyz);
-  float b = a * a - length(center_v.xyz) * length(center_v.xyz) + radius * radius;
+  float a = dot(view_w, -center_help.xyz);
+  float b = a * a - length(center_help.xyz) * length(center_help.xyz) + radius * radius;
 
   if (b < 0)
   {
-  discard; // no intersections
-  return;
+    discard; // no intersections
   }
   else
   {
-  float d_n = -a - sqrt(b); // just substract (+ lies always behind front point)
-  float d_f= -a + sqrt(b); // for back faces
-  vec3 real_hit_position_cam_n = d_n * view_w;
-  vec3 real_hit_position_cam_f = d_f * view_w;
-  hit(real_hit_position_cam_n);
+    float d_n = -a - sqrt(b); // just substract (+ lies always behind front point)
+    float d_f= -a + sqrt(b); // for back faces
+    vec3 real_hit_position_cam_n = d_n * view_w;
+    real_hit_position_cam_n.x += 2*ray_eye.x;
+    real_hit_position_cam_n.y -= 2*ray_eye.y;
+    vec3 real_hit_position_cam_f = d_f * view_w;
+    hit(real_hit_position_cam_n);
+
+    // calculate alternative view hit positions and FragCoords
+
+    // rotate the camera hit position around the sphere center and Y axis
+  /*  vec3 Yrotated_n = real_hit_position_cam_n - center_v;
+    Yrotated_n = vec4(rotY * vec4(Yrotated_n,1)).xyz;
+    Yrotated_n += center_v;
+    // transform that rotated point to the rotated view space
+    Yrotated_n = vec4(view_second * inverse(view) * vec4(Yrotated_n,1)).xyz;
+    vec3 Yrotated_f = Yrotated_n;
+    Yrotated_f.z += d_f - d_n; // the depth difference of the new hit points is doenst change, since both rotate equally around the sphere
+
+    // calculate the FragCoords from which the new points would be visible
+    ray_clip = projection * vec4(Yrotated_n,1);
+    x = (ray_clip.x + 1.0) * width / 2.0;
+    y = (1.0 - ray_clip.y) * height / 2.0;
+
+    if ( x < 0 || x >= width || y < 0 || y >= height)
+    discard;*/
+
+    //fragColor = vec4(x/width,y/height,0,0);
+
+    // debug
+    //center_v = (view_second * inverse(view) * vec4(center_v,1)).xyz;
+    //hit(Yrotated_n);
+
+    //d_near = -Yrotated_n.z;
+    //d_far = -Yrotated_f.z;
+    //coord = ivec2(x,y);
 
     d_near = d_n;// -real_hit_position_cam_n.z;
     d_far = d_f;//-real_hit_position_cam_f.z;
-    }
+    //fragColor = vec4(d_near/100.0);
+  }
 
   // Kugel wurde getroffen -> kritischer Bereich um belegte Intervalle zu updaten
   bool done = false;
@@ -115,12 +153,12 @@ void main() {
   coord = ivec2(gl_FragCoord.xy);
   while(!done)
   {
-  //locked = imageAtomicCompSwap(semaphore, coord, 0u, 1u);
-  locked = imageAtomicExchange(semaphore, coord, 1u);
-  if (locked == 0)
-  {
-  // kritischer Bereich
-  //memoryBarrier();
+    //locked = imageAtomicCompSwap(semaphore, coord, 0u, 1u);
+    locked = imageAtomicExchange(semaphore, coord, 1u);
+    if (locked == 0)
+    {
+      // kritischer Bereich
+      //memoryBarrier();
 
       // Anzahl der vorhandenen Intervalle aus letzter Stelle in der 3D Textur lesen
       int numIntervals = int(imageLoad(intervalBuffer, ivec3(coord, perPixelDepth-1)).r);
@@ -131,27 +169,27 @@ void main() {
 
       for (int i = 0; i < numIntervals; i++)
       {
-      vec4 currentIntervalToCheck = imageLoad(intervalBuffer, ivec3(coord, i));
-      float check_near = currentIntervalToCheck.x;
-      float check_far = currentIntervalToCheck.y;
-      int check_near_ID = int(currentIntervalToCheck.z);
-      int check_far_ID = int(currentIntervalToCheck.w);
+        vec4 currentIntervalToCheck = imageLoad(intervalBuffer, ivec3(coord, i));
+        float check_near = currentIntervalToCheck.x;
+        float check_far = currentIntervalToCheck.y;
+        int check_near_ID = int(currentIntervalToCheck.z);
+        int check_far_ID = int(currentIntervalToCheck.w);
 
         // Fall 0: das neue Interval liegt komplett in einem anderen
         if(d_far <= check_far && d_near >= check_near)
         {
-        discardInterval = true;
-        break;
+          discardInterval = true;
+          break;
         }
         // Fall 1: das neue Interval umschließt ein anderes komplett
         if (d_far > check_far && d_near < check_near)
         {
-        // wurde schon ein neuer Platz gefunden?
-        if (newIntervalPosition != -1)
-        {
-        // wenn ja, dann kann das aktuelle Interval mit dem letzten im Buffer überschrieben werden
-        vec4 lastInterval = imageLoad(intervalBuffer, ivec3(coord, numIntervals-1));
-        imageStore(intervalBuffer, ivec3(coord, i), lastInterval);
+          // wurde schon ein neuer Platz gefunden?
+          if (newIntervalPosition != -1)
+          {
+            // wenn ja, dann kann das aktuelle Interval mit dem letzten im Buffer überschrieben werden
+            vec4 lastInterval = imageLoad(intervalBuffer, ivec3(coord, numIntervals-1));
+            imageStore(intervalBuffer, ivec3(coord, i), lastInterval);
 
             // wenn der neue Eintrag = dem letzten Eintrag ist, Index updaten:
             if((numIntervals-1) == newIntervalPosition)
@@ -160,28 +198,28 @@ void main() {
             numIntervals--;
             i--;
             continue;
-            }
-            else
-            {
+          }
+          else
+          {
             // wenn nicht, kann das neue Interval an die aktuelle Stelle geschrieben werden
             imageStore(intervalBuffer, ivec3(coord, i), newInterval);
             newIntervalPosition = i; // neue Position gefunden
             continue;
-            }
-            }
+          }
+        }
 
         // Fall 2: das neue Interval überschneidet sich mit einem anderen "near"
-        if ((d_far > check_near) && (check_near > d_near))
+        if ((d_far >= check_near) && (check_near > d_near))
         {
-        // wurde schon ein neuer Platz gefunden?
-        if (newIntervalPosition != -1)
-        {
-        // wenn ja, dann kann das aktuelle Interval das neue Interval aktualisieren und mit dem letzten im Buffer überschrieben werden
-        // aktualisieren
-        d_far = check_far;
-        ID_far = check_far_ID;
-        newInterval = vec4(d_near, d_far, ID_near, check_far_ID);
-        imageStore(intervalBuffer, ivec3(coord, newIntervalPosition), newInterval);
+          // wurde schon ein neuer Platz gefunden?
+          if (newIntervalPosition != -1)
+          {
+            // wenn ja, dann kann das aktuelle Interval das neue Interval aktualisieren und mit dem letzten im Buffer überschrieben werden
+            // aktualisieren
+            d_far = check_far;
+            ID_far = check_far_ID;
+            newInterval = vec4(d_near, d_far, ID_near, check_far_ID);
+            imageStore(intervalBuffer, ivec3(coord, newIntervalPosition), newInterval);
 
             // alten Eintrag löschen
             vec4 lastInterval = imageLoad(intervalBuffer, ivec3(coord, numIntervals-1));
@@ -193,9 +231,9 @@ void main() {
             numIntervals--;
             i--;
             continue;
-            }
-            else
-            {
+          }
+          else
+          {
             // wenn nicht, kann das neue Interval die aktuelle Stelle aktualisieren
             d_far = check_far;
             ID_far = check_far_ID;
@@ -203,22 +241,22 @@ void main() {
             imageStore(intervalBuffer, ivec3(coord, i), newInterval);
             newIntervalPosition = i; // neue Position gefunden
             continue;
-            }
-            }
+          }
+        }
 
         // Fall 3: das neue Interval überschneidet sich mit einem anderen "far"
-        if ((d_far > check_far) && (check_far > d_near))
+        if ((d_far > check_far) && (check_far >= d_near))
         {
-        // wurde schon ein neuer Platz gefunden?
+          // wurde schon ein neuer Platz gefunden?
 
           if (newIntervalPosition != -1)
           {
-          // wenn ja, dann kann das aktuelle Interval das neue Interval aktualisieren und mit dem letzten im Buffer überschrieben werden
-          // aktualisieren
-          d_near = check_near;
-          ID_near = check_near_ID;
-          newInterval = vec4(d_near, d_far, check_near_ID, ID_far);
-          imageStore(intervalBuffer, ivec3(coord, newIntervalPosition), newInterval);
+            // wenn ja, dann kann das aktuelle Interval das neue Interval aktualisieren und mit dem letzten im Buffer überschrieben werden
+            // aktualisieren
+            d_near = check_near;
+            ID_near = check_near_ID;
+            newInterval = vec4(d_near, d_far, check_near_ID, ID_far);
+            imageStore(intervalBuffer, ivec3(coord, newIntervalPosition), newInterval);
 
             // alten Eintrag löschen
             vec4 lastInterval = imageLoad(intervalBuffer, ivec3(coord, numIntervals-1));
@@ -230,9 +268,9 @@ void main() {
             numIntervals--;
             i--;
             continue;
-            }
-            else
-            {
+          }
+          else
+          {
             // wenn nicht, kann das neue Interval die aktuelle Stelle aktualisieren
             d_near = check_near;
             ID_near = check_near_ID;
@@ -240,20 +278,20 @@ void main() {
             imageStore(intervalBuffer, ivec3(coord, i), newInterval);
             newIntervalPosition = i; // neue Position gefunden
             continue;
-            }
-            }
-            }
+          }
+        }
+      }
 
       // wurde eine Position gefunden?
       if(newIntervalPosition == -1 && !discardInterval)
       {
-      // wenn nicht, dann trage das neue Interval hinten ein ( wenn es passt )
-      if(numIntervals < perPixelDepth - 1) // letzter Platz ist für Anzahl der Intervalle reserviert
-      {
-      imageStore(intervalBuffer, ivec3(coord, numIntervals), newInterval);
-      newIntervalPosition = numIntervals;
-      numIntervals++;
-      }
+        // wenn nicht, dann trage das neue Interval hinten ein ( wenn es passt )
+        if(numIntervals < perPixelDepth - 1) // letzter Platz ist für Anzahl der Intervalle reserviert
+        {
+          imageStore(intervalBuffer, ivec3(coord, numIntervals), newInterval);
+          newIntervalPosition = numIntervals;
+          numIntervals++;
+        }
       }
 
       // Anzahl der Intervalle speichern
@@ -265,7 +303,7 @@ void main() {
 
       done = true;
       // "Tiefenkomplexität" Rendern
-      // fragColor = vec4(int(imageLoad(intervalBuffer, ivec3(coord, perPixelDepth-1)).r)/10.0);
-      }
-      }
-      }
+       //fragColor = vec4(int(imageLoad(intervalBuffer, ivec3(coord, perPixelDepth-1)).r)/10.0);
+    }
+  }
+}

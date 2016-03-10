@@ -38,12 +38,20 @@ void updateInputMapping(RenderPass* rp, ShaderProgram &sp)
 void ImpostorSESsurface::init()
 {
     window = generateWindow(512,512);
+    preproces_w = getWidth(window)/1.0;
+    preproces_h = getHeight(window)/1.0;
+
+    glViewport(0,0,preproces_w,preproces_h);
+
 
     // load a file
     std::vector<std::string> paths;
-    paths.push_back("/home/nlichtenberg/1crn.pdb");
-    //paths.push_back("/home/nlichtenberg/1vis.pdb");
-    //paths.push_back("/home/nlichtenberg/Develop/Mol_Sandbox/resources/TrajectoryFiles/1aon.pdb");
+    paths.push_back("/home/nlichtenberg/Files/PDB/1crn.pdb");
+    //paths.push_back("/home/nlichtenberg/Files/PDB/2plt.pdb");
+    //paths.push_back("/home/nlichtenberg/Files/PDB/1a19.pdb");
+    //paths.push_back("/home/nlichtenberg/Files/PDB/155C.pdb");
+    //paths.push_back("/home/nlichtenberg/Files/PDB/1vis.pdb");
+    //paths.push_back("/home/nlichtenberg/Files/PDB/Develop/Mol_Sandbox/resources/TrajectoryFiles/1aon.pdb");
 
     MdTrajWrapper mdwrap;
     prot = mdwrap.load(paths);
@@ -88,24 +96,24 @@ void ImpostorSESsurface::init()
 
     // Setup semaphore texture for atomic fragment access blocks
     tex_Semaphore = new Texture(GL_R32UI, GL_RED_INTEGER, GL_UNSIGNED_INT);
-    tex_Semaphore->gen2DTexture(getWidth(window), getHeight(window));
+    tex_Semaphore->gen2DTexture(preproces_w, preproces_h);
 
     // Setup 3D texture to store depth intervals and ID references
     tex_3DintervalStorageBuffer = new Texture(GL_RGBA16F, GL_RGBA, GL_FLOAT);
-    tex_3DintervalStorageBuffer->gen3DTexture(getWidth(window), getHeight(window), perPixelDepth);
+    tex_3DintervalStorageBuffer->gen3DTexture(preproces_w, preproces_h, perPixelDepth);
 
     /// Renderpass to render impostors/fake geometry
     renderBalls = new RenderPass(
                 impSph,
                 &spRenderBalls,
-                getWidth(window),
-                getHeight(window));
+                preproces_w,
+                preproces_h);
 
     renderBalls->update("projection", projection);
     renderBalls->texture("semaphore",tex_Semaphore);
     renderBalls->texture("intervalBuffer",tex_3DintervalStorageBuffer);
-    renderBalls->update("width", getWidth(window));
-    renderBalls->update("height", getHeight(window));
+    renderBalls->update("width", preproces_w);
+    renderBalls->update("height", preproces_h);
     renderBalls->update("perPixelDepth", perPixelDepth);
 
 
@@ -121,9 +129,9 @@ void ImpostorSESsurface::init()
     collectSurfaceIDs = new RenderPass(
                 new Quad(),
                 new ShaderProgram("/SurfaceAtomsDetection/Base/fullscreen.vert",
-                                  "/SurfaceAtomsDetection/Detection/CollectVisibleIDs.frag"),
-                getWidth(window),
-                getHeight(window));
+                                  "/SurfaceAtomsDetection/Detection/CollectVisibleIDs_frontOnly.frag"),
+                preproces_w,
+                preproces_h);
 
     // prepare 1D buffer for entries
     tex_collectedIDsBuffer = new Texture(GL_R8UI, GL_RED_INTEGER, GL_UNSIGNED_INT);
@@ -434,8 +442,6 @@ void ImpostorSESsurface::run()
 
         if (updateVisibilityMap && !pingPongOff)
         {
-            // the following shaders in detectVisible look at what has been written to the screen (framebuffer0)
-            // better render the instance stuff to a texture and read from there
             glBeginQuery(GL_TIME_ELAPSED, timeQuery);
             collectSurfaceIDs->run();
             glEndQuery(GL_TIME_ELAPSED);
@@ -449,6 +455,10 @@ void ImpostorSESsurface::run()
 
             glGetQueryObjectuiv(timeQuery, GL_QUERY_RESULT, &queryTime);
             std::cout << "compute shader time: " << queryTime/1000000000.0 << std::endl;
+
+            GLuint collectSurfaceIDsFromBuffer[num_balls];
+            glBindTexture(GL_TEXTURE_1D, tex_collectedIDsBuffer->getHandle());
+            glGetTexImage(GL_TEXTURE_1D, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, collectSurfaceIDsFromBuffer);
 
             //                int x = tex_3DintervalStorageBuffer->getX();
             //                int y = tex_3DintervalStorageBuffer->getY();
@@ -528,6 +538,22 @@ void ImpostorSESsurface::run()
             std::cout << "Number of visible instances by atomic Counter: " << *counterVal << std::endl;
 
             updateVisibilityMap = false;
+
+            /// UPDATE PATCHES
+
+            float glfwTime;
+            glfwTime = glfwGetTime();
+            prot->setupSimpleAtoms(collectSurfaceIDsFromBuffer);
+            prot->calculatePatches(probeRadius, collectSurfaceIDsFromBuffer);
+            //prot->calculatePatches(probeRadius);
+            std::cout << "GLFW: calculate patches:  \t" << glfwGetTime() - glfwTime << std::endl;
+
+            vaAtoms->updateAtoms();
+            vaSpherePatches->updateSpherePatches();
+            rpSpherePatches->update("probe_radius", probeRadius);
+            vaToroidalPatches->updateToroidalPatches();
+            rpToroidalPatches->update("probe_radius", probeRadius);
+
         }else
         {
             if(!updateVisibilityMapLock)
@@ -541,11 +567,15 @@ void ImpostorSESsurface::run()
             }
         }
 
-
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+        glBlitFramebuffer(0, 0, preproces_w, preproces_h, 0, 0, preproces_w*2, preproces_h*2,
+            GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
         result->clear(0.3,0.3,0.3,1);
         result->run();
 
+
+        glViewport(0,0,getWidth(window),getHeight(window));
         // just to clear the framebuffer (always)
         rpAtoms
                 ->clear(0.15f, 0.15f, 0.15f, 1.0f)
@@ -565,6 +595,8 @@ void ImpostorSESsurface::run()
             rpSpherePatches
                     ->update("view", view)
                     ->run();
+
+        glViewport(0,0,preproces_w,preproces_h);
     });
 }
 
