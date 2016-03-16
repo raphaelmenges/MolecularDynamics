@@ -43,7 +43,6 @@ void ImpostorSESsurface::init()
 
     glViewport(0,0,preproces_w,preproces_h);
 
-
     // load a file
     std::vector<std::string> paths;
     paths.push_back("/home/nlichtenberg/Files/PDB/1crn.pdb");
@@ -56,7 +55,6 @@ void ImpostorSESsurface::init()
     MdTrajWrapper mdwrap;
     prot = mdwrap.load(paths);
     prot->recenter();
-
 
     impSph = new ImpostorSpheres(false, false);
     impSph->setProteinData(prot.get());
@@ -82,7 +80,7 @@ void ImpostorSESsurface::init()
                                           "/SurfaceAtomsDetection/Impostor/Impostor3DSphere.frag");
         else
             spRenderBalls = ShaderProgram("/SurfaceAtomsDetection/Base/modelViewProjectionInstancedUA.vert",
-                                          "/SurfaceAtomsDetection/Impostor/Impostor3DSphere_Ortho_StoreIntervals.frag");
+                                          "/SurfaceAtomsDetection/Impostor/Impostor3DSphere_Ortho_StoreIntervals_2.frag");
     }
     else
     {
@@ -99,7 +97,7 @@ void ImpostorSESsurface::init()
     tex_Semaphore->gen2DTexture(preproces_w, preproces_h);
 
     // Setup 3D texture to store depth intervals and ID references
-    tex_3DintervalStorageBuffer = new Texture(GL_RGBA16F, GL_RGBA, GL_FLOAT);
+    tex_3DintervalStorageBuffer = new Texture(GL_RGBA32F, GL_RGBA, GL_FLOAT);
     tex_3DintervalStorageBuffer->gen3DTexture(preproces_w, preproces_h, perPixelDepth);
 
     /// Renderpass to render impostors/fake geometry
@@ -415,8 +413,7 @@ void ImpostorSESsurface::run()
         mat4 view = translate(mat4(1), vec3(0,0,-distance)) * eulerAngleXY(-rotX, -rotY);
 
         // reset the detected instance IDs
-        glBindTexture(GL_TEXTURE_1D, tex_collectedIDsBuffer->getHandle());
-        glTexImage1D(GL_TEXTURE_1D, 0, GL_R8UI, num_balls, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, zeros);
+        tex_collectedIDsBuffer->reset();
 
         glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomBuff);
         glClearBufferSubData(GL_ATOMIC_COUNTER_BUFFER, GL_R32UI, 0, sizeof(GLuint), GL_RED_INTEGER, GL_UNSIGNED_INT, zero);
@@ -431,30 +428,15 @@ void ImpostorSESsurface::run()
         renderBalls->update("view", view);
         renderBalls->update("probeRadius", probeRadius);
 
-        glBeginQuery(GL_TIME_ELAPSED, timeQuery);
         renderBalls->run();
-        glEndQuery(GL_TIME_ELAPSED);
-        glGetQueryObjectuiv(timeQuery, GL_QUERY_RESULT, &queryTime);
-        std::cout << "render/interval shader time: " << queryTime/1000000000.0 << std::endl;
 
         // Depending on user input: sort out instances for the next frame or not,
         // or lock the current set of visible instances
 
         if (updateVisibilityMap && !pingPongOff)
         {
-            glBeginQuery(GL_TIME_ELAPSED, timeQuery);
             collectSurfaceIDs->run();
-            glEndQuery(GL_TIME_ELAPSED);
-            glGetQueryObjectuiv(timeQuery, GL_QUERY_RESULT, &queryTime);
-            std::cout << "collect IDs shader time: " << queryTime/1000000000.0 << std::endl;
-            //glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT|GL_BUFFER_UPDATE_BARRIER_BIT);
-            glBeginQuery(GL_TIME_ELAPSED, timeQuery);
             computeSortedIDs->run(16,1,1); // 16 work groups * 1024 work items = 16384 atoms and IDs
-            //glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT|GL_SHADER_IMAGE_ACCESS_BARRIER_BIT|GL_BUFFER_UPDATE_BARRIER_BIT);
-            glEndQuery(GL_TIME_ELAPSED);
-
-            glGetQueryObjectuiv(timeQuery, GL_QUERY_RESULT, &queryTime);
-            std::cout << "compute shader time: " << queryTime/1000000000.0 << std::endl;
 
             GLuint collectSurfaceIDsFromBuffer[num_balls];
             glBindTexture(GL_TEXTURE_1D, tex_collectedIDsBuffer->getHandle());

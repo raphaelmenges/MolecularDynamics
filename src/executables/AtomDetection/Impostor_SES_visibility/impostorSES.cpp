@@ -42,9 +42,12 @@ void ImpostorSES::init()
 
     // load a file
     std::vector<std::string> paths;
-    paths.push_back("/home/nlichtenberg/1crn.pdb");
-    //paths.push_back("/home/nlichtenberg/1vis.pdb");
-    //paths.push_back("/home/nlichtenberg/Develop/Mol_Sandbox/resources/TrajectoryFiles/1aon.pdb");
+    paths.push_back("/home/nlichtenberg/Files/PDB/1crn.pdb");
+    //paths.push_back("/home/nlichtenberg/Files/PDB/2plt.pdb");
+    //paths.push_back("/home/nlichtenberg/Files/PDB/1a19.pdb");
+    //paths.push_back("/home/nlichtenberg/Files/PDB/155C.pdb");
+    //paths.push_back("/home/nlichtenberg/Files/PDB/1vis.pdb");
+    //paths.push_back("/home/nlichtenberg/Files/PDB/Develop/Mol_Sandbox/resources/TrajectoryFiles/1aon.pdb");
 
     MdTrajWrapper mdwrap;
     prot = mdwrap.load(paths);
@@ -288,6 +291,8 @@ void ImpostorSES::run()
 
             numberOfFrames = 0;
             frameInterval = 0.0f;
+            if (fps < 0.1)
+                glfwSetWindowShouldClose(window, GL_TRUE);
         }
         glfwSetKeyCallback(window, keyCallback);
 

@@ -1,6 +1,6 @@
 #version 450
 
-coherent layout(rgba16f) uniform image3D intervalBuffer;
+coherent layout(rgba32f) uniform image3D intervalBuffer;
 coherent layout(r32ui) uniform uimage2D semaphore;
 
 uniform vec4 color;
@@ -265,7 +265,8 @@ void main() {
 
       done = true;
       // "Tiefenkomplexität" Rendern
-      // fragColor = vec4(int(imageLoad(intervalBuffer, ivec3(coord, perPixelDepth-1)).r)/10.0);
+      //fragColor = vec4(int(imageLoad(intervalBuffer, ivec3(coord, perPixelDepth-1)).r)/15.0);
+      //gl_FragDepth = 1- imageLoad(intervalBuffer, ivec3(coord, perPixelDepth-1)).r/200.0;
       }
       }
       }

@@ -4,7 +4,7 @@ out vec4 fragColor;
 
 //coherent layout(rgba16f, binding = 0) uniform uimageBuffer collectedIDsBuffer;
 coherent layout(r8ui) uniform uimage1D collectedIDsBuffer;
-coherent layout(rgba16f) uniform image3D intervalBuffer;
+coherent layout(rgba32f) uniform image3D intervalBuffer;
 
 uniform int level = 0;
 

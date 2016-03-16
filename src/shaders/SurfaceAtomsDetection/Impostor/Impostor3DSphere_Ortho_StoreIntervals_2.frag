@@ -1,6 +1,6 @@
 #version 450
 
-coherent layout(rgba16f) uniform image3D intervalBuffer;
+coherent layout(rgba32f) uniform image3D intervalBuffer;
 coherent layout(r32ui) uniform uimage2D semaphore;
 
 uniform vec4 color;

@@ -202,7 +202,7 @@ GLuint Texture::genUimageBuffer(int size)
     byteCount = sizeof(unsigned int) * size;
     pixels = new unsigned char[byteCount];
 
-    unsigned int f = 1000;
+    unsigned int f = 0;
 
     unsigned char const * p = reinterpret_cast<unsigned char const *>(&f);
 

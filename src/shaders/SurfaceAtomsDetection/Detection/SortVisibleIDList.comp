@@ -2,17 +2,18 @@
 
 layout(r32ui) uniform uimage1D sortedVisibleIDsBuffer;
 coherent layout(r8ui) uniform uimage1D collectedIDsBuffer;
-layout(local_size_x = 1024) in;
+layout(local_size_x = 512, local_size_y = 2) in;
 layout(binding = 3) uniform atomic_uint indexCounter;
 
 void main(void)
 {
     // read from the collectedIDsBuffer at the location of the work unit's global index
     // if that index (that instance) was flagged visible, fetch the first free entry in the sortedVisibleIDsBuffer and store the index
-    uint visible = imageLoad(collectedIDsBuffer, int(gl_GlobalInvocationID.x)).r;
+    uint ID = gl_WorkGroupID.x * gl_WorkGroupSize.x * gl_WorkGroupSize.y + gl_LocalInvocationIndex;
+    uint visible = imageLoad(collectedIDsBuffer, int(ID)).r;
     if (visible == uint(1))
     {
         uint i = atomicCounterIncrement(indexCounter);
-        imageStore(sortedVisibleIDsBuffer, int(i), uvec4(gl_GlobalInvocationID.x));
+        imageStore(sortedVisibleIDsBuffer, int(i), uvec4(ID));
     }
 }
