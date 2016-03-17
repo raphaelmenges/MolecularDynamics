@@ -87,8 +87,13 @@ public:
     float frameInterval = 0.0f;
     int numberOfFrames  = 0;
 
+    void setupTexturesAndBuffers();
+    void setupShaderPrograms();
+    void setupRenderPasses();
+
     void init();
     void run();
+
 
     float r(float size) {
         return size * 2 * static_cast <float> (rand()) / static_cast <float> (RAND_MAX) - size;

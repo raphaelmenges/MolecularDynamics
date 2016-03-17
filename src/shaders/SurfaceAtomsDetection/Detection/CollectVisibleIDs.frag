@@ -1,6 +1,5 @@
 #version 450
 
-in flat int passInstanceID;
 out vec4 fragColor;
 
 //coherent layout(rgba16f, binding = 0) uniform uimageBuffer collectedIDsBuffer;
