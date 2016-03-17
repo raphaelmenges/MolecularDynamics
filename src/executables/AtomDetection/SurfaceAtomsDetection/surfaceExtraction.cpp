@@ -55,31 +55,31 @@ void SurfaceExtraction::init()
     if(perspectiveProj)
         projection = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
     else
-        projection = ortho(-40.0f, 40.0f, -40.0f, 40.0f, -200.0f, 200.0f);
+        projection = ortho(-screenSizeOrtho, screenSizeOrtho, -screenSizeOrtho, screenSizeOrtho, -200.0f, 200.0f);
 
     if (useAtomicCounters)
     {
-        spRenderImpostor = ShaderProgram("/SurfaceAtomsDetection/Impostor/impostorSpheres_InstancedUA.vert",
-                                         "/SurfaceAtomsDetection/Detection/solidColorInstanceCount.frag");
-        spRenderDiscs = ShaderProgram("/SurfaceAtomsDetection//Impostor/impostorSpheres_InstancedUA.vert",
-                                      "/SurfaceAtomsDetection//Impostor/impostorSpheres_discardFragments_Instanced.frag");
-        spRenderBalls_p = ShaderProgram("/SurfaceAtomsDetection/Base/modelViewProjectionInstancedUA.vert",
-                                        "/SurfaceAtomsDetection/Impostor/Impostor3DSphere.frag");
+        spRenderImpostor    =   ShaderProgram("/SurfaceAtomsDetection/Impostor/impostorSpheres_InstancedUA.vert",
+                                            "/SurfaceAtomsDetection/Detection/solidColorInstanceCount.frag");
+        spRenderDiscs       =   ShaderProgram("/SurfaceAtomsDetection//Impostor/impostorSpheres_InstancedUA.vert",
+                                            "/SurfaceAtomsDetection//Impostor/impostorSpheres_discardFragments_Instanced.frag");
+        spRenderBalls_p     =   ShaderProgram("/SurfaceAtomsDetection/Base/modelViewProjectionInstancedUA.vert",
+                                            "/SurfaceAtomsDetection/Impostor/Impostor3DSphere.frag");
         if(perspectiveProj)
-            spRenderBalls = ShaderProgram("/SurfaceAtomsDetection/Base/modelViewProjectionInstancedUA.vert",
-                                          "/SurfaceAtomsDetection/Impostor/Impostor3DSphere.frag");
+            spRenderBalls   =   ShaderProgram("/SurfaceAtomsDetection/Base/modelViewProjectionInstancedUA.vert",
+                                            "/SurfaceAtomsDetection/Impostor/Impostor3DSphere.frag");
         else
-            spRenderBalls = ShaderProgram("/SurfaceAtomsDetection/Base/modelViewProjectionInstancedUA.vert",
-                                          "/SurfaceAtomsDetection/Impostor/Impostor3DSphere_Ortho_StoreIntervals.frag");
+            spRenderBalls   =   ShaderProgram("/SurfaceAtomsDetection/Base/modelViewProjectionInstancedUA.vert",
+                                            "/SurfaceAtomsDetection/Impostor/Impostor3DSphere_Ortho_StoreIntervals.frag");
     }
     else
     {
-        spRenderImpostor = ShaderProgram("/SurfaceAtomsDetection/Impostor/impostorSpheres_Instanced.vert",
-                                         "/SurfaceAtomsDetection/Detection/solidColorInstanceCount.frag");
-        spRenderDiscs = ShaderProgram("/SurfaceAtomsDetection/Impostor/impostorSpheres_Instanced.vert",
-                                      "/SurfaceAtomsDetection/Impostor/impostorSpheres_discardFragments_Instanced.frag");
-        spRenderBalls = ShaderProgram("/SurfaceAtomsDetection/Impostor/impostorSpheres_Instanced.vert",
-                                      "/SurfaceAtomsDetection/Impostor/Impostor3DSphere.frag");
+        spRenderImpostor    =   ShaderProgram("/SurfaceAtomsDetection/Impostor/impostorSpheres_Instanced.vert",
+                                            "/SurfaceAtomsDetection/Detection/solidColorInstanceCount.frag");
+        spRenderDiscs       =   ShaderProgram("/SurfaceAtomsDetection/Impostor/impostorSpheres_Instanced.vert",
+                                            "/SurfaceAtomsDetection/Impostor/impostorSpheres_discardFragments_Instanced.frag");
+        spRenderBalls       =   ShaderProgram("/SurfaceAtomsDetection/Impostor/impostorSpheres_Instanced.vert",
+                                            "/SurfaceAtomsDetection/Impostor/Impostor3DSphere.frag");
     }
 
     // Setup semaphore texture for atomic fragment access blocks
@@ -263,7 +263,7 @@ void SurfaceExtraction::run()
         if (glfwGetKey(window, GLFW_KEY_COMMA) == GLFW_PRESS) probeRadius = glm::max(probeRadius - 0.1f, 0.01f);
         if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {pingPongOff = true; updateVisibilityMapLock = true; updateVisibilityMap = true; projection = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
             renderBalls->setShaderProgram(&spRenderBalls_p);renderBalls->update("projection", projection); }
-        if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {updateVisibilityMapLock = false; projection = ortho(-15.0f, 15.0f, -15.0f, 15.0f, 1.0f, 300.0f); renderBalls->setShaderProgram(&spRenderBalls);renderBalls->update("projection", projection);}
+        if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {updateVisibilityMapLock = false; projection = ortho(-screenSizeOrtho, screenSizeOrtho, -screenSizeOrtho, screenSizeOrtho, 1.0f, 300.0f); renderBalls->setShaderProgram(&spRenderBalls);renderBalls->update("projection", projection);}
         if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) pingPongOff = false;
         if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) pingPongOff = true;
         if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) { vsync = !vsync; vsync ? glfwSwapInterval(1) : glfwSwapInterval(0); vsync ? std::cout << "VSync enabled\n" : std::cout << "VSync disabled\n"; }
@@ -443,6 +443,8 @@ int main(int argc, char *argv[]) {
     printProperties();
 
     SurfaceExtraction demo;
+
+    // surface atoms detection requires orthogonal projection
     demo.perspectiveProj = false;
     demo.init();
 

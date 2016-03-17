@@ -62,6 +62,7 @@ public:
     bool updateVisibilityMap = false;
     bool updateVisibilityMapLock = false; // L: lock U: unlock reduced elements for current frame
     bool pingPongOff = true; // reduce number of elements every other frame O: off P: Pingpong On
+    float screenSizeOrtho = 15.0f;
     glm::mat4 rot90Y;
 
     int perPixelDepth = 64;

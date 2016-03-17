@@ -13,7 +13,7 @@ in vec3       gs_hit_position_cam;
 out vec4      frag_color;
 layout (depth_greater) out float gl_FragDepth;
 
-const int     raymarch_steps_max = 128;
+const int     raymarch_steps_max = 16;
 const float   raymarch_epsilon   = 0.0001;
 
 const vec3  light_direction_cam = normalize(vec3(-1.0, 1.0, 1.0));
