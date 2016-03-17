@@ -69,9 +69,11 @@ public:
     bool updateVisibilityMap = false;
     bool updateVisibilityMapLock = false; // L: lock U: unlock reduced elements for current frame
     bool pingPongOff = true; // reduce number of elements every other frame O: off P: Pingpong On
+    float screenSizeOrtho = 15.0f;
 
     int preproces_w;
     int preproces_h;
+    float preprocess_f;
 
     int perPixelDepth = 64;
 
@@ -95,6 +97,10 @@ public:
     float frameInterval = 0.0f;
     int numberOfFrames  = 0;
 
+
+    void setupTexturesAndBuffers();
+    void setupShaderPrograms();
+    void setupRenderPasses();
     void init();
     void run();
     void initSES();

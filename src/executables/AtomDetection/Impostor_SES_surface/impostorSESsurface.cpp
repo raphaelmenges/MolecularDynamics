@@ -35,62 +35,18 @@ void updateInputMapping(RenderPass* rp, ShaderProgram &sp)
     vao->enableVertexAttribArrays(sp.inputMap);
 }
 
-void ImpostorSESsurface::init()
+void ImpostorSESsurface::setupTexturesAndBuffers()
 {
-    window = generateWindow(512,512);
-    preproces_w = getWidth(window)/1.0;
-    preproces_h = getHeight(window)/1.0;
 
-    glViewport(0,0,preproces_w,preproces_h);
+    // prepare buffer with index = value
+    // used to draw all istances
+    identityInstancesMap.clear();
+    for (GLuint i = 0; i < num_balls; i++)
+        identityInstancesMap.push_back(i);
 
-    // load a file
-    std::vector<std::string> paths;
-    paths.push_back("/home/nlichtenberg/Files/PDB/1crn.pdb");
-    //paths.push_back("/home/nlichtenberg/Files/PDB/2plt.pdb");
-    //paths.push_back("/home/nlichtenberg/Files/PDB/1a19.pdb");
-    //paths.push_back("/home/nlichtenberg/Files/PDB/155C.pdb");
-    //paths.push_back("/home/nlichtenberg/Files/PDB/1vis.pdb");
-    //paths.push_back("/home/nlichtenberg/Files/PDB/Develop/Mol_Sandbox/resources/TrajectoryFiles/1aon.pdb");
-
-    MdTrajWrapper mdwrap;
-    prot = mdwrap.load(paths);
-    prot->recenter();
-
-    impSph = new ImpostorSpheres(false, false);
-    impSph->setProteinData(prot.get());
-    impSph->init();
-    num_balls = impSph->num_balls;
-
-    if(perspectiveProj)
-        projection = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
-    else
-        projection = ortho(-15.0f, 15.0f, -15.0f, 15.0f, -100.0f, 100.0f);
-    projection_persp = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
-
-    if (useAtomicCounters)
-    {
-        spRenderImpostor = ShaderProgram("/SurfaceAtomsDetection/Impostor/impostorSpheres_InstancedUA.vert",
-                                         "/SurfaceAtomsDetection/Detection/solidColorInstanceCount.frag");
-        spRenderDiscs = ShaderProgram("/SurfaceAtomsDetection//Impostor/impostorSpheres_InstancedUA.vert",
-                                      "/SurfaceAtomsDetection//Impostor/impostorSpheres_discardFragments_Instanced.frag");
-        spRenderBalls_p = ShaderProgram("/SurfaceAtomsDetection/Base/modelViewProjectionInstancedUA.vert",
-                                        "/SurfaceAtomsDetection/Impostor/Impostor3DSphere.frag");
-        if(perspectiveProj)
-            spRenderBalls = ShaderProgram("/SurfaceAtomsDetection/Base/modelViewProjectionInstancedUA.vert",
-                                          "/SurfaceAtomsDetection/Impostor/Impostor3DSphere.frag");
-        else
-            spRenderBalls = ShaderProgram("/SurfaceAtomsDetection/Base/modelViewProjectionInstancedUA.vert",
-                                          "/SurfaceAtomsDetection/Impostor/Impostor3DSphere_Ortho_StoreIntervals_2.frag");
-    }
-    else
-    {
-        spRenderImpostor = ShaderProgram("/SurfaceAtomsDetection/Impostor/impostorSpheres_Instanced.vert",
-                                         "/SurfaceAtomsDetection/Detection/solidColorInstanceCount.frag");
-        spRenderDiscs = ShaderProgram("/SurfaceAtomsDetection/Impostor/impostorSpheres_Instanced.vert",
-                                      "/SurfaceAtomsDetection/Impostor/impostorSpheres_discardFragments_Instanced.frag");
-        spRenderBalls = ShaderProgram("/SurfaceAtomsDetection/Impostor/impostorSpheres_Instanced.vert",
-                                      "/SurfaceAtomsDetection/Impostor/Impostor3DSphere.frag");
-    }
+    // map to set all instances visible
+    mapAllVisible.resize(num_balls);
+    std::fill(mapAllVisible.begin(), mapAllVisible.end(), 1);
 
     // Setup semaphore texture for atomic fragment access blocks
     tex_Semaphore = new Texture(GL_R32UI, GL_RED_INTEGER, GL_UNSIGNED_INT);
@@ -100,59 +56,16 @@ void ImpostorSESsurface::init()
     tex_3DintervalStorageBuffer = new Texture(GL_RGBA32F, GL_RGBA, GL_FLOAT);
     tex_3DintervalStorageBuffer->gen3DTexture(preproces_w, preproces_h, perPixelDepth);
 
-    /// Renderpass to render impostors/fake geometry
-    renderBalls = new RenderPass(
-                impSph,
-                &spRenderBalls,
-                preproces_w,
-                preproces_h);
-
-    renderBalls->update("projection", projection);
-    renderBalls->texture("semaphore",tex_Semaphore);
-    renderBalls->texture("intervalBuffer",tex_3DintervalStorageBuffer);
-    renderBalls->update("width", preproces_w);
-    renderBalls->update("height", preproces_h);
-    renderBalls->update("perPixelDepth", perPixelDepth);
-
-
-    // define projection matrix for other shader programs
-    renderBalls->setShaderProgram(&spRenderBalls_p);
-    renderBalls->update("projection", projection);
-    renderBalls->setShaderProgram(&spRenderDiscs);
-    renderBalls->update("projection", projection);
-    renderBalls->setShaderProgram(&spRenderImpostor);
-    renderBalls->update("projection", projection);
-
-    /// Renderpass to detect the visible instances
-    collectSurfaceIDs = new RenderPass(
-                new Quad(),
-                new ShaderProgram("/SurfaceAtomsDetection/Base/fullscreen.vert",
-                                  "/SurfaceAtomsDetection/Detection/CollectVisibleIDs_frontOnly.frag"),
-                preproces_w,
-                preproces_h);
-
-    // prepare 1D buffer for entries
+    // prepare 1D buffer to collect visible IDs
     tex_collectedIDsBuffer = new Texture(GL_R8UI, GL_RED_INTEGER, GL_UNSIGNED_INT);
     tex_collectedIDsBuffer->genUimageBuffer(num_balls);
-    collectSurfaceIDs->texture("collectedIDsBuffer", tex_collectedIDsBuffer);
-    collectSurfaceIDs->texture("intervalBuffer", tex_3DintervalStorageBuffer);
 
-    /// renderpass to display result frame
-    result = new RenderPass(
-                new Quad(),
-                new ShaderProgram("/SurfaceAtomsDetection/Base/fullscreen.vert",
-                                  "/SurfaceAtomsDetection/Detection/toneMapperLinearInstanceCount.frag"));
-    result->texture("tex", renderBalls->get("fragColor"));
-
-    /// compute shader to process a list of visible IDs (with the actual instanceID of the first general draw)
-    computeSortedIDs = new ComputeProgram(new ShaderProgram("/SurfaceAtomsDetection/Detection/SortVisibleIDList.comp"));
-
-    // 1D buffer for visible IDs
+    // 1D buffer for sorted visible IDs. Used for indexing into VAO
     tex_sortedVisibleIDsBuffer = new Texture(GL_R32UI, GL_RED_INTEGER, GL_UNSIGNED_INT);
     tex_sortedVisibleIDsBuffer->genUimageBuffer(num_balls);
 
-    computeSortedIDs->texture("collectedIDsBuffer", tex_collectedIDsBuffer);
-    computeSortedIDs->texture("sortedVisibleIDsBuffer", tex_sortedVisibleIDsBuffer);
+    glBindTexture(GL_TEXTURE_1D, tex_sortedVisibleIDsBuffer->getHandle());
+    glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, num_balls, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, &identityInstancesMap[0]);
 
     // atomic counter buffer for consecutive index access in compute shader
     glGenBuffers(1, &atomBuff);
@@ -223,30 +136,153 @@ void ImpostorSESsurface::init()
         zeros[i+3] = p[3];
     }
 
-    // prepare buffer with index = value
-    // used to draw all istances
+}
 
-    identityInstancesMap.clear();
-    for (GLuint i = 0; i < num_balls; i++)
-        identityInstancesMap.push_back(i);
+void ImpostorSESsurface::setupShaderPrograms()
+{
+    if(perspectiveProj)
+        projection = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
+    else
+        projection = ortho(-screenSizeOrtho, screenSizeOrtho, -screenSizeOrtho, screenSizeOrtho, -200.0f, 200.0f);
 
-    glBindTexture(GL_TEXTURE_1D, tex_sortedVisibleIDsBuffer->getHandle());
-    glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, num_balls, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, &identityInstancesMap[0]);
+    if (useAtomicCounters)
+    {
+        spRenderImpostor    =   ShaderProgram("/SurfaceAtomsDetection/Impostor/impostorSpheres_InstancedUA.vert",
+                                            "/SurfaceAtomsDetection/Detection/solidColorInstanceCount.frag");
+        spRenderDiscs       =   ShaderProgram("/SurfaceAtomsDetection//Impostor/impostorSpheres_InstancedUA.vert",
+                                            "/SurfaceAtomsDetection//Impostor/impostorSpheres_discardFragments_Instanced.frag");
+        spRenderBalls_p     =   ShaderProgram("/SurfaceAtomsDetection/Base/modelViewProjectionInstancedUA.vert",
+                                            "/SurfaceAtomsDetection/Impostor/Impostor3DSphere.frag");
+        if(perspectiveProj)
+            spRenderBalls   =   ShaderProgram("/SurfaceAtomsDetection/Base/modelViewProjectionInstancedUA.vert",
+                                            "/SurfaceAtomsDetection/Impostor/Impostor3DSphere.frag");
+        else
+            spRenderBalls   =   ShaderProgram("/SurfaceAtomsDetection/Base/modelViewProjectionInstancedUA.vert",
+                                            "/SurfaceAtomsDetection/Impostor/Impostor3DSphere_Ortho_StoreIntervals.frag");
+    }
+    else
+    {
+        spRenderImpostor    =   ShaderProgram("/SurfaceAtomsDetection/Impostor/impostorSpheres_Instanced.vert",
+                                            "/SurfaceAtomsDetection/Detection/solidColorInstanceCount.frag");
+        spRenderDiscs       =   ShaderProgram("/SurfaceAtomsDetection/Impostor/impostorSpheres_Instanced.vert",
+                                            "/SurfaceAtomsDetection/Impostor/impostorSpheres_discardFragments_Instanced.frag");
+        spRenderBalls       =   ShaderProgram("/SurfaceAtomsDetection/Impostor/impostorSpheres_Instanced.vert",
+                                            "/SurfaceAtomsDetection/Impostor/Impostor3DSphere.frag");
+    }
+}
 
-    // map to set all instances visible
-    mapAllVisible.resize(num_balls);
-    std::fill(mapAllVisible.begin(), mapAllVisible.end(), 1);
+void ImpostorSESsurface::setupRenderPasses()
+{
+    /// Renderpass to render impostors/fake geometry
+    renderBalls = new RenderPass(
+                impSph,
+                &spRenderBalls,
+                preproces_w,
+                preproces_h);
 
-    // time query
-    GLuint timeQuery;
-    glGenQueries(1, &timeQuery);
+    renderBalls->update("projection", projection);
+    renderBalls->texture("semaphore",tex_Semaphore);
+    renderBalls->texture("intervalBuffer",tex_3DintervalStorageBuffer);
+    renderBalls->update("width", preproces_w);
+    renderBalls->update("height", preproces_h);
+    renderBalls->update("perPixelDepth", perPixelDepth);
+    //renderBalls->update("rotY", rot90Y);
+
+
+    // define projection matrix for other shader programs
+    renderBalls->setShaderProgram(&spRenderBalls_p);
+    renderBalls->update("projection", projection);
+    renderBalls->setShaderProgram(&spRenderDiscs);
+    renderBalls->update("projection", projection);
+    renderBalls->setShaderProgram(&spRenderImpostor);
+    renderBalls->update("projection", projection);
+
+    /// Renderpass to detect the visible instances
+    collectSurfaceIDs = new RenderPass(
+                new Quad(),
+                new ShaderProgram("/SurfaceAtomsDetection/Base/fullscreen.vert",
+                                  "/SurfaceAtomsDetection/Detection/CollectVisibleIDs.frag"),
+                preproces_w,
+                preproces_h);
+
+    collectSurfaceIDs->texture("collectedIDsBuffer", tex_collectedIDsBuffer);
+    collectSurfaceIDs->texture("intervalBuffer", tex_3DintervalStorageBuffer);
+
+    /// renderpass to display result frame
+    result = new RenderPass(
+                new Quad(),
+                new ShaderProgram("/SurfaceAtomsDetection/Base/fullscreen.vert",
+                                  "/SurfaceAtomsDetection/Detection/toneMapperLinearInstanceCount.frag"));
+    result->texture("tex", renderBalls->get("fragColor"));
+
+    /// compute shader to process a list of visible IDs (with the actual instanceID of the first general draw)
+    computeSortedIDs = new ComputeProgram(new ShaderProgram("/SurfaceAtomsDetection/Detection/SortVisibleIDList.comp"));
+    computeSortedIDs->texture("collectedIDsBuffer", tex_collectedIDsBuffer);
+    computeSortedIDs->texture("sortedVisibleIDsBuffer", tex_sortedVisibleIDsBuffer);
+}
+
+
+glm::mat4 rotationMatrix(vec3 axis, float angle)
+{
+    axis = normalize(axis);
+    float s = sin(angle);
+    float c = cos(angle);
+    float oc = 1.0 - c;
+
+    return glm::mat4(oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,  0.0,
+                oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,  0.0,
+                oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c,           0.0,
+                0.0,                                0.0,                                0.0,                                1.0);
+}
+
+
+void ImpostorSESsurface::init()
+{
+
+    preproces_w = getWidth(window)/preprocess_f;
+    preproces_h = getHeight(window)/preprocess_f;
+
+    glViewport(0,0,preproces_w,preproces_h);
+
+    //rot90Y = rotationMatrix(glm::vec3(0,1,0), 90.0f/180.0f * 3.14159265358979323846264338327950288f);
+
+    // load a file
+    std::vector<std::string> paths;
+    paths.push_back("/home/nlichtenberg/Files/PDB/1crn.pdb");
+    //paths.push_back("/home/nlichtenberg/Files/PDB/2plt.pdb");
+    //paths.push_back("/home/nlichtenberg/Files/PDB/1a19.pdb");
+    //paths.push_back("/home/nlichtenberg/Files/PDB/1EAI.pdb");
+    //paths.push_back("/home/nlichtenberg/Files/PDB/1J4n.pdb");
+    //paths.push_back("/home/nlichtenberg/Files/PDB/1MBN.pdb");
+    //paths.push_back("/home/nlichtenberg/Files/PDB/155C.pdb");
+    //paths.push_back("/home/nlichtenberg/Files/PDB/1vis.pdb");
+    //paths.push_back("/home/nlichtenberg/Files/PDB/3ZSJ.pdb");
+    //paths.push_back("/home/nlichtenberg/Files/PDB/1aon_16_0.pdb");
+
+    MdTrajWrapper mdwrap;
+    prot = mdwrap.load(paths);
+
+    // some PDB files contain some atoms added by the authors. Attention! -> delete them
+    //prot->getAtoms()->resize(727);
+
+    prot->recenter();
+    std::cout << "Protein " << prot->getName() << " with " << prot->getAtoms()->size() << " atoms" << std::endl;
+
+    impSph = new ImpostorSpheres(!useAtomicCounters, true);
+    impSph->setProteinData(prot.get());
+    impSph->init();
+    num_balls = impSph->num_balls;
+
+    this->setupTexturesAndBuffers();
+    this->setupShaderPrograms();
+    this->setupRenderPasses();
 
     glEnable(GL_DEPTH_TEST);
-    //glDisable(GL_DEPTH_TEST);
 }
 
 void ImpostorSESsurface::initSES()
 {
+    projection_persp = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
     // one timestep so far ...
     //prot->frames.resize(1);
     prot->recenter();
@@ -330,7 +366,7 @@ void ImpostorSESsurface::run()
         if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {pingPongOff = true; updateVisibilityMapLock = true; updateVisibilityMap = true; projection = perspective(45.0f, getRatio(window), 0.1f, 100.0f);
             renderBalls->setShaderProgram(&spRenderBalls_p);renderBalls->update("projection", projection); }
 
-        if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {updateVisibilityMapLock = false; projection = ortho(-15.0f, 15.0f, -15.0f, 15.0f, 1.0f, 300.0f); renderBalls->setShaderProgram(&spRenderBalls);renderBalls->update("projection", projection);}
+        if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {updateVisibilityMapLock = false; projection = ortho(-screenSizeOrtho, screenSizeOrtho, -screenSizeOrtho, screenSizeOrtho, 1.0f, 300.0f); renderBalls->setShaderProgram(&spRenderBalls);renderBalls->update("projection", projection);}
         if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) pingPongOff = false;
         if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) pingPongOff = true;
         if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) { vsync = !vsync; vsync ? glfwSwapInterval(1) : glfwSwapInterval(0); vsync ? std::cout << "VSync enabled\n" : std::cout << "VSync disabled\n"; }
@@ -553,11 +589,8 @@ void ImpostorSESsurface::run()
         glBlitFramebuffer(0, 0, preproces_w, preproces_h, 0, 0, preproces_w*2, preproces_h*2,
             GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
-        result->clear(0.3,0.3,0.3,1);
-        result->run();
 
-
-        glViewport(0,0,getWidth(window),getHeight(window));
+        glViewport(0,0,getWidth(window), getHeight(window)); // full resolution for display
         // just to clear the framebuffer (always)
         rpAtoms
                 ->clear(0.15f, 0.15f, 0.15f, 1.0f)
@@ -578,7 +611,9 @@ void ImpostorSESsurface::run()
                     ->update("view", view)
                     ->run();
 
-        glViewport(0,0,preproces_w,preproces_h);
+        glViewport(0,0,preproces_w,preproces_h); // downscaled resolution for preprocess
+        //result->clear(0.3,0.3,0.3,1);
+        //result->run();
     });
 }
 
@@ -617,6 +652,8 @@ int main(int argc, char *argv[]) {
 
     ImpostorSESsurface demo;
     demo.perspectiveProj = false;
+    demo.window = generateWindow(512,512);
+    demo.preprocess_f = 2.0; // factor by which the detection resolution is downscaled
     demo.init();
     demo.initSES();
 
