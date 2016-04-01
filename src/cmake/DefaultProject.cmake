@@ -48,7 +48,8 @@ endif()
 
 add_definitions(-DSHADERS_PATH="${SHADERS_PATH}")
 add_definitions(-DRESOURCES_PATH="${RESOURCES_PATH}")
-add_definitions(-DMDTRAJ_PATH="${MDTRAJ_PATH}")
+add_definitions(-DMDTRAJ_PATH="${SIDE_PACKAGES_PATH}") # TODO: rename variable on C++ side
+add_definitions(-DMOLECULES_PATH="${MOLECULES_PATH}")
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   # using Clang
@@ -67,7 +68,7 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 GENERATE_SUBDIRS(ALL_EXECUTABLES ${EXECUTABLES_PATH} ${PROJECT_BINARY_DIR}/executables)
 
 if(EXISTS ${SHADERS_PATH})
-	add_subdirectory(${SHADERS_PATH})
+        add_subdirectory(${SHADERS_PATH})
 endif()
 
 file (COPY "${CMAKE_MODULE_PATH}/gdb_prettyprinter.py" DESTINATION ${PROJECT_BINARY_DIR})
