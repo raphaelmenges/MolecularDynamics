@@ -218,7 +218,7 @@ void SurfaceExtraction::init()
 
     // load a file
     std::vector<std::string> paths;
-    paths.push_back("/home/nlichtenberg/Files/PDB/1crn.pdb");
+    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
     //paths.push_back("/home/nlichtenberg/Files/PDB/2plt.pdb");
     //paths.push_back("/home/nlichtenberg/Files/PDB/1a19.pdb");
     //paths.push_back("/home/nlichtenberg/Files/PDB/1EAI.pdb");

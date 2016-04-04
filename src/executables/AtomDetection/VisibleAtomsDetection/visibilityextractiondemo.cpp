@@ -14,7 +14,7 @@ void VisibilityExtractionDemo::init()
     // load a file
     std::vector<std::string> paths;
     //paths.push_back("/home/nlichtenberg/1crn.pdb");
-    paths.push_back("/home/nlichtenberg/1vis.pdb");
+    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1vis.pdb");
     //paths.push_back("/home/nlichtenberg/Develop/Mol_Sandbox/resources/TrajectoryFiles/1aon.pdb");
     MdTrajWrapper mdwrap;
     std::auto_ptr<Protein> prot = mdwrap.load(paths);

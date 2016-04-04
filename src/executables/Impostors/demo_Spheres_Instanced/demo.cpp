@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
     std::vector<std::string> paths;
     //paths.push_back("/home/nlichtenberg/1crn.pdb");
     //paths.push_back("/home/nlichtenberg/1vis.pdb");
-    paths.push_back("/home/nlichtenberg/Develop/Mol_Sandbox/resources/TrajectoryFiles/1aon.pdb");
+    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
     MdTrajWrapper mdwrap;
     std::auto_ptr<Protein> prot = mdwrap.load(paths);
 
@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
     impSph->setProteinData(prot.get());
     //impSph->num_balls = 1000000;
     impSph->init();
-    
+
     RenderPass* renderBalls = new RenderPass(
                 impSph,
                 &spRenderBalls,

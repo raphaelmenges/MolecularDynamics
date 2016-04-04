@@ -49,7 +49,6 @@ endif()
 add_definitions(-DSHADERS_PATH="${SHADERS_PATH}")
 add_definitions(-DRESOURCES_PATH="${RESOURCES_PATH}")
 add_definitions(-DMDTRAJ_PATH="${SIDE_PACKAGES_PATH}") # TODO: rename variable on C++ side
-add_definitions(-DMOLECULES_PATH="${MOLECULES_PATH}")
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   # using Clang
