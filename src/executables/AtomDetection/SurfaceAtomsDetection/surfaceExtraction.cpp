@@ -460,5 +460,7 @@ int main(int argc, char *argv[]) {
 
     demo.init();
     demo.run();
+
+    return 0;
 }
 
