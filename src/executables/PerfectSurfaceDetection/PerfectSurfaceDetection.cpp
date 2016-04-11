@@ -34,16 +34,26 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     MdTrajWrapper mdwrap;
     mupProtein = mdwrap.load(paths);
 
+    // Load LUT
+    AtomLUT atomLUT;
+
     // Test protein extent
     mupProtein->minMax(); // first, one has to calculate min and max value of protein
-    glm::vec3 min = mupProtein->getMin();
-    glm::vec3 max = mupProtein->getMax();
-    std::cout << "Min extent of protein: " << min.x << ", " << min.y << ", " << min.z << std::endl;
-    std::cout << "Max extent of protein: " << max.x << ", " << max.y << ", " << max.z << std::endl;
+    glm::vec3 proteinMinExtent = mupProtein->getMin();
+    glm::vec3 proteinMaxExtent = mupProtein->getMax();
+    std::cout
+        << "Min extent of protein: "
+        << proteinMinExtent.x << ", "
+        << proteinMinExtent.y << ", "
+        << proteinMinExtent.z << std::endl;
+    std::cout
+        << "Max extent of protein: "
+        << proteinMaxExtent.x << ", "
+        << proteinMaxExtent.y << ", "
+        << proteinMaxExtent.z << std::endl;
 
     // Test atom radii
     std::vector<Atom*>* pAtoms = mupProtein->getAtoms();
-    AtomLUT atomLUT;
     for(int i = 0; i < pAtoms->size(); i++)
     {
         std::string element = pAtoms->at(i)->getElement();
@@ -104,13 +114,61 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     glDetachShader(surfaceDetectionProgram, surfaceDetectionShader);
     glDeleteShader(surfaceDetectionShader);
 
-    // # Prepare atoms input
+    // # Prepare atoms input (position + radius)
+
+    // Struct which holds necessary information about singe atom
+    struct AtomStruct
+    {
+        // Constructor
+        AtomStruct(
+            glm::vec3 position,
+            float radius)
+        {
+            this->position = position;
+            this->radius = radius;
+        }
+
+        // Fields
+        glm::vec3 position;
+        float radius;
+    };
+
+    // Vector which is used as data for SSBO
+    std::vector<AtomStruct> atomStructs;
+    for(Atom const * pAtom : *(mupProtein->getAtoms()))
+    {
+        // Push back all atoms
+        atomStructs.push_back(
+            AtomStruct(
+                pAtom->getPosition(),
+                atomLUT.vdW_radii_picometer.at(
+                    pAtoms->at(i)->getElement()));
+    }
+
+    // Fill into ssbo
+    GLint atomsSSBO;
+    glGenBuffers(1, &atomsSSBO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, atomsSSBO);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(AtomStruct) * atomStructs.size(), atomStructs.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+
+
+
 
     // # Prepare uint image to write indices of surface atoms
 
     // # Prepare atomic counter for writing results
 
     // # Execute compute shader to determine surface atoms
+
+    // Bind everything
+    // - Shader Program
+    // - Image
+    // - Atomic counter
+    // - Atoms
+
+    // Dispatch
 
     // ### Render protein with marked surface atoms ###
 
