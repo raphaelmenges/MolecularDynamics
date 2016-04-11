@@ -20,7 +20,6 @@ const char* pSurfaceDetectionShaderSource =
 "   // TODO;\n"
 "}\n";
 
-
 // ### Class implementation ###
 
 PerfectSurfaceDetection::PerfectSurfaceDetection()
