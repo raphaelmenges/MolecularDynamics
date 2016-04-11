@@ -11,46 +11,6 @@
 
 #include <iostream>
 
-// ### Shader implementation ###
-const char* pSurfaceDetectionShaderSource =
-"#version 430 core\n"
-
-// Workgroup layout (just linear of atoms)
-"layout(local_size_x=8, local_size_y=1, local_size_z=1) in;\n"
-
-// Structs
-"struct AtomStruct\n"
-"{\n"
-"   vec3 position;\n"
-"   float radius;\n"
-"};\n"
-
-// SSBOs
-"layout(std430, binding = 0) readonly restrict buffer AtomBuffer\n"
-"{\n"
-"	AtomStruct atoms[];\n"
-"};\n"
-
-// Uniforms
-"uniform int atomCount;\n"
-
-// Atomic counter
-"layout(binding = 1) uniform atomic_uint index;\n"
-
-// Image with output indices of surface atoms
-"layout(binding = 2, r32ui) restrict writeonly uniform uimageBuffer list;\n"
-
-// Main function
-"void main()\n"
-"{\n"
-    // Check whether in range
-"   if(gl_GlobalInvocationID.x < atomCount)\n"
-"   {\n"
-"       uint idx = atomicCounterIncrement(index);\n"
-"       imageStore(list, int(idx), uvec4(gl_GlobalInvocationID.x));\n"
-"   }\n"
-"}\n";
-
 // ### Class implementation ###
 
 PerfectSurfaceDetection::PerfectSurfaceDetection()
@@ -126,32 +86,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // ### Set up compute shader ###
 
     // Compile shader
-    GLint surfaceDetectionProgram = glCreateProgram();
-    GLint surfaceDetectionShader = glCreateShader(GL_COMPUTE_SHADER);
-    glShaderSource(surfaceDetectionShader, 1, &pSurfaceDetectionShaderSource, NULL);
-    // glCompileShader(surfaceDetectionShader);
-
-    // Log if error
-    GLint log_length = 0;
-    glGetShaderiv(surfaceDetectionShader, GL_INFO_LOG_LENGTH, &log_length);
-    if (log_length > 1)
-    {
-        // Copy log to chars
-        GLchar *log = new GLchar[log_length];
-        glGetShaderInfoLog(surfaceDetectionShader, log_length, NULL, log);
-
-        // Print it
-        std::cout << log << std::endl;
-
-        // Delete chars
-        delete[] log;
-    }
-
-    // Attach shader, link program and delete shader
-    glAttachShader(surfaceDetectionProgram, surfaceDetectionShader);
-    glLinkProgram(surfaceDetectionProgram);
-    glDetachShader(surfaceDetectionProgram, surfaceDetectionShader);
-    glDeleteShader(surfaceDetectionShader);
+    ShaderProgram surfaceDetectionProgram(GL_COMPUTE_SHADER, "/PerfectSurfaceDetection/surface.comp");
 
     // # Prepare atoms input (position + radius)
 
@@ -216,13 +151,13 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // # Execute compute shader to determine surface atoms
 
     // Use compute shader program
-    glUseProgram(surfaceDetectionProgram);
+    surfaceDetectionProgram.use();
 
     // Bind SSBO with atoms
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mAtomsSSBO);
 
     // Tell shader about count of atoms
-    glUniform1i(glGetUniformLocation(surfaceDetectionProgram, "atomCount"), atomCount);
+    surfaceDetectionProgram.update("atomCount", atomCount);
 
     // Bind atomic counter
     glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, atomicCounter);

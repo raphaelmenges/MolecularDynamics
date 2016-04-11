@@ -1,0 +1,37 @@
+#version 430 core
+
+// Workgroup layout (just linear of atoms)
+layout(local_size_x=8, local_size_y=1, local_size_z=1) in;
+
+// Structs
+struct AtomStruct
+{
+   vec3 position;
+   float radius;
+};
+
+// SSBOs
+layout(std430, binding = 0) readonly restrict buffer AtomBuffer
+{
+	AtomStruct atoms[];
+};
+
+// Uniforms
+uniform int atomCount;
+
+// Atomic counter
+layout(binding = 1) uniform atomic_uint index;
+
+// Image with output indices of surface atoms
+layout(binding = 2, r32ui) restrict writeonly uniform uimageBuffer list;
+
+// Main function
+void main()
+{
+    // Check whether in range
+   if(gl_GlobalInvocationID.x < atomCount)
+   {
+       uint idx = atomicCounterIncrement(index);
+       imageStore(list, int(idx), uvec4(gl_GlobalInvocationID.x));
+   }
+};
