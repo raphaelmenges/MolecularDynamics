@@ -2,6 +2,8 @@
 #define PERFECT_SURFACE_DETECTION_H
 
 #include <memory>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 
 // ### Create structure to find neighbors fast ###
 
@@ -28,7 +30,9 @@
 //   - if intersection line list is empty, add index of atom to some global memory
 
 // TODO
+// - Delete OpenGL stuff after usage
 // - Work group size?
+// - Binding points ok? not sure wheather atomic counter and image use the same
 
 // Forward declaration instead of including (saved compile time)
 class Protein;
@@ -41,14 +45,23 @@ public:
     // Constructor
     PerfectSurfaceDetection();
 
+    // Render
+    void renderLoop();
+
+    // Keyboard callback for GLFW
+    void keyCallback(int key, int scancode, int action, int mods);
+
 private:
 
     // Atomic counter functions
-    unsigned int readAtomicCounter(unsigned int atomicCounter) const;
-    void resetAtomicCounter(unsigned int atomicCounter) const;
+    GLuint readAtomicCounter(GLuint atomicCounter) const;
+    void resetAtomicCounter(GLuint atomicCounter) const;
 
     // Members
+    GLFWwindow* mpWindow;
     std::unique_ptr<Protein> mupProtein;
+    GLuint mSurfaceAtomTexture; // list of indices encoded in uint32
+    GLint mSurfaceAtomCount;
 };
 
 #endif // PERFECT_SURFACE_DETECTION_H

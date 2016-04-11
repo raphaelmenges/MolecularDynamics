@@ -5,7 +5,6 @@
 #include "Molecule/MDtrajLoader/Data/Protein.h"
 #include "Molecule/MDtrajLoader/Data/AtomLUT.h"
 
-#include <GL/glew.h>
 #include <iostream>
 
 // ### Shader implementation ###
@@ -31,8 +30,11 @@ const char* pSurfaceDetectionShaderSource =
 // Uniforms
 "uniform int atomCount;\n"
 
-// Atomic ounter
+// Atomic counter
 "layout(binding = 0) uniform atomic_uint index;\n"
+
+// Image with output indices of surface atoms
+"layout(binding = 1, r32ui) restrict writeonly uniform uimageBuffer list;\n"
 
 // Main function
 "void main()\n"
@@ -49,7 +51,14 @@ const char* pSurfaceDetectionShaderSource =
 PerfectSurfaceDetection::PerfectSurfaceDetection()
 {
     // Create window
-    generateWindow();
+    mpWindow = generateWindow();
+
+    // Register keyboard callback
+    std::function<void(int, int, int, int)> kC = [&](int k, int s, int a, int m)
+    {
+        this->keyCallback(k, s, a, m);
+    };
+    setKeyCallback(mpWindow, kC);
 
     // ### Load molecule ###
 
@@ -87,7 +96,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
 
     // Test atom radii
     std::vector<Atom*>* pAtoms = mupProtein->getAtoms();
-    for(int i = 0; i < pAtoms->size(); i++)
+    for(int i = 0; i < (int)pAtoms->size(); i++)
     {
         std::string element = pAtoms->at(i)->getElement();
         std::cout << "Atom: " <<  element << " Radius: " << atomLUT.vdW_radii_picometer.at(element) << std::endl;
@@ -161,9 +170,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(AtomStruct) * atomStructs.size(), atomStructs.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-    // # Prepare uint image to write indices of surface atoms
-
-    // # Prepare atomic counter for writing results
+    // # Prepare atomic counter for writing results to unique position in image
 
     GLuint atomicCounter;
     glGenBuffers(1, &atomicCounter);
@@ -171,11 +178,23 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), NULL, GL_STATIC_DRAW);
     resetAtomicCounter(atomicCounter);
 
-    // # Execute compute shader to determine surface atoms
+    // # Prepare uint image to write indices of surface atoms. Lets call it list for easier understanding
 
-    // Bind everything
-    // - Image
-    // - Atomic counter
+    // Buffer
+    GLuint listBuffer;
+    glGenBuffers(1, &listBuffer);
+    glBindBuffer(GL_TEXTURE_BUFFER, listBuffer);
+    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * atomCount, 0, GL_STATIC_DRAW);
+    glBindBuffer(GL_TEXTURE_BUFFER, 0);
+
+    // Texture (which will be bound as image)
+    GLuint listTexture;
+    glGenTextures(1, &listTexture);
+    glBindTexture(GL_TEXTURE_BUFFER, listTexture);
+    glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, listBuffer);
+    glBindTexture(GL_TEXTURE_BUFFER, 0);
+
+    // # Execute compute shader to determine surface atoms
 
     // Use compute shader program
     glUseProgram(surfaceDetectionProgram);
@@ -189,6 +208,15 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // Bind atomic counter
     glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, atomicCounter);
 
+    // Bind image where indices of surface atoms are written to
+    glBindImageTexture(1,
+                       listTexture,
+                       0,
+                       GL_TRUE,
+                       0,
+                       GL_WRITE_ONLY,
+                       GL_R32UI);
+
     // Dispatch
     glDispatchCompute((atomCount / 8) + 1, 1, 1);
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
@@ -200,10 +228,28 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // # Do simple impostor rendering (TODO: split into smaller tasks)
 
     // TODO: delete OpenGL objects
-
 }
 
-unsigned int PerfectSurfaceDetection::readAtomicCounter(unsigned int atomicCounter) const
+void PerfectSurfaceDetection::renderLoop()
+{
+    // Call render function of Rendering.h with lambda function
+    render(mpWindow, [&] (float deltaTime)
+    {
+    });
+}
+
+void PerfectSurfaceDetection::keyCallback(int key, int scancode, int action, int mods)
+{
+    if (action == GLFW_PRESS)
+    {
+        switch (key)
+        {
+        case GLFW_KEY_ESCAPE: { glfwSetWindowShouldClose(mpWindow, GL_TRUE); break; } // Does not work, but method gets called?!
+        }
+    }
+}
+
+GLuint PerfectSurfaceDetection::readAtomicCounter(GLuint atomicCounter) const
 {
     // Read atomic counter
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomicCounter);
@@ -219,7 +265,7 @@ unsigned int PerfectSurfaceDetection::readAtomicCounter(unsigned int atomicCount
     return mapping[0];
 }
 
-void PerfectSurfaceDetection::resetAtomicCounter(unsigned int atomicCounter) const
+void PerfectSurfaceDetection::resetAtomicCounter(GLuint atomicCounter) const
 {
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomicCounter);
 
@@ -242,6 +288,7 @@ void PerfectSurfaceDetection::resetAtomicCounter(unsigned int atomicCounter) con
 int main()
 {
     PerfectSurfaceDetection detection;
+    detection.renderLoop();
     return 0;
 }
 
