@@ -28,9 +28,6 @@
 //   - if intersection line list is empty, add index of atom to some global memory
 
 // TODO
-// - 1. Manipulate atom positons in shader and read them back
-// - 2. ...
-//
 // - Work group size?
 
 // Forward declaration instead of including (saved compile time)

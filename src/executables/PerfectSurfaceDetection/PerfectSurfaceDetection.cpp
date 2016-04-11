@@ -1,5 +1,6 @@
 #include "PerfectSurfaceDetection.h"
 
+#include "ShaderTools/Renderer.h"
 #include "Molecule/MDtrajLoader/MdTraj/MdTrajWrapper.h"
 #include "Molecule/MDtrajLoader/Data/Protein.h"
 #include "Molecule/MDtrajLoader/Data/AtomLUT.h"
@@ -14,16 +15,39 @@ const char* pSurfaceDetectionShaderSource =
 // Workgroup layout (just linear of atoms)
 "layout(local_size_x=8, local_size_y=1, local_size_z=1) in;\n"
 
+// Structs
+"struct AtomStruct\n"
+"{\n"
+"   vec3 position;\n"
+"   float radius;\n"
+"};\n"
+
+// SSBOs
+"layout(std430, binding = 0) restrict readonly buffer AtomBuffer\n"
+"{\n"
+"	AtomStruct atoms[];\n"
+"};\n"
+
+// Uniforms
+"uniform int atomCount;\n"
+
 // Main function
 "void main()\n"
 "{\n"
-"   // TODO;\n"
+    // Check whether in range
+"   if(gl_GlobalInvocationID.x < atomCount);\n"
+"   {\n"
+"       //atoms[gl_GlobalInvocationID.x].radius;\n"
+"   }\n"
 "}\n";
 
 // ### Class implementation ###
 
 PerfectSurfaceDetection::PerfectSurfaceDetection()
 {
+    // Create window
+    generateWindow();
+
     // ### Load molecule ###
 
     // Path to protein molecule
@@ -36,6 +60,12 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
 
     // Load LUT
     AtomLUT atomLUT;
+
+    // Atom count
+    int atomCount = (int) mupProtein->getAtoms()->size();
+
+    // Output atom count
+    std::cout << "Atom count: " << atomCount << std::endl;
 
     // Test protein extent
     mupProtein->minMax(); // first, one has to calculate min and max value of protein
@@ -66,7 +96,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     GLint surfaceDetectionProgram = glCreateProgram();
     GLint surfaceDetectionShader = glCreateShader(GL_COMPUTE_SHADER);
     glShaderSource(surfaceDetectionShader, 1, &pSurfaceDetectionShaderSource, NULL);
-    glCompileShader(surfaceDetectionShader);
+    // glCompileShader(surfaceDetectionShader);
 
     // Log if error
     GLint log_length = 0;
@@ -138,15 +168,27 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // - Shader Program
     // - Image
     // - Atomic counter
-    // - Atoms
+
+    // Use compute shader program
+    glUseProgram(surfaceDetectionProgram);
+
+    // Bind SSBO with atoms
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, atomsSSBO);
+
+    // Tell shader about count of atoms
+    glUniform1i(glGetUniformLocation(surfaceDetectionProgram, "atomCount"), atomCount);
 
     // Dispatch
+    glDispatchCompute((atomCount / 8) + 1, 1, 1);
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
     // ### Render protein with marked surface atoms ###
 
     // # Bind image with results
 
     // # Do simple impostor rendering (TODO: split into smaller tasks)
+
+    // TODO: delete OpenGL objects
 
 }
 
@@ -157,3 +199,19 @@ int main()
     PerfectSurfaceDetection detection;
     return 0;
 }
+
+// ### Snippets ###
+
+/*
+    // Read back SSBO
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, atomsSSBO);
+    AtomStruct *ptr;
+    ptr = (AtomStruct *) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    for(int i = 0; i < atomCount; i++)
+    {
+        std::cout << i << ". " << ptr[i].radius << std::endl;
+    }
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+
+*/
