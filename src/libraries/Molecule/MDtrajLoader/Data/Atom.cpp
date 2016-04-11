@@ -5,7 +5,7 @@
 Atom::Atom(std::string name, std::string element, int index, glm::vec3 position, std::string aminoDistinctAcid, std::string amino, Protein* parent) :
 name_(name), element_(element), index_(index), aminoDistinctAcid_(aminoDistinctAcid), amino_(amino), pParent_(parent)
 {
-	positions_.push_back(position);
+    positions_.push_back(position);
 }
 
 Atom::~Atom()
@@ -13,31 +13,32 @@ Atom::~Atom()
 }
 
 int Atom::getIndex() {
-	return index_;
+    return index_;
 }
 
 std::string Atom::getName() {
-	return name_;
+    return name_;
 }
 
-std::string Atom::getElement() {
-	return element_;
+std::string Atom::getElement() const
+{
+    return element_;
 }
 
 std::string Atom::getAmino() {
-	return amino_;
+    return amino_;
 }
 
 std::string Atom::getDistinctResidue() {
-	return aminoDistinctAcid_;
+    return aminoDistinctAcid_;
 }
 
-glm::vec3 Atom::getPosition() {
-	return positions_.at(0);
+glm::vec3 Atom::getPosition() const{
+    return positions_.at(0);
 }
 
 glm::vec3 Atom::getPositionAtFrame(int i) {
-	return positions_.at(i);
+    return positions_.at(i);
 }
 
 float Atom::getX() {
@@ -65,17 +66,17 @@ float Atom::getZAtFrame(int i) {
 }
 
 void Atom::setNextPosition(glm::vec3 pos) {
-	positions_.push_back(pos);
+    positions_.push_back(pos);
 }
 
 void Atom::addBondPartner(Atom* partner)
 {
-	bonds_.push_back(partner);
+    bonds_.push_back(partner);
 }
 
 std::vector<Atom*> Atom::getBondPartners()
 {
-	return bonds_;
+    return bonds_;
 }
 
 void Atom::setX(float x)
@@ -104,5 +105,5 @@ void Atom::setXYZat(int frame, glm::vec3 xyz)
 }
 
 Protein* Atom::getProteinParent() {
-	return pParent_;
+    return pParent_;
 }
