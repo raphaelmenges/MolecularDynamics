@@ -31,13 +31,16 @@ const char* pSurfaceDetectionShaderSource =
 // Uniforms
 "uniform int atomCount;\n"
 
+// Atomic ounter
+"layout(binding = 0) uniform atomic_uint index;\n"
+
 // Main function
 "void main()\n"
 "{\n"
     // Check whether in range
 "   if(gl_GlobalInvocationID.x < atomCount);\n"
 "   {\n"
-"       //atoms[gl_GlobalInvocationID.x].radius;\n"
+"       uint idx = atomicCounterIncrement(index);\n"
 "   }\n"
 "}\n";
 
@@ -162,10 +165,15 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
 
     // # Prepare atomic counter for writing results
 
+    GLuint atomicCounter;
+    glGenBuffers(1, &atomicCounter);
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomicCounter);
+    glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), NULL, GL_STATIC_DRAW);
+    resetAtomicCounter(atomicCounter);
+
     // # Execute compute shader to determine surface atoms
 
     // Bind everything
-    // - Shader Program
     // - Image
     // - Atomic counter
 
@@ -177,6 +185,9 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
 
     // Tell shader about count of atoms
     glUniform1i(glGetUniformLocation(surfaceDetectionProgram, "atomCount"), atomCount);
+
+    // Bind atomic counter
+    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, atomicCounter);
 
     // Dispatch
     glDispatchCompute((atomCount / 8) + 1, 1, 1);
@@ -191,6 +202,40 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // TODO: delete OpenGL objects
 
 }
+
+unsigned int PerfectSurfaceDetection::readAtomicCounter(unsigned int atomicCounter) const
+{
+    // Read atomic counter
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomicCounter);
+
+    GLuint *mapping = (GLuint*)glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER,
+                                                0,
+                                                sizeof(GLuint),
+                                                GL_MAP_READ_BIT);
+
+    glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+
+    return mapping[0];
+}
+
+void PerfectSurfaceDetection::resetAtomicCounter(unsigned int atomicCounter) const
+{
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomicCounter);
+
+    // Map the buffer
+    GLuint* mapping = (GLuint*)glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER,
+                                                0 ,
+                                                sizeof(GLuint),
+                                                GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+    // Set memory to new value
+    memset(mapping, 0, sizeof(GLuint));
+
+    // Unmap the buffer
+    glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+}
+
 
 // ### Main function ###
 

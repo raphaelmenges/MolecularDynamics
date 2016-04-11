@@ -43,6 +43,10 @@ public:
 
 private:
 
+    // Atomic counter functions
+    unsigned int readAtomicCounter(unsigned int atomicCounter) const;
+    void resetAtomicCounter(unsigned int atomicCounter) const;
+
     // Members
     std::unique_ptr<Protein> mupProtein;
 };
