@@ -29,7 +29,7 @@ void main()
     // Extract position
     int index = int(imageLoad(surfaceAtomImage,int(gl_VertexID)).x);
     vec3 position = atoms[index].position;
-    gl_Position = projection * view * vec4(0,0,0, 1);
+    gl_Position = projection * view * vec4(position, 1);
 
     // Set color
     col = vec3(1,0,0);

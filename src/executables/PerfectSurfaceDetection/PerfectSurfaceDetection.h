@@ -63,11 +63,11 @@ private:
 
     // Members
     GLFWwindow* mpWindow;
-    GLuint mSurfaceAtomTexture; // list of indices encoded in uint32
-    GLint mSurfaceAtomCount;
-    GLuint mAtomsSSBO;
-    std::unique_ptr<Protein> mupProtein;
-    std::unique_ptr<OrbitCamera> mupCamera;
+    GLuint mSurfaceAtomTexture; // list of indices of surface atoms encoded in uint32
+    GLint mSurfaceAtomCount; // count of atoms in surface
+    GLuint mAtomsSSBO; // SSBO with struct of position and radius for each atom
+    std::unique_ptr<Protein> mupProtein; // protein raw data
+    std::unique_ptr<OrbitCamera> mupCamera; // camera for visualization
 };
 
 #endif // PERFECT_SURFACE_DETECTION_H

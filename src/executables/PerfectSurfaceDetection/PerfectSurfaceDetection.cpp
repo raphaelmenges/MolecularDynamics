@@ -92,11 +92,13 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // Output atom count
     std::cout << "Atom count: " << atomCount << std::endl;
 
-    /*
-    // Test protein extent
+    // Get min/max extent of protein
     mupProtein->minMax(); // first, one has to calculate min and max value of protein
     glm::vec3 proteinMinExtent = mupProtein->getMin();
     glm::vec3 proteinMaxExtent = mupProtein->getMax();
+
+    /*
+    // Test protein extent
     std::cout
         << "Min extent of protein: "
         << proteinMinExtent.x << ", "
