@@ -1,5 +1,5 @@
-#ifndef PERFECT_SURFACE_DETECTION_H_
-#define PERFECT_SURFACE_DETECTION_H_
+#ifndef PERFECT_SURFACE_DETECTION_H
+#define PERFECT_SURFACE_DETECTION_H
 
 #include <memory>
 
@@ -19,4 +19,4 @@ private:
     std::unique_ptr<Protein> mupProtein;
 };
 
-#endif // PERFECT_SURFACE_DETECTION_H_
+#endif // PERFECT_SURFACE_DETECTION_H

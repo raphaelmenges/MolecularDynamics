@@ -1,13 +1,7 @@
-/**
- * @file   		ComputeProgram.h
- * @author 		Gerrit Lochmann
- * @date   		@todo
- * @copyright	@todo
- *
- * @brief  		Manages a render pass
- *
- * The ComputeProgram class manages a single render pass.
- */
+// Authors: Gerrit Lochmann, Raphael Menges
+
+// TODO
+// - shader progam is never deleted ?!
 
 #ifndef COMPUTE_PROGRAM_H
 #define COMPUTE_PROGRAM_H
@@ -19,31 +13,36 @@
 class ComputeProgram
 {
     public:
+
+        // Constructor
         ComputeProgram(ShaderProgram* shaderProgram);
 
-		/**
-		 * @brief Executes the whole render pass
-         * @return The ComputeProgram instance
-		 */
+        // Dispatch shader compute program
         ComputeProgram* run(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
 
+        // Get shader program
         ShaderProgram* getShaderProgram();
+
+        // Set custom compute program
         ComputeProgram* setShaderProgram(ShaderProgram* shaderProgram);
 
-		template <class T>
+        // Update single uniform value
+        template <class T>
         ComputeProgram* update(std::string name, T value) {
-			shaderProgram->update(name, value);
-			return this;
+            shaderProgram->update(name, value);
+            return this;
         }
 
+        // Bind texture by id
         ComputeProgram* texture(std::string name, GLuint textureID);
         ComputeProgram* texture(std::string name, GLuint textureID, GLuint samplerHandle);
 
+        // Bind texture by object
         ComputeProgram* texture(std::string name, Texture* texture);
         ComputeProgram* texture(std::string name, Texture* texture, GLuint samplerHandle);
 
-	// private:
-		// Shader program to use within a render pass
+    private:
+
         ShaderProgram* shaderProgram;
 };
 
