@@ -36,6 +36,7 @@
 
 // Forward declaration instead of including (saved compile time)
 class Protein;
+class OrbitCamera;
 
 // Class
 class PerfectSurfaceDetection
@@ -51,6 +52,9 @@ public:
     // Keyboard callback for GLFW
     void keyCallback(int key, int scancode, int action, int mods);
 
+    // Scroll callback for GLFW
+    void scrollCallback(double xoffset, double yoffset);
+
 private:
 
     // Atomic counter functions
@@ -59,9 +63,11 @@ private:
 
     // Members
     GLFWwindow* mpWindow;
-    std::unique_ptr<Protein> mupProtein;
     GLuint mSurfaceAtomTexture; // list of indices encoded in uint32
     GLint mSurfaceAtomCount;
+    GLuint mAtomsSSBO;
+    std::unique_ptr<Protein> mupProtein;
+    std::unique_ptr<OrbitCamera> mupCamera;
 };
 
 #endif // PERFECT_SURFACE_DETECTION_H

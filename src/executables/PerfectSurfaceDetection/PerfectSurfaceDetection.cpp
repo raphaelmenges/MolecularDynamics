@@ -1,9 +1,13 @@
 #include "PerfectSurfaceDetection.h"
 
+#include "OrbitCamera.h"
 #include "ShaderTools/Renderer.h"
+#include "ShaderTools/ShaderProgram.h"
 #include "Molecule/MDtrajLoader/MdTraj/MdTrajWrapper.h"
 #include "Molecule/MDtrajLoader/Data/Protein.h"
 #include "Molecule/MDtrajLoader/Data/AtomLUT.h"
+
+#include <glm/gtx/component_wise.hpp>
 
 #include <iostream>
 
@@ -22,7 +26,7 @@ const char* pSurfaceDetectionShaderSource =
 "};\n"
 
 // SSBOs
-"layout(std430, binding = 0) restrict readonly buffer AtomBuffer\n"
+"layout(std430, binding = 0) readonly restrict buffer AtomBuffer\n"
 "{\n"
 "	AtomStruct atoms[];\n"
 "};\n"
@@ -31,18 +35,19 @@ const char* pSurfaceDetectionShaderSource =
 "uniform int atomCount;\n"
 
 // Atomic counter
-"layout(binding = 0) uniform atomic_uint index;\n"
+"layout(binding = 1) uniform atomic_uint index;\n"
 
 // Image with output indices of surface atoms
-"layout(binding = 1, r32ui) restrict writeonly uniform uimageBuffer list;\n"
+"layout(binding = 2, r32ui) restrict writeonly uniform uimageBuffer list;\n"
 
 // Main function
 "void main()\n"
 "{\n"
     // Check whether in range
-"   if(gl_GlobalInvocationID.x < atomCount);\n"
+"   if(gl_GlobalInvocationID.x < atomCount)\n"
 "   {\n"
 "       uint idx = atomicCounterIncrement(index);\n"
+"       imageStore(list, int(idx), uvec4(gl_GlobalInvocationID.x));\n"
 "   }\n"
 "}\n";
 
@@ -60,7 +65,15 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     };
     setKeyCallback(mpWindow, kC);
 
-    // ### Load molecule ###
+    // Register scroll callback
+    std::function<void(double, double)> kS = [&](double x, double y)
+    {
+        this->scrollCallback(x,y);
+    };
+    setScrollCallback(mpWindow, kS);
+
+    // Clear color
+    glClearColor(0.0f, 0.0f, 0.0f, 1);
 
     // Path to protein molecule
     std::vector<std::string> paths;
@@ -79,6 +92,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // Output atom count
     std::cout << "Atom count: " << atomCount << std::endl;
 
+    /*
     // Test protein extent
     mupProtein->minMax(); // first, one has to calculate min and max value of protein
     glm::vec3 proteinMinExtent = mupProtein->getMin();
@@ -101,8 +115,13 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
         std::string element = pAtoms->at(i)->getElement();
         std::cout << "Atom: " <<  element << " Radius: " << atomLUT.vdW_radii_picometer.at(element) << std::endl;
     }
+    */
 
-    // # Set up compute shader
+    // Create camera
+    float maxAtomExtent = glm::compMax(mupProtein->getMax());
+    mupCamera = std::unique_ptr<OrbitCamera>(new OrbitCamera(glm::vec3(0, 0, 0), 90.f, 90.f, maxAtomExtent, maxAtomExtent / 2, 2 * maxAtomExtent));
+
+    // ### Set up compute shader ###
 
     // Compile shader
     GLint surfaceDetectionProgram = glCreateProgram();
@@ -164,9 +183,8 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     }
 
     // Fill into ssbo
-    GLuint atomsSSBO;
-    glGenBuffers(1, &atomsSSBO);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, atomsSSBO);
+    glGenBuffers(1, &mAtomsSSBO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mAtomsSSBO);
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(AtomStruct) * atomStructs.size(), atomStructs.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
@@ -181,17 +199,16 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // # Prepare uint image to write indices of surface atoms. Lets call it list for easier understanding
 
     // Buffer
-    GLuint listBuffer;
-    glGenBuffers(1, &listBuffer);
-    glBindBuffer(GL_TEXTURE_BUFFER, listBuffer);
+    GLuint surfaceAtomBuffer;
+    glGenBuffers(1, &surfaceAtomBuffer);
+    glBindBuffer(GL_TEXTURE_BUFFER, surfaceAtomBuffer);
     glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * atomCount, 0, GL_STATIC_DRAW);
     glBindBuffer(GL_TEXTURE_BUFFER, 0);
 
     // Texture (which will be bound as image)
-    GLuint listTexture;
-    glGenTextures(1, &listTexture);
-    glBindTexture(GL_TEXTURE_BUFFER, listTexture);
-    glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, listBuffer);
+    glGenTextures(1, &mSurfaceAtomTexture);
+    glBindTexture(GL_TEXTURE_BUFFER, mSurfaceAtomTexture);
+    glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, surfaceAtomBuffer);
     glBindTexture(GL_TEXTURE_BUFFER, 0);
 
     // # Execute compute shader to determine surface atoms
@@ -200,17 +217,17 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     glUseProgram(surfaceDetectionProgram);
 
     // Bind SSBO with atoms
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, atomsSSBO);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mAtomsSSBO);
 
     // Tell shader about count of atoms
     glUniform1i(glGetUniformLocation(surfaceDetectionProgram, "atomCount"), atomCount);
 
     // Bind atomic counter
-    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, atomicCounter);
+    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, atomicCounter);
 
     // Bind image where indices of surface atoms are written to
-    glBindImageTexture(1,
-                       listTexture,
+    glBindImageTexture(2,
+                       mSurfaceAtomTexture,
                        0,
                        GL_TRUE,
                        0,
@@ -221,20 +238,68 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     glDispatchCompute((atomCount / 8) + 1, 1, 1);
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
-    // ### Render protein with marked surface atoms ###
+    // Fetch count
+    mSurfaceAtomCount = readAtomicCounter(atomicCounter);
 
-    // # Bind image with results
+    // Output count
+    std::cout << "Surface atom count: " << mSurfaceAtomCount << std::endl;
 
-    // # Do simple impostor rendering (TODO: split into smaller tasks)
-
-    // TODO: delete OpenGL objects
+    // TODO: Delete atomic counter etc
 }
 
 void PerfectSurfaceDetection::renderLoop()
 {
+    // Point size for rendering
+    glPointSize(15.f);
+
+    // Cursor
+    float prevCursorX, prevCursorY = 0;
+
+    // Prepare shader for rendering
+    ShaderProgram pointProgram = ShaderProgram("/PerfectSurfaceDetection/point.vert", "/PerfectSurfaceDetection/point.frag");
+
+    // Initial setup of shader
+    pointProgram.use();
+
+    // Bind SSBO with atoms
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mAtomsSSBO);
+
+    // Bind image where indices of surface atoms are read from
+    glBindImageTexture(1,
+       mSurfaceAtomTexture,
+       0,
+       GL_TRUE,
+       0,
+       GL_READ_ONLY,
+       GL_R32UI);
+
+    // Projection matrix (hardcoded viewport size)
+    pointProgram.update("projection", glm::perspective(glm::radians(45.f), (GLfloat)1280 / (GLfloat)720, 0.1f, 1000.f));
+
     // Call render function of Rendering.h with lambda function
     render(mpWindow, [&] (float deltaTime)
     {
+        // Clear buffers
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Calculate cursor movement
+        double cursorX, cursorY;
+        glfwGetCursorPos(mpWindow, &cursorX, &cursorY);
+        GLfloat cursorDeltaX = (float)cursorX - prevCursorX;
+        GLfloat cursorDeltaY = (float)cursorY - prevCursorY;
+        prevCursorX = cursorX;
+        prevCursorY = cursorY;
+
+        // Orbit camera
+        mupCamera->setAlpha(mupCamera->getAlpha() + 0.25f * cursorDeltaX);
+        mupCamera->setBeta(mupCamera->getBeta() - 0.25f * cursorDeltaY);
+        mupCamera->update();
+
+        // Update view matrix
+        pointProgram.update("view", mupCamera->getViewMatrix());
+
+        // Draw points
+        glDrawArrays(GL_POINTS, 0, mSurfaceAtomCount);
     });
 }
 
@@ -248,6 +313,12 @@ void PerfectSurfaceDetection::keyCallback(int key, int scancode, int action, int
         }
     }
 }
+
+void PerfectSurfaceDetection::scrollCallback(double xoffset, double yoffset)
+{
+    mupCamera->setRadius(mupCamera->getRadius() - 0.1f * (float)yoffset);
+}
+
 
 GLuint PerfectSurfaceDetection::readAtomicCounter(GLuint atomicCounter) const
 {
@@ -304,6 +375,5 @@ int main()
         std::cout << i << ". " << ptr[i].radius << std::endl;
     }
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
 
 */
