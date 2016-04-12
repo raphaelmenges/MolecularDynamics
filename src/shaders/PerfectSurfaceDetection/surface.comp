@@ -18,6 +18,7 @@ layout(std430, binding = 0) readonly restrict buffer AtomBuffer
 
 // Uniforms
 uniform int atomCount;
+uniform float probeRadius;
 
 // Atomic counter
 layout(binding = 1) uniform atomic_uint index;
@@ -29,9 +30,10 @@ layout(binding = 2, r32ui) restrict writeonly uniform uimageBuffer list;
 void main()
 {
     // Check whether in range
-   if(gl_GlobalInvocationID.x < atomCount)
+   if(gl_GlobalInvocationID.x < atomCount + (0.01 * probeRadius))
    {
        uint idx = atomicCounterIncrement(index);
        imageStore(list, int(idx), uvec4(gl_GlobalInvocationID.x));
+
    }
 };

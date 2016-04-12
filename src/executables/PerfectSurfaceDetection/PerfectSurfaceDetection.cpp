@@ -57,7 +57,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     glm::vec3 proteinMinExtent = mupProtein->getMin();
     glm::vec3 proteinMaxExtent = mupProtein->getMax();
 
-    /*
+
     // Test protein extent
     std::cout
         << "Min extent of protein: "
@@ -77,7 +77,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
         std::string element = pAtoms->at(i)->getElement();
         std::cout << "Atom: " <<  element << " Radius: " << atomLUT.vdW_radii_picometer.at(element) << std::endl;
     }
-    */
+
 
     // Create camera
     float maxAtomExtent = glm::compMax(mupProtein->getMax());
@@ -158,6 +158,9 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
 
     // Tell shader about count of atoms
     surfaceDetectionProgram.update("atomCount", atomCount);
+
+    // Probe radius
+    surfaceDetectionProgram.update("probeRadius", 140.f);
 
     // Bind atomic counter
     glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, atomicCounter);
