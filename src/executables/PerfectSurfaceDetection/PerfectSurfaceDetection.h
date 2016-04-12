@@ -33,6 +33,9 @@
 // - Delete OpenGL stuff after usage
 // - Work group size?
 // - Binding points ok? not sure wheather atomic counter and image use the same
+// - Think of cases in ComputeShader
+//   - one atom completely in other
+// - Streamline position and center (prefer center)
 
 // Forward declaration instead of including (saved compile time)
 class Protein;

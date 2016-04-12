@@ -3,17 +3,26 @@
 // Workgroup layout (just linear of atoms)
 layout(local_size_x=8, local_size_y=1, local_size_z=1) in;
 
+// Constant values
+const int neighborsMaxCount = 6;
+
+// Global variables
+int cuttingFaceCount = 0;
+vec3 cuttingFaceCenters[neighborsMaxCount];
+float cuttingFaceRadii[neighborsMaxCount];
+vec3 cuttingFaceNormals[neighborsMaxCount];
+
 // Structs
 struct AtomStruct
 {
-   vec3 position;
-   float radius;
+    vec3 position;
+    float radius;
 };
 
 // SSBOs
 layout(std430, binding = 0) readonly restrict buffer AtomBuffer
 {
-        AtomStruct atoms[];
+    AtomStruct atoms[];
 };
 
 // Uniforms
@@ -29,10 +38,84 @@ layout(binding = 2, r32ui) restrict writeonly uniform uimageBuffer list;
 // Main function
 void main()
 {
+    // Index
+    int atomIndex = int(gl_GlobalInvocationID.x);
+
     // Check whether in range
-   if(gl_GlobalInvocationID.x < atomCount
-   {
-       uint idx = atomicCounterIncrement(index);
-       imageStore(list, int(idx), uvec4(gl_GlobalInvocationID.x));
-   }
+    if(atomIndex < atomCount)
+    {
+        // Some testing
+        //uint idx = atomicCounterIncrement(atomIndex);
+        //imageStore(list, int(idx), uvec4(gl_GlobalInvocationID.x));
+
+        // ### OWN VALUES ###
+
+        // Own radius
+        float atomRadius = atoms[atomIndex].radius;
+
+        // Own position
+        vec3 atomPosition = atoms[atomIndex].position;
+
+        // Two times the probe radius
+        float probeRadius2 = 2 * probeRadius;
+
+        // ### ITERATION OVER ALL OTHER ATOMS TO BUILD UP CUTTING FACE LIST ###
+
+        // Go over other atoms and build cutting face list
+        for(int a = 0; a < atomCount; a++)
+        {
+            // Necessary?
+            if(a == atomIndex)
+            {
+                // Testing against it self
+                continue;
+            }
+
+            // ### OTHER'S VALUES ###
+
+            // Get values from other atom
+            vec3 otherAtomPosition = atoms[a].position;
+            float otherAtomRadius = atoms[a].radius;
+
+            // ### INTERSECTION TEST ###
+
+            // Vector from one center to other
+            vec3 connection = otherAtomPosition - atomPosition;
+
+            // Distance between extended atoms
+            float atomDistance = length(connection);
+
+            // Do they intersect? (TODO: think about equal..just add endpoint directly?)
+            if(atomDistance >= (atomRadius + otherAtomRadius + probeRadius2))
+            {
+                continue;
+            }
+
+            // ### INTERSECTION AND CUTTING FACE LIST ###
+
+            // Calculate center of intersection
+            // http://gamedev.stackexchange.com/questions/75756/sphere-sphere-intersection-and-circle-sphere-intersection
+            float h = 0.5 + ((atomRadius * atomRadius) - (otherAtomRadius * otherAtomRadius)) / (atomDistance * atomDistance);
+            cuttingFaceCenters[cuttingFaceCount] = atomPosition + h * connection;
+
+            // Calculate radius of intersection
+            cuttingFaceRadii[cuttingFaceCount] = sqrt((atomRadius * atomRadius) - h * h* atomDistance * atomDistance);
+
+            // Calculate normal of intersection
+            cuttingFaceNormals[cuttingFaceCount] = normalize(connection);
+
+            // Increment cutting face list index and break if max count of neighbors reached
+            if((++cuttingFaceCount) == neighborsMaxCount)
+            {
+                break;
+            }
+        }
+
+        // ### ITERATION OVER ALL CUTTING FACES TO BUILD UP END POINT LIST ###
+
+        for(int c = 0; c < cuttingFaceCount; c++)
+        {
+            // Test every cutting face for intersection line with other
+        }
+    }
 };
