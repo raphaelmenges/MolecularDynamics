@@ -160,7 +160,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     surfaceDetectionProgram.update("atomCount", atomCount);
 
     // Probe radius
-    surfaceDetectionProgram.update("probeRadius", 140.f);
+    //surfaceDetectionProgram.update("probeRadius", 140.f);
 
     // Bind atomic counter
     glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, atomicCounter);
@@ -258,7 +258,6 @@ void PerfectSurfaceDetection::scrollCallback(double xoffset, double yoffset)
 {
     mupCamera->setRadius(mupCamera->getRadius() - 0.1f * (float)yoffset);
 }
-
 
 GLuint PerfectSurfaceDetection::readAtomicCounter(GLuint atomicCounter) const
 {

@@ -13,7 +13,7 @@ struct AtomStruct
 // SSBOs
 layout(std430, binding = 0) readonly restrict buffer AtomBuffer
 {
-	AtomStruct atoms[];
+        AtomStruct atoms[];
 };
 
 // Uniforms
@@ -30,10 +30,9 @@ layout(binding = 2, r32ui) restrict writeonly uniform uimageBuffer list;
 void main()
 {
     // Check whether in range
-   if(gl_GlobalInvocationID.x < atomCount + (0.01 * probeRadius))
+   if(gl_GlobalInvocationID.x < atomCount
    {
        uint idx = atomicCounterIncrement(index);
        imageStore(list, int(idx), uvec4(gl_GlobalInvocationID.x));
-
    }
 };
