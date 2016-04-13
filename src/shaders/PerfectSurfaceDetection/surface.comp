@@ -11,6 +11,12 @@ int cuttingFaceCount = 0;
 vec3 cuttingFaceCenters[neighborsMaxCount];
 float cuttingFaceRadii[neighborsMaxCount];
 vec3 cuttingFaceNormals[neighborsMaxCount];
+int endPointCount = 0;
+vec3 endPoints[neighborsMaxCount];
+
+// Uniforms
+uniform int atomCount;
+uniform float probeRadius;
 
 // Structs
 struct AtomStruct
@@ -24,10 +30,6 @@ layout(std430, binding = 0) readonly restrict buffer AtomBuffer
 {
     AtomStruct atoms[];
 };
-
-// Uniforms
-uniform int atomCount;
-uniform float probeRadius;
 
 // Atomic counter
 layout(binding = 1) uniform atomic_uint index;
@@ -44,10 +46,6 @@ void main()
     // Check whether in range
     if(atomIndex < atomCount)
     {
-        // Some testing
-        //uint idx = atomicCounterIncrement(atomIndex);
-        //imageStore(list, int(idx), uvec4(gl_GlobalInvocationID.x));
-
         // ### OWN VALUES ###
 
         // Own radius
@@ -64,12 +62,7 @@ void main()
         // Go over other atoms and build cutting face list
         for(int a = 0; a < atomCount; a++)
         {
-            // Necessary?
-            if(a == atomIndex)
-            {
-                // Testing against it self
-                continue;
-            }
+            if(a == atomIndex) { continue; }
 
             // ### OTHER'S VALUES ###
 
@@ -115,7 +108,79 @@ void main()
 
         for(int c = 0; c < cuttingFaceCount; c++)
         {
+            // Values of cutting face
+            vec3 faceCenter = cuttingFaceCenters[c];
+            float faceRadius = cuttingFaceRadii[c];
+            vec3 faceNormal = cuttingFaceNormals[c];
+
             // Test every cutting face for intersection line with other
+            for(int d = 0; d < cuttingFaceCount; d++)
+            {
+                if(c == d) { continue; }
+
+                // Values of other cutting face
+                vec3 otherFaceCenter = cuttingFaceCenters[d];
+                float otherFaceRadius = cuttingFaceRadii[d];
+                vec3 otherFaceNormal = cuttingFaceNormals[d];
+
+                // Check for parallel (just not handle it :D)
+                if(faceNormal == otherFaceNormal) { continue; }
+
+                // Intersection of planes, resulting in line
+                // http://stackoverflow.com/questions/6408670/line-of-intersection-between-two-planes
+
+                // Direction of line
+                vec3 lineDir = cross(faceNormal, otherFaceNormal);
+
+                // Determinant (should be not zero since already check for parallelity)
+                float lineDet = sqrt(length(lineDir));
+
+                // Point on line
+                linePoint =
+                    ((cross(lineDir, otherFaceNormal) * length(faceCenter)
+                    +(cross(FaceNormal, lineDir) * length(otherFaceCenter)))
+                    / lineDet;
+
+                // Intersection of line with sphere, resulting in endpoints
+                // https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
+                // TODO
+
+                // Add endpoints to array
+
+                // Increment count of end points
+                endPointCount += 2;
+            }
+
+            // ### ITERATION OVER ALL END POINTS AND TEST WITH CUTTING FACES ###
+
+            for(int e = endPointCount; e > 0 ; e--)
+            {
+                // Currently processed endpoint
+                vec3 endPoint = endPoints[e];
+
+                for(int c = 0; c < cuttingFaceCount; c++)
+                {
+                    vec3 vector = cuttingFaceCenters[c] - endPoint;
+                    if(dot(vector, cuttingFaceNormals[d]) > 0)
+                    {
+                        // Throw away endpoint
+                        endPointCount--;
+                        continue;
+                    }
+                }
+            }
+
+            // ### CHECK FOR EMPTY END POINT ARRAY ###
+
+            // When there was no cut it is also a surface atom
+            if(endPointCount == 0 && cuttingFaceCount == 0)
+            {
+                // Increment atomic counter
+                uint idx = atomicCounterIncrement(index);
+
+                // Save index of atom at index of atomic counter in image
+                imageStore(list, int(idx), uvec4(gl_GlobalInvocationID.x));
+            }
         }
     }
 };
