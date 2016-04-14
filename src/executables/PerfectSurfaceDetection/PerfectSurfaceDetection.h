@@ -36,6 +36,8 @@
 // - Think of cases in ComputeShader
 //   - one atom completely in other
 // - Streamline position and center (prefer center)
+// - What if one cutting face? or two without intersection... read again original algorithm
+// - Check range of for loops in 121 and 129
 
 // Forward declaration instead of including (saved compile time)
 class Protein;

@@ -4,15 +4,13 @@
 layout(local_size_x=8, local_size_y=1, local_size_z=1) in;
 
 // Constant values
-const int neighborsMaxCount = 6;
+const int neighborsMaxCount = 8;
 
 // Global variables
 int cuttingFaceCount = 0;
 vec3 cuttingFaceCenters[neighborsMaxCount];
 float cuttingFaceRadii[neighborsMaxCount];
 vec3 cuttingFaceNormals[neighborsMaxCount];
-int endPointCount = 0;
-vec3 endPoints[neighborsMaxCount];
 
 // Uniforms
 uniform int atomCount;
@@ -37,6 +35,20 @@ layout(binding = 1) uniform atomic_uint index;
 // Image with output indices of surface atoms
 layout(binding = 2, r32ui) restrict writeonly uniform uimageBuffer list;
 
+// Function to test whether endpoint is NOT cut away
+bool testEndpoint(vec3 endpoint)
+{
+    for(int c = 0; c < cuttingFaceCount; c++)
+    {
+        vec3 vector = cuttingFaceCenters[c] - endPoint;
+        if(dot(vector, cuttingFaceNormals[d]) > 0)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 // Main function
 void main()
 {
@@ -49,13 +61,13 @@ void main()
         // ### OWN VALUES ###
 
         // Own radius
-        float atomRadius = atoms[atomIndex].radius;
+        float atomRadius = atoms[atomIndex].radius + probeRadius;
 
         // Own position
         vec3 atomPosition = atoms[atomIndex].position;
 
-        // Two times the probe radius
-        float probeRadius2 = 2 * probeRadius;
+        // One endpoint which survices cutting tests is enough
+        surfaceAtom = false;
 
         // ### ITERATION OVER ALL OTHER ATOMS TO BUILD UP CUTTING FACE LIST ###
 
@@ -68,7 +80,7 @@ void main()
 
             // Get values from other atom
             vec3 otherAtomPosition = atoms[a].position;
-            float otherAtomRadius = atoms[a].radius;
+            float otherAtomRadius = atoms[a].radius + probeRadius;
 
             // ### INTERSECTION TEST ###
 
@@ -79,7 +91,7 @@ void main()
             float atomDistance = length(connection);
 
             // Do they intersect? (TODO: think about equal..just add endpoint directly?)
-            if(atomDistance >= (atomRadius + otherAtomRadius + probeRadius2))
+            if(atomDistance >= (atomRadius + otherAtomRadius))
             {
                 continue;
             }
@@ -104,9 +116,9 @@ void main()
             }
         }
 
-        // ### ITERATION OVER ALL CUTTING FACES TO BUILD UP END POINT LIST ###
+        // ### ITERATION OVER ALL CUTTING FACES TO BUILD END POINTS ###
 
-        for(int c = 0; c < cuttingFaceCount; c++)
+        for(int c = 0; c < cuttingFaceCount - 1; c++)
         {
             // Values of cutting face
             vec3 faceCenter = cuttingFaceCenters[c];
@@ -114,10 +126,8 @@ void main()
             vec3 faceNormal = cuttingFaceNormals[c];
 
             // Test every cutting face for intersection line with other
-            for(int d = 0; d < cuttingFaceCount; d++)
+            for(int d = c+1; d < cuttingFaceCount; d++)
             {
-                if(c == d) { continue; }
-
                 // Values of other cutting face
                 vec3 otherFaceCenter = cuttingFaceCenters[d];
                 float otherFaceRadius = cuttingFaceRadii[d];
@@ -141,46 +151,65 @@ void main()
                     +(cross(FaceNormal, lineDir) * length(otherFaceCenter)))
                     / lineDet;
 
-                // Intersection of line with sphere, resulting in endpoints
+                // Intersection of line with sphere, resulting in two, one or no endpoints
                 // https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
-                // TODO
+                float underSQRT1 = dot(lineDir, (linePoint - atomPosition));
+                underSQRT1 = underSQRT1 * underSQRT1;
+                float underSQRT2 = length(linePoint - atomPosition);
+                underSQRT2 = underSQRT2 * underSQRT2;
+                float underSQRT = underSQRT1 - underSQRT2 + atomRadius * atomRadius;
 
-                // Add endpoints to array
+                // Left part of equation
+                float left = -(dot(lineDir,(linePoint - atomCenter)));
 
-                // Increment count of end points
-                endPointCount += 2;
-            }
-
-            // ### ITERATION OVER ALL END POINTS AND TEST WITH CUTTING FACES ###
-
-            for(int e = endPointCount; e > 0 ; e--)
-            {
-                // Currently processed endpoint
-                vec3 endPoint = endPoints[e];
-
-                for(int c = 0; c < cuttingFaceCount; c++)
+                // Check value under square root
+                if(underSQRT > 0)
                 {
-                    vec3 vector = cuttingFaceCenters[c] - endPoint;
-                    if(dot(vector, cuttingFaceNormals[d]) > 0)
+                    // Right part of equation
+                    float right = sqrt(underSQRT);
+
+                    // First endpoint
+                    float d = left + right;
+                    if(testEndpoint(linePoint + d * lineDir)
                     {
-                        // Throw away endpoint
-                        endPointCount--;
-                        continue;
+                        // Break out of for loop (and outer)
+                        surfaceAtom = true;
+                        break;
+                    }
+
+                    // Second endpoint
+                    d = left - right;
+                    if(testEndpoint(linePoint + d * lineDir)
+                    {
+                        // Break out of for loop (and outer)
+                        surfaceAtom = true;
+                        break;
+                    }
+                }
+                else if(underSQRT = 0)
+                {
+                    // Just test the one endpoint
+                    float d = left;
+                    if(testEndpoint(linePoint + d * lineDir)
+                    {
+                        // Break out of for loop (and outer)
+                        surfaceAtom = true;
+                        break;
                     }
                 }
             }
+        }
 
-            // ### CHECK FOR EMPTY END POINT ARRAY ###
+        // ### ATOM IS SURFACE ATOM ###
 
-            // When there was no cut it is also a surface atom
-            if(endPointCount == 0 && cuttingFaceCount == 0)
-            {
-                // Increment atomic counter
-                uint idx = atomicCounterIncrement(index);
+        // When there was no cut it is also a surface atom
+        if(surfaceAtom || cuttingFaceCount == 0)
+        {
+            // Increment atomic counter
+            uint idx = atomicCounterIncrement(index);
 
-                // Save index of atom at index of atomic counter in image
-                imageStore(list, int(idx), uvec4(gl_GlobalInvocationID.x));
-            }
+            // Save index of atom at index of atomic counter in image
+            imageStore(list, int(idx), uvec4(gl_GlobalInvocationID.x));
         }
     }
 };
