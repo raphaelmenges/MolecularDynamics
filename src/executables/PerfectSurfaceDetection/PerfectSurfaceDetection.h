@@ -33,11 +33,6 @@
 // - Delete OpenGL stuff after usage
 // - Work group size?
 // - Binding points ok? not sure wheather atomic counter and image use the same
-// - Think of cases in ComputeShader
-//   - one atom completely in other
-// - What if one cutting face? or two without intersection... read again original algorithm
-// - Check range of for loops in 121 and 129
-// - Pre tests necessary like in http://gamedev.stackexchange.com/questions/75756/sphere-sphere-intersection-and-circle-sphere-intersection ?
 
 // Forward declaration instead of including (saved compile time)
 class Protein;

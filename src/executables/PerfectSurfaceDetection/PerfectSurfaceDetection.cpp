@@ -37,7 +37,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
 
     // Path to protein molecule
     std::vector<std::string> paths;
-    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1vis.pdb");
+    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
 
     // Load protein
     MdTrajWrapper mdwrap;
@@ -57,7 +57,6 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     glm::vec3 proteinMinExtent = mupProtein->getMin();
     glm::vec3 proteinMaxExtent = mupProtein->getMax();
 
-    /*
     // Test protein extent
     std::cout
         << "Min extent of protein: "
@@ -69,7 +68,6 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
         << proteinMaxExtent.x << ", "
         << proteinMaxExtent.y << ", "
         << proteinMaxExtent.z << std::endl;
-    */
 
     /*
     // Test atom radii
@@ -208,8 +206,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // Print time for execution
     glEndQuery(GL_TIME_ELAPSED);
     glGetQueryObjectuiv(query, GL_QUERY_RESULT, &timeElapsed);
-    std::cout << "Time for execution: " << std::to_string(timeElapsed) << "ns" << std::endl;
-    std::cout << "Time for execution: " << std::to_string(timeElapsed / 1000000.f) << "ms" << std::endl;
+    std::cout << "Time for execution: " << std::to_string(timeElapsed) << "ns (= " << std::to_string(timeElapsed / 1000000.f) << "ms)" << std::endl;
 
     // Fetch count
     mSurfaceAtomCount = readAtomicCounter(atomicCounter);

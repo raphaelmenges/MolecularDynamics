@@ -1,48 +1,54 @@
 #version 430 core
 
-// Workgroup layout (just linear of atoms)
-layout(local_size_x=8, local_size_y=1, local_size_z=1) in;
+// ## Workgroup layout (just linear of atoms)
+layout(local_size_x = 8, local_size_y = 1, local_size_z = 1) in;
 
-// Constant values
+// ## Constant values
 const int neighborsMaxCount = 10;
 
-// Global variables
+// ## Global variables
 int cuttingFaceCount = 0;
 vec3 cuttingFaceCenters[neighborsMaxCount];
 float cuttingFaceRadii[neighborsMaxCount];
 vec3 cuttingFaceNormals[neighborsMaxCount];
 
-// Uniforms
+// ## Uniforms
 uniform int atomCount;
 uniform float probeRadius;
 
-// Structs
+// ## Structs
 struct AtomStruct
 {
     vec3 center;
     float radius;
 };
 
-// SSBOs
+// ## SSBOs
 layout(std430, binding = 0) readonly restrict buffer AtomBuffer
 {
     AtomStruct atoms[];
 };
 
-// Atomic counter
+// ## Atomic counter
 layout(binding = 1) uniform atomic_uint index;
 
-// Image with output indices of surface atoms
+// ## Image with output indices of surface atoms
 layout(binding = 2, r32ui) restrict writeonly uniform uimageBuffer list;
 
-// Function to test whether endpoint is NOT cut away
+// ## Function to test whether endpoint is NOT cut away
 bool testEndpoint(vec3 endpoint)
 {
+    // Just some reservation
     vec3 vector;
-    for(int c = 0; c < cuttingFaceCount; c++)
+
+    // Iterate over cuttingFaceIndices entries
+    for(int i = 0; i < cuttingFaceCount; i++)
     {
-        vector = endpoint - cuttingFaceCenters[c];
-        if(dot(vector, cuttingFaceNormals[c]) > 0)
+        // Vector from cutting face center to endpoint
+        vector = endpoint - cuttingFaceCenters[i];
+
+        // Dot product should have positive sign if in same half space
+        if(dot(vector, cuttingFaceNormals[i]) > 0)
         {
             return false;
         }
@@ -50,7 +56,7 @@ bool testEndpoint(vec3 endpoint)
     return true;
 }
 
-// Main function
+// ## Main function
 void main()
 {
     // Index
@@ -70,30 +76,35 @@ void main()
     // Own center
     vec3 atomCenter = atoms[atomIndex].center;
 
-    // ### ITERATION OVER ALL OTHER ATOMS TO BUILD UP CUTTING FACE LIST ###
+    // ### BUILD UP OF CUTTING FACE LIST ###
 
     // Go over other atoms and build cutting face list
-    for(int a = 0; a < atomCount; a++)
+    for(int i = 0; i < atomCount; i++)
     {
         // Do not cut with itself
-        if(a == atomIndex) { continue; }
+        if(i == atomIndex) { continue; }
 
         // ### OTHER'S VALUES ###
 
         // Get values from other atom
-        vec3 otherAtomCenter = atoms[a].center;
-        float otherAtomExtRadius = atoms[a].radius + probeRadius;
+        vec3 otherAtomCenter = atoms[i].center;
+        float otherAtomExtRadius = atoms[i].radius + probeRadius;
 
         // ### INTERSECTION TEST ###
 
-        // Vector from one center to other
+        // Vector from center to other's
         vec3 connection = otherAtomCenter - atomCenter;
 
         // Distance between atoms
         float atomDistance = length(connection);
 
-        // Do they intersect with extended radii? (TODO: think about equal..just add endpoint directly?)
+        // Do they intersect with extended radii?
         if(atomDistance >= (atomExtRadius + otherAtomExtRadius)) { continue; }
+
+        // NODE: Following cases are NOT considered
+        // - both spheres touch each other in one point
+        // - one sphere lies completely inside other
+        // - one sphere lies completely inside other and touches other's surface in one point
 
         // ### INTERSECTION ###
 
@@ -125,22 +136,22 @@ void main()
         if((++cuttingFaceCount) == neighborsMaxCount) { break; }
     }
 
-    // ### CHECK OF ENDPOINTS OF CUTTING FACE INTERSECTION LINES ###
+    // ### CHECK CUTTING FACES AND INTERSECTION LINE ENDPOINTS ###
 
-    for(int c = 0; c < cuttingFaceCount - 1; c++)
+    for(int i = 0; i < cuttingFaceCount - 1; i++)
     {
         // Values of cutting face
-        vec3 faceCenter = cuttingFaceCenters[c];
-        float faceRadius = cuttingFaceRadii[c];
-        vec3 faceNormal = cuttingFaceNormals[c];
+        vec3 faceCenter = cuttingFaceCenters[i];
+        float faceRadius = cuttingFaceRadii[i];
+        vec3 faceNormal = cuttingFaceNormals[i];
 
         // Test every cutting face for intersection line with other
-        for(int d = c+1; d < cuttingFaceCount; d++)
+        for(int j = i+1; j < cuttingFaceCount; j++)
         {
             // Values of other cutting face
-            vec3 otherFaceCenter = cuttingFaceCenters[d];
-            float otherFaceRadius = cuttingFaceRadii[d];
-            vec3 otherFaceNormal = cuttingFaceNormals[d];
+            vec3 otherFaceCenter = cuttingFaceCenters[j];
+            float otherFaceRadius = cuttingFaceRadii[j];
+            vec3 otherFaceNormal = cuttingFaceNormals[j];
 
             // Check for parallelity (just not handle it :D)
             if(faceNormal == otherFaceNormal) { continue; }
@@ -205,6 +216,22 @@ void main()
                     surfaceAtom = true;
                     break;
                 }
+            }
+            else
+            {
+                // No intersection line for those two cutting faces
+
+                // Connection between faces' center
+                vec3 connection = otherFaceCenter - faceCenter;
+
+                // Test connection with normals
+                if(dot(faceNormal, connection) > 0 && dot(otherFaceNormal, connection) < 0)
+                {
+                    // No surface atom since cut away by the two cutting faces
+                    return;
+                }
+
+                // TODO: Cases Figure 4 b and c. Does not create endpoints but is not internal...
             }
         }
     }
