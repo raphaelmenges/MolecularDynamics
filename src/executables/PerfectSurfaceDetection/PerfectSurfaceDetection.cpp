@@ -33,7 +33,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     setScrollCallback(mpWindow, kS);
 
     // Clear color
-    glClearColor(0.0f, 0.0f, 0.0f, 1);
+    glClearColor(0.f, 0.f, 0.f, 1.f);
 
     // Path to protein molecule
     std::vector<std::string> paths;
@@ -57,6 +57,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     glm::vec3 proteinMinExtent = mupProtein->getMin();
     glm::vec3 proteinMaxExtent = mupProtein->getMax();
 
+    /*
     // Test protein extent
     std::cout
         << "Min extent of protein: "
@@ -68,7 +69,9 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
         << proteinMaxExtent.x << ", "
         << proteinMaxExtent.y << ", "
         << proteinMaxExtent.z << std::endl;
+    */
 
+    /*
     // Test atom radii
     std::vector<Atom*>* pAtoms = mupProtein->getAtoms();
     for(int i = 0; i < (int)pAtoms->size(); i++)
@@ -76,6 +79,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
         std::string element = pAtoms->at(i)->getElement();
         std::cout << "Atom: " <<  element << " Radius: " << atomLUT.vdW_radii_picometer.at(element) << std::endl;
     }
+    */
 
     // Create camera
     float maxAtomExtent = glm::compMax(mupProtein->getMax());
@@ -128,10 +132,10 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     GLuint atomicCounter;
     glGenBuffers(1, &atomicCounter);
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomicCounter);
-    glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), NULL, GL_DYNAMIC_DRAW);
     resetAtomicCounter(atomicCounter);
 
-    // # Prepare uint image to write indices of surface atoms. Lets call it list for easier understanding
+    // # Prepare uint image to write indices of surface atoms. Lets call it list in shader for easier understanding
 
     // Buffer
     GLuint surfaceAtomBuffer;
@@ -158,7 +162,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     surfaceDetectionProgram.update("atomCount", mAtomCount);
 
     // Probe radius
-    //surfaceDetectionProgram.update("probeRadius", 140.f);
+    surfaceDetectionProgram.update("probeRadius", 140.f);
 
     // Bind atomic counter
     glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, atomicCounter);

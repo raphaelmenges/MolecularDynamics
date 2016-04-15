@@ -4,7 +4,7 @@
 layout(local_size_x=8, local_size_y=1, local_size_z=1) in;
 
 // Constant values
-const int neighborsMaxCount = 8;
+const int neighborsMaxCount = 10;
 
 // Global variables
 int cuttingFaceCount = 0;
@@ -36,11 +36,12 @@ layout(binding = 1) uniform atomic_uint index;
 layout(binding = 2, r32ui) restrict writeonly uniform uimageBuffer list;
 
 // Function to test whether endpoint is NOT cut away
-bool testEndpoint(vec3 endPoint)
+bool testEndpoint(vec3 endpoint)
 {
+    vec3 vector;
     for(int c = 0; c < cuttingFaceCount; c++)
     {
-        vec3 vector = cuttingFaceCenters[c] - endPoint;
+        vector = endpoint - cuttingFaceCenters[c];
         if(dot(vector, cuttingFaceNormals[c]) > 0)
         {
             return false;
@@ -94,7 +95,7 @@ void main()
         // Do they intersect with extended radii? (TODO: think about equal..just add endpoint directly?)
         if(atomDistance >= (atomExtRadius + otherAtomExtRadius)) { continue; }
 
-        // ### INTERSECTION AND CUTTING FACE LIST ###
+        // ### INTERSECTION ###
 
         // Squared atom distance
         float atomDistanceSquared = atomDistance * atomDistance;
@@ -106,6 +107,8 @@ void main()
             + ((atomExtRadius * atomExtRadius)
             - (otherAtomExtRadius * otherAtomExtRadius))
             / atomDistanceSquared;
+
+        // ### CUTTING FACE LIST ###
 
         // Use connection between centers as line
         cuttingFaceCenters[cuttingFaceCount] = atomCenter + h * connection;
@@ -122,7 +125,7 @@ void main()
         if((++cuttingFaceCount) == neighborsMaxCount) { break; }
     }
 
-    // ### ITERATION OVER ALL CUTTING FACES TO BUILD END POINTS ###
+    // ### CHECK OF ENDPOINTS OF CUTTING FACE INTERSECTION LINES ###
 
     for(int c = 0; c < cuttingFaceCount - 1; c++)
     {
@@ -139,7 +142,7 @@ void main()
             float otherFaceRadius = cuttingFaceRadii[d];
             vec3 otherFaceNormal = cuttingFaceNormals[d];
 
-            // Check for parallel (just not handle it :D)
+            // Check for parallelity (just not handle it :D)
             if(faceNormal == otherFaceNormal) { continue; }
 
             // Intersection of planes, resulting in line
@@ -148,25 +151,25 @@ void main()
             // Direction of line
             vec3 lineDir = cross(faceNormal, otherFaceNormal);
 
-            // Determinant (should be not zero since already check for parallelity)
-            float lineDet = sqrt(length(lineDir));
+            // No determinant necessary, because check for parallelity already done and normals are unit vectors
 
             // Point on line
             vec3 linePoint =
                 (cross(lineDir, otherFaceNormal) * length(faceCenter)
-                + (cross(faceNormal, lineDir) * length(otherFaceCenter)))
-                / lineDet;
+                + (cross(faceNormal, lineDir) * length(otherFaceCenter)));
 
             // Intersection of line with sphere, resulting in two, one or no endpoints
             // https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
+
+            // Calculate the part under the square root
             float underSQRT1 = dot(lineDir, (linePoint - atomCenter));
             underSQRT1 = underSQRT1 * underSQRT1;
             float underSQRT2 = length(linePoint - atomCenter);
             underSQRT2 = underSQRT2 * underSQRT2;
-            float underSQRT = underSQRT1 - underSQRT2 + atomExtRadius * atomExtRadius;
+            float underSQRT = underSQRT1 - underSQRT2 + (atomExtRadius * atomExtRadius);
 
             // Left part of equation
-            float left = -(dot(lineDir,(linePoint - atomCenter)));
+            float left = -(dot(lineDir, (linePoint - atomCenter)));
 
             // Check value under square root
             if(underSQRT > 0)
