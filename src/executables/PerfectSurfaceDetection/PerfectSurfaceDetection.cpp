@@ -37,7 +37,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
 
     // Path to protein molecule
     std::vector<std::string> paths;
-    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
+    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1vis.pdb");
 
     // Load protein
     MdTrajWrapper mdwrap;
@@ -82,10 +82,19 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     */
 
     // Create camera
-    float maxAtomExtent = glm::compMax(mupProtein->getMax());
-    mupCamera = std::unique_ptr<OrbitCamera>(new OrbitCamera(glm::vec3(0, 0, 0), 90.f, 90.f, maxAtomExtent, maxAtomExtent / 2, 2 * maxAtomExtent));
+    glm::vec3 cameraCenter = (proteinMinExtent + proteinMaxExtent) / 2.f;
+    float cameraRadius = glm::compMax(proteinMaxExtent - cameraCenter);
+    mupCamera = std::unique_ptr<OrbitCamera>(new OrbitCamera(cameraCenter, 90.f, 90.f, cameraRadius, cameraRadius / 2.f, 2.f * cameraRadius));
+
+    // Create query to measure execution time
+    GLuint query;
+    glGenQueries(1, &query);
+    GLuint timeElapsed = 0;
 
     // ### Set up compute shader ###
+
+    // Start query for time measurement
+    glBeginQuery(GL_TIME_ELAPSED, query);
 
     // Compile shader
     ShaderProgram surfaceDetectionProgram(GL_COMPUTE_SHADER, "/PerfectSurfaceDetection/surface.comp");
@@ -150,7 +159,15 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, surfaceAtomBuffer);
     glBindTexture(GL_TEXTURE_BUFFER, 0);
 
+    // Print time for data transfer
+    glEndQuery(GL_TIME_ELAPSED);
+    glGetQueryObjectuiv(query, GL_QUERY_RESULT, &timeElapsed);
+    std::cout << "Time for data transfer: " << std::to_string(timeElapsed) << "ns" << std::endl;
+
     // # Execute compute shader to determine surface atoms
+
+    // Start query for time measurement
+    glBeginQuery(GL_TIME_ELAPSED, query);
 
     // Use compute shader program
     surfaceDetectionProgram.use();
@@ -176,9 +193,23 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
                        GL_WRITE_ONLY,
                        GL_R32UI);
 
+    // Print time for setup
+    glEndQuery(GL_TIME_ELAPSED);
+    glGetQueryObjectuiv(query, GL_QUERY_RESULT, &timeElapsed);
+    std::cout << "Time for setup: " << std::to_string(timeElapsed) << "ns" << std::endl;
+
+    // Start query for time measurement
+    glBeginQuery(GL_TIME_ELAPSED, query);
+
     // Dispatch
     glDispatchCompute((mAtomCount / 8) + 1, 1, 1);
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+    // Print time for execution
+    glEndQuery(GL_TIME_ELAPSED);
+    glGetQueryObjectuiv(query, GL_QUERY_RESULT, &timeElapsed);
+    std::cout << "Time for execution: " << std::to_string(timeElapsed) << "ns" << std::endl;
+    std::cout << "Time for execution: " << std::to_string(timeElapsed / 1000000.f) << "ms" << std::endl;
 
     // Fetch count
     mSurfaceAtomCount = readAtomicCounter(atomicCounter);
@@ -186,7 +217,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // Output count
     std::cout << "Surface atom count: " << mSurfaceAtomCount << std::endl;
 
-    // TODO: Delete atomic counter etc
+    // TODO: Delete atomic counter, query, etc
 }
 
 void PerfectSurfaceDetection::renderLoop()
