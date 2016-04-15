@@ -6,7 +6,7 @@ out vec3 col;
 // Struct for atom
 struct AtomStruct
 {
-    vec3 position;
+    vec3 center;
     float radius;
 };
 
@@ -24,7 +24,7 @@ uniform mat4 view;
 void main()
 {
     // Extract position
-    vec3 position = atoms[int(gl_VertexID)].position;
+    vec3 position = atoms[int(gl_VertexID)].center;
     gl_Position = projection * view * vec4(position, 1);
 
     // Set color

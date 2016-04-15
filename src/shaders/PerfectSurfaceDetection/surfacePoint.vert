@@ -6,7 +6,7 @@ out vec3 col;
 // Struct for atom
 struct AtomStruct
 {
-    vec3 position;
+    vec3 center;
     float radius;
 };
 
@@ -28,7 +28,7 @@ void main()
 {
     // Extract position
     int index = int(imageLoad(surfaceAtomImage,int(gl_VertexID)).x);
-    vec3 position = atoms[index].position;
+    vec3 position = atoms[index].center;
     vec4 viewPosition = view * vec4(position, 1);
     viewPosition.z += 0.01; // move towards camera since all atoms get rendered before that and z buffer is filled
     gl_Position = projection * viewPosition;

@@ -19,7 +19,7 @@ uniform float probeRadius;
 // Structs
 struct AtomStruct
 {
-    vec3 position;
+    vec3 center;
     float radius;
 };
 
@@ -63,8 +63,8 @@ void main()
         // Own radius
         float atomRadius = atoms[atomIndex].radius + probeRadius;
 
-        // Own position
-        vec3 atomPosition = atoms[atomIndex].position;
+        // Own center
+        vec3 atomCenter = atoms[atomIndex].center;
 
         // One endpoint which survices cutting tests is enough
         bool surfaceAtom = false;
@@ -79,13 +79,13 @@ void main()
             // ### OTHER'S VALUES ###
 
             // Get values from other atom
-            vec3 otherAtomPosition = atoms[a].position;
+            vec3 otheratomCenter = atoms[a].center;
             float otherAtomRadius = atoms[a].radius + probeRadius;
 
             // ### INTERSECTION TEST ###
 
             // Vector from one center to other
-            vec3 connection = otherAtomPosition - atomPosition;
+            vec3 connection = otheratomCenter - atomCenter;
 
             // Distance between extended atoms
             float atomDistance = length(connection);
@@ -101,7 +101,7 @@ void main()
             // Calculate center of intersection
             // http://gamedev.stackexchange.com/questions/75756/sphere-sphere-intersection-and-circle-sphere-intersection
             float h = 0.5 + ((atomRadius * atomRadius) - (otherAtomRadius * otherAtomRadius)) / (atomDistance * atomDistance);
-            cuttingFaceCenters[cuttingFaceCount] = atomPosition + h * connection;
+            cuttingFaceCenters[cuttingFaceCount] = atomCenter + h * connection;
 
             // Calculate radius of intersection
             cuttingFaceRadii[cuttingFaceCount] = sqrt((atomRadius * atomRadius) - h * h* atomDistance * atomDistance);
@@ -153,14 +153,14 @@ void main()
 
                 // Intersection of line with sphere, resulting in two, one or no endpoints
                 // https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
-                float underSQRT1 = dot(lineDir, (linePoint - atomPosition));
+                float underSQRT1 = dot(lineDir, (linePoint - atomCenter));
                 underSQRT1 = underSQRT1 * underSQRT1;
-                float underSQRT2 = length(linePoint - atomPosition);
+                float underSQRT2 = length(linePoint - atomCenter);
                 underSQRT2 = underSQRT2 * underSQRT2;
                 float underSQRT = underSQRT1 - underSQRT2 + atomRadius * atomRadius;
 
                 // Left part of equation
-                float left = -(dot(lineDir,(linePoint - atomPosition)));
+                float left = -(dot(lineDir,(linePoint - atomCenter)));
 
                 // Check value under square root
                 if(underSQRT > 0)

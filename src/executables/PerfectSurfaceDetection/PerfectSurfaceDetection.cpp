@@ -57,7 +57,6 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     glm::vec3 proteinMinExtent = mupProtein->getMin();
     glm::vec3 proteinMaxExtent = mupProtein->getMax();
 
-
     // Test protein extent
     std::cout
         << "Min extent of protein: "
@@ -78,7 +77,6 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
         std::cout << "Atom: " <<  element << " Radius: " << atomLUT.vdW_radii_picometer.at(element) << std::endl;
     }
 
-
     // Create camera
     float maxAtomExtent = glm::compMax(mupProtein->getMax());
     mupCamera = std::unique_ptr<OrbitCamera>(new OrbitCamera(glm::vec3(0, 0, 0), 90.f, 90.f, maxAtomExtent, maxAtomExtent / 2, 2 * maxAtomExtent));
@@ -95,15 +93,15 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     {
         // Constructor
         AtomStruct(
-            glm::vec3 position,
+            glm::vec3 center,
             float radius)
         {
-            this->position = position;
+            this->center = center;
             this->radius = radius;
         }
 
         // Fields
-        glm::vec3 position;
+        glm::vec3 center;
         float radius;
     };
 
