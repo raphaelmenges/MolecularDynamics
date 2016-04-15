@@ -56,160 +56,165 @@ void main()
     int atomIndex = int(gl_GlobalInvocationID.x);
 
     // Check whether in range
-    if(atomIndex < atomCount)
+    if(atomIndex >= atomCount) { return; }
+
+    // One endpoint which survices cutting tests is enough
+    bool surfaceAtom = false;
+
+    // ### OWN VALUES ###
+
+    // Own extended radius
+    float atomExtRadius = atoms[atomIndex].radius + probeRadius;
+
+    // Own center
+    vec3 atomCenter = atoms[atomIndex].center;
+
+    // ### ITERATION OVER ALL OTHER ATOMS TO BUILD UP CUTTING FACE LIST ###
+
+    // Go over other atoms and build cutting face list
+    for(int a = 0; a < atomCount; a++)
     {
-        // ### OWN VALUES ###
+        // Do not cut with itself
+        if(a == atomIndex) { continue; }
 
-        // Own radius
-        float atomRadius = atoms[atomIndex].radius + probeRadius;
+        // ### OTHER'S VALUES ###
 
-        // Own center
-        vec3 atomCenter = atoms[atomIndex].center;
+        // Get values from other atom
+        vec3 otherAtomCenter = atoms[a].center;
+        float otherAtomExtRadius = atoms[a].radius + probeRadius;
 
-        // One endpoint which survices cutting tests is enough
-        bool surfaceAtom = false;
+        // ### INTERSECTION TEST ###
 
-        // ### ITERATION OVER ALL OTHER ATOMS TO BUILD UP CUTTING FACE LIST ###
+        // Vector from one center to other
+        vec3 connection = otherAtomCenter - atomCenter;
 
-        // Go over other atoms and build cutting face list
-        for(int a = 0; a < atomCount; a++)
+        // Distance between atoms
+        float atomDistance = length(connection);
+
+        // Do they intersect with extended radii? (TODO: think about equal..just add endpoint directly?)
+        if(atomDistance >= (atomExtRadius + otherAtomExtRadius)) { continue; }
+
+        // ### INTERSECTION AND CUTTING FACE LIST ###
+
+        // Squared atom distance
+        float atomDistanceSquared = atomDistance * atomDistance;
+
+        // Calculate center of intersection
+        // http://gamedev.stackexchange.com/questions/75756/sphere-sphere-intersection-and-circle-sphere-intersection
+        float h =
+            0.5
+            + ((atomExtRadius * atomExtRadius)
+            - (otherAtomExtRadius * otherAtomExtRadius))
+            / atomDistanceSquared;
+
+        // Use connection between centers as line
+        cuttingFaceCenters[cuttingFaceCount] = atomCenter + h * connection;
+
+        // Calculate radius of intersection
+        cuttingFaceRadii[cuttingFaceCount] =
+            sqrt((atomExtRadius * atomExtRadius)
+            - h * h * atomDistanceSquared);
+
+        // Calculate normal of intersection
+        cuttingFaceNormals[cuttingFaceCount] = normalize(connection);
+
+        // Increment cutting face list index and break if max count of neighbors reached
+        if((++cuttingFaceCount) == neighborsMaxCount) { break; }
+    }
+
+    // ### ITERATION OVER ALL CUTTING FACES TO BUILD END POINTS ###
+
+    for(int c = 0; c < cuttingFaceCount - 1; c++)
+    {
+        // Values of cutting face
+        vec3 faceCenter = cuttingFaceCenters[c];
+        float faceRadius = cuttingFaceRadii[c];
+        vec3 faceNormal = cuttingFaceNormals[c];
+
+        // Test every cutting face for intersection line with other
+        for(int d = c+1; d < cuttingFaceCount; d++)
         {
-            if(a == atomIndex) { continue; }
+            // Values of other cutting face
+            vec3 otherFaceCenter = cuttingFaceCenters[d];
+            float otherFaceRadius = cuttingFaceRadii[d];
+            vec3 otherFaceNormal = cuttingFaceNormals[d];
 
-            // ### OTHER'S VALUES ###
+            // Check for parallel (just not handle it :D)
+            if(faceNormal == otherFaceNormal) { continue; }
 
-            // Get values from other atom
-            vec3 otheratomCenter = atoms[a].center;
-            float otherAtomRadius = atoms[a].radius + probeRadius;
+            // Intersection of planes, resulting in line
+            // http://stackoverflow.com/questions/6408670/line-of-intersection-between-two-planes
 
-            // ### INTERSECTION TEST ###
+            // Direction of line
+            vec3 lineDir = cross(faceNormal, otherFaceNormal);
 
-            // Vector from one center to other
-            vec3 connection = otheratomCenter - atomCenter;
+            // Determinant (should be not zero since already check for parallelity)
+            float lineDet = sqrt(length(lineDir));
 
-            // Distance between extended atoms
-            float atomDistance = length(connection);
+            // Point on line
+            vec3 linePoint =
+                (cross(lineDir, otherFaceNormal) * length(faceCenter)
+                + (cross(faceNormal, lineDir) * length(otherFaceCenter)))
+                / lineDet;
 
-            // Do they intersect? (TODO: think about equal..just add endpoint directly?)
-            if(atomDistance >= (atomRadius + otherAtomRadius))
+            // Intersection of line with sphere, resulting in two, one or no endpoints
+            // https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
+            float underSQRT1 = dot(lineDir, (linePoint - atomCenter));
+            underSQRT1 = underSQRT1 * underSQRT1;
+            float underSQRT2 = length(linePoint - atomCenter);
+            underSQRT2 = underSQRT2 * underSQRT2;
+            float underSQRT = underSQRT1 - underSQRT2 + atomExtRadius * atomExtRadius;
+
+            // Left part of equation
+            float left = -(dot(lineDir,(linePoint - atomCenter)));
+
+            // Check value under square root
+            if(underSQRT > 0)
             {
-                continue;
-            }
+                // Right part of equation
+                float right = sqrt(underSQRT);
 
-            // ### INTERSECTION AND CUTTING FACE LIST ###
-
-            // Calculate center of intersection
-            // http://gamedev.stackexchange.com/questions/75756/sphere-sphere-intersection-and-circle-sphere-intersection
-            float h = 0.5 + ((atomRadius * atomRadius) - (otherAtomRadius * otherAtomRadius)) / (atomDistance * atomDistance);
-            cuttingFaceCenters[cuttingFaceCount] = atomCenter + h * connection;
-
-            // Calculate radius of intersection
-            cuttingFaceRadii[cuttingFaceCount] = sqrt((atomRadius * atomRadius) - h * h* atomDistance * atomDistance);
-
-            // Calculate normal of intersection
-            cuttingFaceNormals[cuttingFaceCount] = normalize(connection);
-
-            // Increment cutting face list index and break if max count of neighbors reached
-            if((++cuttingFaceCount) == neighborsMaxCount)
-            {
-                break;
-            }
-        }
-
-        // ### ITERATION OVER ALL CUTTING FACES TO BUILD END POINTS ###
-
-        for(int c = 0; c < cuttingFaceCount - 1; c++)
-        {
-            // Values of cutting face
-            vec3 faceCenter = cuttingFaceCenters[c];
-            float faceRadius = cuttingFaceRadii[c];
-            vec3 faceNormal = cuttingFaceNormals[c];
-
-            // Test every cutting face for intersection line with other
-            for(int d = c+1; d < cuttingFaceCount; d++)
-            {
-                // Values of other cutting face
-                vec3 otherFaceCenter = cuttingFaceCenters[d];
-                float otherFaceRadius = cuttingFaceRadii[d];
-                vec3 otherFaceNormal = cuttingFaceNormals[d];
-
-                // Check for parallel (just not handle it :D)
-                if(faceNormal == otherFaceNormal) { continue; }
-
-                // Intersection of planes, resulting in line
-                // http://stackoverflow.com/questions/6408670/line-of-intersection-between-two-planes
-
-                // Direction of line
-                vec3 lineDir = cross(faceNormal, otherFaceNormal);
-
-                // Determinant (should be not zero since already check for parallelity)
-                float lineDet = sqrt(length(lineDir));
-
-                // Point on line
-                vec3 linePoint =
-                    (cross(lineDir, otherFaceNormal) * length(faceCenter)
-                    + (cross(faceNormal, lineDir) * length(otherFaceCenter)))
-                    / lineDet;
-
-                // Intersection of line with sphere, resulting in two, one or no endpoints
-                // https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
-                float underSQRT1 = dot(lineDir, (linePoint - atomCenter));
-                underSQRT1 = underSQRT1 * underSQRT1;
-                float underSQRT2 = length(linePoint - atomCenter);
-                underSQRT2 = underSQRT2 * underSQRT2;
-                float underSQRT = underSQRT1 - underSQRT2 + atomRadius * atomRadius;
-
-                // Left part of equation
-                float left = -(dot(lineDir,(linePoint - atomCenter)));
-
-                // Check value under square root
-                if(underSQRT > 0)
+                // First endpoint
+                float d = left + right;
+                if(testEndpoint(linePoint + d * lineDir))
                 {
-                    // Right part of equation
-                    float right = sqrt(underSQRT);
-
-                    // First endpoint
-                    float d = left + right;
-                    if(testEndpoint(linePoint + d * lineDir))
-                    {
-                        // Break out of for loop (and outer)
-                        surfaceAtom = true;
-                        break;
-                    }
-
-                    // Second endpoint
-                    d = left - right;
-                    if(testEndpoint(linePoint + d * lineDir))
-                    {
-                        // Break out of for loop (and outer)
-                        surfaceAtom = true;
-                        break;
-                    }
+                    // Break out of for loop (and outer)
+                    surfaceAtom = true;
+                    break;
                 }
-                else if(underSQRT == 0)
+
+                // Second endpoint
+                d = left - right;
+                if(testEndpoint(linePoint + d * lineDir))
                 {
-                    // Just test the one endpoint
-                    float d = left;
-                    if(testEndpoint(linePoint + d * lineDir))
-                    {
-                        // Break out of for loop (and outer)
-                        surfaceAtom = true;
-                        break;
-                    }
+                    // Break out of for loop (and outer)
+                    surfaceAtom = true;
+                    break;
+                }
+            }
+            else if(underSQRT == 0)
+            {
+                // Just test the one endpoint
+                float d = left;
+                if(testEndpoint(linePoint + d * lineDir))
+                {
+                    // Break out of for loop (and outer)
+                    surfaceAtom = true;
+                    break;
                 }
             }
         }
+    }
 
-        // ### ATOM IS SURFACE ATOM ###
+    // ### ATOM IS SURFACE ATOM ###
 
-        // When there was no cut it is also a surface atom
-        if(surfaceAtom || cuttingFaceCount == 0)
-        {
-            // Increment atomic counter
-            uint idx = atomicCounterIncrement(index);
+    // When there was no cut it is also a surface atom
+    if(surfaceAtom || cuttingFaceCount == 0)
+    {
+        // Increment atomic counter
+        uint idx = atomicCounterIncrement(index);
 
-            // Save index of atom at index of atomic counter in image
-            imageStore(list, int(idx), uvec4(gl_GlobalInvocationID.x));
-        }
+        // Save index of atom at index of atomic counter in image
+        imageStore(list, int(idx), uvec4(gl_GlobalInvocationID.x));
     }
 };
