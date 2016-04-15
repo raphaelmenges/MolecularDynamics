@@ -16,9 +16,6 @@ layout(std430, binding = 0) restrict readonly buffer AtomBuffer
    AtomStruct atoms[];
 };
 
-// Indices of surface atoms
-layout(binding = 1, r32ui) readonly restrict uniform uimageBuffer surfaceAtomImage;
-
 // Uniforms
 uniform mat4 projection;
 uniform mat4 view;
@@ -27,10 +24,9 @@ uniform mat4 view;
 void main()
 {
     // Extract position
-    int index = int(imageLoad(surfaceAtomImage,int(gl_VertexID)).x);
-    vec3 position = atoms[index].position;
+    vec3 position = atoms[int(gl_VertexID)].position;
     gl_Position = projection * view * vec4(position, 1);
 
     // Set color
-    col = vec3(1,0,0);
+    col = vec3(0,1,0);
 }

@@ -47,10 +47,10 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     AtomLUT atomLUT;
 
     // Atom count
-    int atomCount = (int) mupProtein->getAtoms()->size();
+    mAtomCount = (int) mupProtein->getAtoms()->size();
 
     // Output atom count
-    std::cout << "Atom count: " << atomCount << std::endl;
+    std::cout << "Atom count: " << mAtomCount << std::endl;
 
     // Get min/max extent of protein
     mupProtein->minMax(); // first, one has to calculate min and max value of protein
@@ -139,7 +139,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     GLuint surfaceAtomBuffer;
     glGenBuffers(1, &surfaceAtomBuffer);
     glBindBuffer(GL_TEXTURE_BUFFER, surfaceAtomBuffer);
-    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * atomCount, 0, GL_STATIC_DRAW);
+    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * mAtomCount, 0, GL_STATIC_DRAW);
     glBindBuffer(GL_TEXTURE_BUFFER, 0);
 
     // Texture (which will be bound as image)
@@ -157,7 +157,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mAtomsSSBO);
 
     // Tell shader about count of atoms
-    surfaceDetectionProgram.update("atomCount", atomCount);
+    surfaceDetectionProgram.update("atomCount", mAtomCount);
 
     // Probe radius
     //surfaceDetectionProgram.update("probeRadius", 140.f);
@@ -175,7 +175,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
                        GL_R32UI);
 
     // Dispatch
-    glDispatchCompute((atomCount / 8) + 1, 1, 1);
+    glDispatchCompute((mAtomCount / 8) + 1, 1, 1);
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
     // Fetch count
@@ -195,11 +195,9 @@ void PerfectSurfaceDetection::renderLoop()
     // Cursor
     float prevCursorX, prevCursorY = 0;
 
-    // Prepare shader for rendering
-    ShaderProgram pointProgram = ShaderProgram("/PerfectSurfaceDetection/point.vert", "/PerfectSurfaceDetection/point.frag");
-
-    // Initial setup of shader
-    pointProgram.use();
+    // Prepare shader programs for rendering
+    ShaderProgram proteinPointProgram = ShaderProgram("/PerfectSurfaceDetection/proteinPoint.vert", "/PerfectSurfaceDetection/point.frag");
+    ShaderProgram surfacePointProgram = ShaderProgram("/PerfectSurfaceDetection/surfacePoint.vert", "/PerfectSurfaceDetection/point.frag");
 
     // Bind SSBO with atoms
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mAtomsSSBO);
@@ -214,7 +212,10 @@ void PerfectSurfaceDetection::renderLoop()
        GL_R32UI);
 
     // Projection matrix (hardcoded viewport size)
-    pointProgram.update("projection", glm::perspective(glm::radians(45.f), (GLfloat)1280 / (GLfloat)720, 0.1f, 1000.f));
+    proteinPointProgram.use();
+    proteinPointProgram.update("projection", glm::perspective(glm::radians(45.f), (GLfloat)1280 / (GLfloat)720, 0.1f, 1000.f));
+    surfacePointProgram.use();
+    surfacePointProgram.update("projection", glm::perspective(glm::radians(45.f), (GLfloat)1280 / (GLfloat)720, 0.1f, 1000.f));
 
     // Call render function of Rendering.h with lambda function
     render(mpWindow, [&] (float deltaTime)
@@ -235,10 +236,14 @@ void PerfectSurfaceDetection::renderLoop()
         mupCamera->setBeta(mupCamera->getBeta() - 0.25f * cursorDeltaY);
         mupCamera->update();
 
-        // Update view matrix
-        pointProgram.update("view", mupCamera->getViewMatrix());
+        // Draw complete protein
+        proteinPointProgram.use();
+        proteinPointProgram.update("view", mupCamera->getViewMatrix());
+        glDrawArrays(GL_POINTS, 0, mAtomCount);
 
-        // Draw points
+        // Draw surface atoms
+        surfacePointProgram.use();
+        surfacePointProgram.update("view", mupCamera->getViewMatrix());
         glDrawArrays(GL_POINTS, 0, mSurfaceAtomCount);
     });
 }

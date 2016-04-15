@@ -36,12 +36,12 @@ layout(binding = 1) uniform atomic_uint index;
 layout(binding = 2, r32ui) restrict writeonly uniform uimageBuffer list;
 
 // Function to test whether endpoint is NOT cut away
-bool testEndpoint(vec3 endpoint)
+bool testEndpoint(vec3 endPoint)
 {
     for(int c = 0; c < cuttingFaceCount; c++)
     {
         vec3 vector = cuttingFaceCenters[c] - endPoint;
-        if(dot(vector, cuttingFaceNormals[d]) > 0)
+        if(dot(vector, cuttingFaceNormals[c]) > 0)
         {
             return false;
         }
@@ -67,7 +67,7 @@ void main()
         vec3 atomPosition = atoms[atomIndex].position;
 
         // One endpoint which survices cutting tests is enough
-        surfaceAtom = false;
+        bool surfaceAtom = false;
 
         // ### ITERATION OVER ALL OTHER ATOMS TO BUILD UP CUTTING FACE LIST ###
 
@@ -146,9 +146,9 @@ void main()
                 float lineDet = sqrt(length(lineDir));
 
                 // Point on line
-                linePoint =
-                    ((cross(lineDir, otherFaceNormal) * length(faceCenter)
-                    +(cross(FaceNormal, lineDir) * length(otherFaceCenter)))
+                vec3 linePoint =
+                    (cross(lineDir, otherFaceNormal) * length(faceCenter)
+                    + (cross(faceNormal, lineDir) * length(otherFaceCenter)))
                     / lineDet;
 
                 // Intersection of line with sphere, resulting in two, one or no endpoints
@@ -160,7 +160,7 @@ void main()
                 float underSQRT = underSQRT1 - underSQRT2 + atomRadius * atomRadius;
 
                 // Left part of equation
-                float left = -(dot(lineDir,(linePoint - atomCenter)));
+                float left = -(dot(lineDir,(linePoint - atomPosition)));
 
                 // Check value under square root
                 if(underSQRT > 0)
@@ -170,7 +170,7 @@ void main()
 
                     // First endpoint
                     float d = left + right;
-                    if(testEndpoint(linePoint + d * lineDir)
+                    if(testEndpoint(linePoint + d * lineDir))
                     {
                         // Break out of for loop (and outer)
                         surfaceAtom = true;
@@ -179,18 +179,18 @@ void main()
 
                     // Second endpoint
                     d = left - right;
-                    if(testEndpoint(linePoint + d * lineDir)
+                    if(testEndpoint(linePoint + d * lineDir))
                     {
                         // Break out of for loop (and outer)
                         surfaceAtom = true;
                         break;
                     }
                 }
-                else if(underSQRT = 0)
+                else if(underSQRT == 0)
                 {
                     // Just test the one endpoint
                     float d = left;
-                    if(testEndpoint(linePoint + d * lineDir)
+                    if(testEndpoint(linePoint + d * lineDir))
                     {
                         // Break out of for loop (and outer)
                         surfaceAtom = true;

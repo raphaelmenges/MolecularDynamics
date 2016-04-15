@@ -68,6 +68,7 @@ private:
 
     // Members
     GLFWwindow* mpWindow;
+    int mAtomCount;
     GLuint mSurfaceAtomTexture; // list of indices of surface atoms encoded in uint32
     GLint mSurfaceAtomCount; // count of atoms in surface
     GLuint mAtomsSSBO; // SSBO with struct of position and radius for each atom
