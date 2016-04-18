@@ -7,13 +7,17 @@ layout(local_size_x = 16, local_size_y = 1, local_size_z = 1) in;
 const int neighborsMaxCount = 10;
 
 // ## Global variables
+
+// All cutting faces, also those who gets cut away by others
 int cuttingFaceCount = 0;
 vec3 cuttingFaceCenters[neighborsMaxCount];
 float cuttingFaceRadii[neighborsMaxCount];
 vec3 cuttingFaceNormals[neighborsMaxCount];
-int cuttingFaceIndicators[neighborsMaxCount]; // Indicator whether cutting face was cut by other
+
+// Selection of cutting faces which get intersected pairwaise and produce endpoints
+int cuttingFaceIndicesCount = 0; // Count of not cut away cutting faces
+int cuttingFaceIndicators[neighborsMaxCount]; // Indicator whether cutting face was cut away by other (1 == not cut away)
 int cuttingFaceIndices[neighborsMaxCount]; // Indices of cutting faces which are not cut away by other
-int cuttingFaceIndicesCount = 0; // Count of ok cutting faces
 
 // ## Uniforms
 uniform int atomCount;
@@ -100,8 +104,8 @@ void main()
     // Check whether in range
     if(atomIndex >= atomCount) { return; }
 
-    // When no endpoint was generated, atom is surface (value is false then)
-    bool endpointExists = false;
+    // When no endpoint was generated at all, atom is surface (value is false then)
+    bool endpointGenerated = false;
 
     // When one endpoint survives cutting, atom is surface (value is true then)
     bool endpointSurvivesCut = false;
@@ -170,18 +174,19 @@ void main()
         // Calculate normal of intersection
         cuttingFaceNormals[cuttingFaceCount] = normalize(connection);
 
-        // Initialize cutting face indicator with: 1 == was not cut away
-        cuttingFaceIndicators[i] = 1;
+        // Initialize cutting face indicator with: 1 == was not cut away (yet)
+        cuttingFaceIndicators[cuttingFaceCount] = 1;
 
         // Increment cutting face list index and break if max count of neighbors reached
         if((++cuttingFaceCount) == neighborsMaxCount) { break; }
     }
 
-    // ### GET RID OF CUTTING FACES WHICH GET COMPLETELY CUT AWAY BY OTHER ###
+    // ### GET RID OF CUTTING FACES WHICH ARE COMPLETELY CUT AWAY BY OTHER ###
 
     for(int i = 0; i < cuttingFaceCount - 1; i++)
     {
-        if(cuttingFaceIndicators[i] == 0) { continue; }
+        // Already cut away (think about where this is save to test)
+        // if(cuttingFaceIndicators[i] == 0) { continue; }
 
         // Values of cutting face
         vec3 faceCenter = cuttingFaceCenters[i];
@@ -191,22 +196,24 @@ void main()
         // Test every cutting face for intersection line with other
         for(int j = i+1; j < cuttingFaceCount; j++)
         {
-            if(cuttingFaceIndicators[j] == 0) { continue; }
+            // Already cut away (think about where this is save to test)
+            // if(cuttingFaceIndicators[j] == 0) { continue; }
 
             // Values of other cutting face
             vec3 otherFaceCenter = cuttingFaceCenters[j];
             float otherFaceRadius = cuttingFaceRadii[j];
             vec3 otherFaceNormal = cuttingFaceNormals[j];
 
-            // Check for parallelity
+            // ### CHECK THAT FACES TO NOT CUT EACH OTHER WITHIN ATOM ###
+
+            // Check for parallelity, first
             bool notCutEachOther = (1.0 == abs(dot(faceNormal,otherFaceNormal))); // If already parallel, they do not cut
+
+            // Do further testing if not already parallel
             if(!notCutEachOther)
             {
-                // Do further testing for cut
-
                 // Intersection of planes, resulting in line
-                vec3 lineDir;
-                vec3 linePoint;
+                vec3 lineDir; vec3 linePoint;
                 intersectPlanes(
                     faceCenter,
                     faceNormal,
@@ -223,6 +230,8 @@ void main()
                 notCutEachOther = valueUnderSQRT < 0;
             }
 
+            // ### CHECK WHETHER CUTTING FACE CAN BE FORGOT ###
+
             // Faces do not cut each other, so they produce not later endpoints. Check them now
             if(notCutEachOther)
             {
@@ -230,11 +239,11 @@ void main()
                 vec3 connection = otherFaceCenter - faceCenter;
 
                 // Booleans for check
-                bool faceConnection = dot(faceNormal, connection) > 0;
-                bool otherFaceConnection = dot(faceNormal, connection) > 0;
+                bool faceConnectionPositive = dot(faceNormal, connection) > 0;
+                bool otherFaceConnectionPositive = dot(otherFaceNormal, connection) > 0;
 
                 // Atom is completely cut away by faces
-                if(faceConnection && !otherFaceConnection)
+                if(faceConnectionPositive && !otherFaceConnectionPositive)
                 {
                     // No surface atom since cut away by the two cutting faces
                     return;
@@ -243,13 +252,13 @@ void main()
                 // Check for direction of normals
                 if(dot(faceNormal, otherFaceNormal) > 0)
                 {
-                    if(!faceConnection && otherFaceConnection)
+                    if(!faceConnectionPositive && otherFaceConnectionPositive)
                     {
                         // Face is cut away by other face
                         cuttingFaceIndicators[i] = 0;
 
                     }
-                    else if(faceConnection && !otherFaceConnection)
+                    else if(faceConnectionPositive && !otherFaceConnectionPositive)
                     {
                         // Other face is cut away by face
                         cuttingFaceIndicators[j] = 0;
@@ -259,17 +268,17 @@ void main()
         }
     }
 
-    // ### GO OVER CUTTING FACES AND COLLECT NOT CUT AWAY ###
+    // ### GO OVER CUTTING FACES AND COLLECT NOT CUT AWAY ONES ###
 
     for(int i = 0; i < cuttingFaceCount; i++)
     {
         // Check whether cutting face is still there after preprocessing
         if(cuttingFaceIndicators[i] == 1)
         {
-            // Save index of ok cutting face
+            // Save index of that cutting face
             cuttingFaceIndices[cuttingFaceIndicesCount] = i;
 
-            // Increase count of ok cutting faces
+            // Increase count of those cutting faces
             cuttingFaceIndicesCount++;
         }
     }
@@ -285,7 +294,7 @@ void main()
         vec3 faceNormal = cuttingFaceNormals[index];
 
         // Test every cutting face for intersection line with other
-        for(int j = i+1; j < cuttingFaceCount; j++)
+        for(int j = i+1; j < cuttingFaceIndicesCount; j++)
         {
             // Values of other cutting face
             int otherIndex = cuttingFaceIndices[j];
@@ -294,8 +303,7 @@ void main()
             vec3 otherFaceNormal = cuttingFaceNormals[otherIndex];
 
             // Intersection of planes, resulting in line
-            vec3 lineDir;
-            vec3 linePoint;
+            vec3 lineDir; vec3 linePoint;
             intersectPlanes(
                 faceCenter,
                 faceNormal,
@@ -314,8 +322,8 @@ void main()
             // Check value under square root
             if(valueUnderSQRT > 0)
             {
-                // Some endpoint existed
-                endpointExists = true;
+                // Some endpoint was at least generated
+                endpointGenerated = true;
 
                 // Right part of equation
                 float right = sqrt(valueUnderSQRT);
@@ -340,8 +348,8 @@ void main()
             }
             else if(valueUnderSQRT == 0)
             {
-                // Some endpoint existed
-                endpointExists = true;
+                // Some endpoint was at least generated
+                endpointGenerated = true;
 
                 // Just test the one endpoint
                 float d = left;
@@ -352,14 +360,14 @@ void main()
                     break;
                 }
             }
-            // else (TODO: think about it)
+            // else, no endpoint is generated since cutting faces do not intersect
         }
     }
 
     // ### ATOM IS SURFACE ATOM ###
 
-    // Check bools
-    if(!endpointExists || endpointSurvivesCut)
+    // If no endpoint was generated at all or one or more survived cutting, add this atom to surface
+    if(!endpointGenerated || endpointSurvivesCut)
     {
         // Increment atomic counter
         uint idx = atomicCounterIncrement(atomicIndex);
