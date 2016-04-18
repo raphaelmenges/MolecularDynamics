@@ -92,7 +92,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // Create camera
     glm::vec3 cameraCenter = (proteinMinExtent + proteinMaxExtent) / 2.f;
     float cameraRadius = glm::compMax(proteinMaxExtent - cameraCenter);
-    mupCamera = std::unique_ptr<OrbitCamera>(new OrbitCamera(cameraCenter, 90.f, 90.f, cameraRadius, cameraRadius / 2.f, 2.f * cameraRadius));
+    mupCamera = std::unique_ptr<OrbitCamera>(new OrbitCamera(cameraCenter, 90.f, 90.f, cameraRadius, cameraRadius / 2.f, 3.f * cameraRadius));
 
     // Create query to measure execution time
     GLuint query;
@@ -316,7 +316,7 @@ void PerfectSurfaceDetection::mouseButtonCallback(int button, int action, int mo
 
 void PerfectSurfaceDetection::scrollCallback(double xoffset, double yoffset)
 {
-    mupCamera->setRadius(mupCamera->getRadius() - 0.1f * (float)yoffset);
+    mupCamera->setRadius(mupCamera->getRadius() - 0.5f * (float)yoffset);
 }
 
 GLuint PerfectSurfaceDetection::readAtomicCounter(GLuint atomicCounter) const

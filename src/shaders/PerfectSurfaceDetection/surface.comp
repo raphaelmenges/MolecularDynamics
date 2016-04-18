@@ -15,31 +15,31 @@ float cuttingFaceRadii[neighborsMaxCount];
 vec3 cuttingFaceNormals[neighborsMaxCount];
 
 // Selection of cutting faces which get intersected pairwaise and produce endpoints
-int cuttingFaceIndicesCount = 0; // Count of not cut away cutting faces
 int cuttingFaceIndicators[neighborsMaxCount]; // Indicator whether cutting face was cut away by other (1 == not cut away)
+int cuttingFaceIndicesCount = 0; // Count of not cut away cutting faces
 int cuttingFaceIndices[neighborsMaxCount]; // Indices of cutting faces which are not cut away by other
 
 // ## Uniforms
 uniform int atomCount;
 uniform float probeRadius;
 
-// ## Structs
+// ## Struct of atom
 struct AtomStruct
 {
     vec3 center;
     float radius;
 };
 
-// ## SSBOs
+// ## SSBO with atoms
 layout(std430, binding = 0) readonly restrict buffer AtomBuffer
 {
     AtomStruct atoms[];
 };
 
-// ## Atomic counter
+// ## Atomic counter for indices in image buffer
 layout(binding = 1) uniform atomic_uint atomicIndex;
 
-// ## Image with output indices of surface atoms
+// ## Image buffer with output indices of surface atoms
 layout(binding = 2, r32ui) restrict writeonly uniform uimageBuffer imageList;
 
 // ## Intersection line of two planes
@@ -52,7 +52,7 @@ void intersectPlanes(
     inout vec3 linePoint,
     inout vec3 lineDir)
 {
-    // Direction of line
+    // Direction of line (length already should be one)
     lineDir = cross(faceNormal, otherFaceNormal);
 
     // No determinant necessary, because check for parallelity already done and normals are unit vectors
@@ -172,7 +172,7 @@ void main()
         // Calculate radius of intersection
         cuttingFaceRadii[cuttingFaceCount] =
             sqrt((atomExtRadius * atomExtRadius)
-            - h * h * atomDistanceSquared);
+            - (h * h * atomDistanceSquared));
 
         // Calculate normal of intersection
         cuttingFaceNormals[cuttingFaceCount] = normalize(connection);
@@ -210,9 +210,9 @@ void main()
             // ### CHECK THAT FACES TO NOT CUT EACH OTHER WITHIN ATOM ###
 
             // Check for parallelity, first
-            bool notCutEachOther = (1.0 == abs(dot(faceNormal,otherFaceNormal))); // If already parallel, they do not cut
+            bool notCutEachOther = (1.0 == abs(dot(faceNormal, otherFaceNormal))); // If already parallel, they do not cut
 
-            // Do further testing if not already parallel
+            // Do further checking if not already parallel
             if(!notCutEachOther)
             {
                 // Intersection of planes, resulting in line
@@ -229,7 +229,7 @@ void main()
                 // https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
                 float valueUnderSQRT = underSQRT(linePoint, lineDir, atomCenter, atomExtRadius);
 
-                // Only interesting case is for zero endpoints, because then there is no cut
+                // Only interesting case is for zero endpoints, because then there is no cut on atom surface
                 notCutEachOther = valueUnderSQRT < 0;
             }
 
@@ -252,16 +252,16 @@ void main()
                     return;
                 }
 
-                // Check for direction of normals
+                // Check for direction of normals (bigger zero is enough, since there is not intersection of both)
                 if(dot(faceNormal, otherFaceNormal) > 0)
                 {
-                    if(!faceConnectionPositive && otherFaceConnectionPositive)
+                    if(!faceConnectionPositive && !otherFaceConnectionPositive)
                     {
                         // Face is cut away by other face
                         cuttingFaceIndicators[i] = 0;
 
                     }
-                    else if(faceConnectionPositive && !otherFaceConnectionPositive)
+                    else if(faceConnectionPositive && otherFaceConnectionPositive)
                     {
                         // Other face is cut away by face
                         cuttingFaceIndicators[j] = 0;
