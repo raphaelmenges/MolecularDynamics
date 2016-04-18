@@ -52,6 +52,9 @@ public:
     // Keyboard callback for GLFW
     void keyCallback(int key, int scancode, int action, int mods);
 
+    // Mouse button callback for GLFW
+    void mouseButtonCallback(int button, int action, int mods);
+
     // Scroll callback for GLFW
     void scrollCallback(double xoffset, double yoffset);
 
@@ -63,6 +66,7 @@ private:
 
     // Members
     GLFWwindow* mpWindow;
+    bool mRotateCamera;
     int mAtomCount;
     GLuint mSurfaceAtomTexture; // list of indices of surface atoms encoded in uint32
     GLint mSurfaceAtomCount; // count of atoms in surface

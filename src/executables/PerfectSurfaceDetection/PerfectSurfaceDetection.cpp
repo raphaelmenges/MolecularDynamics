@@ -15,6 +15,9 @@
 
 PerfectSurfaceDetection::PerfectSurfaceDetection()
 {
+    // Setup members
+    mRotateCamera = false,
+
     // Create window
     mpWindow = generateWindow();
 
@@ -24,6 +27,13 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
         this->keyCallback(k, s, a, m);
     };
     setKeyCallback(mpWindow, kC);
+
+    // Register mouse button callback
+    std::function<void(int, int, int)> kB = [&](int b, int a, int m)
+    {
+        this->mouseButtonCallback(b, a, m);
+    };
+    setMouseButtonCallback(mpWindow, kB);
 
     // Register scroll callback
     std::function<void(double, double)> kS = [&](double x, double y)
@@ -142,7 +152,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), NULL, GL_DYNAMIC_DRAW);
     resetAtomicCounter(atomicCounter);
 
-    // # Prepare uint image to write indices of surface atoms. Lets call it list in shader for easier understanding
+    // # Prepare uint image to write indices of surface atoms. Lets call it image list in shader for easier understanding
 
     // Buffer
     GLuint surfaceAtomBuffer;
@@ -200,7 +210,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     glBeginQuery(GL_TIME_ELAPSED, query);
 
     // Dispatch
-    glDispatchCompute((mAtomCount / 8) + 1, 1, 1);
+    glDispatchCompute((mAtomCount / 16) + 1, 1, 1);
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
     // Print time for execution
@@ -262,8 +272,11 @@ void PerfectSurfaceDetection::renderLoop()
         prevCursorY = cursorY;
 
         // Orbit camera
-        mupCamera->setAlpha(mupCamera->getAlpha() + 0.25f * cursorDeltaX);
-        mupCamera->setBeta(mupCamera->getBeta() - 0.25f * cursorDeltaY);
+        if(mRotateCamera)
+        {
+            mupCamera->setAlpha(mupCamera->getAlpha() + 0.25f * cursorDeltaX);
+            mupCamera->setBeta(mupCamera->getBeta() - 0.25f * cursorDeltaY);
+        }
         mupCamera->update();
 
         // Draw complete protein
@@ -286,6 +299,18 @@ void PerfectSurfaceDetection::keyCallback(int key, int scancode, int action, int
         {
         case GLFW_KEY_ESCAPE: { glfwSetWindowShouldClose(mpWindow, GL_TRUE); break; } // Does not work, but method gets called?!
         }
+    }
+}
+
+void PerfectSurfaceDetection::mouseButtonCallback(int button, int action, int mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    {
+        mRotateCamera = true;
+    }
+    else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+    {
+        mRotateCamera = false;
     }
 }
 
