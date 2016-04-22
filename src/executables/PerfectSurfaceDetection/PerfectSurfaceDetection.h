@@ -5,6 +5,9 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include "ShaderTools/ShaderProgram.h"
+#include "Molecule/MDtrajLoader/Data/AtomLUT.h"
+
 // ### Create structure to find neighbors fast ###
 
 // Do it later, could improve performance
@@ -38,6 +41,8 @@
 class Protein;
 class OrbitCamera;
 
+#define USE_GLSL_IMPLEMENTATION true
+
 // Class
 class PerfectSurfaceDetection
 {
@@ -45,6 +50,9 @@ public:
 
     // Constructor
     PerfectSurfaceDetection();
+
+    // Destructor
+    virtual ~PerfectSurfaceDetection();
 
     // Render
     void renderLoop();
@@ -68,11 +76,26 @@ private:
     GLFWwindow* mpWindow;
     bool mRotateCamera;
     int mAtomCount;
-    GLuint mSurfaceAtomTexture; // list of indices of surface atoms encoded in uint32
-    GLint mSurfaceAtomCount; // count of atoms in surface
-    GLuint mAtomsSSBO; // SSBO with struct of position and radius for each atom
     std::unique_ptr<Protein> mupProtein; // protein raw data
     std::unique_ptr<OrbitCamera> mupCamera; // camera for visualization
+    GLuint mAtomsSSBO; // SSBO with struct of position and radius for each atom
+    AtomLUT mAtomLUT;
+
+    // ### CPP implementation of surface atoms detection ###
+    void initCPPImplementation();
+    void runCPPImplementation();
+
+    // ### GLSL implementation of surface atoms detection ###
+    void initGLSLImplementation();
+    void runGLSLImplementation();
+    void clearGLSLImplementation();
+    GLuint mSurfaceAtomTexture; // list of indices of surface atoms encoded in uint32
+    GLuint mSurfaceAtomBuffer;
+    GLint mSurfaceAtomCount; // count of atoms in surface
+    GLuint mQuery;
+    std::unique_ptr<ShaderProgram> mupComputeProgram;
+    GLuint mAtomicCounter;
+
 };
 
 #endif // PERFECT_SURFACE_DETECTION_H
