@@ -41,7 +41,7 @@
 class Protein;
 class OrbitCamera;
 
-#define USE_GLSL_IMPLEMENTATION true
+#define USE_GLSL_IMPLEMENTATION
 
 // Class
 class PerfectSurfaceDetection
@@ -68,6 +68,23 @@ public:
 
 private:
 
+    // Struct which holds necessary information about singe atom
+    struct AtomStruct
+    {
+        // Constructor
+        AtomStruct(
+            glm::vec3 center,
+            float radius)
+        {
+            this->center = center;
+            this->radius = radius;
+        }
+
+        // Fields
+        glm::vec3 center;
+        float radius;
+    };
+
     // Atomic counter functions
     GLuint readAtomicCounter(GLuint atomicCounter) const;
     void resetAtomicCounter(GLuint atomicCounter) const;
@@ -75,26 +92,22 @@ private:
     // Members
     GLFWwindow* mpWindow;
     bool mRotateCamera;
-    int mAtomCount;
     std::unique_ptr<Protein> mupProtein; // protein raw data
     std::unique_ptr<OrbitCamera> mupCamera; // camera for visualization
+    int mAtomCount;
     GLuint mAtomsSSBO; // SSBO with struct of position and radius for each atom
     AtomLUT mAtomLUT;
-
-    // ### CPP implementation of surface atoms detection ###
-    void initCPPImplementation();
-    void runCPPImplementation();
-
-    // ### GLSL implementation of surface atoms detection ###
-    void initGLSLImplementation();
-    void runGLSLImplementation();
-    void clearGLSLImplementation();
     GLuint mSurfaceAtomTexture; // list of indices of surface atoms encoded in uint32
     GLuint mSurfaceAtomBuffer;
     GLint mSurfaceAtomCount; // count of atoms in surface
     GLuint mQuery;
-    std::unique_ptr<ShaderProgram> mupComputeProgram;
-    GLuint mAtomicCounter;
+    std::vector<AtomStruct> mAtomStructs;
+
+    // ### CPP implementation of surface atoms detection ###
+    void runCPPImplementation();
+
+    // ### GLSL implementation of surface atoms detection ###
+    void runGLSLImplementation();
 
 };
 
