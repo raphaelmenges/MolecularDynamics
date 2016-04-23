@@ -306,7 +306,8 @@ void PerfectSurfaceDetection::runCPPImplementation()
 
     // Do it for each atom
     std::cout << "*** ALGORITHM OUTPUT START ***" << std::endl;
-    for(int i = 0; i < mAtomCount; i++)
+    //for(int i = 0; i < mAtomCount; i++)
+    for(int i = 0; i < 1; i++)
     {
         cppImplementation.execute(i, mAtomCount, mProbeRadius, mAtomStructs, surfaceAtomIndices);
     }

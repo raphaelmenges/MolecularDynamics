@@ -18,15 +18,25 @@ void CPPImplementation::intersectPlanes(
     glm::vec3 &linePoint,
     glm::vec3 &lineDir) const
 {
-    // Direction of line (length already should be one)
+    // Direction of line
     lineDir = cross(faceNormal, otherFaceNormal);
 
-    // No determinant necessary, because check for parallelity already done and normals are unit vectors
+    // Determinant (should no be zero since no parallel planes tested)
+    float determinant = glm::length(lineDir);
+    determinant = determinant * determinant;
+
+    // Distance of faces from origin (TODO: understand minus: https://en.wikipedia.org/wiki/Plane_(geometry) )
+    float faceDistance = -glm::dot(faceCenter, faceNormal);
+    float otherFaceDistance = -glm::dot(otherFaceCenter, otherFaceNormal);
 
     // Point on line
     linePoint =
-        (cross(lineDir, otherFaceNormal) * length(faceCenter)
-        + (cross(faceNormal, lineDir) * length(otherFaceCenter)));
+        (cross(lineDir, otherFaceNormal) * faceDistance
+        + (cross(faceNormal, lineDir) * otherFaceDistance))
+        / determinant;
+
+    // Normalize direction of line
+    lineDir = glm::normalize(lineDir);
 }
 
 // ## Part under square root of intersection line and sphere
@@ -87,6 +97,12 @@ void CPPImplementation::execute(
 
     std::cout << std::endl;
     std::cout << "### Execution for atom: " << atomIndex << std::endl;
+
+    // When no endpoint was generated at all, atom is surface (value is false then)
+    bool endpointGenerated = false;
+
+    // When one endpoint survives cutting, atom is surface (value is true then)
+    bool endpointSurvivesCut = false;
 
     // Own extended radius
     float atomExtRadius = atoms[atomIndex].radius + probeRadius;
@@ -161,6 +177,59 @@ void CPPImplementation::execute(
 
         // Increment cutting face list index and break if max count of neighbors reached
         if((++cuttingFaceCount) == neighborsMaxCount) { break; }
+    }
+
+    // FROM HERE ON: TEST INTERSECTION LINE STUFF (CAN BE DELETED LATER ON)
+    for(int i = 0; i < cuttingFaceCount - 1; i++)
+    {
+        // Already cut away (think about where this is save to test)
+        // if(cuttingFaceIndicators[i] == 0) { continue; }
+
+        // Values of cutting face
+        glm::vec3 faceCenter = cuttingFaceCenters[i];
+        float faceRadius = cuttingFaceRadii[i];
+        glm::vec3 faceNormal = cuttingFaceNormals[i];
+
+        // Test every cutting face for intersection line with other
+        for(int j = i+1; j < cuttingFaceCount; j++)
+        {
+            // Already cut away (think about where this is save to test)
+            // if(cuttingFaceIndicators[j] == 0) { continue; }
+
+            // Values of other cutting face
+            glm::vec3 otherFaceCenter = cuttingFaceCenters[j];
+            float otherFaceRadius = cuttingFaceRadii[j];
+            glm::vec3 otherFaceNormal = cuttingFaceNormals[j];
+
+            // Check for parallelity, first
+            bool notCutEachOther = (1.0 == glm::abs(dot(faceNormal, otherFaceNormal))); // If already parallel, they do not cut
+
+            // Do further checking if not already parallel
+            if(!notCutEachOther)
+            {
+                // Intersection of planes, resulting in line
+                glm::vec3 lineDir; glm::vec3 linePoint;
+                intersectPlanes(
+                    faceCenter,
+                    faceNormal,
+                    otherFaceCenter,
+                    otherFaceNormal,
+                    linePoint,
+                    lineDir);
+
+                std::cout << "Cutting faces " << i << " and " << j << " were intersected" << std::endl;
+                std::cout << "Line point: " << linePoint.x << ", " << linePoint.y << ", " << linePoint.z << std::endl;
+                std::cout << "Line direction: " << lineDir.x << ", " << lineDir.y << ", " << lineDir.z << std::endl;
+
+                // Intersection of line with sphere, resulting in two, one or no endpoints
+                // https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
+                float valueUnderSQRT = underSQRT(linePoint, lineDir, atomCenter, atomExtRadius);
+                std::cout << "Value under SQRT: " << valueUnderSQRT << std::endl;
+
+                // Only interesting case is for zero endpoints, because then there is no cut on atom surface
+                notCutEachOther = valueUnderSQRT < 0;
+            }
+        }
     }
 
     /*
