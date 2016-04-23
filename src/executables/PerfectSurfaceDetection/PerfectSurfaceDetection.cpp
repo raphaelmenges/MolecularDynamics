@@ -54,7 +54,8 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     std::vector<std::string> paths;
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/2AtomsIntersection.pdb");
-    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/3AtomsIntersection.pdb");
+    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/3AtomsIntersection.pdb");
+    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/6AtomsIntersection.pdb");
 
     // Load protein
     MdTrajWrapper mdwrap;
@@ -306,8 +307,8 @@ void PerfectSurfaceDetection::runCPPImplementation()
 
     // Do it for each atom
     std::cout << "*** ALGORITHM OUTPUT START ***" << std::endl;
-    //for(int i = 0; i < mAtomCount; i++)
-    for(int i = 0; i < 1; i++)
+    for(int i = 0; i < mAtomCount; i++) // all atoms
+    // for(int i = 0; i < 1; i++) // just first
     {
         cppImplementation.execute(i, mAtomCount, mProbeRadius, mAtomStructs, surfaceAtomIndices);
     }

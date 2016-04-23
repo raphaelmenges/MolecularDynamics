@@ -57,8 +57,14 @@ float CPPImplementation::underSQRT(
 // ## Function to test whether endpoint is NOT cut away. Called after cutting face list is minimized
 bool CPPImplementation::testEndpoint(glm::vec3 endpoint) const
 {
+    std::cout << "Testing an endpoint: " << endpoint.x << ", " << endpoint.y << ", " << endpoint.z << std::endl;
+
     // Just some reservation
     glm::vec3 vector;
+
+    // Some epsilon to prohibit cutting away by faces that created this endpoint
+    // TODO: alternative: exclude those cutting faces here.. how to do efficiently?
+    float epsilon = 0.0001f;
 
     // Iterate over cuttingFaceIndices entries
     for(int i = 0; i < cuttingFaceIndicesCount; i++)
@@ -66,15 +72,20 @@ bool CPPImplementation::testEndpoint(glm::vec3 endpoint) const
         // Index of cutting face
         int index = cuttingFaceIndices[i];
 
+        // Normal of cutting face
+        glm::vec3 cuttingFaceNormal = cuttingFaceNormals[index];
+
         // Vector from cutting face center to endpoint
-        vector = endpoint - cuttingFaceCenters[index];
+        vector = endpoint - (cuttingFaceCenters[index] + epsilon * cuttingFaceNormal);
 
         // Dot product should have positive sign if in same half space
-        if(glm::dot(vector, cuttingFaceNormals[index]) > 0)
+        if(glm::dot(vector, cuttingFaceNormal) > 0)
         {
+            std::cout << "Endpoint killed by cutting face" << std::endl;
             return false;
         }
     }
+    std::cout << "Endpoint survived" << std::endl;
     return true;
 }
 
@@ -229,7 +240,151 @@ void CPPImplementation::execute(
                 // Only interesting case is for zero endpoints, because then there is no cut on atom surface
                 notCutEachOther = valueUnderSQRT < 0;
             }
+
+            // ### CHECK WHETHER CUTTING FACE CAN BE FORGOT ###
+
+            // Faces do not cut each other, so they produce not later endpoints. Check them now
+            if(notCutEachOther)
+            {
+                // Connection between faces' center
+                glm::vec3 connection = otherFaceCenter - faceCenter;
+
+                // Booleans for check
+                bool faceConnectionPositive = dot(faceNormal, connection) > 0;
+                bool otherFaceConnectionPositive = dot(otherFaceNormal, connection) > 0;
+
+                // Atom is completely cut away by faces
+                if(false) // TODO!
+                {
+                    // No surface atom since cut away by the two cutting faces
+                    return;
+                }
+
+                // Check for direction of normals (bigger zero is enough, since there is no intersection of both)
+                if(dot(faceNormal, otherFaceNormal) > 0)
+                {
+                    if(!faceConnectionPositive && !otherFaceConnectionPositive)
+                    {
+                        // Face is cut away by other face
+                        cuttingFaceIndicators[i] = 0;
+
+                    }
+                    else if(faceConnectionPositive && otherFaceConnectionPositive)
+                    {
+                        // Other face is cut away by face
+                        cuttingFaceIndicators[j] = 0;
+                    }
+                }
+            }
         }
+    }
+
+    // ### GO OVER CUTTING FACES AND COLLECT NOT CUT AWAY ONES ###
+
+    for(int i = 0; i < cuttingFaceCount; i++)
+    {
+        // Check whether cutting face is still there after preprocessing
+        if(cuttingFaceIndicators[i] == 1)
+        {
+            // Save index of that cutting face
+            cuttingFaceIndices[cuttingFaceIndicesCount] = i;
+
+            // Increase count of those cutting faces
+            cuttingFaceIndicesCount++;
+        }
+    }
+
+    std::cout << "Cutting face count: " << cuttingFaceCount << ". After minimization: " << cuttingFaceIndicesCount << std::endl;
+
+    // ### GO OVER MINIMIZED CUTTING FACE LIST AND TEST ENDPOINTS ###
+
+    for(int i = 0; i < cuttingFaceIndicesCount; i++)
+    {
+        // Values of cutting face
+        int index = cuttingFaceIndices[i];
+        glm::vec3 faceCenter = cuttingFaceCenters[index];
+        float faceRadius = cuttingFaceRadii[index];
+        glm::vec3 faceNormal = cuttingFaceNormals[index];
+
+        // Test every cutting face for intersection line with other
+        for(int j = i+1; j < cuttingFaceIndicesCount; j++)
+        {
+            // Values of other cutting face
+            int otherIndex = cuttingFaceIndices[j];
+            glm::vec3 otherFaceCenter = cuttingFaceCenters[otherIndex];
+            float otherFaceRadius = cuttingFaceRadii[otherIndex];
+            glm::vec3 otherFaceNormal = cuttingFaceNormals[otherIndex];
+
+            // Intersection of planes, resulting in line
+            glm::vec3 lineDir; glm::vec3 linePoint;
+            intersectPlanes(
+                faceCenter,
+                faceNormal,
+                otherFaceCenter,
+                otherFaceNormal,
+                linePoint,
+                lineDir);
+
+            // Intersection of line with sphere, resulting in two, one or no endpoints
+            // https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
+            float valueUnderSQRT = underSQRT(linePoint, lineDir, atomCenter, atomExtRadius);
+
+            // Left part of equation
+            float left = -(glm::dot(lineDir, (linePoint - atomCenter)));
+
+            // Check value under square root
+            if(valueUnderSQRT > 0)
+            {
+                // Some endpoint was at least generated
+                endpointGenerated = true;
+
+                // Right part of equation
+                float right = sqrt(valueUnderSQRT);
+
+                // First endpoint
+                float d = left + right;
+                if(testEndpoint(linePoint + d * lineDir))
+                {
+                    // Break out of for loop (and outer)
+                    endpointSurvivesCut = true;
+                    break;
+                }
+
+                // Second endpoint
+                d = left - right;
+                if(testEndpoint(linePoint + d * lineDir))
+                {
+                    // Break out of for loop (and outer)
+                    endpointSurvivesCut = true;
+                    break;
+                }
+            }
+            else if(valueUnderSQRT == 0)
+            {
+                // Some endpoint was at least generated
+                endpointGenerated = true;
+
+                // Just test the one endpoint
+                float d = left;
+                if(testEndpoint(linePoint + d * lineDir))
+                {
+                    // Break out of for loop (and outer)
+                    endpointSurvivesCut = true;
+                    break;
+                }
+            }
+            // else, no endpoint is generated since cutting faces do not intersect
+
+            if(endpointSurvivesCut) { break; }
+        }
+    }
+
+    // ### ATOM IS SURFACE ATOM ###
+
+    // If no endpoint was generated at all or one or more survived cutting, add this atom to surface
+    if(!endpointGenerated || endpointSurvivesCut)
+    {
+        surfaceAtomsIndices.push_back((unsigned int) atomIndex);
     }
 
     /*
