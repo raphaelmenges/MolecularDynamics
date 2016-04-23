@@ -85,6 +85,7 @@ void CPPImplementation::execute(
     // Check whether in range
     if(atomIndex >= atomCount) { return; }
 
+    std::cout << std::endl;
     std::cout << "### Execution for atom: " << atomIndex << std::endl;
 
     // Own extended radius
@@ -115,11 +116,11 @@ void CPPImplementation::execute(
         glm::vec3 connection = otherAtomCenter - atomCenter;
 
         // Distance between atoms
-        float atomDistance = glm::length(connection);
-        std::cout << "Atom distance: " << atomDistance << std::endl;
+        float atomsDistance = glm::length(connection);
+        std::cout << "Atoms distance: " << atomsDistance << std::endl;
 
         // Do they intersect with extended radii?
-        if(atomDistance >= (atomExtRadius + otherAtomExtRadius)) { continue; }
+        if(atomsDistance >= (atomExtRadius + otherAtomExtRadius)) { continue; }
 
         std::cout << "Working on cutting face: " << cuttingFaceCount << std::endl;
 
@@ -130,16 +131,13 @@ void CPPImplementation::execute(
 
         // ### INTERSECTION ###
 
-        // Squared atom distance
-        float atomDistanceSquared = atomDistance * atomDistance;
-
         // Calculate center of intersection
         // http://gamedev.stackexchange.com/questions/75756/sphere-sphere-intersection-and-circle-sphere-intersection
         float h =
             0.5
             + ((atomExtRadius * atomExtRadius)
             - (otherAtomExtRadius * otherAtomExtRadius))
-            / atomDistanceSquared;
+            / (2 * (atomsDistance * atomsDistance));
         std::cout << "h: " << h << std::endl;
 
         // ### CUTTING FACE LIST ###
@@ -151,7 +149,7 @@ void CPPImplementation::execute(
         // Calculate radius of intersection
         cuttingFaceRadii[cuttingFaceCount] =
             sqrt((atomExtRadius * atomExtRadius)
-            - (h * h * atomDistanceSquared));
+            - (h * h * atomsDistance * atomsDistance));
         std::cout << "Cutting face radius: " << cuttingFaceRadii[cuttingFaceCount] << std::endl;
 
         // Calculate normal of intersection

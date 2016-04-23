@@ -1,0 +1,6 @@
+HEADER    SIMPLE PROTEIN FOR TESTING SURFACE EXTRACTION ALGORITHM (RADIUS OF P IS 1.80 ANGSTROM, H IS 1.2 ANGSTROM)     
+ATOM      1  P   THR A   1      0.000  0.000   0.000  1.00 0.0             P  
+ATOM      2  H   THR A   1      5.000  0.000   0.000  1.00 0.0             H  
+ATOM      2  H   THR A   1      3.000  -3.000   0.000  1.00 0.0             H  
+TER       3      ASN A   2                                                            
+END                                                                             
