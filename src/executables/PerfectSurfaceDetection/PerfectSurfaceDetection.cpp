@@ -18,7 +18,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // # Setup members
     mRotateCamera = false;
     mSurfaceAtomCount = 0;
-    mProbeRadius = 140.f;
+    mProbeRadius
 
     // Create window
     mpWindow = generateWindow();
@@ -103,12 +103,12 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
      // Variable to measure elapsed time
     GLuint timeElapsed = 0;
 
+    // # Prepare atoms input (position + radius)
+
     // Start query for time measurement
     glBeginQuery(GL_TIME_ELAPSED, mQuery);
 
-    // # Prepare atoms input (position + radius)
-
-    // Vector which is used as data for SSBO or CPP implementation
+    // Vector which is used as data for SSBO and CPP implementation
     for(Atom const * pAtom : *(mupProtein->getAtoms()))
     {
         // Push back all atoms
@@ -119,7 +119,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
                     pAtom->getElement())));
     }
 
-    // Fill into ssbo
+    // Fill into SSBO
     glGenBuffers(1, &mAtomsSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, mAtomsSSBO);
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(AtomStruct) * mAtomStructs.size(), mAtomStructs.data(), GL_STATIC_DRAW);
@@ -131,14 +131,14 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     glGenBuffers(1, &mSurfaceAtomBuffer); // just generate, filled in GLSL or CPP implementatin method
 
     // Texture (which will be bound as image)
-    glGenTextures(1, &mSurfaceAtomTexture);
+    glGenTextures(1, &mSurfaceAtomTexture); // connected to buffer in renderLoop(), since it seems that is has to be done after buffer fill
 
     // Print time for data transfer
     glEndQuery(GL_TIME_ELAPSED);
     glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT, &timeElapsed);
     std::cout << "Time for data transfer on GPU: " << std::to_string(timeElapsed) << "ns" << std::endl;
 
-    // # Run implementation
+    // # Run implementation to extract surface atoms
     if(mUseGLSLImplementation)
     {
         runGLSLImplementation();
@@ -178,12 +178,12 @@ void PerfectSurfaceDetection::renderLoop()
     // Bind SSBO with atoms
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mAtomsSSBO);
 
-    // Bind current buffer to texture (may not be done before buffer filling ?!)
+    // Bind buffer to texture (may not be done before buffer filling? Probably not necessary for GLSL implementation since already bound there and filled on GPU)
     glBindTexture(GL_TEXTURE_BUFFER, mSurfaceAtomTexture);
     glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, mSurfaceAtomBuffer);
     glBindTexture(GL_TEXTURE_BUFFER, 0);
 
-    // Bind image where indices of surface atoms are read from
+    // Bind image with buffer where indices of surface atoms are read from
     glBindImageTexture(
         1,
         mSurfaceAtomTexture,
@@ -302,17 +302,13 @@ void PerfectSurfaceDetection::runCPPImplementation()
     std::vector<unsigned int> surfaceAtomIndices;
 
     // # Simulate compute shader
-
     CPPImplementation cppImplementation;
 
     // Do it for each atom
     for(int i = 0; i < mAtomCount; i++)
     {
-        // cppImplementation.execute(i, mAtomCount, mProbeRadius, mAtomStructs, surfaceAtomIndices);
+        cppImplementation.execute(i, mAtomCount, mProbeRadius, mAtomStructs, surfaceAtomIndices);
     }
-
-    surfaceAtomIndices.push_back(0u);
-    surfaceAtomIndices.push_back(1u);
 
     // Fill surface atom indices to mSurfaceAtomBuffer
     glBindBuffer(GL_TEXTURE_BUFFER, mSurfaceAtomBuffer);
@@ -339,8 +335,13 @@ void PerfectSurfaceDetection::runGLSLImplementation()
 
     // # Prepare output buffer
     glBindBuffer(GL_TEXTURE_BUFFER, mSurfaceAtomBuffer);
-    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * mAtomCount, 0, GL_DYNAMIC_COPY);
+    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * mAtomCount, 0, GL_DYNAMIC_COPY); // DYNAMIC_COPY because filled by GPU and read by GPU
     glBindBuffer(GL_TEXTURE_BUFFER, 0);
+
+    // Bind buffer to texture which is used as image
+    glBindTexture(GL_TEXTURE_BUFFER, mSurfaceAtomTexture);
+    glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, mSurfaceAtomBuffer);
+    glBindTexture(GL_TEXTURE_BUFFER, 0);
 
     // # Execute compute shader to determine surface atoms
 
@@ -353,14 +354,14 @@ void PerfectSurfaceDetection::runGLSLImplementation()
     // Use compute shader program
     computeProgram.use();
 
-    // Bind SSBO with atoms
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mAtomsSSBO);
-
     // Tell shader about count of atoms
     computeProgram.update("atomCount", mAtomCount);
 
     // Probe radius
     computeProgram.update("probeRadius", mProbeRadius);
+
+    // Bind SSBO with atoms
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mAtomsSSBO);
 
     // Bind atomic counter
     glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, atomicCounter);
