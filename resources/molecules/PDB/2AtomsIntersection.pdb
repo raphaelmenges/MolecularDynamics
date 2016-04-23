@@ -1,5 +1,5 @@
-HEADER    SIMPLE PROTEIN FOR TESTING SURFACE EXTRACTION ALGORITHM      
-ATOM      1  N   THR A   1      17.047  14.099   3.625  1.00 13.79           N  
-ATOM      2  CA  THR A   1      16.967  12.784   4.338  1.00 10.80           C  
+HEADER    SIMPLE PROTEIN FOR TESTING SURFACE EXTRACTION ALGORITHM (RADIUS OF P IS 1.80 AENGSTROEM)     
+ATOM      1  P   THR A   1      0.000  0.000   0.000  1.00 0.0             P  
+ATOM      2  P   THR A   1      6.000  0.000   0.000  1.00 0.0             P  
 TER       3      ASN A   2                                                            
 END                                                                             
