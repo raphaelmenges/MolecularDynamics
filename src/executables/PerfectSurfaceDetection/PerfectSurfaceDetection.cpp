@@ -87,7 +87,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     for(int i = 0; i < (int)pAtoms->size(); i++)
     {
         std::string element = pAtoms->at(i)->getElement();
-        std::cout << "Atom: " <<  element << " Radius in picometer: " << mAtomLUT.vdW_radii_picometer.at(element) << std::endl;
+        std::cout << "Atom: " <<  element << ". Radius in picometer: " << mAtomLUT.vdW_radii_picometer.at(element) << std::endl;
     }
 
     // # Create camera

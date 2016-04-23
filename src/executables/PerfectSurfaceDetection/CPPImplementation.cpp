@@ -85,14 +85,85 @@ void CPPImplementation::execute(
     // Check whether in range
     if(atomIndex >= atomCount) { return; }
 
-    // ### TESTING ###
     std::cout << "### Execution for atom: " << atomIndex << std::endl;
 
+    // Own extended radius
     float atomExtRadius = atoms[atomIndex].radius + probeRadius;
-    std::cout << "Atom Extended Radius: " << atomExtRadius << std::endl;
+    std::cout << "Atom extended radius: " << atomExtRadius << std::endl;
 
+    // Own center
     glm::vec3 atomCenter = atoms[atomIndex].center;
-    std::cout << "Atom Center: " << atomCenter.x << ", " << atomCenter.y << ", " << atomCenter.z << std::endl;
+    std::cout << "Atom center: " << atomCenter.x << ", " << atomCenter.y << ", " << atomCenter.z << std::endl;
+
+    // ### BUILD UP OF CUTTING FACE LIST ###
+
+    // Go over other atoms and build cutting face list
+    for(int i = 0; i < atomCount; i++)
+    {
+        // Do not cut with itself
+        if(i == atomIndex) { continue; }
+
+        // ### OTHER'S VALUES ###
+
+        // Get values from other atom
+        glm::vec3 otherAtomCenter = atoms[i].center;
+        float otherAtomExtRadius = atoms[i].radius + probeRadius;
+
+        // ### INTERSECTION TEST ###
+
+        // Vector from center to other's
+        glm::vec3 connection = otherAtomCenter - atomCenter;
+
+        // Distance between atoms
+        float atomDistance = glm::length(connection);
+        std::cout << "Atom distance: " << atomDistance << std::endl;
+
+        // Do they intersect with extended radii?
+        if(atomDistance >= (atomExtRadius + otherAtomExtRadius)) { continue; }
+
+        std::cout << "Working on cutting face: " << cuttingFaceCount << std::endl;
+
+        // NODE: Following cases are NOT considered
+        // - both spheres touch each other in one point
+        // - one sphere lies completely inside other
+        // - one sphere lies completely inside other and touches other's surface in one point
+
+        // ### INTERSECTION ###
+
+        // Squared atom distance
+        float atomDistanceSquared = atomDistance * atomDistance;
+
+        // Calculate center of intersection
+        // http://gamedev.stackexchange.com/questions/75756/sphere-sphere-intersection-and-circle-sphere-intersection
+        float h =
+            0.5
+            + ((atomExtRadius * atomExtRadius)
+            - (otherAtomExtRadius * otherAtomExtRadius))
+            / atomDistanceSquared;
+        std::cout << "h: " << h << std::endl;
+
+        // ### CUTTING FACE LIST ###
+
+        // Use connection between centers as line
+        cuttingFaceCenters[cuttingFaceCount] = atomCenter + h * connection;
+        std::cout << "Cutting face center: " << cuttingFaceCenters[cuttingFaceCount].x << ", " << cuttingFaceCenters[cuttingFaceCount].y << ", " << cuttingFaceCenters[cuttingFaceCount].z << std::endl;
+
+        // Calculate radius of intersection
+        cuttingFaceRadii[cuttingFaceCount] =
+            sqrt((atomExtRadius * atomExtRadius)
+            - (h * h * atomDistanceSquared));
+        std::cout << "Cutting face radius: " << cuttingFaceRadii[cuttingFaceCount] << std::endl;
+
+        // Calculate normal of intersection
+        cuttingFaceNormals[cuttingFaceCount] = normalize(connection);
+        std::cout << "Cutting face normal: " << cuttingFaceNormals[cuttingFaceCount].x << ", " << cuttingFaceNormals[cuttingFaceCount].y << ", " << cuttingFaceNormals[cuttingFaceCount].z << std::endl;
+
+        // Initialize cutting face indicator with: 1 == was not cut away (yet)
+        cuttingFaceIndicators[cuttingFaceCount] = 1;
+
+        // Increment cutting face list index and break if max count of neighbors reached
+        if((++cuttingFaceCount) == neighborsMaxCount) { break; }
+    }
 
     /*
 
