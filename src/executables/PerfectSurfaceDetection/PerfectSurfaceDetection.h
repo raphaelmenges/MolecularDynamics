@@ -71,11 +71,13 @@ private:
     GLuint readAtomicCounter(GLuint atomicCounter) const;
     void resetAtomicCounter(GLuint atomicCounter) const;
 
+    // Setup
+    const float mProbeRadius = 140.f;
+    const bool mUseGLSLImplementation = false;
+
     // Members
-    bool mUseGLSLImplementation = false;
     GLFWwindow* mpWindow;
     bool mRotateCamera;
-    float mProbeRadius;
     std::unique_ptr<Protein> mupProtein; // protein raw data
     std::unique_ptr<OrbitCamera> mupCamera; // camera for visualization
     int mAtomCount;

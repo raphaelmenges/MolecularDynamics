@@ -18,7 +18,6 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // # Setup members
     mRotateCamera = false;
     mSurfaceAtomCount = 0;
-    mProbeRadius
 
     // Create window
     mpWindow = generateWindow();
@@ -307,7 +306,7 @@ void PerfectSurfaceDetection::runCPPImplementation()
     // Do it for each atom
     for(int i = 0; i < mAtomCount; i++)
     {
-        cppImplementation.execute(i, mAtomCount, mProbeRadius, mAtomStructs, surfaceAtomIndices);
+        // cppImplementation.execute(i, mAtomCount, mProbeRadius, mAtomStructs, surfaceAtomIndices);
     }
 
     // Fill surface atom indices to mSurfaceAtomBuffer
