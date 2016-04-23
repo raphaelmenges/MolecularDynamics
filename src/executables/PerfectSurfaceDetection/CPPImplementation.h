@@ -20,10 +20,15 @@ private:
 
     void setup();
 
-    void intersectPlanes(
-        glm::vec3 faceCenter,
+    bool pointInHalfspaceOfPlane(
+        float faceDistance,
         glm::vec3 faceNormal,
-        glm::vec3 otherFaceCenter,
+        glm::vec3 point) const;
+
+    void intersectPlanes(
+        float faceDistance,
+        glm::vec3 faceNormal,
+        float otherFaceDistance,
         glm::vec3 otherFaceNormal,
         glm::vec3 &linePoint,
         glm::vec3 &lineDir) const;
@@ -42,7 +47,7 @@ private:
     // All cutting faces, also those who gets cut away by others
     int cuttingFaceCount = 0;
     glm::vec3 cuttingFaceCenters[neighborsMaxCount];
-    float cuttingFaceRadii[neighborsMaxCount];
+    float cuttingFaceDistances[neighborsMaxCount];
     glm::vec3 cuttingFaceNormals[neighborsMaxCount];
 
     // Selection of cutting faces which get intersected pairwaise and produce endpoints
