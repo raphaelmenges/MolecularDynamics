@@ -87,7 +87,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     for(int i = 0; i < (int)pAtoms->size(); i++)
     {
         std::string element = pAtoms->at(i)->getElement();
-        std::cout << "Atom: " <<  element << " Radius: " << mAtomLUT.vdW_radii_picometer.at(element) << std::endl;
+        std::cout << "Atom: " <<  element << " Radius in picometer: " << mAtomLUT.vdW_radii_picometer.at(element) << std::endl;
     }
 
     // # Create camera
@@ -110,11 +110,11 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // Vector which is used as data for SSBO and CPP implementation
     for(Atom const * pAtom : *(mupProtein->getAtoms()))
     {
-        // Push back all atoms
+        // Push back all atoms (CONVERTING PICOMETER TO ANGSTROM)
         mAtomStructs.push_back(
             AtomStruct(
                 pAtom->getPosition(),
-                mAtomLUT.vdW_radii_picometer.at(
+                0.01f * mAtomLUT.vdW_radii_picometer.at(
                     pAtom->getElement())));
     }
 
@@ -304,10 +304,12 @@ void PerfectSurfaceDetection::runCPPImplementation()
     CPPImplementation cppImplementation;
 
     // Do it for each atom
+    std::cout << "*** ALGORITHM OUTPUT START ***" << std::endl;
     for(int i = 0; i < mAtomCount; i++)
     {
-        // cppImplementation.execute(i, mAtomCount, mProbeRadius, mAtomStructs, surfaceAtomIndices);
+        cppImplementation.execute(i, mAtomCount, mProbeRadius, mAtomStructs, surfaceAtomIndices);
     }
+    std::cout << "*** ALGORITHM OUTPUT END ***" << std::endl;
 
     // Fill surface atom indices to mSurfaceAtomBuffer
     glBindBuffer(GL_TEXTURE_BUFFER, mSurfaceAtomBuffer);

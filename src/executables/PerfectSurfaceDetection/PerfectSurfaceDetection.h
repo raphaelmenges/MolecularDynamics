@@ -9,7 +9,8 @@
 #include "Molecule/MDtrajLoader/Data/AtomLUT.h"
 #include "AtomStruct.h"
 
-// ### Create structure to find neighbors fast ###
+// Notes:
+// - Calculations done in angstrom
 
 // Do it later, could improve performance
 // - determine size of volume and grid cell count
@@ -72,7 +73,7 @@ private:
     void resetAtomicCounter(GLuint atomicCounter) const;
 
     // Setup
-    const float mProbeRadius = 140.f;
+    const float mProbeRadius = 1.4f;
     const bool mUseGLSLImplementation = false;
 
     // Members

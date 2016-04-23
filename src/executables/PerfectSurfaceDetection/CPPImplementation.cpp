@@ -76,8 +76,6 @@ void CPPImplementation::execute(
     const std::vector<AtomStruct>& atoms,
     std::vector<unsigned int>& surfaceAtomsIndices)
 {
-    std::cout << "Execution for atom: " << executionIndex << std::endl;
-
     // Reset members for new execution
     setup();
 
@@ -86,6 +84,17 @@ void CPPImplementation::execute(
 
     // Check whether in range
     if(atomIndex >= atomCount) { return; }
+
+    // ### TESTING ###
+    std::cout << "### Execution for atom: " << atomIndex << std::endl;
+
+    float atomExtRadius = atoms[atomIndex].radius + probeRadius;
+    std::cout << "Atom Extended Radius: " << atomExtRadius << std::endl;
+
+    glm::vec3 atomCenter = atoms[atomIndex].center;
+    std::cout << "Atom Center: " << atomCenter.x << ", " << atomCenter.y << ", " << atomCenter.z << std::endl;
+
+    /*
 
     // When no endpoint was generated at all, atom is surface (value is false then)
     bool endpointGenerated = false;
@@ -356,4 +365,6 @@ void CPPImplementation::execute(
     {
         surfaceAtomsIndices.push_back((unsigned int) atomIndex);
     }
+
+    */
 }
