@@ -7,6 +7,7 @@
 
 #include "ShaderTools/ShaderProgram.h"
 #include "Molecule/MDtrajLoader/Data/AtomLUT.h"
+#include "AtomStruct.h"
 
 // ### Create structure to find neighbors fast ###
 
@@ -41,8 +42,6 @@
 class Protein;
 class OrbitCamera;
 
-#define USE_GLSL_IMPLEMENTATION
-
 // Class
 class PerfectSurfaceDetection
 {
@@ -68,30 +67,15 @@ public:
 
 private:
 
-    // Struct which holds necessary information about singe atom
-    struct AtomStruct
-    {
-        // Constructor
-        AtomStruct(
-            glm::vec3 center,
-            float radius)
-        {
-            this->center = center;
-            this->radius = radius;
-        }
-
-        // Fields
-        glm::vec3 center;
-        float radius;
-    };
-
     // Atomic counter functions
     GLuint readAtomicCounter(GLuint atomicCounter) const;
     void resetAtomicCounter(GLuint atomicCounter) const;
 
     // Members
+    bool mUseGLSLImplementation = false;
     GLFWwindow* mpWindow;
     bool mRotateCamera;
+    float mProbeRadius;
     std::unique_ptr<Protein> mupProtein; // protein raw data
     std::unique_ptr<OrbitCamera> mupCamera; // camera for visualization
     int mAtomCount;

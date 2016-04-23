@@ -15,12 +15,18 @@
 
 PerfectSurfaceDetection::PerfectSurfaceDetection()
 {
-    // Setup members
+    // # Setup members
     mRotateCamera = false;
     mSurfaceAtomCount = 0;
+    mProbeRadius = 140.f;
 
     // Create window
     mpWindow = generateWindow();
+
+    // Clear color
+    glClearColor(0.f, 0.f, 0.f, 1.f);
+
+    // # Callbacks
 
     // Register keyboard callback
     std::function<void(int, int, int, int)> kC = [&](int k, int s, int a, int m)
@@ -43,12 +49,12 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     };
     setScrollCallback(mpWindow, kS);
 
-    // Clear color
-    glClearColor(0.f, 0.f, 0.f, 1.f);
+    // # Load protein
 
     // Path to protein molecule
     std::vector<std::string> paths;
-    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
+    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
+    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/2AtomsIntersection.pdb");
 
     // Load protein
     MdTrajWrapper mdwrap;
@@ -87,7 +93,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     }
     */
 
-    // Create camera
+    // # Create camera
     glm::vec3 cameraCenter = (proteinMinExtent + proteinMaxExtent) / 2.f;
     float cameraRadius = glm::compMax(proteinMaxExtent - cameraCenter);
     mupCamera = std::unique_ptr<OrbitCamera>(new OrbitCamera(cameraCenter, 90.f, 90.f, cameraRadius, cameraRadius / 2.f, 3.f * cameraRadius));
@@ -97,8 +103,6 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
 
      // Variable to measure elapsed time
     GLuint timeElapsed = 0;
-
-    // ### Set up compute shader ###
 
     // Start query for time measurement
     glBeginQuery(GL_TIME_ELAPSED, mQuery);
@@ -127,7 +131,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // Buffer
     glGenBuffers(1, &mSurfaceAtomBuffer);
     glBindBuffer(GL_TEXTURE_BUFFER, mSurfaceAtomBuffer);
-    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * mAtomCount, 0, GL_STATIC_DRAW);
+    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * mAtomCount, 0, GL_DYNAMIC_READ);
     glBindBuffer(GL_TEXTURE_BUFFER, 0);
 
     // Texture (which will be bound as image)
@@ -141,12 +145,15 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT, &timeElapsed);
     std::cout << "Time for data transfer on GPU: " << std::to_string(timeElapsed) << "ns" << std::endl;
 
-    // Run implementation
-    #ifdef USE_GLSL_IMPLEMENTATION
+    // # Run implementation
+    if(mUseGLSLImplementation)
+    {
         runGLSLImplementation();
-    #else
+    }
+    else
+    {
         runCPPImplementation();
-    #endif
+    }
 
     // Output count
     std::cout << "Surface atom count: " << mSurfaceAtomCount << std::endl;
@@ -156,7 +163,8 @@ PerfectSurfaceDetection::~PerfectSurfaceDetection()
 {
     // TODO: Delete OpenGL stuff
     // - ssbo
-    // -
+    // - texture
+    // - buffer
 
     // Delete query object
     glDeleteQueries(1, &mQuery);
@@ -289,14 +297,33 @@ void PerfectSurfaceDetection::resetAtomicCounter(GLuint atomicCounter) const
 
 void PerfectSurfaceDetection::runCPPImplementation()
 {
-    // # Input vector with atoms
+    std::cout << "CPP implementation used!" << std::endl;
+
+    // # Prepare output vector
+    std::vector<unsigned int> surfaceAtomIndices;
+
+    // # Simulate compute shader
+
+    CPPImplementation cppImplementation;
+
+    // Do it for each atom
+    for(int i = 0; i < mAtomCount; i++)
+    {
+        cppImplementation.execute(i, mAtomCount, mProbeRadius, mAtomStructs, surfaceAtomIndices);
+    }
+
+    // Fill surface atom indices to mSurfaceAtomBuffer
+    glBufferData(mSurfaceAtomBuffer, surfaceAtomIndices.size(), surfaceAtomIndices.data(), GL_DYNAMIC_DRAW);
+
+    // Fetch count
+    mSurfaceAtomCount = surfaceAtomIndices.size();
 }
-
-
 
 void PerfectSurfaceDetection::runGLSLImplementation()
 {
-     // # Compile shader
+    std::cout << "GLSL implementation used!" << std::endl;
+
+    // # Compile shader
     ShaderProgram computeProgram(GL_COMPUTE_SHADER, "/PerfectSurfaceDetection/surface.comp");
 
     // # Prepare atomic counter for writing results to unique position in image
@@ -324,7 +351,7 @@ void PerfectSurfaceDetection::runGLSLImplementation()
     computeProgram.update("atomCount", mAtomCount);
 
     // Probe radius
-    computeProgram.update("probeRadius", 140.f);
+    computeProgram.update("probeRadius", mProbeRadius);
 
     // Bind atomic counter
     glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, atomicCounter);

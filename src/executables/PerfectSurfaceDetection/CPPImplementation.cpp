@@ -1,56 +1,22 @@
-#version 430 core
+#include "CPPImplementation.h"
 
-// ## Workgroup layout (just linear of atoms)
-layout(local_size_x = 16, local_size_y = 1, local_size_z = 1) in;
+#include <iostream>
 
-// ## Constant values
-const int neighborsMaxCount = 10;
-
-// ## Global variables
-
-// All cutting faces, also those who gets cut away by others
-int cuttingFaceCount = 0;
-vec3 cuttingFaceCenters[neighborsMaxCount];
-float cuttingFaceRadii[neighborsMaxCount];
-vec3 cuttingFaceNormals[neighborsMaxCount];
-
-// Selection of cutting faces which get intersected pairwaise and produce endpoints
-int cuttingFaceIndicators[neighborsMaxCount]; // Indicator whether cutting face was cut away by other (1 == not cut away)
-int cuttingFaceIndicesCount = 0; // Count of not cut away cutting faces
-int cuttingFaceIndices[neighborsMaxCount]; // Indices of cutting faces which are not cut away by other
-
-// ## Uniforms
-uniform int atomCount;
-uniform float probeRadius;
-
-// ## Struct of atom
-struct AtomStruct
+void CPPImplementation::setup()
 {
-    vec3 center;
-    float radius;
-};
-
-// ## SSBO with atoms
-layout(std430, binding = 0) readonly restrict buffer AtomBuffer
-{
-    AtomStruct atoms[];
-};
-
-// ## Atomic counter for indices in image buffer
-layout(binding = 1) uniform atomic_uint atomicIndex;
-
-// ## Image buffer with output indices of surface atoms
-layout(binding = 2, r32ui) restrict writeonly uniform uimageBuffer imageList;
+    cuttingFaceCount = 0;
+    cuttingFaceIndicesCount = 0;
+}
 
 // ## Intersection line of two planes
 // http://stackoverflow.com/questions/6408670/line-of-intersection-between-two-planes
-void intersectPlanes(
-    vec3 faceCenter,
-    vec3 faceNormal,
-    vec3 otherFaceCenter,
-    vec3 otherFaceNormal,
-    inout vec3 linePoint,
-    inout vec3 lineDir)
+void CPPImplementation::intersectPlanes(
+    glm::vec3 faceCenter,
+    glm::vec3 faceNormal,
+    glm::vec3 otherFaceCenter,
+    glm::vec3 otherFaceNormal,
+    glm::vec3 &linePoint,
+    glm::vec3 &lineDir) const
 {
     // Direction of line (length already should be one)
     lineDir = cross(faceNormal, otherFaceNormal);
@@ -65,20 +31,24 @@ void intersectPlanes(
 
 // ## Part under square root of intersection line and sphere
 // https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
-float underSQRT(vec3 linePoint, vec3 lineDir, vec3 atomCenter, float atomRadius)
+float CPPImplementation::underSQRT(
+    glm::vec3 linePoint,
+    glm::vec3 lineDir,
+    glm::vec3 atomCenter,
+    float atomRadius) const
 {
-    float underSQRT1 = dot(lineDir, (linePoint - atomCenter));
+    float underSQRT1 = glm::dot(lineDir, (linePoint - atomCenter));
     underSQRT1 = underSQRT1 * underSQRT1;
-    float underSQRT2 = length(linePoint - atomCenter);
+    float underSQRT2 = glm::length(linePoint - atomCenter);
     underSQRT2 = underSQRT2 * underSQRT2;
     return (underSQRT1 - underSQRT2 + (atomRadius * atomRadius));
 }
 
 // ## Function to test whether endpoint is NOT cut away. Called after cutting face list is minimized
-bool testEndpoint(vec3 endpoint)
+bool CPPImplementation::testEndpoint(glm::vec3 endpoint) const
 {
     // Just some reservation
-    vec3 vector;
+    glm::vec3 vector;
 
     // Iterate over cuttingFaceIndices entries
     for(int i = 0; i < cuttingFaceIndicesCount; i++)
@@ -90,7 +60,7 @@ bool testEndpoint(vec3 endpoint)
         vector = endpoint - cuttingFaceCenters[index];
 
         // Dot product should have positive sign if in same half space
-        if(dot(vector, cuttingFaceNormals[index]) > 0)
+        if(glm::dot(vector, cuttingFaceNormals[index]) > 0)
         {
             return false;
         }
@@ -98,11 +68,21 @@ bool testEndpoint(vec3 endpoint)
     return true;
 }
 
-// ## Main function
-void main()
+// ## Execution function
+void CPPImplementation::execute(
+    int executionIndex,
+    int atomCount,
+    float probeRadius,
+    const std::vector<AtomStruct>& atoms,
+    std::vector<unsigned int>& surfaceAtomsIndices)
 {
+    std::cout << "Execution for atom: " << executionIndex << std::endl;
+
+    // Reset members for new execution
+    setup();
+
     // Index
-    int atomIndex = int(gl_GlobalInvocationID.x);
+    int atomIndex = executionIndex;
 
     // Check whether in range
     if(atomIndex >= atomCount) { return; }
@@ -119,7 +99,7 @@ void main()
     float atomExtRadius = atoms[atomIndex].radius + probeRadius;
 
     // Own center
-    vec3 atomCenter = atoms[atomIndex].center;
+    glm::vec3 atomCenter = atoms[atomIndex].center;
 
     // ### BUILD UP OF CUTTING FACE LIST ###
 
@@ -132,16 +112,16 @@ void main()
         // ### OTHER'S VALUES ###
 
         // Get values from other atom
-        vec3 otherAtomCenter = atoms[i].center;
+        glm::vec3 otherAtomCenter = atoms[i].center;
         float otherAtomExtRadius = atoms[i].radius + probeRadius;
 
         // ### INTERSECTION TEST ###
 
         // Vector from center to other's
-        vec3 connection = otherAtomCenter - atomCenter;
+        glm::vec3 connection = otherAtomCenter - atomCenter;
 
         // Distance between atoms
-        float atomDistance = length(connection);
+        float atomDistance = glm::length(connection);
 
         // Do they intersect with extended radii?
         if(atomDistance >= (atomExtRadius + otherAtomExtRadius)) { continue; }
@@ -192,9 +172,9 @@ void main()
         // if(cuttingFaceIndicators[i] == 0) { continue; }
 
         // Values of cutting face
-        vec3 faceCenter = cuttingFaceCenters[i];
+        glm::vec3 faceCenter = cuttingFaceCenters[i];
         float faceRadius = cuttingFaceRadii[i];
-        vec3 faceNormal = cuttingFaceNormals[i];
+        glm::vec3 faceNormal = cuttingFaceNormals[i];
 
         // Test every cutting face for intersection line with other
         for(int j = i+1; j < cuttingFaceCount; j++)
@@ -203,20 +183,20 @@ void main()
             // if(cuttingFaceIndicators[j] == 0) { continue; }
 
             // Values of other cutting face
-            vec3 otherFaceCenter = cuttingFaceCenters[j];
+            glm::vec3 otherFaceCenter = cuttingFaceCenters[j];
             float otherFaceRadius = cuttingFaceRadii[j];
-            vec3 otherFaceNormal = cuttingFaceNormals[j];
+            glm::vec3 otherFaceNormal = cuttingFaceNormals[j];
 
             // ### CHECK THAT FACES TO NOT CUT EACH OTHER WITHIN ATOM ###
 
             // Check for parallelity, first
-            bool notCutEachOther = (1.0 == abs(dot(faceNormal, otherFaceNormal))); // If already parallel, they do not cut
+            bool notCutEachOther = (1.0 == glm::abs(dot(faceNormal, otherFaceNormal))); // If already parallel, they do not cut
 
             // Do further checking if not already parallel
             if(!notCutEachOther)
             {
                 // Intersection of planes, resulting in line
-                vec3 lineDir; vec3 linePoint;
+                glm::vec3 lineDir; glm::vec3 linePoint;
                 intersectPlanes(
                     faceCenter,
                     faceNormal,
@@ -239,7 +219,7 @@ void main()
             if(notCutEachOther)
             {
                 // Connection between faces' center
-                vec3 connection = otherFaceCenter - faceCenter;
+                glm::vec3 connection = otherFaceCenter - faceCenter;
 
                 // Booleans for check
                 bool faceConnectionPositive = dot(faceNormal, connection) > 0;
@@ -292,21 +272,21 @@ void main()
     {
         // Values of cutting face
         int index = cuttingFaceIndices[i];
-        vec3 faceCenter = cuttingFaceCenters[index];
+        glm::vec3 faceCenter = cuttingFaceCenters[index];
         float faceRadius = cuttingFaceRadii[index];
-        vec3 faceNormal = cuttingFaceNormals[index];
+        glm::vec3 faceNormal = cuttingFaceNormals[index];
 
         // Test every cutting face for intersection line with other
         for(int j = i+1; j < cuttingFaceIndicesCount; j++)
         {
             // Values of other cutting face
             int otherIndex = cuttingFaceIndices[j];
-            vec3 otherFaceCenter = cuttingFaceCenters[otherIndex];
+            glm::vec3 otherFaceCenter = cuttingFaceCenters[otherIndex];
             float otherFaceRadius = cuttingFaceRadii[otherIndex];
-            vec3 otherFaceNormal = cuttingFaceNormals[otherIndex];
+            glm::vec3 otherFaceNormal = cuttingFaceNormals[otherIndex];
 
             // Intersection of planes, resulting in line
-            vec3 lineDir; vec3 linePoint;
+            glm::vec3 lineDir; glm::vec3 linePoint;
             intersectPlanes(
                 faceCenter,
                 faceNormal,
@@ -320,7 +300,7 @@ void main()
             float valueUnderSQRT = underSQRT(linePoint, lineDir, atomCenter, atomExtRadius);
 
             // Left part of equation
-            float left = -(dot(lineDir, (linePoint - atomCenter)));
+            float left = -(glm::dot(lineDir, (linePoint - atomCenter)));
 
             // Check value under square root
             if(valueUnderSQRT > 0)
@@ -374,10 +354,6 @@ void main()
     // If no endpoint was generated at all or one or more survived cutting, add this atom to surface
     if(!endpointGenerated || endpointSurvivesCut)
     {
-        // Increment atomic counter
-        uint idx = atomicCounterIncrement(atomicIndex);
-
-        // Save index of atom at index of atomic counter in image
-        imageStore(imageList, int(idx), uvec4(gl_GlobalInvocationID.x));
+        surfaceAtomsIndices.push_back((unsigned int) atomIndex);
     }
 }
