@@ -75,7 +75,7 @@ bool CPPImplementation::testEndpoint(glm::vec3 endpoint) const
         int index = cuttingFaceIndices[i];
 
         // Calculate direction of epsilon
-        float faceEpsilon = dot(cuttingFaceNormals[index], cuttingFaceCenters[index]) > 0 ? epsilon : -epsilon;
+        float faceEpsilon = glm::dot(cuttingFaceNormals[index], cuttingFaceCenters[index]) > 0 ? epsilon : -epsilon;
 
         // Test whether endpoint is in halfspace of cut away part
         float distance = cuttingFaceDistances[index];
@@ -254,13 +254,33 @@ void CPPImplementation::execute(
             // Faces do not cut each other, so they produce not later endpoints. Check them now
             if(notCutEachOther)
             {
-                // Connection between faces' center
+                // Connection between faces' center (vector from face to other face)
                 glm::vec3 connection = otherFaceCenter - faceCenter;
 
-                // TODO
-
-                // - Face includes other
-                // - Faces cut complete atom away
+                // Check both normals
+                if(glm::dot(faceNormal, otherFaceNormal) > 0)
+                {
+                    // Check for inclusion
+                    if(glm::dot(faceNormal, connection) > 0)
+                    {
+                        // Face cuts away other
+                        cuttingFaceIndicators[j] = 0;
+                    }
+                    else
+                    {
+                        // Other face cuts away face
+                        cuttingFaceIndicators[i] = 0;
+                    }
+                }
+                else
+                {
+                    // Check for completely cut away atom
+                    if(glm::dot(faceNormal, connection) > 0)
+                    {
+                        // Complete atom cut away
+                        return;
+                    }
+                }
             }
         }
     }
