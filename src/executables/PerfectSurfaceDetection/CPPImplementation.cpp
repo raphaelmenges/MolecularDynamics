@@ -74,10 +74,13 @@ bool CPPImplementation::testEndpoint(glm::vec3 endpoint) const
         // Index of cutting face
         int index = cuttingFaceIndices[i];
 
-        // TODO: USE EPSILON (how?)
+        // Calculate direction of epsilon
+        float faceEpsilon = dot(cuttingFaceNormals[index], cuttingFaceCenters[index]) > 0 ? epsilon : -epsilon;
+
+        // Test whether endpoint is in halfspace of cut away part
         float distance = cuttingFaceDistances[index];
         if(pointInHalfspaceOfPlane(
-            distance,
+            distance + faceEpsilon,
             cuttingFaceNormals[index],
             endpoint) > 0)
         {
