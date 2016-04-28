@@ -8,7 +8,7 @@ void CPPImplementation::setup()
     cuttingFaceIndicesCount = 0;
 }
 
-// ## Distance point to plane
+// ## Determines whether point lies in halfspace of plane direction
 // http://stackoverflow.com/questions/15688232/check-which-side-of-a-plane-points-are-on
 bool CPPImplementation::pointInHalfspaceOfPlane(
     glm::vec3 faceCenter,
@@ -37,8 +37,8 @@ void CPPImplementation::intersectPlanes(
 
     // Point on line
     linePoint =
-        (cross(lineDir, otherFaceNormal) * faceDistance
-        + (cross(faceNormal, lineDir) * otherFaceDistance))
+        (cross(lineDir, otherFaceNormal) * -faceDistance
+        + (cross(faceNormal, lineDir) * -otherFaceDistance))
         / determinant;
 
     // Normalize direction of line
@@ -183,8 +183,8 @@ void CPPImplementation::execute(
         cuttingFaceNormals[cuttingFaceCount] = normalize(connection);
         std::cout << "Cutting face normal: " << cuttingFaceNormals[cuttingFaceCount].x << ", " << cuttingFaceNormals[cuttingFaceCount].y << ", " << cuttingFaceNormals[cuttingFaceCount].z << std::endl;
 
-        // Distance of face from origin (TODO: understand minus: https://en.wikipedia.org/wiki/Plane_(geometry) )
-        cuttingFaceDistances[cuttingFaceCount] = -glm::dot(cuttingFaceCenters[cuttingFaceCount], cuttingFaceNormals[cuttingFaceCount]);
+        // Distance of face from origin
+        cuttingFaceDistances[cuttingFaceCount] = glm::dot(cuttingFaceCenters[cuttingFaceCount], cuttingFaceNormals[cuttingFaceCount]);
 
         // Initialize cutting face indicator with: 1 == was not cut away (yet)
         cuttingFaceIndicators[cuttingFaceCount] = 1;
