@@ -21,7 +21,7 @@ private:
     void setup();
 
     bool pointInHalfspaceOfPlane(
-        float faceDistance,
+        glm::vec3 faceCenter,
         glm::vec3 faceNormal,
         glm::vec3 point) const;
 
@@ -42,7 +42,7 @@ private:
     bool testEndpoint(glm::vec3 endpoint) const;
 
     // Members
-    static const int neighborsMaxCount = 10;
+    static const int neighborsMaxCount = 66; // tested...quite many :(
 
     // All cutting faces, also those who gets cut away by others
     int cuttingFaceCount = 0;

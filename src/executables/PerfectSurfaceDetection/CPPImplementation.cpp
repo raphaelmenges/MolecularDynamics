@@ -11,11 +11,11 @@ void CPPImplementation::setup()
 // ## Distance point to plane
 // http://stackoverflow.com/questions/15688232/check-which-side-of-a-plane-points-are-on
 bool CPPImplementation::pointInHalfspaceOfPlane(
-    float faceDistance,
+    glm::vec3 faceCenter,
     glm::vec3 faceNormal,
     glm::vec3 point) const
 {
-    return 0 < (glm::dot(faceNormal, point - faceDistance) + faceDistance);
+    return 0 < glm::dot(faceNormal, point - faceCenter);
 }
 
 // ## Intersection line of two planes
@@ -66,7 +66,7 @@ bool CPPImplementation::testEndpoint(glm::vec3 endpoint) const
     std::cout << "Testing an endpoint: " << endpoint.x << ", " << endpoint.y << ", " << endpoint.z << std::endl;
 
     // Some epsilon to prohibit cutting away by faces that created this endpoint
-    float epsilon = 0.0001f;
+    float epsilon = 0.00001f;
 
     // Iterate over cuttingFaceIndices entries
     for(int i = 0; i < cuttingFaceIndicesCount; i++)
@@ -74,15 +74,11 @@ bool CPPImplementation::testEndpoint(glm::vec3 endpoint) const
         // Index of cutting face
         int index = cuttingFaceIndices[i];
 
-        // Calculate direction of epsilon
-        float faceEpsilon = glm::dot(cuttingFaceNormals[index], cuttingFaceCenters[index]) > 0 ? epsilon : -epsilon;
-
         // Test whether endpoint is in halfspace of cut away part
-        float distance = cuttingFaceDistances[index];
         if(pointInHalfspaceOfPlane(
-            distance + faceEpsilon,
+            cuttingFaceCenters[index] + cuttingFaceNormals[index] * epsilon,
             cuttingFaceNormals[index],
-            endpoint) > 0)
+            endpoint))
         {
             std::cout << "Endpoint killed by cutting face" << std::endl;
             return false;
@@ -177,12 +173,11 @@ void CPPImplementation::execute(
         std::cout << "Cutting face center: " << cuttingFaceCenters[cuttingFaceCount].x << ", " << cuttingFaceCenters[cuttingFaceCount].y << ", " << cuttingFaceCenters[cuttingFaceCount].z << std::endl;
 
         // Calculate radius of intersection
-        /*
-        cuttingFaceRadii[cuttingFaceCount] =
-            sqrt((atomExtRadius * atomExtRadius)
-            - (h * h * atomsDistance * atomsDistance));
-        std::cout << "Cutting face radius: " << cuttingFaceRadii[cuttingFaceCount] << std::endl;
-        */
+        //
+        //cuttingFaceRadii[cuttingFaceCount] =
+        //    sqrt((atomExtRadius * atomExtRadius)
+        //    - (h * h * atomsDistance * atomsDistance));
+        //std::cout << "Cutting face radius: " << cuttingFaceRadii[cuttingFaceCount] << std::endl;
 
         // Calculate normal of intersection
         cuttingFaceNormals[cuttingFaceCount] = normalize(connection);
