@@ -31,5 +31,5 @@ void main()
     vertRadius = atoms[index].radius + probeRadius;
 
     // Set color
-    vertColor = vec3(0.5,0.5,0.5);
+    vertColor = vec3(1,1,1);
 }
