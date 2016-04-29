@@ -54,6 +54,7 @@ private:
     // Setup
     const float mProbeRadius = 1.4f;
     const bool mUseGLSLImplementation = false;
+    const float mCameraSmoothDuration = 1.5f;
 
     // Members
     GLFWwindow* mpWindow;
@@ -68,6 +69,10 @@ private:
     GLint mSurfaceAtomCount; // count of atoms in surface
     GLuint mQuery;
     std::vector<AtomStruct> mAtomStructs;
+    bool mRenderImpostor;
+    bool mRenderWithProbeRadius;
+    glm::vec2 mCameraDeltaMovement;
+    float mCameraSmoothTime;
 
     // ### CPP implementation of surface atoms detection ###
     void runCPPImplementation();

@@ -18,6 +18,10 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // # Setup members
     mRotateCamera = false;
     mSurfaceAtomCount = 0;
+    mRenderImpostor = false;
+    mRenderWithProbeRadius = false;
+    mCameraDeltaMovement = glm::vec2(0,0);
+    mCameraSmoothTime = 1.f;
 
     // Create window
     mpWindow = generateWindow();
@@ -93,8 +97,8 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     }
 
     // # Create camera
-    // glm::vec3 cameraCenter = (proteinMinExtent + proteinMaxExtent) / 2.f;
-    glm::vec3 cameraCenter(0,0,0);
+    glm::vec3 cameraCenter = (proteinMinExtent + proteinMaxExtent) / 2.f;
+    // glm::vec3 cameraCenter(0,0,0);
     float cameraRadius = glm::compMax(proteinMaxExtent - cameraCenter);
     mupCamera = std::unique_ptr<OrbitCamera>(new OrbitCamera(cameraCenter, 90.f, 90.f, cameraRadius, cameraRadius / 2.f, 3.f * cameraRadius));
 
@@ -229,36 +233,47 @@ void PerfectSurfaceDetection::renderLoop()
         // Orbit camera
         if(mRotateCamera)
         {
-            mupCamera->setAlpha(mupCamera->getAlpha() + 0.25f * cursorDeltaX);
-            mupCamera->setBeta(mupCamera->getBeta() - 0.25f * cursorDeltaY);
+            mCameraDeltaMovement = glm::vec2(cursorDeltaX, cursorDeltaY);
+            mCameraSmoothTime = 1.f;
         }
+        else
+        {
+            mCameraSmoothTime -= deltaTime / mCameraSmoothDuration;
+            mCameraSmoothTime = glm::max(mCameraSmoothTime, 0.f);
+        }
+        glm::vec2 cameraMovement = glm::lerp(glm::vec2(0), mCameraDeltaMovement, mCameraSmoothTime);
+        mupCamera->setAlpha(mupCamera->getAlpha() + 0.25f * cameraMovement.x);
+        mupCamera->setBeta(mupCamera->getBeta() - 0.25f * cameraMovement.y);
         mupCamera->update();
 
-        /*
-        // Draw complete protein with points
-        proteinPointProgram.use();
-        proteinPointProgram.update("view", mupCamera->getViewMatrix());
-        glDrawArrays(GL_POINTS, 0, mAtomCount);
+        if(mRenderImpostor)
+        {
+            // Draw complete atoms with impostors
+            proteinImpostorProgram.use();
+            proteinImpostorProgram.update("view", mupCamera->getViewMatrix());
+            proteinImpostorProgram.update("cameraWorldPos", mupCamera->getPosition());
+            proteinImpostorProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
+            glDrawArrays(GL_POINTS, 0, mAtomCount);
 
-        // Draw surface atoms with points
-        surfacePointProgram.use();
-        surfacePointProgram.update("view", mupCamera->getViewMatrix());
-        glDrawArrays(GL_POINTS, 0, mSurfaceAtomCount);
-        */
+            // Draw surface atoms with impostors
+            surfaceImpostorProgram.use();
+            surfaceImpostorProgram.update("view", mupCamera->getViewMatrix());
+            surfaceImpostorProgram.update("cameraWorldPos", mupCamera->getPosition());
+            surfaceImpostorProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
+            glDrawArrays(GL_POINTS, 0, mSurfaceAtomCount);
+        }
+        else
+        {
+            // Draw complete protein with points
+            proteinPointProgram.use();
+            proteinPointProgram.update("view", mupCamera->getViewMatrix());
+            glDrawArrays(GL_POINTS, 0, mAtomCount);
 
-        // Draw complete atoms with impostors
-        proteinImpostorProgram.use();
-        proteinImpostorProgram.update("view", mupCamera->getViewMatrix());
-        proteinImpostorProgram.update("cameraWorldPos", mupCamera->getPosition());
-        proteinImpostorProgram.update("probeRadius", mProbeRadius);
-        glDrawArrays(GL_POINTS, 0, mAtomCount);
-
-        // Draw surface atoms with impostors
-        surfaceImpostorProgram.use();
-        surfaceImpostorProgram.update("view", mupCamera->getViewMatrix());
-        surfaceImpostorProgram.update("cameraWorldPos", mupCamera->getPosition());
-        surfaceImpostorProgram.update("probeRadius", mProbeRadius);
-        glDrawArrays(GL_POINTS, 0, mSurfaceAtomCount);
+            // Draw surface atoms with points
+            surfacePointProgram.use();
+            surfacePointProgram.update("view", mupCamera->getViewMatrix());
+            glDrawArrays(GL_POINTS, 0, mSurfaceAtomCount);
+        }
     });
 
     // TODO: delete programs
@@ -270,7 +285,9 @@ void PerfectSurfaceDetection::keyCallback(int key, int scancode, int action, int
     {
         switch (key)
         {
-        case GLFW_KEY_ESCAPE: { glfwSetWindowShouldClose(mpWindow, GL_TRUE); break; } // Does not work, but method gets called?!
+            case GLFW_KEY_ESCAPE: { glfwSetWindowShouldClose(mpWindow, GL_TRUE); break; }
+            case GLFW_KEY_I: { mRenderImpostor = !mRenderImpostor; break; }
+            case GLFW_KEY_P: { mRenderWithProbeRadius = !mRenderWithProbeRadius; break; }
         }
     }
 }
