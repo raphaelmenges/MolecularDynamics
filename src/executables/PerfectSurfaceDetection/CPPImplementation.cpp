@@ -15,7 +15,7 @@ bool CPPImplementation::pointInHalfspaceOfPlane(
     glm::vec3 point) const
 {
     // TODO: which direction i d? positive or negative?
-    return 0 < glm::dot(plane, glm::vec4(point, 1));
+    return 0 < glm::dot(plane, glm::vec4(point, -1));
 }
 
 // ## Intersection line of two planes
