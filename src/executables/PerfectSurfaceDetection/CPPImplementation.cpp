@@ -14,7 +14,7 @@ bool CPPImplementation::pointInHalfspaceOfPlane(
     glm::vec4 plane,
     glm::vec3 point) const
 {
-    // TODO: which direction i d? positive or negative?
+    // Use negative distance of plane
     return 0 < glm::dot(plane, glm::vec4(point, -1));
 }
 
