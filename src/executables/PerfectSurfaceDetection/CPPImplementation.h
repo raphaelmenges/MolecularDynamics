@@ -21,15 +21,12 @@ private:
     void setup();
 
     bool pointInHalfspaceOfPlane(
-        glm::vec3 faceCenter,
-        glm::vec3 faceNormal,
+        glm::vec4 plane,
         glm::vec3 point) const;
 
     void intersectPlanes(
-        float faceDistance,
-        glm::vec3 faceNormal,
-        float otherFaceDistance,
-        glm::vec3 otherFaceNormal,
+        glm::vec4 plane,
+        glm::vec4 otherPlane,
         glm::vec3 &linePoint,
         glm::vec3 &lineDir) const;
 
@@ -39,16 +36,15 @@ private:
         glm::vec3 atomCenter,
         float atomRadius) const;
 
-    bool testEndpoint(glm::vec3 endpoint) const;
+    bool testEndpoint(glm::vec3 endpoint, int excludeA, int excludeB) const;
 
     // Members
-    static const int neighborsMaxCount = 66; // tested...quite many :(
+    static const int neighborsMaxCount = 100;
 
     // All cutting faces, also those who gets cut away by others
     int cuttingFaceCount = 0;
-    glm::vec3 cuttingFaceCenters[neighborsMaxCount];
-    float cuttingFaceDistances[neighborsMaxCount];
-    glm::vec3 cuttingFaceNormals[neighborsMaxCount];
+    glm::vec3 cuttingFacesCenters[neighborsMaxCount];
+    glm::vec4 cuttingFaces[neighborsMaxCount]; // Normal + Distance
 
     // Selection of cutting faces which get intersected pairwaise and produce endpoints
     int cuttingFaceIndicators[neighborsMaxCount]; // Indicator whether cutting face was cut away by other (1 == not cut away)
