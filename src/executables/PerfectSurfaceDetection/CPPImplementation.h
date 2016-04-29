@@ -43,7 +43,7 @@ private:
 
     // All cutting faces, also those who gets cut away by others
     int cuttingFaceCount = 0;
-    glm::vec3 cuttingFacesCenters[neighborsMaxCount];
+    glm::vec3 cuttingFaceCenters[neighborsMaxCount];
     glm::vec4 cuttingFaces[neighborsMaxCount]; // Normal + Distance
 
     // Selection of cutting faces which get intersected pairwaise and produce endpoints

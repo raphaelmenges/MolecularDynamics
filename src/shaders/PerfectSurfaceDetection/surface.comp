@@ -4,15 +4,14 @@
 layout(local_size_x = 16, local_size_y = 1, local_size_z = 1) in;
 
 // ## Constant values
-const int neighborsMaxCount = 10;
+const int neighborsMaxCount = 100;
 
 // ## Global variables
 
 // All cutting faces, also those who gets cut away by others
 int cuttingFaceCount = 0;
 vec3 cuttingFaceCenters[neighborsMaxCount];
-float cuttingFaceRadii[neighborsMaxCount];
-vec3 cuttingFaceNormals[neighborsMaxCount];
+vec4 cuttingFaces[neighborsMaxCount];
 
 // Selection of cutting faces which get intersected pairwaise and produce endpoints
 int cuttingFaceIndicators[neighborsMaxCount]; // Indicator whether cutting face was cut away by other (1 == not cut away)
@@ -42,62 +41,78 @@ layout(binding = 1) uniform atomic_uint atomicIndex;
 // ## Image buffer with output indices of surface atoms
 layout(binding = 2, r32ui) restrict writeonly uniform uimageBuffer imageList;
 
+// ## Determines whether point lies in halfspace of plane direction
+// http://stackoverflow.com/questions/15688232/check-which-side-of-a-plane-points-are-on
+bool pointInHalfspaceOfPlane(
+    vec4 plane,
+    vec3 point)
+{
+    // Use negative distance of plane
+    return 0 < dot(plane, vec4(point, -1));
+}
+
 // ## Intersection line of two planes
 // http://stackoverflow.com/questions/6408670/line-of-intersection-between-two-planes
 void intersectPlanes(
-    vec3 faceCenter,
-    vec3 faceNormal,
-    vec3 otherFaceCenter,
-    vec3 otherFaceNormal,
+    vec4 plane,
+    vec4 otherPlane,
     inout vec3 linePoint,
     inout vec3 lineDir)
 {
-    // Direction of line (length already should be one)
-    lineDir = cross(faceNormal, otherFaceNormal);
+    // Direction of line
+    lineDir = cross(plane.xyz, otherPlane.xyz);
 
-    // No determinant necessary, because check for parallelity already done and normals are unit vectors
+    // Determinant (should no be zero since no parallel planes tested)
+    float determinant = length(lineDir);
+    determinant = determinant * determinant;
 
     // Point on line
     linePoint =
-        (cross(lineDir, otherFaceNormal) * length(faceCenter)
-        + (cross(faceNormal, lineDir) * length(otherFaceCenter)));
+        (cross(lineDir, otherPlane.xyz) * -plane.w
+        + (cross(plane.xyz, lineDir) * -otherPlane.w))
+        / determinant;
+
+    // Normalize direction of line
+    lineDir = normalize(lineDir);
 }
 
 // ## Part under square root of intersection line and sphere
 // https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
-float underSQRT(vec3 linePoint, vec3 lineDir, vec3 atomCenter, float atomRadius)
+float underSQRT(
+    vec3 linePoint,
+    vec3 lineDir,
+    vec3 sphereCenter,
+    float sphereRadius)
 {
-    float underSQRT1 = dot(lineDir, (linePoint - atomCenter));
+    float underSQRT1 = dot(lineDir, (linePoint - sphereCenter));
     underSQRT1 = underSQRT1 * underSQRT1;
-    float underSQRT2 = length(linePoint - atomCenter);
+    float underSQRT2 = length(linePoint - sphereCenter);
     underSQRT2 = underSQRT2 * underSQRT2;
-    return (underSQRT1 - underSQRT2 + (atomRadius * atomRadius));
+    return (underSQRT1 - underSQRT2 + (sphereRadius * sphereRadius));
 }
 
 // ## Function to test whether endpoint is NOT cut away. Called after cutting face list is minimized
-bool testEndpoint(vec3 endpoint)
+bool testEndpoint(vec3 endpoint, int excludeA, int excludeB)
 {
-    // Just some reservation
-    vec3 vector;
-
     // Iterate over cuttingFaceIndices entries
     for(int i = 0; i < cuttingFaceIndicesCount; i++)
     {
+        // Do not test against faces which created endpoint
+        if(i == excludeA || i == excludeB) { continue; }
+
         // Index of cutting face
         int index = cuttingFaceIndices[i];
 
-        // Vector from cutting face center to endpoint
-        vector = endpoint - cuttingFaceCenters[index];
-
-        // Dot product should have positive sign if in same half space
-        if(dot(vector, cuttingFaceNormals[index]) > 0)
+        // Test whether endpoint is in halfspace of cut away part
+        if(pointInHalfspaceOfPlane(
+            cuttingFaces[index],
+            endpoint))
         {
             return false;
         }
     }
     return true;
 }
-
 // ## Main function
 void main()
 {
@@ -141,20 +156,17 @@ void main()
         vec3 connection = otherAtomCenter - atomCenter;
 
         // Distance between atoms
-        float atomDistance = length(connection);
+        float atomsDistance = length(connection);
 
         // Do they intersect with extended radii?
-        if(atomDistance >= (atomExtRadius + otherAtomExtRadius)) { continue; }
+        if(atomsDistance >= (atomExtRadius + otherAtomExtRadius)) { continue; }
 
-        // NODE: Following cases are NOT considered
+        // NOTE: Following cases are NOT considered
         // - both spheres touch each other in one point
         // - one sphere lies completely inside other
         // - one sphere lies completely inside other and touches other's surface in one point
 
         // ### INTERSECTION ###
-
-        // Squared atom distance
-        float atomDistanceSquared = atomDistance * atomDistance;
 
         // Calculate center of intersection
         // http://gamedev.stackexchange.com/questions/75756/sphere-sphere-intersection-and-circle-sphere-intersection
@@ -162,20 +174,18 @@ void main()
             0.5
             + ((atomExtRadius * atomExtRadius)
             - (otherAtomExtRadius * otherAtomExtRadius))
-            / atomDistanceSquared;
+            / (2 * (atomsDistance * atomsDistance));
 
         // ### CUTTING FACE LIST ###
 
-        // Use connection between centers as line
-        cuttingFaceCenters[cuttingFaceCount] = atomCenter + h * connection;
+        // Save center of face
+        vec3 center = atomCenter + h * connection;
+        cuttingFaceCenters[cuttingFaceCount] = center;
 
-        // Calculate radius of intersection
-        cuttingFaceRadii[cuttingFaceCount] =
-            sqrt((atomExtRadius * atomExtRadius)
-            - (h * h * atomDistanceSquared));
-
-        // Calculate normal of intersection
-        cuttingFaceNormals[cuttingFaceCount] = normalize(connection);
+        // Save plane equation face
+        vec3 normal = normalize(connection);
+        float dist = dot(center, normal);
+        cuttingFaces[cuttingFaceCount] = vec4(normal, dist);
 
         // Initialize cutting face indicator with: 1 == was not cut away (yet)
         cuttingFaceIndicators[cuttingFaceCount] = 1;
@@ -184,17 +194,15 @@ void main()
         if((++cuttingFaceCount) == neighborsMaxCount) { break; }
     }
 
-    // ### GET RID OF CUTTING FACES WHICH ARE COMPLETELY CUT AWAY BY OTHER ###
-
+    // FROM HERE ON: TEST INTERSECTION LINE STUFF (CAN BE DELETED LATER ON)
     for(int i = 0; i < cuttingFaceCount - 1; i++)
     {
         // Already cut away (think about where this is save to test)
         // if(cuttingFaceIndicators[i] == 0) { continue; }
 
         // Values of cutting face
+        vec4 face = cuttingFaces[i];
         vec3 faceCenter = cuttingFaceCenters[i];
-        float faceRadius = cuttingFaceRadii[i];
-        vec3 faceNormal = cuttingFaceNormals[i];
 
         // Test every cutting face for intersection line with other
         for(int j = i+1; j < cuttingFaceCount; j++)
@@ -203,14 +211,11 @@ void main()
             // if(cuttingFaceIndicators[j] == 0) { continue; }
 
             // Values of other cutting face
+            vec4 otherFace = cuttingFaces[j];
             vec3 otherFaceCenter = cuttingFaceCenters[j];
-            float otherFaceRadius = cuttingFaceRadii[j];
-            vec3 otherFaceNormal = cuttingFaceNormals[j];
-
-            // ### CHECK THAT FACES TO NOT CUT EACH OTHER WITHIN ATOM ###
 
             // Check for parallelity, first
-            bool notCutEachOther = (1.0 == abs(dot(faceNormal, otherFaceNormal))); // If already parallel, they do not cut
+            bool notCutEachOther = (1.0 == abs(dot(face.xyz, otherFace.xyz))); // If already parallel, they do not cut
 
             // Do further checking if not already parallel
             if(!notCutEachOther)
@@ -218,10 +223,8 @@ void main()
                 // Intersection of planes, resulting in line
                 vec3 lineDir; vec3 linePoint;
                 intersectPlanes(
-                    faceCenter,
-                    faceNormal,
-                    otherFaceCenter,
-                    otherFaceNormal,
+                    face,
+                    otherFace,
                     linePoint,
                     lineDir);
 
@@ -238,33 +241,31 @@ void main()
             // Faces do not cut each other, so they produce not later endpoints. Check them now
             if(notCutEachOther)
             {
-                // Connection between faces' center
+                // Connection between faces' center (vector from face to other face)
                 vec3 connection = otherFaceCenter - faceCenter;
 
-                // Booleans for check
-                bool faceConnectionPositive = dot(faceNormal, connection) > 0;
-                bool otherFaceConnectionPositive = dot(otherFaceNormal, connection) > 0;
-
-                // Atom is completely cut away by faces
-                if(faceConnectionPositive && !otherFaceConnectionPositive)
+                // Check both normals
+                if(dot(face.xyz, otherFace.xyz) > 0)
                 {
-                    // No surface atom since cut away by the two cutting faces
-                    return;
-                }
-
-                // Check for direction of normals (bigger zero is enough, since there is not intersection of both)
-                if(dot(faceNormal, otherFaceNormal) > 0)
-                {
-                    if(!faceConnectionPositive && !otherFaceConnectionPositive)
+                    // Check for inclusion
+                    if(dot(face.xyz, connection) > 0)
                     {
-                        // Face is cut away by other face
-                        cuttingFaceIndicators[i] = 0;
-
-                    }
-                    else if(faceConnectionPositive && otherFaceConnectionPositive)
-                    {
-                        // Other face is cut away by face
+                        // Face cuts away other
                         cuttingFaceIndicators[j] = 0;
+                    }
+                    else
+                    {
+                        // Other face cuts away face
+                        cuttingFaceIndicators[i] = 0;
+                    }
+                }
+                else
+                {
+                    // Check for completely cut away atom
+                    if(dot(face.xyz, connection) > 0)
+                    {
+                        // Complete atom cut away
+                        return;
                     }
                 }
             }
@@ -286,32 +287,26 @@ void main()
         }
     }
 
-    // ### GO OVER OK CUTTING FACES AND TEST ENDPOINTS ###
+    // ### GO OVER MINIMIZED CUTTING FACE LIST AND TEST ENDPOINTS ###
 
     for(int i = 0; i < cuttingFaceIndicesCount; i++)
     {
         // Values of cutting face
         int index = cuttingFaceIndices[i];
-        vec3 faceCenter = cuttingFaceCenters[index];
-        float faceRadius = cuttingFaceRadii[index];
-        vec3 faceNormal = cuttingFaceNormals[index];
+        vec4 face = cuttingFaces[index];
 
         // Test every cutting face for intersection line with other
         for(int j = i+1; j < cuttingFaceIndicesCount; j++)
         {
             // Values of other cutting face
             int otherIndex = cuttingFaceIndices[j];
-            vec3 otherFaceCenter = cuttingFaceCenters[otherIndex];
-            float otherFaceRadius = cuttingFaceRadii[otherIndex];
-            vec3 otherFaceNormal = cuttingFaceNormals[otherIndex];
+            vec4 otherFace = cuttingFaces[otherIndex];
 
             // Intersection of planes, resulting in line
             vec3 lineDir; vec3 linePoint;
             intersectPlanes(
-                faceCenter,
-                faceNormal,
-                otherFaceCenter,
-                otherFaceNormal,
+                face,
+                otherFace,
                 linePoint,
                 lineDir);
 
@@ -333,7 +328,7 @@ void main()
 
                 // First endpoint
                 float d = left + right;
-                if(testEndpoint(linePoint + d * lineDir))
+                if(testEndpoint(linePoint + (d * lineDir), i, j))
                 {
                     // Break out of for loop (and outer)
                     endpointSurvivesCut = true;
@@ -342,7 +337,7 @@ void main()
 
                 // Second endpoint
                 d = left - right;
-                if(testEndpoint(linePoint + d * lineDir))
+                if(testEndpoint(linePoint + (d * lineDir), i, j))
                 {
                     // Break out of for loop (and outer)
                     endpointSurvivesCut = true;
@@ -356,17 +351,17 @@ void main()
 
                 // Just test the one endpoint
                 float d = left;
-                if(testEndpoint(linePoint + d * lineDir))
+                if(testEndpoint(linePoint + (d * lineDir), i, j))
                 {
                     // Break out of for loop (and outer)
                     endpointSurvivesCut = true;
                     break;
                 }
             }
-            // else, no endpoint is generated since cutting faces do not intersect
-
-            if(endpointSurvivesCut) { break; }
+            // else, no endpoint is generated since cutting faces do not intersect (should not happen)
         }
+
+        if(endpointSurvivesCut) { break; }
     }
 
     // ### ATOM IS SURFACE ATOM ###

@@ -185,12 +185,12 @@ void CPPImplementation::execute(
 
         // Save center of face
         glm::vec3 center = atomCenter + h * connection;
-        cuttingFacesCenters[cuttingFaceCount] = center;
+        cuttingFaceCenters[cuttingFaceCount] = center;
 
         // Save plane equation face
         glm::vec3 normal = normalize(connection);
-        float distance = glm::dot(center, normal);
-        cuttingFaces[cuttingFaceCount] = glm::vec4(normal, distance);
+        float dist = glm::dot(center, normal);
+        cuttingFaces[cuttingFaceCount] = glm::vec4(normal, dist);
 
         // Initialize cutting face indicator with: 1 == was not cut away (yet)
         cuttingFaceIndicators[cuttingFaceCount] = 1;
@@ -207,7 +207,7 @@ void CPPImplementation::execute(
 
         // Values of cutting face
         glm::vec4 face = cuttingFaces[i];
-        glm::vec3 faceCenter = cuttingFacesCenters[i];
+        glm::vec3 faceCenter = cuttingFaceCenters[i];
 
         // Test every cutting face for intersection line with other
         for(int j = i+1; j < cuttingFaceCount; j++)
@@ -217,7 +217,7 @@ void CPPImplementation::execute(
 
             // Values of other cutting face
             glm::vec4 otherFace = cuttingFaces[j];
-            glm::vec3 otherFaceCenter = cuttingFacesCenters[j];
+            glm::vec3 otherFaceCenter = cuttingFaceCenters[j];
 
             // Check for parallelity, first
             bool notCutEachOther = (1.0 == glm::abs(dot(glm::vec3(face.x, face.y, face.z), glm::vec3(otherFace.x, otherFace.y, otherFace.z)))); // If already parallel, they do not cut
