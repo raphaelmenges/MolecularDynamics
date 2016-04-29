@@ -22,6 +22,7 @@ layout(binding = 1, r32ui) readonly restrict uniform uimageBuffer surfaceAtomIma
 
 // Uniforms
 uniform vec3 cameraWorldPos;
+uniform float probeRadius;
 
 // Main function
 void main()
@@ -30,10 +31,10 @@ void main()
     int index = int(imageLoad(surfaceAtomImage,int(gl_VertexID)).x);
     vec3 center = atoms[index].center;
     vec3 vector = normalize(cameraWorldPos - center);
-    gl_Position = vec4(center + 0.001 * vector, 1);
+    gl_Position = vec4(center + 0.01 * vector, 1);
 
     // Extract radius
-    vertRadius =  atoms[index].radius;
+    vertRadius =  atoms[index].radius + probeRadius;
 
     // Set color
     vertColor = vec3(1,0,0);

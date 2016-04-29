@@ -52,10 +52,10 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
 
     // Path to protein molecule
     std::vector<std::string> paths;
-    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
+    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/2AtomsIntersection.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/3AtomsIntersection.pdb");
-    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/6AtomsIntersection.pdb");
+    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/6AtomsIntersection.pdb");
 
     // Load protein
     MdTrajWrapper mdwrap;
@@ -250,12 +250,14 @@ void PerfectSurfaceDetection::renderLoop()
         proteinImpostorProgram.use();
         proteinImpostorProgram.update("view", mupCamera->getViewMatrix());
         proteinImpostorProgram.update("cameraWorldPos", mupCamera->getPosition());
+        proteinImpostorProgram.update("probeRadius", mProbeRadius);
         glDrawArrays(GL_POINTS, 0, mAtomCount);
 
         // Draw surface atoms with impostors
         surfaceImpostorProgram.use();
         surfaceImpostorProgram.update("view", mupCamera->getViewMatrix());
         surfaceImpostorProgram.update("cameraWorldPos", mupCamera->getPosition());
+        surfaceImpostorProgram.update("probeRadius", mProbeRadius);
         glDrawArrays(GL_POINTS, 0, mSurfaceAtomCount);
     });
 
