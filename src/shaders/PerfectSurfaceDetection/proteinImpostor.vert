@@ -1,7 +1,8 @@
-#version 430
+#version 450
 
-// Color of rendered point
-out vec3 col;
+// Color of impostor
+out vec3 vertColor;
+out float vertRadius;
 
 // Struct for atom
 struct AtomStruct
@@ -19,20 +20,16 @@ layout(std430, binding = 0) restrict readonly buffer AtomBuffer
 // Indices of surface atoms
 layout(binding = 1, r32ui) readonly restrict uniform uimageBuffer surfaceAtomImage;
 
-// Uniforms
-uniform mat4 projection;
-uniform mat4 view;
-
 // Main function
 void main()
 {
     // Extract position
     int index = int(imageLoad(surfaceAtomImage,int(gl_VertexID)).x);
-    vec3 position = atoms[index].center;
-    vec4 viewPosition = view * vec4(position, 1);
-    viewPosition.z += 0.01; // move towards camera since all protein's atoms get rendered before that and z buffer is filled
-    gl_Position = projection * viewPosition;
+    gl_Position = vec4(atoms[index].center, 1);
+
+    // Extract radius
+    vertRadius =  atoms[index].radius;
 
     // Set color
-    col = vec3(1,0,0);
+    vertColor = vec3(0.5,0.5,0.5);
 }

@@ -166,6 +166,11 @@ PerfectSurfaceDetection::~PerfectSurfaceDetection()
 
 void PerfectSurfaceDetection::renderLoop()
 {
+    // Setup OpenGL
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glEnable(GL_CULL_FACE);
+
     // Point size for rendering
     glPointSize(15.f);
 
@@ -175,6 +180,8 @@ void PerfectSurfaceDetection::renderLoop()
     // Prepare shader programs for rendering
     ShaderProgram proteinPointProgram = ShaderProgram("/PerfectSurfaceDetection/proteinPoint.vert", "/PerfectSurfaceDetection/point.frag");
     ShaderProgram surfacePointProgram = ShaderProgram("/PerfectSurfaceDetection/surfacePoint.vert", "/PerfectSurfaceDetection/point.frag");
+    ShaderProgram proteinImpostorProgram = ShaderProgram("/PerfectSurfaceDetection/proteinImpostor.vert", "/PerfectSurfaceDetection/impostor.geom", "/PerfectSurfaceDetection/impostor.frag");
+    ShaderProgram surfaceImpostorProgram = ShaderProgram("/PerfectSurfaceDetection/surfaceImpostor.vert", "/PerfectSurfaceDetection/impostor.geom", "/PerfectSurfaceDetection/impostor.frag");
 
     // Bind SSBO with atoms
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mAtomsSSBO);
@@ -195,10 +202,15 @@ void PerfectSurfaceDetection::renderLoop()
         GL_R32UI);
 
     // Projection matrix (hardcoded viewport size)
+    glm::mat4 projection = glm::perspective(glm::radians(45.f), (GLfloat)1280 / (GLfloat)720, 0.1f, 1000.f);
     proteinPointProgram.use();
-    proteinPointProgram.update("projection", glm::perspective(glm::radians(45.f), (GLfloat)1280 / (GLfloat)720, 0.1f, 1000.f));
+    proteinPointProgram.update("projection", projection);
     surfacePointProgram.use();
-    surfacePointProgram.update("projection", glm::perspective(glm::radians(45.f), (GLfloat)1280 / (GLfloat)720, 0.1f, 1000.f));
+    surfacePointProgram.update("projection", projection);
+    proteinImpostorProgram.use();
+    proteinImpostorProgram.update("projection", projection);
+    surfaceImpostorProgram.use();
+    surfaceImpostorProgram.update("projection", projection);
 
     // Call render function of Rendering.h with lambda function
     render(mpWindow, [&] (float deltaTime)
@@ -222,16 +234,32 @@ void PerfectSurfaceDetection::renderLoop()
         }
         mupCamera->update();
 
-        // Draw complete protein
+        /*
+        // Draw complete protein with points
         proteinPointProgram.use();
         proteinPointProgram.update("view", mupCamera->getViewMatrix());
         glDrawArrays(GL_POINTS, 0, mAtomCount);
 
-        // Draw surface atoms
+        // Draw surface atoms with points
         surfacePointProgram.use();
         surfacePointProgram.update("view", mupCamera->getViewMatrix());
         glDrawArrays(GL_POINTS, 0, mSurfaceAtomCount);
+        */
+
+        // Draw complete atoms with impostors
+        proteinImpostorProgram.use();
+        proteinImpostorProgram.update("view", mupCamera->getViewMatrix());
+        proteinImpostorProgram.update("cameraWorldPos", mupCamera->getPosition());
+        glDrawArrays(GL_POINTS, 0, mAtomCount);
+
+        // Draw surface atoms with impostors
+        surfaceImpostorProgram.use();
+        surfaceImpostorProgram.update("view", mupCamera->getViewMatrix());
+        surfaceImpostorProgram.update("cameraWorldPos", mupCamera->getPosition());
+        glDrawArrays(GL_POINTS, 0, mSurfaceAtomCount);
     });
+
+    // TODO: delete programs
 }
 
 void PerfectSurfaceDetection::keyCallback(int key, int scancode, int action, int mods)
