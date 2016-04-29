@@ -22,6 +22,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     mRenderWithProbeRadius = false;
     mCameraDeltaMovement = glm::vec2(0,0);
     mCameraSmoothTime = 1.f;
+    mLightDirection = glm::normalize(glm::vec3(-0.5, -0.75, -0.3));
 
     // Create window
     mpWindow = generateWindow();
@@ -56,10 +57,10 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
 
     // Path to protein molecule
     std::vector<std::string> paths;
-    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
+    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/2AtomsIntersection.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/3AtomsIntersection.pdb");
-    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/6AtomsIntersection.pdb");
+    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/6AtomsIntersection.pdb");
 
     // Load protein
     MdTrajWrapper mdwrap;
@@ -246,6 +247,13 @@ void PerfectSurfaceDetection::renderLoop()
         mupCamera->setBeta(mupCamera->getBeta() - 0.25f * cameraMovement.y);
         mupCamera->update();
 
+        // Light direction
+        if(mRotateLight)
+        {
+            mLightDirection = - glm::normalize(mupCamera->getPosition() - mupCamera->getCenter());
+        }
+
+        // Drawing
         if(mRenderImpostor)
         {
             // Draw complete atoms with impostors
@@ -253,6 +261,7 @@ void PerfectSurfaceDetection::renderLoop()
             proteinImpostorProgram.update("view", mupCamera->getViewMatrix());
             proteinImpostorProgram.update("cameraWorldPos", mupCamera->getPosition());
             proteinImpostorProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
+            proteinImpostorProgram.update("lightDir", mLightDirection);
             glDrawArrays(GL_POINTS, 0, mAtomCount);
 
             // Draw surface atoms with impostors
@@ -260,6 +269,7 @@ void PerfectSurfaceDetection::renderLoop()
             surfaceImpostorProgram.update("view", mupCamera->getViewMatrix());
             surfaceImpostorProgram.update("cameraWorldPos", mupCamera->getPosition());
             surfaceImpostorProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
+            surfaceImpostorProgram.update("lightDir", mLightDirection);
             glDrawArrays(GL_POINTS, 0, mSurfaceAtomCount);
         }
         else
@@ -275,8 +285,6 @@ void PerfectSurfaceDetection::renderLoop()
             glDrawArrays(GL_POINTS, 0, mSurfaceAtomCount);
         }
     });
-
-    // TODO: delete programs
 }
 
 void PerfectSurfaceDetection::keyCallback(int key, int scancode, int action, int mods)
@@ -301,6 +309,14 @@ void PerfectSurfaceDetection::mouseButtonCallback(int button, int action, int mo
     else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
     {
         mRotateCamera = false;
+    }
+    else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+    {
+        mRotateLight = true;
+    }
+    else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE)
+    {
+        mRotateLight = false;
     }
 }
 

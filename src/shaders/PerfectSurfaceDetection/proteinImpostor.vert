@@ -1,4 +1,4 @@
-#version 450
+#version 430
 
 // Color of impostor
 out vec3 vertColor;
@@ -28,7 +28,7 @@ void main()
     gl_Position = vec4(atoms[index].center, 1);
 
     // Extract radius
-    vertRadius =  atoms[index].radius + probeRadius;
+    vertRadius = atoms[index].radius + probeRadius;
 
     // Set color
     vertColor = vec3(0.5,0.5,0.5);

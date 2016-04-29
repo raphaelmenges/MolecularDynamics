@@ -59,6 +59,7 @@ private:
     // Members
     GLFWwindow* mpWindow;
     bool mRotateCamera;
+    bool mRotateLight;
     std::unique_ptr<Protein> mupProtein; // protein raw data
     std::unique_ptr<OrbitCamera> mupCamera; // camera for visualization
     int mAtomCount;
@@ -73,6 +74,7 @@ private:
     bool mRenderWithProbeRadius;
     glm::vec2 mCameraDeltaMovement;
     float mCameraSmoothTime;
+    glm::vec3 mLightDirection;
 
     // ### CPP implementation of surface atoms detection ###
     void runCPPImplementation();

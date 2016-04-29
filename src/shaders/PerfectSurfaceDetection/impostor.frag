@@ -1,4 +1,4 @@
-#version 450
+#version 430
 
 in vec2 uv;
 flat in float radius;
@@ -8,10 +8,9 @@ out vec4 outColor;
 layout (depth_less) out float gl_FragDepth; // Makes optimizations possible
 
 uniform mat4 view;
-uniform mat4 proj;
+uniform mat4 projection;
 uniform vec3 cameraWorldPos;
-
-const vec4 lightDirection = vec4(-0.5, -0.75, -0.3, 0);
+uniform vec3 lightDir;
 
 void main()
 {
@@ -38,23 +37,23 @@ void main()
     vec3 worldPos = position + relativeWorldPos;
 
     // Set depth of pixel by projecting pixel position into clip space
-    vec4 projPos = proj * view * vec4(worldPos, 1.0);
+    vec4 projPos = projection * view * vec4(worldPos, 1.0);
     float projDepth = projPos.z / projPos.w;
     gl_FragDepth = (projDepth + 1.0) * 0.5; // gl_FragCoord.z is from 0..1. So go from clip space to viewport space
 
     // Diffuse lighting (hacked together, not correct)
-    vec4 nrmLightDirection = normalize(lightDirection);
+    vec4 nrmLightDirection = normalize(vec4(lightDir, 0));
     float lighting = max(0,dot(normal, vec3(view * -nrmLightDirection))); // Do it in view space (therefore is normal here ok)
 
     // Specular lighting (camera pos in view matrix last column is in view coordinates?)
     vec3 reflectionVector = reflect(nrmLightDirection.xyz, worldNormal);
     vec3 surfaceToCamera = normalize(cameraWorldPos - worldPos);
     float cosAngle = max(0.0, dot(surfaceToCamera, reflectionVector));
-    float specular = pow(cosAngle, 25);
-    lighting += lighting * specular;
+    float specular = pow(cosAngle, 10);
+    specular *= 0.5 * lighting;
 
-    // Some "ambient" lighting
-    vec3 finalColor = color * mix(vec3(0.4, 0.45, 0.5), vec3(1.0, 1.0, 1.0), lighting);
+    // Some "ambient" lighting combined with specular
+    vec3 finalColor = mix(color * mix(vec3(0.4, 0.45, 0.5), vec3(1.0, 1.0, 1.0), lighting), vec3(1,1,1), specular);
 
     // Output color
     outColor = vec4(finalColor, 1);

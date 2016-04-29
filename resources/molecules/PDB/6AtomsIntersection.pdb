@@ -1,7 +1,7 @@
 HEADER    SIMPLE PROTEIN FOR TESTING SURFACE EXTRACTION ALGORITHM (RADIUS OF P IS 1.8 ANGSTROM, C IS 1.7 ANGSTROM)     
 ATOM      1  C   THR A   1      0.000  0.000   0.000  1.00 0.0             C  
 ATOM      2  P   THR A   1      -2.500  0.000   0.000  1.00 0.0            P  
-ATOM      2  P   THR A   1      5.000  0.000   0.000  1.00 0.0             P  
+ATOM      2  P   THR A   1      5.400  0.000   0.000  1.00 0.0             P  
 ATOM      2  P   THR A   1      0.000   -2.500  0.000  1.00 0.0            P  
 ATOM      2  P   THR A   1      0.000   2.500   0.000  1.00 0.0            P   
 ATOM      2  P   THR A   1      0.000   0.000  -2.500  1.00 0.0            P  
