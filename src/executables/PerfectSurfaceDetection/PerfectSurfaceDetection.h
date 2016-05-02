@@ -52,7 +52,7 @@ private:
     void resetAtomicCounter(GLuint atomicCounter) const;
 
     // Setup
-    const float mProbeRadius = 1.4f;
+    const float mProbeRadius = 1.6f;
     const bool mUseGLSLImplementation = true;
     const float mCameraSmoothDuration = 1.5f;
 
@@ -60,7 +60,6 @@ private:
     GLFWwindow* mpWindow;
     bool mRotateCamera;
     bool mRotateLight;
-    std::unique_ptr<Protein> mupProtein; // protein raw data
     std::unique_ptr<OrbitCamera> mupCamera; // camera for visualization
     int mAtomCount;
     GLuint mAtomsSSBO; // SSBO with struct of position and radius for each atom

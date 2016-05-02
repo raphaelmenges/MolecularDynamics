@@ -6,6 +6,7 @@
 #include "ShaderTools/Renderer.h"
 #include "Molecule/MDtrajLoader/MdTraj/MdTrajWrapper.h"
 #include "Molecule/MDtrajLoader/Data/Protein.h"
+#include "SimpleLoader.h"
 
 #include <glm/gtx/component_wise.hpp>
 
@@ -55,13 +56,15 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
 
     // # Load protein
 
+    /*
+
     // Path to protein molecule
     std::vector<std::string> paths;
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1a19.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/2AtomsIntersection.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/3AtomsIntersection.pdb");
-    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/6AtomsIntersection.pdb");
+    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/7AtomsIntersection.pdb");
 
     // Load protein
     MdTrajWrapper mdwrap;
@@ -98,9 +101,17 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
         std::cout << "Atom: " <<  element << ". Radius in picometer: " << mAtomLUT.vdW_radii_picometer.at(element) << std::endl;
     }
 
+    */
+
+    // Simple PDB loader
+    mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Myoglobin.txt");
+    mAtomCount = mAtomStructs.size();
+    glm::vec3 proteinMinExtent(0,0,0);
+    glm::vec3 proteinMaxExtent(100,100,100);
+
     // # Create camera
     glm::vec3 cameraCenter = (proteinMinExtent + proteinMaxExtent) / 2.f;
-    // glm::vec3 cameraCenter(0,0,0);
+    //glm::vec3 cameraCenter(0,0,0);
     float cameraRadius = glm::compMax(proteinMaxExtent - cameraCenter);
     mupCamera = std::unique_ptr<OrbitCamera>(new OrbitCamera(cameraCenter, 90.f, 90.f, cameraRadius, cameraRadius / 2.f, 3.f * cameraRadius));
 
@@ -115,6 +126,8 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // Start query for time measurement
     glBeginQuery(GL_TIME_ELAPSED, mQuery);
 
+    /*
+
     // Vector which is used as data for SSBO and CPP implementation
     for(Atom const * pAtom : *(mupProtein->getAtoms()))
     {
@@ -125,6 +138,8 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
                 0.01f * mAtomLUT.vdW_radii_picometer.at(
                     pAtom->getElement())));
     }
+
+    */
 
     // Fill into SSBO
     glGenBuffers(1, &mAtomsSSBO);
