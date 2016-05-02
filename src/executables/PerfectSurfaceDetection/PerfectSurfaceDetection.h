@@ -53,7 +53,7 @@ private:
 
     // Setup
     const float mProbeRadius = 1.4f;
-    const bool mUseGLSLImplementation = false;
+    const bool mUseGLSLImplementation = true;
     const float mCameraSmoothDuration = 1.5f;
 
     // Members
