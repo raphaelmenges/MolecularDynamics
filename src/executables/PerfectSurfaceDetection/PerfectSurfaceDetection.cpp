@@ -56,8 +56,11 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
 
     // # Load protein
 
-    /*
+    // Prepare vectors for min and max extent
+    glm::vec3 proteinMinExtent;
+    glm::vec3 proteinMaxExtent;
 
+    /*
     // Path to protein molecule
     std::vector<std::string> paths;
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
@@ -68,18 +71,33 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
 
     // Load protein
     MdTrajWrapper mdwrap;
-    mupProtein = mdwrap.load(paths);
+    std::unique_ptr<Protein> upProtein = std::move(mdwrap.load(paths));
 
     // Atom count
-    mAtomCount = (int) mupProtein->getAtoms()->size();
-
-    // Output atom count
-    std::cout << "Atom count: " << mAtomCount << std::endl;
+    mAtomCount = (int) upProtein->getAtoms()->size();
 
     // Get min/max extent of protein
-    mupProtein->minMax(); // first, one has to calculate min and max value of protein
-    glm::vec3 proteinMinExtent = mupProtein->getMin();
-    glm::vec3 proteinMaxExtent = mupProtein->getMax();
+    upProtein->minMax(); // first, one has to calculate min and max value of protein
+    proteinMinExtent = upProtein->getMin();
+    proteinMaxExtent = upProtein->getMax();
+
+    // Vector which is used as data for SSBO and CPP implementation
+    for(Atom const * pAtom : *(upProtein->getAtoms()))
+    {
+        // Push back all atoms (CONVERTING PICOMETER TO ANGSTROM)
+        mAtomStructs.push_back(
+            AtomStruct(
+                pAtom->getPosition(),
+                0.01f * mAtomLUT.vdW_radii_picometer.at(
+                    pAtom->getElement())));
+    }
+    */
+
+    // Simple PDB loader
+    // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Polymerase-of-E-coli-DNA.txt", proteinMinExtent, proteinMaxExtent);
+    mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Myoglobin.txt", proteinMinExtent, proteinMaxExtent);
+    // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Nitrogen-Paracoccus-Cytochrome-C550.txt", proteinMinExtent, proteinMaxExtent);
+    mAtomCount = mAtomStructs.size();
 
     // Test protein extent
     std::cout
@@ -93,27 +111,22 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
         << proteinMaxExtent.y << ", "
         << proteinMaxExtent.z << std::endl;
 
+    /*
     // Test atom radii
-    std::vector<Atom*>* pAtoms = mupProtein->getAtoms();
-    for(int i = 0; i < (int)pAtoms->size(); i++)
+    for(const auto& rAtom : mAtomStructs)
     {
-        std::string element = pAtoms->at(i)->getElement();
-        std::cout << "Atom: " <<  element << ". Radius in picometer: " << mAtomLUT.vdW_radii_picometer.at(element) << std::endl;
+        std::cout << "Radius in Angstrom: " << rAtom.radius << std::endl;
     }
-
     */
 
-    // Simple PDB loader
-    mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Myoglobin.txt");
-    mAtomCount = mAtomStructs.size();
-    glm::vec3 proteinMinExtent(0,0,0);
-    glm::vec3 proteinMaxExtent(100,100,100);
+    // Output atom count
+    std::cout << "Atom count: " << mAtomCount << std::endl;
 
     // # Create camera
     glm::vec3 cameraCenter = (proteinMinExtent + proteinMaxExtent) / 2.f;
     //glm::vec3 cameraCenter(0,0,0);
     float cameraRadius = glm::compMax(proteinMaxExtent - cameraCenter);
-    mupCamera = std::unique_ptr<OrbitCamera>(new OrbitCamera(cameraCenter, 90.f, 90.f, cameraRadius, cameraRadius / 2.f, 3.f * cameraRadius));
+    mupCamera = std::unique_ptr<OrbitCamera>(new OrbitCamera(cameraCenter, 90.f, 90.f, cameraRadius, cameraRadius / 2.f, 5.f * cameraRadius));
 
     // Create query to measure execution time
     glGenQueries(1, &mQuery);
@@ -125,21 +138,6 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
 
     // Start query for time measurement
     glBeginQuery(GL_TIME_ELAPSED, mQuery);
-
-    /*
-
-    // Vector which is used as data for SSBO and CPP implementation
-    for(Atom const * pAtom : *(mupProtein->getAtoms()))
-    {
-        // Push back all atoms (CONVERTING PICOMETER TO ANGSTROM)
-        mAtomStructs.push_back(
-            AtomStruct(
-                pAtom->getPosition(),
-                0.01f * mAtomLUT.vdW_radii_picometer.at(
-                    pAtom->getElement())));
-    }
-
-    */
 
     // Fill into SSBO
     glGenBuffers(1, &mAtomsSSBO);

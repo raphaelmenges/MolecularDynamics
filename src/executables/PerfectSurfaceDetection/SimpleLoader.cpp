@@ -5,76 +5,105 @@
 #include <sstream>
 #include <map>
 
-// TODO: very unstable :D
-
+// Lookup table for radii
 std::map<std::string, float> radiiLookup =
 {
 {"H", 1.2f}, {"N", 1.55f}, {"C", 1.7f}, {"O", 1.52f}, {"S", 1.8f}
 };
 
-std::vector<AtomStruct> parseSimplePDB(std::string filepath)
+std::vector<AtomStruct> parseSimplePDB(std::string filepath, glm::vec3& rMinExtent, glm::vec3& rMaxExtent)
 {
+    // Initialize min / max extent values
+    rMinExtent.x = std::numeric_limits<float>::max();
+    rMinExtent.y = std::numeric_limits<float>::max();
+    rMinExtent.z = std::numeric_limits<float>::max();
+    rMaxExtent.x = std::numeric_limits<float>::min();
+    rMaxExtent.y = std::numeric_limits<float>::min();
+    rMaxExtent.z = std::numeric_limits<float>::min();
+
     // Read file
     std::ifstream in(filepath);
+
+    // Create vector
+    std::vector<AtomStruct> atoms;
 
     // Check whether file was found
     if (!in)
     {
         std::cout << "Could not open file: " << filepath << std::endl;
     }
-
-    // Convert input file to string
-    std::stringstream strStream;
-    strStream << in.rdbuf();
-    std::string content = strStream.str();
-
-    // Close file
-    in.close();
-
-    // Some values for iteration
-    std::string lineDelimiter = "\n";
-    size_t linePos = 0;
-    std::string line;
-
-    // Create vector
-    std::vector<AtomStruct> atoms;
-
-    // Iterate through lines
-    while ((linePos = content.find(lineDelimiter)) != std::string::npos)
+    else
     {
-        // Extract line
-        line = content.substr(0, linePos);
-        content.erase(0, linePos + lineDelimiter.length());
+        // Convert input file to string
+        std::stringstream strStream;
+        strStream << in.rdbuf();
+        std::string content = strStream.str();
 
-        // Split by space
-        std::string valueDelimiter = " ";
-        size_t valuePos = 0;
-        std::string value;
-        int valueCount = 0;
-        glm::vec3 center;
-        while ((valuePos = line.find(valueDelimiter)) != std::string::npos)
+        // Close file
+        in.close();
+
+        // Add line in the end to catch all
+        content += "\n";
+
+        // Some values for iteration
+        std::string lineDelimiter = "\n";
+        size_t linePos = 0;
+        std::string line;
+
+        // Iterate through lines
+        while ((linePos = content.find(lineDelimiter)) != std::string::npos)
         {
-            // Extract value
-            value = line.substr(0, valuePos);
-            line.erase(0, valuePos + valueDelimiter.length());
+            // Extract line
+            line = content.substr(0, linePos);
+            content.erase(0, linePos + lineDelimiter.length());
 
-            // Forgot empty values
-            if(value.empty())
+            // Check for empty line
+            if(line.empty())
             {
                 continue;
             }
 
-            // Has to be component of center
-            if(valueCount < 3)
-            {
-                center[valueCount] = std::stof(value);
-            }
-            valueCount++;
-        }
-        float radius = radiiLookup.at(line);
+            // Split by space
+            std::string valueDelimiter = " ";
+            size_t valuePos = 0;
+            std::string value;
+            int valueCount = 0;
 
-        // Add found atom to vector
-        atoms.push_back(AtomStruct(center, radius));
+            // Prepare vec3 for center
+            glm::vec3 center;
+
+            // Find values in a line (quite hacky but works for well formatted files)
+            while ((valuePos = line.find(valueDelimiter)) != std::string::npos)
+            {
+                // Extract value
+                value = line.substr(0, valuePos);
+                line.erase(0, valuePos + valueDelimiter.length());
+
+                // Forgot empty values
+                if(value.empty())
+                {
+                    continue;
+                }
+
+                // Has to be component of center
+                if(valueCount < 3)
+                {
+                    // Just guess that there are floats
+                    center[valueCount] = std::stof(value);
+                }
+                valueCount++;
+            }
+
+            // Decide about min / max
+            rMinExtent = glm::min(rMinExtent, center);
+            rMaxExtent = glm::max(rMaxExtent, center);
+
+            // Radius
+            float radius = radiiLookup.at(line);
+
+            // Add found atom to vector
+            atoms.push_back(AtomStruct(center, radius));
+        }
     }
 
     // Return protein
