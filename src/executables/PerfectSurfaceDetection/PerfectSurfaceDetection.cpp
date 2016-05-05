@@ -60,7 +60,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     glm::vec3 proteinMinExtent;
     glm::vec3 proteinMaxExtent;
 
-    /*
+    // /*
     // Path to protein molecule
     std::vector<std::string> paths;
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
@@ -91,13 +91,15 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
                 0.01f * mAtomLUT.vdW_radii_picometer.at(
                     pAtom->getElement())));
     }
-    */
+    // */
 
+    /*
     // Simple PDB loader
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Polymerase-of-E-coli-DNA.txt", proteinMinExtent, proteinMaxExtent);
     mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Myoglobin.txt", proteinMinExtent, proteinMaxExtent);
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Nitrogen-Paracoccus-Cytochrome-C550.txt", proteinMinExtent, proteinMaxExtent);
     mAtomCount = mAtomStructs.size();
+    */
 
     // Test protein extent
     std::cout
@@ -121,6 +123,16 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
 
     // Output atom count
     std::cout << "Atom count: " << mAtomCount << std::endl;
+
+    // # Some simple rotation matrix for easy test of rotation invariance
+    glm::mat4 rotation = glm::rotate(glm::mat4(1.f), glm::radians(45.f), glm::normalize(glm::vec3(-1,1,1)));
+
+    // Go over atom structs and rotate them
+    for(auto& rAtomStruct : mAtomStructs)
+    {
+        glm::vec4 newAtomCenter = (glm::vec4(rotation * glm::vec4(rAtomStruct.center, 1)));
+        rAtomStruct.center = glm::vec3(newAtomCenter.x, newAtomCenter.y, newAtomCenter.z);
+    }
 
     // # Create camera
     glm::vec3 cameraCenter = (proteinMinExtent + proteinMaxExtent) / 2.f;
