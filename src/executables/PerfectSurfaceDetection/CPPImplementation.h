@@ -39,7 +39,8 @@ private:
     bool testEndpoint(glm::vec3 endpoint, int excludeA, int excludeB) const;
 
     // Members
-    static const int neighborsMaxCount = 100;
+    static const int neighborsMaxCount = 200;
+    static const bool logging = false;
 
     // All cutting faces, also those who gets cut away by others
     int cuttingFaceCount = 0;
