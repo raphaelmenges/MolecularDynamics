@@ -66,11 +66,11 @@ bool CPPImplementation::testEndpoint(glm::vec3 endpoint, int excludeA, int exclu
     // Iterate over cuttingFaceIndices entries
     for(int i = 0; i < cuttingFaceIndicesCount; i++)
     {
-        // Do not test against faces which created endpoint
-        if(i == excludeA || i == excludeB) { continue; }
-
         // Index of cutting face
         int index = cuttingFaceIndices[i];
+
+        // Do not test against faces which created endpoint
+        if(index == excludeA || index == excludeB) { continue; }
 
         // Test whether endpoint is in positive halfspace of cut away part
         if(pointInHalfspaceOfPlane(
@@ -199,9 +199,7 @@ void CPPImplementation::execute(
         if((++cuttingFaceCount) == neighborsMaxCount) { std::cout << "TOO MANY NEIGHBORS" << std::endl; break; }
     }
 
-    // TODO: READ FURTHER (until now everything seems ok :C )
-
-    // FROM HERE ON: TEST INTERSECTION LINE STUFF (CAN BE DELETED LATER ON)
+    // CALCULATE WHICH CUTTING FACES ARE USED FOR ENPOINT CALCULATION
     for(int i = 0; i < cuttingFaceCount - 1; i++)
     {
         // Already cut away (think about where this is save to test)
@@ -222,7 +220,7 @@ void CPPImplementation::execute(
             glm::vec3 otherFaceCenter = cuttingFaceCenters[j];
 
             // Check for parallelity, first
-            bool notCutEachOther = (1.0 == glm::abs(dot(glm::vec3(face.x, face.y, face.z), glm::vec3(otherFace.x, otherFace.y, otherFace.z)))); // If already parallel, they do not cut
+            bool notCutEachOther = (1.0 >= glm::abs(dot(glm::vec3(face.x, face.y, face.z), glm::vec3(otherFace.x, otherFace.y, otherFace.z)))); // If already parallel, they do not cut
 
             // Do further checking if not already parallel
             if(!notCutEachOther)
@@ -256,13 +254,13 @@ void CPPImplementation::execute(
                 // Connection between faces' center (vector from face to other face)
                 glm::vec3 connection = otherFaceCenter - faceCenter;
 
-                // Check both normals
+                // Check both normals (pointing in same direction)
                 if(glm::dot(glm::vec3(face.x, face.y, face.z), glm::vec3(otherFace.x, otherFace.y, otherFace.z)) > 0)
                 {
                     // Check for inclusion
                     if(glm::dot(glm::vec3(face.x, face.y, face.z), connection) > 0)
                     {
-                        // Face cuts away other
+                        // Face cuts away other face
                         cuttingFaceIndicators[j] = 0;
                     }
                     else
@@ -279,6 +277,7 @@ void CPPImplementation::execute(
                         // Complete atom cut away
                         return;
                     }
+                    // else: do not influence each other
                 }
             }
         }
@@ -303,7 +302,7 @@ void CPPImplementation::execute(
 
     // ### GO OVER MINIMIZED CUTTING FACE LIST AND TEST ENDPOINTS ###
 
-    for(int i = 0; i < cuttingFaceIndicesCount; i++)
+    for(int i = 0; i < cuttingFaceIndicesCount - 1; i++)
     {
         // Values of cutting face
         int index = cuttingFaceIndices[i];
@@ -316,7 +315,7 @@ void CPPImplementation::execute(
             int otherIndex = cuttingFaceIndices[j];
             glm::vec4 otherFace = cuttingFaces[otherIndex];
 
-            // Intersection of planes, resulting in line
+            // Intersection of faces, resulting in line
             glm::vec3 lineDir; glm::vec3 linePoint;
             intersectPlanes(
                 face,
@@ -338,11 +337,11 @@ void CPPImplementation::execute(
                 endpointGenerated = true;
 
                 // Right part of equation
-                float right = sqrt(valueUnderSQRT);
+                float right = glm::sqrt(valueUnderSQRT);
 
                 // First endpoint
                 float d = left + right;
-                if(testEndpoint(linePoint + (d * lineDir), i, j))
+                if(testEndpoint(linePoint + (d * lineDir), index, otherIndex))
                 {
                     // Break out of for loop (and outer)
                     endpointSurvivesCut = true;
@@ -351,7 +350,7 @@ void CPPImplementation::execute(
 
                 // Second endpoint
                 d = left - right;
-                if(testEndpoint(linePoint + (d * lineDir), i, j))
+                if(testEndpoint(linePoint + (d * lineDir), index, otherIndex))
                 {
                     // Break out of for loop (and outer)
                     endpointSurvivesCut = true;
@@ -365,14 +364,14 @@ void CPPImplementation::execute(
 
                 // Just test the one endpoint
                 float d = left;
-                if(testEndpoint(linePoint + (d * lineDir), i, j))
+                if(testEndpoint(linePoint + (d * lineDir), index, otherIndex))
                 {
                     // Break out of for loop (and outer)
                     endpointSurvivesCut = true;
                     break;
                 }
             }
-            // else, no endpoint is generated since cutting faces do not intersect (should not happen)
+            // else, no endpoint is generated since cutting faces do not intersect
         }
 
         if(endpointSurvivesCut) { break; }
