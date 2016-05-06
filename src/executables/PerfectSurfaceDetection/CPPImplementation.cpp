@@ -141,6 +141,7 @@ void CPPImplementation::execute(
         // Distance between atoms
         float atomsDistance = glm::length(connection);
 
+        /*
         // Do they intersect with extended radii?
         if(atomsDistance >= (atomExtRadius + otherAtomExtRadius)) { continue; }
         if(logging) { std::cout << "Neighbor atom distance: " << atomsDistance << std::endl; }
@@ -151,6 +152,20 @@ void CPPImplementation::execute(
         // - both spheres touch each other in one point (excluded by neighboring test)
         // - one sphere lies completely inside other
         // - one sphere lies completely inside other and touches other's surface in one point
+        */
+
+        // Test atoms are either too far away or just touch each other (then continue)
+        if(atomsDistance >= (atomExtRadius + otherAtomExtRadius)) { continue; }
+
+        // Test whether atom is completely covering other
+        if(atomExtRadius >= (otherAtomExtRadius + atomsDistance)) { continue; }
+
+        // Test whether atom is completely covered by other
+        if((atomExtRadius + atomsDistance) <= otherAtomExtRadius)
+        {
+            // Since it is completely covered, it is not at surface
+            return;
+        }
 
         // ### INTERSECTION ###
 

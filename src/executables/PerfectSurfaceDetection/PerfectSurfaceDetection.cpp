@@ -67,7 +67,8 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1a19.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/2AtomsIntersection.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/3AtomsIntersection.pdb");
-    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/7AtomsIntersection.pdb");
+    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/7AtomsIntersection.pdb");
+    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/8AtomsIntersection.pdb");
 
     // Load protein
     MdTrajWrapper mdwrap;
@@ -124,6 +125,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // Output atom count
     std::cout << "Atom count: " << mAtomCount << std::endl;
 
+    /*
     // # Some simple rotation matrix for easy test of rotation invariance
     glm::mat4 rotation = glm::rotate(glm::mat4(1.f), glm::radians(45.f), glm::normalize(glm::vec3(-1,1,1)));
 
@@ -133,6 +135,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
         glm::vec4 newAtomCenter = (glm::vec4(rotation * glm::vec4(rAtomStruct.center, 1)));
         rAtomStruct.center = glm::vec3(newAtomCenter.x, newAtomCenter.y, newAtomCenter.z);
     }
+    */
 
     // # Create camera
     glm::vec3 cameraCenter = (proteinMinExtent + proteinMaxExtent) / 2.f;
