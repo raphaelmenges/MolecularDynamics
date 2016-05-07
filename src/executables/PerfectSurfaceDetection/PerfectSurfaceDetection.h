@@ -76,6 +76,7 @@ private:
     glm::vec3 mLightDirection;
     glm::vec3 mProteinMinExtent;
     glm::vec3 mProteinMaxExtent;
+    int mSelectedAtom;
 
     // ### CPP implementation of surface atoms detection ###
     void runCPPImplementation();

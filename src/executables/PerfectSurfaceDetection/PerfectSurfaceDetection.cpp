@@ -24,6 +24,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     mCameraDeltaMovement = glm::vec2(0,0);
     mCameraSmoothTime = 1.f;
     mLightDirection = glm::normalize(glm::vec3(-0.5, -0.75, -0.3));
+    mSelectedAtom = 0;
 
     // Create window
     mpWindow = generateWindow();
@@ -222,8 +223,10 @@ void PerfectSurfaceDetection::renderLoop()
     // Prepare shader programs for rendering
     ShaderProgram proteinPointProgram = ShaderProgram("/PerfectSurfaceDetection/proteinPoint.vert", "/PerfectSurfaceDetection/point.frag");
     ShaderProgram surfacePointProgram = ShaderProgram("/PerfectSurfaceDetection/surfacePoint.vert", "/PerfectSurfaceDetection/point.frag");
+    ShaderProgram selectionPointProgram = ShaderProgram("/PerfectSurfaceDetection/selectionPoint.vert", "/PerfectSurfaceDetection/point.frag");
     ShaderProgram proteinImpostorProgram = ShaderProgram("/PerfectSurfaceDetection/proteinImpostor.vert", "/PerfectSurfaceDetection/impostor.geom", "/PerfectSurfaceDetection/impostor.frag");
     ShaderProgram surfaceImpostorProgram = ShaderProgram("/PerfectSurfaceDetection/surfaceImpostor.vert", "/PerfectSurfaceDetection/impostor.geom", "/PerfectSurfaceDetection/impostor.frag");
+    ShaderProgram selectionImpostorProgram = ShaderProgram("/PerfectSurfaceDetection/selectionImpostor.vert", "/PerfectSurfaceDetection/impostor.geom", "/PerfectSurfaceDetection/impostor.frag");
 
     // Bind SSBO with atoms
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mAtomsSSBO);
@@ -261,10 +264,14 @@ void PerfectSurfaceDetection::renderLoop()
     proteinPointProgram.update("projection", projection);
     surfacePointProgram.use();
     surfacePointProgram.update("projection", projection);
+    selectionPointProgram.use();
+    selectionPointProgram.update("projection", projection);
     proteinImpostorProgram.use();
     proteinImpostorProgram.update("projection", projection);
     surfaceImpostorProgram.use();
     surfaceImpostorProgram.update("projection", projection);
+    selectionImpostorProgram.use();
+    selectionImpostorProgram.update("projection", projection);
 
     // Call render function of Rendering.h with lambda function
     render(mpWindow, [&] (float deltaTime)
@@ -320,6 +327,15 @@ void PerfectSurfaceDetection::renderLoop()
             surfaceImpostorProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
             surfaceImpostorProgram.update("lightDir", mLightDirection);
             glDrawArrays(GL_POINTS, 0, mSurfaceAtomCount);
+
+            // Draw selected atom with impostor
+            selectionImpostorProgram.use();
+            selectionImpostorProgram.update("view", mupCamera->getViewMatrix());
+            selectionImpostorProgram.update("cameraWorldPos", mupCamera->getPosition());
+            selectionImpostorProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
+            selectionImpostorProgram.update("lightDir", mLightDirection);
+            selectionImpostorProgram.update("atomIndex", mSelectedAtom);
+            glDrawArrays(GL_POINTS, 0, 1);
         }
         else
         {
@@ -332,6 +348,12 @@ void PerfectSurfaceDetection::renderLoop()
             surfacePointProgram.use();
             surfacePointProgram.update("view", mupCamera->getViewMatrix());
             glDrawArrays(GL_POINTS, 0, mSurfaceAtomCount);
+
+            // Draw selected atom with point
+            selectionPointProgram.use();
+            selectionPointProgram.update("view", mupCamera->getViewMatrix());
+            selectionPointProgram.update("atomIndex", mSelectedAtom);
+            glDrawArrays(GL_POINTS, 0, 1);
         }
     });
 }
@@ -345,6 +367,20 @@ void PerfectSurfaceDetection::keyCallback(int key, int scancode, int action, int
             case GLFW_KEY_ESCAPE: { glfwSetWindowShouldClose(mpWindow, GL_TRUE); break; }
             case GLFW_KEY_I: { mRenderImpostor = !mRenderImpostor; break; }
             case GLFW_KEY_P: { mRenderWithProbeRadius = !mRenderWithProbeRadius; break; }
+            case GLFW_KEY_RIGHT:
+                {
+                    mSelectedAtom++;
+                    if(mSelectedAtom >= mAtomCount) { mSelectedAtom = 0; }
+                    std::cout << "Selected atom: " << mSelectedAtom << std::endl;
+                    break;
+                }
+            case GLFW_KEY_LEFT:
+                {
+                    mSelectedAtom--;
+                    if(mSelectedAtom < 0) { mSelectedAtom = mAtomCount - 1; }
+                    std::cout << "Selected atom: " << mSelectedAtom << std::endl;
+                    break;
+                }
         }
     }
 }
