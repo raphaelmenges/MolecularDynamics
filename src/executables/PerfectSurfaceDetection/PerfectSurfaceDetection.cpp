@@ -55,16 +55,19 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     setScrollCallback(mpWindow, kS);
 
     // # Load protein
-    /*
+
+    // /*
     // Path to protein molecule
     std::vector<std::string> paths;
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1a19.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1vis.pdb");
+    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/2mp3.pdb");
+    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/4d2i.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/2AtomsIntersection.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/3AtomsIntersection.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/7AtomsIntersection.pdb");
-    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/8AtomsIntersection.pdb");
+    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/8AtomsIntersection.pdb");
 
     // Load protein
     MdTrajWrapper mdwrap;
@@ -85,15 +88,15 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
                 0.01f * mAtomLUT.vdW_radii_picometer.at(
                     pAtom->getElement())));
     }
-    */
+    // */
 
-    // /*
+    /*
     // Simple PDB loader
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Polymerase-of-E-coli-DNA.txt", mProteinMinExtent, mProteinMaxExtent);
     mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Myoglobin.txt", mProteinMinExtent, mProteinMaxExtent);
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Nitrogen-Paracoccus-Cytochrome-C550.txt", mProteinMinExtent, mProteinMaxExtent);
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/8AtomsIntersection.txt", mProteinMinExtent, mProteinMaxExtent);
-    // */
+    */
 
     // Count of atoms
     mAtomCount = mAtomStructs.size();
@@ -121,16 +124,20 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // Output atom count
     std::cout << "Atom count: " << mAtomCount << std::endl;
 
+    /*
     // # Some simple rotation matrix for easy test of rotation invariance
     // glm::mat4 rotation = glm::rotate(glm::mat4(1.f), glm::radians(45.f), glm::normalize(glm::vec3(-1,1,1)));
-    glm::mat4 rotation = glm::rotate(glm::mat4(1.f), glm::radians(0.f), glm::normalize(glm::vec3(0,0,1)));
+    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.f), glm::radians(0.f), glm::normalize(glm::vec3(0.6f,-1.f,0.f)));
+    glm::vec3 translation = glm::vec3(3.544,-8.454,1);
+    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.f), translation);
 
-    // Go over atom structs and rotate them
+    // Go over atom structs and transform them
     for(auto& rAtomStruct : mAtomStructs)
     {
-        glm::vec4 newAtomCenter = (glm::vec4(rotation * glm::vec4(rAtomStruct.center, 1)));
+        glm::vec4 newAtomCenter = translationMatrix * (rotationMatrix * glm::vec4(rAtomStruct.center, 1));
         rAtomStruct.center = glm::vec3(newAtomCenter.x, newAtomCenter.y, newAtomCenter.z);
     }
+    */
 
     // # Create camera
     glm::vec3 cameraCenter = (mProteinMinExtent + mProteinMaxExtent) / 2.f;
@@ -237,7 +244,8 @@ void PerfectSurfaceDetection::renderLoop()
         GL_R32UI);
 
     // Projection matrix (hardcoded viewport size)
-    // glm::mat4 projection = glm::perspective(glm::radians(45.f), (GLfloat)1280 / (GLfloat)720, 0.1f, 1000.f);
+    glm::mat4 projection = glm::perspective(glm::radians(45.f), (GLfloat)1280 / (GLfloat)720, 0.1f, 1000.f);
+    /*
     GLfloat halfWidth = ((GLfloat) 1280) / 2.f;
     GLfloat halfHeight = ((GLfloat) 720) / 2.f;
     GLfloat zoom = 0.1f;
@@ -248,6 +256,7 @@ void PerfectSurfaceDetection::renderLoop()
         zoom * halfHeight,
         0.1f,
         100.0f);
+    */
     proteinPointProgram.use();
     proteinPointProgram.update("projection", projection);
     surfacePointProgram.use();

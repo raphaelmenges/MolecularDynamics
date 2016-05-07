@@ -18,7 +18,7 @@ bool CPPImplementation::pointInHalfspaceOfPlane(
     return 0 < glm::dot(plane, glm::vec4(point, -1));
 }
 
-// ## Intersection line of two planes (Planes should not be parallel, which should be impossible due to cutting face tests)
+// ## Intersection line of two planes (Planes should not be parallel, which is impossible due to cutting face tests)
 // http://stackoverflow.com/questions/6408670/line-of-intersection-between-two-planes
 void CPPImplementation::intersectPlanes(
     glm::vec4 plane,
@@ -29,7 +29,7 @@ void CPPImplementation::intersectPlanes(
     // Direction of line
     lineDir = glm::cross(glm::vec3(plane.x, plane.y, plane.z), glm::vec3(otherPlane.x, otherPlane.y, otherPlane.z));
 
-    // Determinant (should no be zero since no parallel planes tested)
+    // Determinant (should not be zero since no parallel planes tested)
     float determinant = glm::length(lineDir);
     determinant = determinant * determinant;
 
@@ -58,7 +58,7 @@ float CPPImplementation::underSQRT(
     return (underSQRT1 - underSQRT2 + (sphereRadius * sphereRadius));
 }
 
-// ## Function to test whether endpoint is NOT cut away. Called after cutting face list is minimized
+// ## Function to test whether endpoint is NOT cut away. Called after cutting face list is optimized
 bool CPPImplementation::testEndpoint(glm::vec3 endpoint, int excludeA, int excludeB) const
 {
     if(logging) { std::cout << "Testing an endpoint: " << endpoint.x << ", " << endpoint.y << ", " << endpoint.z << std::endl; }
@@ -155,7 +155,10 @@ void CPPImplementation::execute(
         */
 
         // Test atoms are either too far away or just touch each other (then continue)
-        if(atomsDistance >= (atomExtRadius + otherAtomExtRadius)) { continue; }
+        // if(atomsDistance >= (atomExtRadius + otherAtomExtRadius)) { continue; }
+
+        // Test atoms are either too far away (then continue)
+        if(atomsDistance > (atomExtRadius + otherAtomExtRadius)) { continue; }
 
         // Test whether atom is completely covering other
         if(atomExtRadius >= (otherAtomExtRadius + atomsDistance)) { continue; }
@@ -199,7 +202,7 @@ void CPPImplementation::execute(
         //cuttingFaceDistances[cuttingFaceCount] = glm::dot(cuttingFaceCenters[cuttingFaceCount], cuttingFaceNormals[cuttingFaceCount]);
 
         // Save center of face
-        glm::vec3 faceCenter = atomCenter + h * connection;
+        glm::vec3 faceCenter = atomCenter + (h * connection);
         cuttingFaceCenters[cuttingFaceCount] = faceCenter;
         if(logging) { std::cout << "Cutting face center: " << faceCenter.x << ", " << faceCenter.y << ", " << faceCenter.z << std::endl; }
 
@@ -241,7 +244,7 @@ void CPPImplementation::execute(
             // Check for parallelity, first
             bool notCutEachOther = (1.0 <= glm::abs(glm::dot(glm::vec3(face.x, face.y, face.z), glm::vec3(otherFace.x, otherFace.y, otherFace.z)))); // If already parallel, they do not cut
 
-            // Do further checking if not already parallel
+            // Do further checking when not parallel
             if(!notCutEachOther)
             {
                 // Intersection of planes, resulting in line
@@ -267,7 +270,7 @@ void CPPImplementation::execute(
 
             // ### CHECK WHETHER CUTTING FACE CAN BE FORGOT ###
 
-            // Faces do not cut each other, so they produce not later endpoints. Check them now
+            // Faces do not cut each other on sphere, so they produce not later endpoints. Check them now
             if(notCutEachOther)
             {
                 if(logging) { std::cout << "Following cutting faces do not cut each other on surface: " << i << ", " << j << std::endl; }
@@ -359,7 +362,7 @@ void CPPImplementation::execute(
             // Check value under square root
             if(valueUnderSQRT > 0)
             {
-                // Some endpoint was at least generated
+                // Some endpoint was generated, at least
                 endpointGenerated = true;
 
                 // Right part of equation
@@ -385,7 +388,7 @@ void CPPImplementation::execute(
             }
             else if(valueUnderSQRT == 0)
             {
-                // Some endpoint was at least generated
+                // Some endpoint was generated, at least generated
                 endpointGenerated = true;
 
                 // Just test the one endpoint
@@ -406,7 +409,7 @@ void CPPImplementation::execute(
     // ### ATOM IS SURFACE ATOM ###
 
     // If no endpoint was generated at all or one or more survived cutting, add this atom to surface
-    if(!endpointGenerated || endpointSurvivesCut)
+    if((!endpointGenerated) || endpointSurvivesCut)
     {
         surfaceAtomsIndices.push_back((unsigned int) atomIndex);
     }
