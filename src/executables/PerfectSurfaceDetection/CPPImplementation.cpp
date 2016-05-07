@@ -155,10 +155,10 @@ void CPPImplementation::execute(
         */
 
         // Test atoms are either too far away or just touch each other (then continue)
-        // if(atomsDistance >= (atomExtRadius + otherAtomExtRadius)) { continue; }
+        if(atomsDistance >= (atomExtRadius + otherAtomExtRadius)) { continue; }
 
         // Test atoms are either too far away (then continue)
-        if(atomsDistance > (atomExtRadius + otherAtomExtRadius)) { continue; }
+        // if(atomsDistance > (atomExtRadius + otherAtomExtRadius)) { continue; }
 
         // Test whether atom is completely covering other
         if(atomExtRadius >= (otherAtomExtRadius + atomsDistance)) { continue; }
@@ -170,7 +170,7 @@ void CPPImplementation::execute(
             return;
         }
 
-        // ### INTERSECTION ###
+        // ### INTERSECTION WITH OTHER ATOMS ###
 
         // Calculate center of intersection
         // http://gamedev.stackexchange.com/questions/75756/sphere-sphere-intersection-and-circle-sphere-intersection
@@ -178,7 +178,7 @@ void CPPImplementation::execute(
             0.5
             + ((atomExtRadius * atomExtRadius)
             - (otherAtomExtRadius * otherAtomExtRadius))
-            / (2 * (atomsDistance * atomsDistance));
+            / (2.0 * (atomsDistance * atomsDistance));
         if(logging) { std::cout << "h: " << h << std::endl; }
 
         // ### CUTTING FACE LIST ###
@@ -207,7 +207,7 @@ void CPPImplementation::execute(
         if(logging) { std::cout << "Cutting face center: " << faceCenter.x << ", " << faceCenter.y << ", " << faceCenter.z << std::endl; }
 
         // Save plane equation of face
-        glm::vec3 faceNormal = normalize(connection);
+        glm::vec3 faceNormal = glm::normalize(connection);
         float faceDistance = glm::dot(faceCenter, faceNormal);
         cuttingFaces[cuttingFaceCount] = glm::vec4(faceNormal, faceDistance);
         if(logging) { std::cout << "Cutting face distance: " << faceDistance << std::endl; }
@@ -216,7 +216,8 @@ void CPPImplementation::execute(
         cuttingFaceIndicators[cuttingFaceCount] = 1;
 
         // Increment cutting face list index and break if max count of neighbors reached
-        if((++cuttingFaceCount) == neighborsMaxCount) { std::cout << "TOO MANY NEIGHBORS" << std::endl; break; }
+        cuttingFaceCount++;
+        if(cuttingFaceCount == neighborsMaxCount) { std::cout << "TOO MANY NEIGHBORS" << std::endl; break; }
     }
 
     // CALCULATE WHICH CUTTING FACES ARE USED FOR ENDPOINT CALCULATION
@@ -248,7 +249,7 @@ void CPPImplementation::execute(
             if(!notCutEachOther)
             {
                 // Intersection of planes, resulting in line
-                glm::vec3 lineDir; glm::vec3 linePoint;
+                glm::vec3 linePoint; glm::vec3 lineDir;
                 intersectPlanes(
                     face,
                     otherFace,
@@ -264,7 +265,7 @@ void CPPImplementation::execute(
                 float valueUnderSQRT = underSQRT(linePoint, lineDir, atomCenter, atomExtRadius);
                 if(logging) { std::cout << "Value under SQRT: " << valueUnderSQRT << std::endl; }
 
-                // Only interesting case is for zero endpoints, because then there is no cut on atom surface
+                // Only interesting case is for zero endpoints, because then there is no cut on atom's sphere
                 notCutEachOther = (valueUnderSQRT < 0);
             }
 
