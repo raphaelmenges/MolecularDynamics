@@ -215,6 +215,16 @@ void CPPImplementation::execute(
         // Initialize cutting face indicator with: 1 == was not cut away (yet)
         cuttingFaceIndicators[cuttingFaceCount] = 1;
 
+        if(cuttingFaceCount == 12 || cuttingFaceCount == 36)
+        {
+            std::cout << "Face: " << cuttingFaceCount << std::endl;
+            std::cout << "Created by atom: " << i << std::endl;
+            std::cout << "Other atom radius: " << otherAtomExtRadius << std::endl;
+            std::cout << "Other atom position: " << otherAtomCenter.x << ", " << otherAtomCenter.y << ", " << otherAtomCenter.z << std::endl;
+            std::cout << "Cutting face center: " << faceCenter.x << ", " << faceCenter.y << ", " << faceCenter.z << std::endl;
+            std::cout << "Cutting face normal: " << faceNormal.x << ", " << faceNormal.y << ", " << faceNormal.z << std::endl;
+        }
+
         // Increment cutting face list index and break if max count of neighbors reached
         cuttingFaceCount++;
         if(cuttingFaceCount == neighborsMaxCount) { std::cout << "TOO MANY NEIGHBORS" << std::endl; break; }
