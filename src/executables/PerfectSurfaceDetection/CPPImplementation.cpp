@@ -6,6 +6,7 @@ void CPPImplementation::setup()
 {
     cuttingFaceCount = 0;
     cuttingFaceIndicesCount = 0;
+    logging = false;
 }
 
 // ## Determines whether point lies in halfspace of plane's normal direction
@@ -243,6 +244,11 @@ void CPPImplementation::execute(
         // Test every cutting face for intersection line with other
         for(int j = i+1; j < cuttingFaceCount; j++)
         {
+            if(i == 12 && j == 36)
+            {
+                logging = true;
+            }
+
             if(logging) { std::cout << "Testing cutting faces: " << i << ", " << j << std::endl; }
 
             // Already cut away
@@ -289,6 +295,8 @@ void CPPImplementation::execute(
                 // Connection between faces' center (vector from face to other face)
                 glm::vec3 connection = otherFaceCenter - faceCenter;
 
+                if(logging) { std::cout << "Connection: " << connection.x << ", " << connection.y << ", " << connection.z << std::endl; }
+
                 // Check both normals (pointing in same direction)
                 if(glm::dot(glm::vec3(face.x, face.y, face.z), glm::vec3(otherFace.x, otherFace.y, otherFace.z)) > 0)
                 {
@@ -308,10 +316,12 @@ void CPPImplementation::execute(
                 }
                 else
                 {
+                    if(logging) { std::cout << "Dot of face normal and connection: " << glm::dot(glm::vec3(face.x, face.y, face.z), connection) << std::endl; }
+
                     // Check for completely cut away atom
                     if(glm::dot(glm::vec3(face.x, face.y, face.z), connection) > 0)
                     {
-                        // Complete atom cut away
+                        // Complete atom cut away (TODO: here seems to be the bug!!!)
                         if(logging) { std::cout << "Atom completely cut away by: " << i << ", " << j << std::endl; }
                         return;
                     }

@@ -372,6 +372,14 @@ void PerfectSurfaceDetection::keyCallback(int key, int scancode, int action, int
                     mSelectedAtom++;
                     if(mSelectedAtom >= mAtomCount) { mSelectedAtom = 0; }
                     std::cout << "Selected atom: " << mSelectedAtom << std::endl;
+                    std::cout
+                        << "Center: "
+                        << mAtomStructs[mSelectedAtom].center.x
+                        << ", "
+                        << mAtomStructs[mSelectedAtom].center.y
+                        << ", "
+                        << mAtomStructs[mSelectedAtom].center.z
+                        << std::endl;
                     break;
                 }
             case GLFW_KEY_LEFT:
@@ -379,6 +387,14 @@ void PerfectSurfaceDetection::keyCallback(int key, int scancode, int action, int
                     mSelectedAtom--;
                     if(mSelectedAtom < 0) { mSelectedAtom = mAtomCount - 1; }
                     std::cout << "Selected atom: " << mSelectedAtom << std::endl;
+                    std::cout
+                        << "Center: "
+                        << mAtomStructs[mSelectedAtom].center.x
+                        << ", "
+                        << mAtomStructs[mSelectedAtom].center.y
+                        << ", "
+                        << mAtomStructs[mSelectedAtom].center.z
+                        << std::endl;
                     break;
                 }
         }
