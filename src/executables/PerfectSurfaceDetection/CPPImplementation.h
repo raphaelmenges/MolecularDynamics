@@ -1,6 +1,9 @@
 #ifndef CPP_IMPLEMENTATION_H
 #define CPP_IMPLEMENTATION_H
 
+// Notes
+// - Face is defined by vec4(Normal, Distance from origin)
+
 #include <glm/glm.hpp>
 #include <vector>
 #include "AtomStruct.h"
@@ -33,10 +36,13 @@ private:
     float underSQRT(
         glm::vec3 linePoint,
         glm::vec3 lineDir,
-        glm::vec3 atomCenter,
-        float atomRadius) const;
+        glm::vec3 sphereCenter,
+        float sphereRadius) const;
 
-    bool testEndpoint(glm::vec3 endpoint, int excludeA, int excludeB) const;
+    bool testEndpoint(
+        glm::vec3 endpoint,
+        int excludeA,
+        int excludeB) const;
 
     // Members
     static const int neighborsMaxCount = 200;

@@ -8,7 +8,7 @@
 // Lookup table for radii
 std::map<std::string, float> radiiLookup =
 {
-{"H", 1.2f}, {"N", 1.55f}, {"C", 1.7f}, {"O", 1.52f}, {"S", 1.8f}
+{"H", 1.2f}, {"N", 1.55f}, {"C", 1.7f}, {"O", 1.52f}, {"S", 1.8f}, {"P", 1.8f}
 };
 
 std::vector<AtomStruct> parseSimplePDB(std::string filepath, glm::vec3& rMinExtent, glm::vec3& rMaxExtent)
@@ -42,7 +42,7 @@ std::vector<AtomStruct> parseSimplePDB(std::string filepath, glm::vec3& rMinExte
         // Close file
         in.close();
 
-        // Add line in the end to catch all
+        // Add line in the end to catch all lines
         content += "\n";
 
         // Some values for iteration
@@ -79,7 +79,7 @@ std::vector<AtomStruct> parseSimplePDB(std::string filepath, glm::vec3& rMinExte
                 value = line.substr(0, valuePos);
                 line.erase(0, valuePos + valueDelimiter.length());
 
-                // Forgot empty values
+                // Forget empty values
                 if(value.empty())
                 {
                     continue;

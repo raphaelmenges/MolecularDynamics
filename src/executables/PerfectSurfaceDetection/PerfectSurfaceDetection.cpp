@@ -55,16 +55,12 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     setScrollCallback(mpWindow, kS);
 
     // # Load protein
-
-    // Prepare vectors for min and max extent
-    glm::vec3 proteinMinExtent;
-    glm::vec3 proteinMaxExtent;
-
-    // /*
+    /*
     // Path to protein molecule
     std::vector<std::string> paths;
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1a19.pdb");
+    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1vis.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/2AtomsIntersection.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/3AtomsIntersection.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/7AtomsIntersection.pdb");
@@ -74,13 +70,10 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     MdTrajWrapper mdwrap;
     std::unique_ptr<Protein> upProtein = std::move(mdwrap.load(paths));
 
-    // Atom count
-    mAtomCount = (int) upProtein->getAtoms()->size();
-
     // Get min/max extent of protein
     upProtein->minMax(); // first, one has to calculate min and max value of protein
-    proteinMinExtent = upProtein->getMin();
-    proteinMaxExtent = upProtein->getMax();
+    mProteinMinExtent = upProtein->getMin();
+    mProteinMaxExtent = upProtein->getMax();
 
     // Vector which is used as data for SSBO and CPP implementation
     for(Atom const * pAtom : *(upProtein->getAtoms()))
@@ -92,27 +85,30 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
                 0.01f * mAtomLUT.vdW_radii_picometer.at(
                     pAtom->getElement())));
     }
+    */
+
+    // /*
+    // Simple PDB loader
+    // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Polymerase-of-E-coli-DNA.txt", mProteinMinExtent, mProteinMaxExtent);
+    mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Myoglobin.txt", mProteinMinExtent, mProteinMaxExtent);
+    // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Nitrogen-Paracoccus-Cytochrome-C550.txt", mProteinMinExtent, mProteinMaxExtent);
+    // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/8AtomsIntersection.txt", mProteinMinExtent, mProteinMaxExtent);
     // */
 
-    /*
-    // Simple PDB loader
-    // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Polymerase-of-E-coli-DNA.txt", proteinMinExtent, proteinMaxExtent);
-    mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Myoglobin.txt", proteinMinExtent, proteinMaxExtent);
-    // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Nitrogen-Paracoccus-Cytochrome-C550.txt", proteinMinExtent, proteinMaxExtent);
+    // Count of atoms
     mAtomCount = mAtomStructs.size();
-    */
 
     // Test protein extent
     std::cout
         << "Min extent of protein: "
-        << proteinMinExtent.x << ", "
-        << proteinMinExtent.y << ", "
-        << proteinMinExtent.z << std::endl;
+        << mProteinMinExtent.x << ", "
+        << mProteinMinExtent.y << ", "
+        << mProteinMinExtent.z << std::endl;
     std::cout
         << "Max extent of protein: "
-        << proteinMaxExtent.x << ", "
-        << proteinMaxExtent.y << ", "
-        << proteinMaxExtent.z << std::endl;
+        << mProteinMaxExtent.x << ", "
+        << mProteinMaxExtent.y << ", "
+        << mProteinMaxExtent.z << std::endl;
 
     /*
     // Test atom radii
@@ -125,9 +121,9 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // Output atom count
     std::cout << "Atom count: " << mAtomCount << std::endl;
 
-    /*
     // # Some simple rotation matrix for easy test of rotation invariance
-    glm::mat4 rotation = glm::rotate(glm::mat4(1.f), glm::radians(45.f), glm::normalize(glm::vec3(-1,1,1)));
+    // glm::mat4 rotation = glm::rotate(glm::mat4(1.f), glm::radians(45.f), glm::normalize(glm::vec3(-1,1,1)));
+    glm::mat4 rotation = glm::rotate(glm::mat4(1.f), glm::radians(0.f), glm::normalize(glm::vec3(0,0,1)));
 
     // Go over atom structs and rotate them
     for(auto& rAtomStruct : mAtomStructs)
@@ -135,13 +131,18 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
         glm::vec4 newAtomCenter = (glm::vec4(rotation * glm::vec4(rAtomStruct.center, 1)));
         rAtomStruct.center = glm::vec3(newAtomCenter.x, newAtomCenter.y, newAtomCenter.z);
     }
-    */
 
     // # Create camera
-    glm::vec3 cameraCenter = (proteinMinExtent + proteinMaxExtent) / 2.f;
-    //glm::vec3 cameraCenter(0,0,0);
-    float cameraRadius = glm::compMax(proteinMaxExtent - cameraCenter);
-    mupCamera = std::unique_ptr<OrbitCamera>(new OrbitCamera(cameraCenter, 90.f, 90.f, cameraRadius, cameraRadius / 2.f, 5.f * cameraRadius));
+    glm::vec3 cameraCenter = (mProteinMinExtent + mProteinMaxExtent) / 2.f;
+    float cameraRadius = glm::compMax(mProteinMaxExtent - cameraCenter);
+    mupCamera = std::unique_ptr<OrbitCamera>(
+        new OrbitCamera(
+            cameraCenter,
+            90.f,
+            90.f,
+            cameraRadius,
+            cameraRadius / 2.f,
+            5.f * cameraRadius));
 
     // Create query to measure execution time
     glGenQueries(1, &mQuery);
@@ -236,7 +237,17 @@ void PerfectSurfaceDetection::renderLoop()
         GL_R32UI);
 
     // Projection matrix (hardcoded viewport size)
-    glm::mat4 projection = glm::perspective(glm::radians(45.f), (GLfloat)1280 / (GLfloat)720, 0.1f, 1000.f);
+    // glm::mat4 projection = glm::perspective(glm::radians(45.f), (GLfloat)1280 / (GLfloat)720, 0.1f, 1000.f);
+    GLfloat halfWidth = ((GLfloat) 1280) / 2.f;
+    GLfloat halfHeight = ((GLfloat) 720) / 2.f;
+    GLfloat zoom = 0.1f;
+    glm::mat4 projection = glm::ortho(
+        zoom * -halfWidth,
+        zoom * halfWidth,
+        zoom * -halfHeight,
+        zoom * halfHeight,
+        0.1f,
+        100.0f);
     proteinPointProgram.use();
     proteinPointProgram.update("projection", projection);
     surfacePointProgram.use();
@@ -400,7 +411,7 @@ void PerfectSurfaceDetection::runCPPImplementation()
     // Do it for each atom
     std::cout << "*** ALGORITHM OUTPUT START ***" << std::endl;
     for(int i = 0; i < mAtomCount; i++) // all atoms
-    // for(int i = 0; i < 1; i++) // just first
+    // for(int i = 0; i < 1; i++) // just first atom
     {
         cppImplementation.execute(i, mAtomCount, mProbeRadius, mAtomStructs, surfaceAtomIndices);
     }

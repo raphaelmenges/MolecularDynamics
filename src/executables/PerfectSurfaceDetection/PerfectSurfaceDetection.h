@@ -74,6 +74,8 @@ private:
     glm::vec2 mCameraDeltaMovement;
     float mCameraSmoothTime;
     glm::vec3 mLightDirection;
+    glm::vec3 mProteinMinExtent;
+    glm::vec3 mProteinMaxExtent;
 
     // ### CPP implementation of surface atoms detection ###
     void runCPPImplementation();
