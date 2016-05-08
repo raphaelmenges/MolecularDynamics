@@ -290,12 +290,18 @@ void CPPImplementation::execute(
             // Faces do not cut each other on sphere, so they produce not later endpoints. Check them now
             if(notCutEachOther)
             {
+                /*
                 if(logging) { std::cout << "Following cutting faces do not cut each other on surface: " << i << ", " << j << std::endl; }
 
                 // Connection between faces' center (vector from face to other face)
                 glm::vec3 connection = otherFaceCenter - faceCenter;
 
                 if(logging) { std::cout << "Connection: " << connection.x << ", " << connection.y << ", " << connection.z << std::endl; }
+
+                if(logging) { std::cout << "Dot of normals: " << glm::dot(glm::vec3(face.x, face.y, face.z), glm::vec3(otherFace.x, otherFace.y, otherFace.z)) << std::endl; }
+                if(logging) { std::cout << "Normal of face: " <<  face.x << ", " << face.y << ", " << face.z << std::endl; }
+                if(logging) { std::cout << "Normal of other face: " <<  otherFace.x << ", " << otherFace.y << ", " << otherFace.z << std::endl; }
+
 
                 // Check both normals (pointing in same direction)
                 if(glm::dot(glm::vec3(face.x, face.y, face.z), glm::vec3(otherFace.x, otherFace.y, otherFace.z)) > 0)
@@ -318,16 +324,58 @@ void CPPImplementation::execute(
                 {
                     if(logging) { std::cout << "Dot of face normal and connection: " << glm::dot(glm::vec3(face.x, face.y, face.z), connection) << std::endl; }
 
+
                     // Check for completely cut away atom
-                    if(glm::dot(glm::vec3(face.x, face.y, face.z), connection) > 0)
+                    //if(glm::dot(glm::vec3(face.x, face.y, face.z), connection) > 0)
+                    //{
+                    //    // Complete atom cut away (TODO: here seems to be the bug!!!)
+                    //    if(logging) { std::cout << "Atom completely cut away by: " << i << ", " << j << std::endl; }
+                    //    return;
+                    //}
+
+
+                    if(pointInHalfspaceOfPlane(face, faceCenter + 0.5f * connection))
                     {
-                        // Complete atom cut away (TODO: here seems to be the bug!!!)
                         if(logging) { std::cout << "Atom completely cut away by: " << i << ", " << j << std::endl; }
                         return;
                     }
+
                     // else: do not influence each other
                 }
+                */
+
+                glm::vec3 connection = otherFaceCenter - faceCenter;
+                glm::vec3 testPoint = faceCenter + 0.5f * connection;
+
+                if(
+                    (glm::dot(glm::vec3(face.x, face.y, face.z), connection) > 0 && glm::dot(glm::vec3(otherFace.x, otherFace.y, otherFace.z), connection) > 0)
+                    || (glm::dot(glm::vec3(face.x, face.y, face.z), connection) < 0 && glm::dot(glm::vec3(otherFace.x, otherFace.y, otherFace.z), connection) < 0)
+                    )
+                {
+                    // Inclusion
+                    if(logging) { std::cout << "Inclusion!" << std::endl; }
+
+
+                    if(pointInHalfspaceOfPlane(face, testPoint))
+                    {
+                        cuttingFaceIndicators[j] = 0;
+                    }
+                    else
+                    {
+                        cuttingFaceIndicators[i] = 0;
+                    }
+                }
+                else
+                {
+                    // Maybe complete atom is cut away
+                    if(pointInHalfspaceOfPlane(face, testPoint))
+                    {
+                        return;
+                    }
+                }
             }
+
+            logging = false;
 
             if(logging) { std::cout << std::endl; }
         }
