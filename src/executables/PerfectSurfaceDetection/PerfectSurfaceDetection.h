@@ -16,7 +16,8 @@
 // - Delete OpenGL stuff after usage
 // - Work group size?
 // - Binding points ok? not sure wheather atomic counter and image use the same
-// - Use distance point / plane instead of scalar product, for example in testEndpoint() function
+// - Camera and Rotation / Translation do not like each other
+// - Orthographic Projection
 
 // Forward declaration
 class Protein;
@@ -52,7 +53,7 @@ private:
     void resetAtomicCounter(GLuint atomicCounter) const;
 
     // Setup
-    const float mProbeRadius = 1.6f;
+    const float mProbeRadius = 1.4f;
     const bool mUseGLSLImplementation = false;
     const float mCameraSmoothDuration = 1.5f;
 

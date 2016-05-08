@@ -279,33 +279,28 @@ void CPPImplementation::execute(
                 // Connection between faces' center (vector from face to other face)
                 glm::vec3 connection = otherFaceCenter - faceCenter;
 
-                // Check both normals (pointing in same direction)
-                if(glm::dot(glm::vec3(face.x, face.y, face.z), glm::vec3(otherFace.x, otherFace.y, otherFace.z)) > 0)
+                // Test point
+                glm::vec3 testPoint = faceCenter + 0.5f * connection;
+
+                if(glm::dot(glm::vec3(face.x, face.y, face.z), connection) > 0 == glm::dot(glm::vec3(otherFace.x, otherFace.y, otherFace.z), connection) > 0)
                 {
-                    // Check for inclusion
-                    if(glm::dot(glm::vec3(face.x, face.y, face.z), connection) > 0)
+                    // Inclusion
+                    if(pointInHalfspaceOfPlane(face, testPoint))
                     {
-                        // Face cuts away other face
-                        if(logging) { std::cout << "Cutting face " << j << " cut away by " << i << std::endl; }
                         cuttingFaceIndicators[j] = 0;
                     }
                     else
                     {
-                        // Other face cuts away face
-                        if(logging) { std::cout << "Cutting face " << i << " cut away by " << j << std::endl; }
                         cuttingFaceIndicators[i] = 0;
                     }
                 }
                 else
                 {
-                    // Check for completely cut away atom
-                    if(glm::dot(glm::vec3(face.x, face.y, face.z), connection) > 0)
+                    // Maybe complete atom is cut away
+                    if(pointInHalfspaceOfPlane(face, testPoint))
                     {
-                        // Complete atom cut away
-                        if(logging) { std::cout << "Atom completely cut away by: " << i << ", " << j << std::endl; }
                         return;
                     }
-                    // else: do not influence each other
                 }
             }
 
