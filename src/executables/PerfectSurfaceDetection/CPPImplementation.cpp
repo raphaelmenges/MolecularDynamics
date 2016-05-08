@@ -141,19 +141,6 @@ void CPPImplementation::execute(
         // Distance between atoms
         float atomsDistance = glm::length(connection);
 
-        /*
-        // Do they intersect with extended radii?
-        if(atomsDistance >= (atomExtRadius + otherAtomExtRadius)) { continue; }
-        if(logging) { std::cout << "Neighbor atom distance: " << atomsDistance << std::endl; }
-
-        if(logging) { std::cout << "Working on cutting face: " << cuttingFaceCount << std::endl; }
-
-        // NOTE: Following cases are NOT considered
-        // - both spheres touch each other in one point (excluded by neighboring test)
-        // - one sphere lies completely inside other
-        // - one sphere lies completely inside other and touches other's surface in one point
-        */
-
         // Test atoms are either too far away or just touch each other (then continue)
         if(atomsDistance >= (atomExtRadius + otherAtomExtRadius)) { continue; }
 
@@ -183,23 +170,12 @@ void CPPImplementation::execute(
 
         // ### CUTTING FACE LIST ###
 
-        // Use connection between centers as line
-        //cuttingFaceCenters[cuttingFaceCount] = atomCenter + h * connection;
-        //if(logging) { std::cout << "Cutting face center: " << cuttingFaceCenters[cuttingFaceCount].x << ", " << cuttingFaceCenters[cuttingFaceCount].y << ", " << cuttingFaceCenters[cuttingFaceCount].z << std::endl; }
-
         // Calculate radius of intersection
         //
         //cuttingFaceRadii[cuttingFaceCount] =
         //    sqrt((atomExtRadius * atomExtRadius)
         //    - (h * h * atomsDistance * atomsDistance));
         //if(logging) { std::cout << "Cutting face radius: " << cuttingFaceRadii[cuttingFaceCount] << std::endl; }
-
-        // Calculate normal of intersection
-        //cuttingFaceNormals[cuttingFaceCount] = normalize(connection);
-        //if(logging) { std::cout << "Cutting face normal: " << cuttingFaceNormals[cuttingFaceCount].x << ", " << cuttingFaceNormals[cuttingFaceCount].y << ", " << cuttingFaceNormals[cuttingFaceCount].z << std::endl; }
-
-        // Distance of face from origin
-        //cuttingFaceDistances[cuttingFaceCount] = glm::dot(cuttingFaceCenters[cuttingFaceCount], cuttingFaceNormals[cuttingFaceCount]);
 
         // Save center of face
         glm::vec3 faceCenter = atomCenter + (h * connection);
@@ -282,7 +258,7 @@ void CPPImplementation::execute(
                 // Test point
                 glm::vec3 testPoint = faceCenter + 0.5f * connection;
 
-                if(glm::dot(glm::vec3(face.x, face.y, face.z), connection) > 0 == glm::dot(glm::vec3(otherFace.x, otherFace.y, otherFace.z), connection) > 0)
+                if((glm::dot(glm::vec3(face.x, face.y, face.z), connection) > 0) == (glm::dot(glm::vec3(otherFace.x, otherFace.y, otherFace.z), connection) > 0))
                 {
                     // Inclusion
                     if(pointInHalfspaceOfPlane(face, testPoint))

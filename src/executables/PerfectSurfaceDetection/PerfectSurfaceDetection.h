@@ -53,7 +53,7 @@ private:
     void resetAtomicCounter(GLuint atomicCounter) const;
 
     // Setup
-    const float mProbeRadius = 1.4f;
+    const float mProbeRadius = 1.2f;
     const bool mUseGLSLImplementation = false;
     const float mCameraSmoothDuration = 1.5f;
 
