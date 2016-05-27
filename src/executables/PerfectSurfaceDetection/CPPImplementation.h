@@ -17,7 +17,8 @@ public:
         int atomCount,
         float probeRadius,
         const std::vector<AtomStruct>& atoms,
-        std::vector<unsigned int>& surfaceAtomsIndices);
+        std::vector<unsigned int>& internalIndices,
+        std::vector<unsigned int>& surfaceIndices);
 
 private:
 

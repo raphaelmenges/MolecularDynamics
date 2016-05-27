@@ -91,7 +91,8 @@ void CPPImplementation::execute(
     int atomCount,
     float probeRadius,
     const std::vector<AtomStruct>& atoms,
-    std::vector<unsigned int>& surfaceAtomsIndices)
+    std::vector<unsigned int>& internalIndices,
+    std::vector<unsigned int>& surfaceIndices)
 {
     // Reset members for new execution
     setup();
@@ -153,8 +154,8 @@ void CPPImplementation::execute(
         // Test whether atom is completely covered by other
         if((atomExtRadius + atomsDistance) <= otherAtomExtRadius)
         {
-            // Since it is completely covered, it is not at surface
-            return;
+            // Since it is completely covered, it is internal
+            internalIndices.push_back((unsigned int) atomIndex); return;
         }
 
         // ### INTERSECTION WITH OTHER ATOMS ###
@@ -275,7 +276,7 @@ void CPPImplementation::execute(
                     // Maybe complete atom is cut away
                     if(pointInHalfspaceOfPlane(face, testPoint))
                     {
-                        return;
+                        internalIndices.push_back((unsigned int) atomIndex); return;
                     }
                 }
             }
@@ -383,6 +384,10 @@ void CPPImplementation::execute(
     // If no endpoint was generated at all or one or more survived cutting, add this atom to surface
     if((!endpointGenerated) || endpointSurvivesCut)
     {
-        surfaceAtomsIndices.push_back((unsigned int) atomIndex);
+        surfaceIndices.push_back((unsigned int) atomIndex); return;
+    }
+    else
+    {
+        internalIndices.push_back((unsigned int) atomIndex); return;
     }
 }

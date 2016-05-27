@@ -90,8 +90,8 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // /*
     // Simple PDB loader
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Polymerase-of-E-coli-DNA.txt", mProteinMinExtent, mProteinMaxExtent);
-    mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Myoglobin.txt", mProteinMinExtent, mProteinMaxExtent);
-    // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Nitrogen-Paracoccus-Cytochrome-C550.txt", mProteinMinExtent, mProteinMaxExtent);
+    // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Myoglobin.txt", mProteinMinExtent, mProteinMaxExtent);
+    mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Nitrogen-Paracoccus-Cytochrome-C550.txt", mProteinMinExtent, mProteinMaxExtent);
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/8AtomsIntersection.txt", mProteinMinExtent, mProteinMaxExtent);
     // */
 
@@ -444,8 +444,9 @@ void PerfectSurfaceDetection::runCPPImplementation()
 {
     std::cout << "CPP implementation used!" << std::endl;
 
-    // # Prepare output vector
-    std::vector<unsigned int> surfaceAtomIndices;
+    // # Prepare output vectors
+    std::vector<unsigned int> internalIndices;
+    std::vector<unsigned int> surfaceIndices;
 
     // # Simulate compute shader
     CPPImplementation cppImplementation;
@@ -455,18 +456,22 @@ void PerfectSurfaceDetection::runCPPImplementation()
     for(int i = 0; i < mAtomCount; i++) // all atoms
     // for(int i = 0; i < 1; i++) // just first atom
     {
-        cppImplementation.execute(i, mAtomCount, mProbeRadius, mAtomStructs, surfaceAtomIndices);
+        cppImplementation.execute(i, mAtomCount, mProbeRadius, mAtomStructs, internalIndices, surfaceIndices);
     }
     std::cout << "*** ALGORITHM OUTPUT END ***" << std::endl;
 
-    // TODO: fill internal buffer, too etc
-    // Fill surface atom indices to mSurfaceIndicesBuffer
+    // Fill output atom indices to image buffers
+    glBindBuffer(GL_TEXTURE_BUFFER, mInternalIndicesBuffer);
+    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * internalIndices.size(), internalIndices.data(), GL_STATIC_DRAW);
+    glBindBuffer(0, mInternalIndicesBuffer);
+
     glBindBuffer(GL_TEXTURE_BUFFER, mSurfaceIndicesBuffer);
-    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * surfaceAtomIndices.size(), surfaceAtomIndices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * surfaceIndices.size(), surfaceIndices.data(), GL_STATIC_DRAW);
     glBindBuffer(0, mSurfaceIndicesBuffer);
 
     // Fetch count
-    mSurfaceCount = surfaceAtomIndices.size();
+    mInternalCount = internalIndices.size();
+    mSurfaceCount = surfaceIndices.size();
 }
 
 void PerfectSurfaceDetection::runGLSLImplementation()
