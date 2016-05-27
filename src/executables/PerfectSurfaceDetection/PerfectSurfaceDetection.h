@@ -52,7 +52,7 @@ private:
     void resetAtomicCounter(GLuint atomicCounter) const;
 
     // Setup
-    const float mProbeRadius = 0.894f;
+    const float mProbeRadius = 1.2f;
     const bool mUseGLSLImplementation = true;
     const float mCameraSmoothDuration = 1.5f;
 
@@ -63,6 +63,8 @@ private:
     bool mRenderImpostor = false;
     bool mRenderWithProbeRadius = false;
     bool mUsePerspectiveCamera = true;
+    bool mShowInternal = true;
+    bool mShowSurface = true;
 
     // Members
     GLFWwindow* mpWindow;

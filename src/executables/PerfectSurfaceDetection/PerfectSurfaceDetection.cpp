@@ -90,8 +90,8 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // /*
     // Simple PDB loader
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Polymerase-of-E-coli-DNA.txt", mProteinMinExtent, mProteinMaxExtent);
-    // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Myoglobin.txt", mProteinMinExtent, mProteinMaxExtent);
-    mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Nitrogen-Paracoccus-Cytochrome-C550.txt", mProteinMinExtent, mProteinMaxExtent);
+    mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Myoglobin.txt", mProteinMinExtent, mProteinMaxExtent);
+    // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Nitrogen-Paracoccus-Cytochrome-C550.txt", mProteinMinExtent, mProteinMaxExtent);
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/8AtomsIntersection.txt", mProteinMinExtent, mProteinMaxExtent);
     // */
 
@@ -296,28 +296,34 @@ void PerfectSurfaceDetection::renderLoop()
             impostorProgram.update("selectedIndex", mSelectedAtom);
 
             // Draw internal
-            glBindImageTexture(
-                1,
-                mInternalIndicesTexture,
-                0,
-                GL_TRUE,
-                0,
-                GL_READ_ONLY,
-                GL_R32UI);
-            impostorProgram.update("color", glm::vec3(1.f,1.f,1.f));
-            glDrawArrays(GL_POINTS, 0, mInternalCount);
+            if(mShowInternal)
+            {
+                glBindImageTexture(
+                    1,
+                    mInternalIndicesTexture,
+                    0,
+                    GL_TRUE,
+                    0,
+                    GL_READ_ONLY,
+                    GL_R32UI);
+                impostorProgram.update("color", glm::vec3(1.f,1.f,1.f));
+                glDrawArrays(GL_POINTS, 0, mInternalCount);
+            }
 
-            // Draw surface
-            glBindImageTexture(
-                1,
-                mSurfaceIndicesTexture,
-                0,
-                GL_TRUE,
-                0,
-                GL_READ_ONLY,
-                GL_R32UI);
-            impostorProgram.update("color", glm::vec3(1.f,0.f,0.f));
-            glDrawArrays(GL_POINTS, 0, mSurfaceCount);
+            if(mShowSurface)
+            {
+                // Draw surface
+                glBindImageTexture(
+                    1,
+                    mSurfaceIndicesTexture,
+                    0,
+                    GL_TRUE,
+                    0,
+                    GL_READ_ONLY,
+                    GL_R32UI);
+                impostorProgram.update("color", glm::vec3(1.f,0.f,0.f));
+                glDrawArrays(GL_POINTS, 0, mSurfaceCount);
+            }
         }
         else
         {
@@ -328,28 +334,34 @@ void PerfectSurfaceDetection::renderLoop()
             pointProgram.update("selectedIndex", mSelectedAtom);
 
             // Draw internal
-            glBindImageTexture(
-                1,
-                mInternalIndicesTexture,
-                0,
-                GL_TRUE,
-                0,
-                GL_READ_ONLY,
-                GL_R32UI);
-            pointProgram.update("color", glm::vec3(1.f,1.f,1.f));
-            glDrawArrays(GL_POINTS, 0, mInternalCount);
+            if(mShowInternal)
+            {
+                glBindImageTexture(
+                    1,
+                    mInternalIndicesTexture,
+                    0,
+                    GL_TRUE,
+                    0,
+                    GL_READ_ONLY,
+                    GL_R32UI);
+                pointProgram.update("color", glm::vec3(1.f,1.f,1.f));
+                glDrawArrays(GL_POINTS, 0, mInternalCount);
+            }
 
             // Draw surface
-            glBindImageTexture(
-                1,
-                mSurfaceIndicesTexture,
-                0,
-                GL_TRUE,
-                0,
-                GL_READ_ONLY,
-                GL_R32UI);
-            pointProgram.update("color", glm::vec3(1.f,0.f,0.f));
-            glDrawArrays(GL_POINTS, 0, mSurfaceCount);
+            if(mShowSurface)
+            {
+                glBindImageTexture(
+                    1,
+                    mSurfaceIndicesTexture,
+                    0,
+                    GL_TRUE,
+                    0,
+                    GL_READ_ONLY,
+                    GL_R32UI);
+                pointProgram.update("color", glm::vec3(1.f,0.f,0.f));
+                glDrawArrays(GL_POINTS, 0, mSurfaceCount);
+            }
         }
     });
 }
@@ -361,8 +373,8 @@ void PerfectSurfaceDetection::keyCallback(int key, int scancode, int action, int
         switch (key)
         {
             case GLFW_KEY_ESCAPE: { glfwSetWindowShouldClose(mpWindow, GL_TRUE); break; }
-            case GLFW_KEY_I: { mRenderImpostor = !mRenderImpostor; break; }
-            case GLFW_KEY_P: { mRenderWithProbeRadius = !mRenderWithProbeRadius; break; }
+            case GLFW_KEY_P: { mRenderImpostor = !mRenderImpostor; break; }
+            case GLFW_KEY_R: { mRenderWithProbeRadius = !mRenderWithProbeRadius; break; }
             case GLFW_KEY_RIGHT:
             {
                 mSelectedAtom++;
@@ -378,6 +390,8 @@ void PerfectSurfaceDetection::keyCallback(int key, int scancode, int action, int
                 break;
             }
             case GLFW_KEY_C: { mUsePerspectiveCamera = !mUsePerspectiveCamera; break; }
+            case GLFW_KEY_I: { mShowInternal = !mShowInternal; break; }
+            case GLFW_KEY_S: { mShowSurface = !mShowSurface; break; }
         }
     }
 }
