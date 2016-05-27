@@ -20,6 +20,9 @@ link_dependency(DevIL)
 link_dependency(ASSIMP)
 link_dependency(ZLIB)
 
+# Include externals folder
+include_directories(${EXTERNALS_PATH})
+
 #set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} $ENV{PythonLibs})
 #find_package(PythonLibs 2.7 REQUIRED)  # cant use macro due to version parameter
 #include(${CMAKE_MODULE_PATH}/LinkPythonLibs27.cmake)

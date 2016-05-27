@@ -1,6 +1,8 @@
 #include "PerfectSurfaceDetection.h"
 
 #include "CPPImplementation.h"
+#include "imgui/imgui.h"
+#include "imgui/examples/opengl3_example/imgui_impl_glfw_gl3.h"
 
 #include "OrbitCamera.h"
 #include "ShaderTools/Renderer.h"
@@ -25,14 +27,25 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // Create window
     mpWindow = generateWindow();
 
+    // Init ImGui
+    ImGui_ImplGlfwGL3_Init(mpWindow, true);
+    ImGuiIO& io = ImGui::GetIO();
+    io.Fonts->AddFontDefault();
+
     // Clear color
     glClearColor(0.f, 0.f, 0.f, 1.f);
 
-    // # Callbacks
+    // # Callbacks after ImGui
 
     // Register keyboard callback
     std::function<void(int, int, int, int)> kC = [&](int k, int s, int a, int m)
     {
+        // Check whether ImGui is handling this
+        ImGuiIO& io = ImGui::GetIO();
+        if(io.WantCaptureKeyboard)
+        {
+            return;
+        }
         this->keyCallback(k, s, a, m);
     };
     setKeyCallback(mpWindow, kC);
@@ -40,6 +53,12 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // Register mouse button callback
     std::function<void(int, int, int)> kB = [&](int b, int a, int m)
     {
+        // Check whether ImGui is handling this
+        ImGuiIO& io = ImGui::GetIO();
+        if(io.WantCaptureMouse)
+        {
+            return;
+        }
         this->mouseButtonCallback(b, a, m);
     };
     setMouseButtonCallback(mpWindow, kB);
@@ -47,6 +66,12 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // Register scroll callback
     std::function<void(double, double)> kS = [&](double x, double y)
     {
+        // Check whether ImGui is handling this
+        ImGuiIO& io = ImGui::GetIO();
+        if(io.WantCaptureMouse)
+        {
+            return;
+        }
         this->scrollCallback(x,y);
     };
     setScrollCallback(mpWindow, kS);
@@ -249,6 +274,9 @@ void PerfectSurfaceDetection::renderLoop()
         // Clear buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // ImGui new frame
+        ImGui_ImplGlfwGL3_NewFrame();
+
         // Viewport size
         glm::vec2 resolution = getResolution(mpWindow);
         glViewport(0, 0, resolution.x, resolution.y);
@@ -363,6 +391,13 @@ void PerfectSurfaceDetection::renderLoop()
                 glDrawArrays(GL_POINTS, 0, mSurfaceCount);
             }
         }
+
+        // ImGui drawing
+        bool opened = true;
+        ImGui::Begin("Properties", &opened, ImVec2(300, 100));
+        ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::End();
+        ImGui::Render();
     });
 }
 
