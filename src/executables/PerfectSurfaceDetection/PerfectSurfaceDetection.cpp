@@ -249,6 +249,10 @@ void PerfectSurfaceDetection::renderLoop()
         // Clear buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // Viewport size
+        glm::vec2 resolution = getResolution(mpWindow);
+        glViewport(0, 0, resolution.x, resolution.y);
+
         // Calculate cursor movement
         double cursorX, cursorY;
         glfwGetCursorPos(mpWindow, &cursorX, &cursorY);
@@ -271,7 +275,7 @@ void PerfectSurfaceDetection::renderLoop()
         glm::vec2 cameraMovement = glm::lerp(glm::vec2(0), mCameraDeltaMovement, mCameraSmoothTime);
         mupCamera->setAlpha(mupCamera->getAlpha() + 0.25f * cameraMovement.x);
         mupCamera->setBeta(mupCamera->getBeta() - 0.25f * cameraMovement.y);
-        mupCamera->update(1280, 720, mUsePerspectiveCamera);
+        mupCamera->update(resolution.x, resolution.y, mUsePerspectiveCamera);
 
         // Light direction
         if(mRotateLight)
