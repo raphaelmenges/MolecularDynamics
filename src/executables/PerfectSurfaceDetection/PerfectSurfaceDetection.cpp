@@ -13,6 +13,8 @@
 #include <glm/gtx/component_wise.hpp>
 
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 
 // ### Class implementation ###
 
@@ -705,7 +707,10 @@ void PerfectSurfaceDetection::renderGUI()
         }
 
         // Frametime
-        std::string fps = "FPS: " + std::to_string(ImGui::GetIO().Framerate);
+        float framerate = ImGui::GetIO().Framerate;
+        std::stringstream stream;
+        stream << std::fixed << std::setprecision(0) << framerate;
+        std::string fps = "FPS: " + stream.str();
         ImGui::MenuItem(fps.c_str(), "", false, false);
 
         // Pop styling
