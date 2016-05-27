@@ -9,14 +9,21 @@ class OrbitCamera
 {
 public:
 
-    // Constructor
-    OrbitCamera(glm::vec3 center, GLfloat alpha, GLfloat beta, GLfloat radius, GLfloat minRadius, GLfloat maxRadius);
+    // Constructor (Degrees!)
+    OrbitCamera(
+        glm::vec3 center,
+        GLfloat alpha,
+        GLfloat beta,
+        GLfloat radius,
+        GLfloat minRadius,
+        GLfloat maxRadius,
+        GLfloat fov);
 
     // Destructor
     virtual ~OrbitCamera();
 
     // Update view and projection matrix (must be called at least once)
-    void update();
+    void update(int viewportWidth, int viewportHeight);
 
     // Reset camera
     void reset(glm::vec3 center, GLfloat alpha, GLfloat beta, GLfloat radius);
@@ -29,6 +36,7 @@ public:
 
     // Getter
     glm::mat4 getViewMatrix() const;
+    glm::mat4 getProjectionMatrix() const;
     glm::vec3 getPosition() const;
     glm::vec3 getCenter() const;
     GLfloat getAlpha() const;
@@ -50,8 +58,10 @@ protected:
     GLfloat mRadius;
     GLfloat mMinRadius;
     GLfloat mMaxRadius;
+    GLfloat mFov;
     glm::vec3 mPosition;
     glm::mat4 mViewMatrix;
+    glm::mat4 mProjectionMatrix;
 };
 
 #endif // ORBIT_CAMERA_H

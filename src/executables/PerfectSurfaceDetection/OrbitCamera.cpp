@@ -2,123 +2,139 @@
 
 const GLfloat CAMERA_BETA_BIAS = 0.0001f;
 
-OrbitCamera::OrbitCamera(glm::vec3 center, GLfloat alpha, GLfloat beta, GLfloat radius, GLfloat minRadius, GLfloat maxRadius)
+OrbitCamera::OrbitCamera(
+    glm::vec3 center,
+    GLfloat alpha,
+    GLfloat beta,
+    GLfloat radius,
+    GLfloat minRadius,
+    GLfloat maxRadius,
+    GLfloat fov)
 {
-	mCenter = center;
-	mAlpha = alpha;
-	mBeta = beta;
-	mRadius = radius;
-	mMinRadius = minRadius;
-	mMaxRadius = maxRadius;
-	mPosition = glm::vec3(0, 0, 0);
-	clampValues();
+    mCenter = center;
+    mAlpha = alpha;
+    mBeta = beta;
+    mRadius = radius;
+    mMinRadius = minRadius;
+    mMaxRadius = maxRadius;
+    mFov = fov;
+    mPosition = glm::vec3(0, 0, 0);
+    clampValues();
 }
 
 OrbitCamera::~OrbitCamera()
 {
-	// Nothing to do
+    // Nothing to do
 }
 
-void OrbitCamera::update()
+void OrbitCamera::update(int viewportWidth, int viewportHeight)
 {
-	// Calculate current position
-	mPosition.x = mRadius * glm::sin(glm::radians(mBeta)) * glm::cos(glm::radians(mAlpha));
-	mPosition.y = mRadius * glm::cos(glm::radians(mBeta));
-	mPosition.z = mRadius * glm::sin(glm::radians(mBeta)) * glm::sin(glm::radians(mAlpha));
-	mPosition += mCenter;
+    // Calculate current position
+    mPosition.x = mRadius * glm::sin(glm::radians(mBeta)) * glm::cos(glm::radians(mAlpha));
+    mPosition.y = mRadius * glm::cos(glm::radians(mBeta));
+    mPosition.z = mRadius * glm::sin(glm::radians(mBeta)) * glm::sin(glm::radians(mAlpha));
+    mPosition += mCenter;
 
-	// Calculate view matrix using simple up vector
-	mViewMatrix= glm::lookAt(mPosition, mCenter, glm::vec3(0.0f, 1.0f, 0.0f));
+    // Calculate view matrix using simple up vector
+    mViewMatrix= glm::lookAt(mPosition, mCenter, glm::vec3(0.0f, 1.0f, 0.0f));
+
+    // Calculate projection matrix
+    mProjectionMatrix = glm::perspective(glm::radians(mFov), (GLfloat)viewportWidth / (GLfloat)viewportHeight, 0.1f, 1000.f);
 }
 
 void OrbitCamera::reset(glm::vec3 center, GLfloat alpha, GLfloat beta, GLfloat radius)
 {
-	mCenter = center;
-	mAlpha = alpha;
-	mBeta = beta;
-	mRadius = radius;
+    mCenter = center;
+    mAlpha = alpha;
+    mBeta = beta;
+    mRadius = radius;
 }
 
 void OrbitCamera::setCenter(glm::vec3 center)
 {
-	mCenter = center;
+    mCenter = center;
 }
 
 void OrbitCamera::setAlpha(GLfloat alpha)
 {
-	mAlpha = alpha;
-	clampAlpha();
+    mAlpha = alpha;
+    clampAlpha();
 }
 
 void OrbitCamera::setBeta(GLfloat beta)
 {
-	mBeta = beta;
-	clampBeta();
+    mBeta = beta;
+    clampBeta();
 }
 
 void OrbitCamera::setRadius(GLfloat radius)
 {
-	mRadius = radius;
-	clampRadius();
+    mRadius = radius;
+    clampRadius();
 }
 
 glm::mat4 OrbitCamera::getViewMatrix() const
 {
-	return mViewMatrix;
+    return mViewMatrix;
+}
+
+glm::mat4 OrbitCamera::getProjectionMatrix() const
+{
+    return mProjectionMatrix;
 }
 
 glm::vec3 OrbitCamera::getPosition() const
 {
-	return mPosition;
+    return mPosition;
 }
 
 glm::vec3 OrbitCamera::getCenter() const
 {
-	return mCenter;
+    return mCenter;
 }
 
 GLfloat OrbitCamera::getAlpha() const
 {
-	return mAlpha;
+    return mAlpha;
 }
 
 GLfloat OrbitCamera::getBeta() const
 {
-	return mBeta;
+    return mBeta;
 }
 
 GLfloat OrbitCamera::getRadius() const
 {
-	return mRadius;
+    return mRadius;
 }
 
 void OrbitCamera::clampValues()
 {
-	// Horizontal rotation
-	clampAlpha();
+    // Horizontal rotation
+    clampAlpha();
 
-	// Vertical rotation
-	clampBeta();
+    // Vertical rotation
+    clampBeta();
 
-	// Zoom/Radius
-	clampRadius();
+    // Zoom/Radius
+    clampRadius();
 }
 
 void OrbitCamera::clampAlpha()
 {
-	mAlpha = fmodf(mAlpha, 2 * glm::degrees(glm::pi<GLfloat>()));
-	if (mAlpha < 0)
-	{
-		mAlpha = 2 * glm::degrees(glm::pi<GLfloat>()) + mAlpha;
-	}
+    mAlpha = fmodf(mAlpha, 2 * glm::degrees(glm::pi<GLfloat>()));
+    if (mAlpha < 0)
+    {
+        mAlpha = 2 * glm::degrees(glm::pi<GLfloat>()) + mAlpha;
+    }
 }
 
 void OrbitCamera::clampBeta()
 {
-	mBeta = glm::clamp(mBeta, CAMERA_BETA_BIAS, glm::degrees(glm::pi<GLfloat>()) - CAMERA_BETA_BIAS);
+    mBeta = glm::clamp(mBeta, CAMERA_BETA_BIAS, glm::degrees(glm::pi<GLfloat>()) - CAMERA_BETA_BIAS);
 }
 
 void OrbitCamera::clampRadius()
 {
-	mRadius = glm::clamp(mRadius, mMinRadius, mMaxRadius);
+    mRadius = glm::clamp(mRadius, mMinRadius, mMaxRadius);
 }
