@@ -638,6 +638,10 @@ void PerfectSurfaceDetection::renderGUI()
 {
     if (ImGui::BeginMainMenuBar())
     {
+        // Styling
+        ImColor col = ImColor(1.0f,0.78f,0.58f,1.0f);
+        ImGui::PushStyleColor(ImGuiCol_TextDisabled, col);
+
         // General menu
         if (ImGui::BeginMenu("Menu"))
         {
@@ -697,7 +701,6 @@ void PerfectSurfaceDetection::renderGUI()
             {
                 if(ImGui::MenuItem("Add Probe Radius", "R", false, true)) { mRenderWithProbeRadius = true; }
             }
-
             ImGui::EndMenu();
         }
 
@@ -705,6 +708,10 @@ void PerfectSurfaceDetection::renderGUI()
         std::string fps = "FPS: " + std::to_string(ImGui::GetIO().Framerate);
         ImGui::MenuItem(fps.c_str(), "", false, false);
 
+        // Pop styling
+        ImGui::PopStyleColor();
+
+        // End main menu bar
         ImGui::EndMainMenuBar();
     }
     ImGui::Render();
