@@ -179,6 +179,11 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
 
     // Print time for data transfer
     glEndQuery(GL_TIME_ELAPSED);
+    GLuint done = 0;
+    while(done == 0)
+    {
+        glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT_AVAILABLE, &done);
+    }
     glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT, &timeElapsed);
     std::cout << "Time for data transfer on GPU: " << std::to_string(timeElapsed) << "ns" << std::endl;
 
@@ -529,6 +534,11 @@ void PerfectSurfaceDetection::runGLSLImplementation()
 
     // Print time for setup
     glEndQuery(GL_TIME_ELAPSED);
+    GLuint done = 0;
+    while(done == 0)
+    {
+        glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT_AVAILABLE, &done);
+    }
     glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT, &timeElapsed);
     std::cout << "Time for setup on GPU: " << std::to_string(timeElapsed) << "ns" << std::endl;
 
@@ -541,6 +551,11 @@ void PerfectSurfaceDetection::runGLSLImplementation()
 
     // Print time for execution
     glEndQuery(GL_TIME_ELAPSED);
+    done = 0;
+    while(done == 0)
+    {
+        glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT_AVAILABLE, &done);
+    }
     glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT, &timeElapsed);
     std::cout << "Time for execution on GPU: " << std::to_string(timeElapsed) << "ns (= " << std::to_string(timeElapsed / 1000000.f) << "ms)" << std::endl;
 
