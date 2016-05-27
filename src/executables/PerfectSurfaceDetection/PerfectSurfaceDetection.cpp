@@ -688,6 +688,16 @@ void PerfectSurfaceDetection::renderGUI()
                 if(ImGui::MenuItem("Show Surface Atoms", "S", false, true)) { mShowSurface = true; }
             }
 
+            // Add probe radius
+            if(mRenderWithProbeRadius)
+            {
+                if(ImGui::MenuItem("No Probe Radius", "R", false, true)) { mRenderWithProbeRadius = false; }
+            }
+            else
+            {
+                if(ImGui::MenuItem("Add Probe Radius", "R", false, true)) { mRenderWithProbeRadius = true; }
+            }
+
             ImGui::EndMenu();
         }
 
