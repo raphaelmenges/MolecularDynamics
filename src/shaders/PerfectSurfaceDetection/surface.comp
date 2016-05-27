@@ -43,8 +43,8 @@ layout(binding = 2) uniform atomic_uint SurfaceCount;
 layout(binding = 3, r32ui) restrict writeonly uniform uimageBuffer InternalIndices;
 layout(binding = 4, r32ui) restrict writeonly uniform uimageBuffer SurfaceIndices;
 
-// ## Return as internal
-void returnAsInternal()
+// ## Save as internal
+void saveAsInternal()
 {
     // Increment atomic counter
     uint idx = atomicCounterIncrement(InternalCount);
@@ -53,8 +53,8 @@ void returnAsInternal()
     imageStore(InternalIndices, int(idx), uvec4(gl_GlobalInvocationID.x));
 }
 
-// ## Return as surface
-void returnAsSurface()
+// ## Save as surface
+void saveAsSurface()
 {
     // Increment atomic counter
     uint idx = atomicCounterIncrement(SurfaceCount);
@@ -193,7 +193,7 @@ void main()
         if((atomExtRadius + atomsDistance) <= otherAtomExtRadius)
         {
             // Since it is completely covered, it is internal
-            returnAsInternal();
+            saveAsInternal(); return;
         }
 
         // ### INTERSECTION WITH OTHER ATOMS ###
@@ -295,7 +295,7 @@ void main()
                     // Maybe complete atom is cut away
                     if(pointInHalfspaceOfPlane(face, testPoint))
                     {
-                        returnAsInternal();
+                        saveAsInternal(); return;
                     }
                 }
             }
@@ -399,10 +399,10 @@ void main()
     // If no endpoint was generated at all or one or more survived cutting, add this atom to surface
     if(!endpointGenerated || endpointSurvivesCut)
     {
-        returnAsSurface();
+        saveAsSurface();
     }
     else
     {
-        returnAsInternal();
+        saveAsInternal();
     }
 }

@@ -15,9 +15,8 @@
 // TODO
 // - Delete OpenGL stuff after usage
 // - Work group size?
-// - Binding points ok? not sure wheather atomic counter and image use the same
-// - Camera and Rotation / Translation do not like each other
-// - Orthographic Projection
+// - Binding points ok? not sure whether atomic counter and image use the same
+// - Instead of direclty use ALL atoms as input, us index list InputIndices
 
 // Forward declaration
 class Protein;
@@ -53,7 +52,7 @@ private:
     void resetAtomicCounter(GLuint atomicCounter) const;
 
     // Setup
-    const float mProbeRadius = 1.2f;
+    const float mProbeRadius = 0.894f;
     const bool mUseGLSLImplementation = true;
     const float mCameraSmoothDuration = 1.5f;
 

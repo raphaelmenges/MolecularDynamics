@@ -452,6 +452,7 @@ void PerfectSurfaceDetection::runCPPImplementation()
     CPPImplementation cppImplementation;
 
     // Do it for each atom
+    double time = glfwGetTime();
     std::cout << "*** ALGORITHM OUTPUT START ***" << std::endl;
     for(int i = 0; i < mAtomCount; i++) // all atoms
     // for(int i = 0; i < 1; i++) // just first atom
@@ -459,6 +460,7 @@ void PerfectSurfaceDetection::runCPPImplementation()
         cppImplementation.execute(i, mAtomCount, mProbeRadius, mAtomStructs, internalIndices, surfaceIndices);
     }
     std::cout << "*** ALGORITHM OUTPUT END ***" << std::endl;
+    std::cout << "Time for execution on CPU: " << std::to_string(1000.0 * (glfwGetTime() - time)) << "ms" << std::endl;
 
     // Fill output atom indices to image buffers
     glBindBuffer(GL_TEXTURE_BUFFER, mInternalIndicesBuffer);

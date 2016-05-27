@@ -384,10 +384,10 @@ void CPPImplementation::execute(
     // If no endpoint was generated at all or one or more survived cutting, add this atom to surface
     if((!endpointGenerated) || endpointSurvivesCut)
     {
-        surfaceIndices.push_back((unsigned int) atomIndex); return;
+        surfaceIndices.push_back((unsigned int) atomIndex);
     }
     else
     {
-        internalIndices.push_back((unsigned int) atomIndex); return;
+        internalIndices.push_back((unsigned int) atomIndex);
     }
 }
