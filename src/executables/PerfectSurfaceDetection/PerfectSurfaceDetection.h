@@ -98,6 +98,9 @@ private:
     // ### GLSL implementation of surface atoms detection ###
     void runGLSLImplementation();
 
+    // Render GUI
+    void renderGUI();
+
 };
 
 #endif // PERFECT_SURFACE_DETECTION_H

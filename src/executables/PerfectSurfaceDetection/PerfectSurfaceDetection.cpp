@@ -392,12 +392,8 @@ void PerfectSurfaceDetection::renderLoop()
             }
         }
 
-        // ImGui drawing
-        bool opened = true;
-        ImGui::Begin("Properties", &opened, ImVec2(300, 100));
-        ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        ImGui::End();
-        ImGui::Render();
+        // GUI rendering
+        renderGUI();
     });
 }
 
@@ -636,6 +632,72 @@ void PerfectSurfaceDetection::runGLSLImplementation()
     mSurfaceCount = readAtomicCounter(surfaceCounter);
 
     // TODO: Delete atomic counter
+}
+
+void PerfectSurfaceDetection::renderGUI()
+{
+    if (ImGui::BeginMainMenuBar())
+    {
+        // General menu
+        if (ImGui::BeginMenu("Menu"))
+        {
+            if(ImGui::MenuItem("Quit", "Esc", false, true)) { glfwSetWindowShouldClose(mpWindow, GL_TRUE); }
+            ImGui::EndMenu();
+        }
+
+        // Rendering menu
+        if (ImGui::BeginMenu("Rendering"))
+        {
+            // Impostors
+            if(mRenderImpostor)
+            {
+                if(ImGui::MenuItem("Show Points", "P", false, true)) { mRenderImpostor = false; }
+            }
+            else
+            {
+                if(ImGui::MenuItem("Show Impostor", "P", false, true)) { mRenderImpostor = true; }
+            }
+
+            // Camera
+            if(mUsePerspectiveCamera)
+            {
+                if(ImGui::MenuItem("Orthographic Projection", "C", false, true)) { mUsePerspectiveCamera = false; }
+            }
+            else
+            {
+                if(ImGui::MenuItem("Perspective Projection", "C", false, true)) { mUsePerspectiveCamera = true; }
+            }
+
+            // Internal atoms
+            if(mShowInternal)
+            {
+                if(ImGui::MenuItem("Hide Internal Atoms", "I", false, true)) { mShowInternal = false; }
+            }
+            else
+            {
+                if(ImGui::MenuItem("Show Internal Atoms", "I", false, true)) { mShowInternal = true; }
+            }
+
+            // Surface atoms
+            if(mShowSurface)
+            {
+                if(ImGui::MenuItem("Hide Surface Atoms", "S", false, true)) { mShowSurface = false; }
+            }
+            else
+            {
+                if(ImGui::MenuItem("Show Surface Atoms", "S", false, true)) { mShowSurface = true; }
+            }
+
+            ImGui::EndMenu();
+        }
+
+        // Frametime
+        std::string fps = "FPS: " + std::to_string(ImGui::GetIO().Framerate);
+        ImGui::MenuItem(fps.c_str(), "", false, false);
+
+        ImGui::EndMainMenuBar();
+    }
+    ImGui::Render();
 }
 
 // ### Main function ###
