@@ -76,16 +76,17 @@ private:
     glm::vec3 mLightDirection;
     glm::vec3 mProteinMinExtent;
     glm::vec3 mProteinMaxExtent;
+    GLint mInternalCount; // general count of internal atoms
+    GLint mSurfaceCount; // general count of surface atoms
 
     // SSBO
     GLuint mAtomsSSBO; // SSBO with struct of position and radius for each atom
 
     // Images
-    GLuint mSurfaceIndicesTexture; // list of indices of surface atoms encoded in uint32
+    GLuint mInternalIndicesTexture; // list of indices of internal output atoms encoded in uint32
+    GLuint mInternalIndicesBuffer;
+    GLuint mSurfaceIndicesTexture; // list of indices of surface output atoms encoded in uint32
     GLuint mSurfaceIndicesBuffer;
-
-    // Atomic Counter
-    GLint mSurfaceCount; // atomic count of atoms in surface
 
     // Queries
     GLuint mQuery;

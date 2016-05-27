@@ -169,11 +169,14 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
 
     // # Prepare uint image to write indices of surface atoms. Lets call it image list in shader for easier understanding
 
-    // Buffer
+    // Buffers
+    glGenBuffers(1, &mInternalIndicesBuffer); // just generate, filled in GLSL or CPP implementatin method
     glGenBuffers(1, &mSurfaceIndicesBuffer); // just generate, filled in GLSL or CPP implementatin method
 
-    // Texture (which will be bound as image)
-    glGenTextures(1, &mSurfaceIndicesTexture); // connected to buffer in renderLoop(), since it seems that is has to be done after buffer fill
+    // TODO: understand why buffer to texture binding is necessary in GLSL method and in renderLoop()
+    // Texture (which will be bound as image, connected to buffer in renderLoop(), since it seems that is has to be done after buffer fill)
+    glGenTextures(1, &mInternalIndicesTexture);
+    glGenTextures(1, &mSurfaceIndicesTexture);
 
     // Print time for data transfer
     glEndQuery(GL_TIME_ELAPSED);
@@ -235,6 +238,10 @@ void PerfectSurfaceDetection::renderLoop()
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mAtomsSSBO);
 
     // Bind buffer to texture (may not be done before buffer filling? Probably not necessary for GLSL implementation since already bound there and filled on GPU)
+    glBindTexture(GL_TEXTURE_BUFFER, mInternalIndicesTexture);
+    glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, mInternalIndicesBuffer);
+    glBindTexture(GL_TEXTURE_BUFFER, 0);
+
     glBindTexture(GL_TEXTURE_BUFFER, mSurfaceIndicesTexture);
     glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, mSurfaceIndicesBuffer);
     glBindTexture(GL_TEXTURE_BUFFER, 0);
@@ -445,6 +452,7 @@ void PerfectSurfaceDetection::runCPPImplementation()
     }
     std::cout << "*** ALGORITHM OUTPUT END ***" << std::endl;
 
+    // TODO: fill internal buffer, too etc
     // Fill surface atom indices to mSurfaceIndicesBuffer
     glBindBuffer(GL_TEXTURE_BUFFER, mSurfaceIndicesBuffer);
     glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * surfaceAtomIndices.size(), surfaceAtomIndices.data(), GL_STATIC_DRAW);
@@ -462,18 +470,31 @@ void PerfectSurfaceDetection::runGLSLImplementation()
     ShaderProgram computeProgram(GL_COMPUTE_SHADER, "/PerfectSurfaceDetection/surface.comp");
 
     // # Prepare atomic counter for writing results to unique position in image
-    GLuint atomicCounter;
-    glGenBuffers(1, &atomicCounter);
-    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomicCounter);
+    GLuint internalCounter;
+    glGenBuffers(1, &internalCounter);
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, internalCounter);
     glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), NULL, GL_DYNAMIC_DRAW);
-    resetAtomicCounter(atomicCounter);
+    resetAtomicCounter(internalCounter);
+    GLuint surfaceCounter;
+    glGenBuffers(1, &surfaceCounter);
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, surfaceCounter);
+    glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), NULL, GL_DYNAMIC_DRAW);
+    resetAtomicCounter(surfaceCounter);
 
     // # Prepare output buffer
+    glBindBuffer(GL_TEXTURE_BUFFER, mInternalIndicesBuffer);
+    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * mAtomCount, 0, GL_DYNAMIC_COPY); // DYNAMIC_COPY because filled by GPU and read by GPU
+    glBindBuffer(GL_TEXTURE_BUFFER, 0);
+
     glBindBuffer(GL_TEXTURE_BUFFER, mSurfaceIndicesBuffer);
     glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * mAtomCount, 0, GL_DYNAMIC_COPY); // DYNAMIC_COPY because filled by GPU and read by GPU
     glBindBuffer(GL_TEXTURE_BUFFER, 0);
 
     // Bind buffer to texture which is used as image
+    glBindTexture(GL_TEXTURE_BUFFER, mInternalIndicesTexture);
+    glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, mInternalIndicesBuffer);
+    glBindTexture(GL_TEXTURE_BUFFER, 0);
+
     glBindTexture(GL_TEXTURE_BUFFER, mSurfaceIndicesTexture);
     glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, mSurfaceIndicesBuffer);
     glBindTexture(GL_TEXTURE_BUFFER, 0);
@@ -499,16 +520,25 @@ void PerfectSurfaceDetection::runGLSLImplementation()
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mAtomsSSBO);
 
     // Bind atomic counter
-    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, atomicCounter);
+    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, internalCounter);
+    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 2, surfaceCounter);
 
     // Bind image where indices of surface atoms are written to
-    glBindImageTexture(2,
+    glBindImageTexture(3,
+                       mInternalIndicesTexture,
+                       0,
+                       GL_TRUE,
+                       0,
+                       GL_WRITE_ONLY,
+                       GL_R32UI);
+    glBindImageTexture(4,
                        mSurfaceIndicesTexture,
                        0,
                        GL_TRUE,
                        0,
                        GL_WRITE_ONLY,
                        GL_R32UI);
+
 
     // Print time for setup
     glEndQuery(GL_TIME_ELAPSED);
@@ -538,7 +568,8 @@ void PerfectSurfaceDetection::runGLSLImplementation()
     std::cout << "Time for execution on GPU: " << std::to_string(timeElapsed) << "ns (= " << std::to_string(timeElapsed / 1000000.f) << "ms)" << std::endl;
 
     // Fetch count
-    mSurfaceCount = readAtomicCounter(atomicCounter);
+    mInternalCount = readAtomicCounter(internalCounter);
+    mSurfaceCount = readAtomicCounter(surfaceCounter);
 
     // TODO: Delete atomic counter
 }
