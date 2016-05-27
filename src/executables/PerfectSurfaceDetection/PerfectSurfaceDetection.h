@@ -69,18 +69,26 @@ private:
     GLFWwindow* mpWindow;
     std::unique_ptr<OrbitCamera> mupCamera; // camera for visualization
     int mAtomCount;
-    GLuint mAtomsSSBO; // SSBO with struct of position and radius for each atom
     AtomLUT mAtomLUT;
-    GLuint mSurfaceAtomTexture; // list of indices of surface atoms encoded in uint32
-    GLuint mSurfaceAtomBuffer;
-    GLint mSurfaceAtomCount; // count of atoms in surface
-    GLuint mQuery;
     std::vector<AtomStruct> mAtomStructs;
     glm::vec2 mCameraDeltaMovement;
     float mCameraSmoothTime;
     glm::vec3 mLightDirection;
     glm::vec3 mProteinMinExtent;
     glm::vec3 mProteinMaxExtent;
+
+    // SSBO
+    GLuint mAtomsSSBO; // SSBO with struct of position and radius for each atom
+
+    // Images
+    GLuint mSurfaceIndicesTexture; // list of indices of surface atoms encoded in uint32
+    GLuint mSurfaceIndicesBuffer;
+
+    // Atomic Counter
+    GLint mSurfaceCount; // atomic count of atoms in surface
+
+    // Queries
+    GLuint mQuery;
 
     // ### CPP implementation of surface atoms detection ###
     void runCPPImplementation();

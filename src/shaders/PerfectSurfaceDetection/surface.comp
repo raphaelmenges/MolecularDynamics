@@ -36,10 +36,10 @@ layout(std430, binding = 0) readonly restrict buffer AtomBuffer
 };
 
 // ## Atomic counter for indices in image buffer
-layout(binding = 1) uniform atomic_uint atomicIndex;
+layout(binding = 1) uniform atomic_uint SurfaceCount;
 
 // ## Image buffer with output indices of surface atoms
-layout(binding = 2, r32ui) restrict writeonly uniform uimageBuffer imageList;
+layout(binding = 2, r32ui) restrict writeonly uniform uimageBuffer SurfaceIndices;
 
 // ## Determines whether point lies in halfspace of plane direction
 // http://stackoverflow.com/questions/15688232/check-which-side-of-a-plane-points-are-on
@@ -378,9 +378,9 @@ void main()
     if(!endpointGenerated || endpointSurvivesCut)
     {
         // Increment atomic counter
-        uint idx = atomicCounterIncrement(atomicIndex);
+        uint idx = atomicCounterIncrement(SurfaceCount);
 
         // Save index of atom at index of atomic counter in image
-        imageStore(imageList, int(idx), uvec4(gl_GlobalInvocationID.x));
+        imageStore(SurfaceIndices, int(idx), uvec4(gl_GlobalInvocationID.x));
     }
 }
