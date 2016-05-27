@@ -17,14 +17,10 @@
 PerfectSurfaceDetection::PerfectSurfaceDetection()
 {
     // # Setup members
-    mRotateCamera = false;
     mSurfaceAtomCount = 0;
-    mRenderImpostor = false;
-    mRenderWithProbeRadius = false;
     mCameraDeltaMovement = glm::vec2(0,0);
     mCameraSmoothTime = 1.f;
     mLightDirection = glm::normalize(glm::vec3(-0.5, -0.75, -0.3));
-    mSelectedAtom = 0;
 
     // Create window
     mpWindow = generateWindow();
@@ -151,7 +147,8 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
             cameraRadius,
             cameraRadius / 2.f,
             5.f * cameraRadius,
-            45.f));
+            45.f,
+            0.05f));
 
     // Create query to measure execution time
     glGenQueries(1, &mQuery);
@@ -252,20 +249,6 @@ void PerfectSurfaceDetection::renderLoop()
         GL_READ_ONLY,
         GL_R32UI);
 
-    // Projection matrix (hardcoded viewport size)
-    /*
-    GLfloat halfWidth = ((GLfloat) 1280) / 2.f;
-    GLfloat halfHeight = ((GLfloat) 720) / 2.f;
-    GLfloat zoom = 0.1f;
-    glm::mat4 projection = glm::ortho(
-        zoom * -halfWidth,
-        zoom * halfWidth,
-        zoom * -halfHeight,
-        zoom * halfHeight,
-        0.1f,
-        100.0f);
-    */
-
     // Call render function of Rendering.h with lambda function
     render(mpWindow, [&] (float deltaTime)
     {
@@ -294,7 +277,7 @@ void PerfectSurfaceDetection::renderLoop()
         glm::vec2 cameraMovement = glm::lerp(glm::vec2(0), mCameraDeltaMovement, mCameraSmoothTime);
         mupCamera->setAlpha(mupCamera->getAlpha() + 0.25f * cameraMovement.x);
         mupCamera->setBeta(mupCamera->getBeta() - 0.25f * cameraMovement.y);
-        mupCamera->update(1280, 720);
+        mupCamera->update(1280, 720, mUsePerspectiveCamera);
 
         // Light direction
         if(mRotateLight)
@@ -367,19 +350,20 @@ void PerfectSurfaceDetection::keyCallback(int key, int scancode, int action, int
             case GLFW_KEY_I: { mRenderImpostor = !mRenderImpostor; break; }
             case GLFW_KEY_P: { mRenderWithProbeRadius = !mRenderWithProbeRadius; break; }
             case GLFW_KEY_RIGHT:
-                {
-                    mSelectedAtom++;
-                    if(mSelectedAtom >= mAtomCount) { mSelectedAtom = 0; }
-                    std::cout << "Selected atom: " << mSelectedAtom << std::endl;
-                    break;
-                }
+            {
+                mSelectedAtom++;
+                if(mSelectedAtom >= mAtomCount) { mSelectedAtom = 0; }
+                std::cout << "Selected atom: " << mSelectedAtom << std::endl;
+                break;
+            }
             case GLFW_KEY_LEFT:
-                {
-                    mSelectedAtom--;
-                    if(mSelectedAtom < 0) { mSelectedAtom = mAtomCount - 1; }
-                    std::cout << "Selected atom: " << mSelectedAtom << std::endl;
-                    break;
-                }
+            {
+                mSelectedAtom--;
+                if(mSelectedAtom < 0) { mSelectedAtom = mAtomCount - 1; }
+                std::cout << "Selected atom: " << mSelectedAtom << std::endl;
+                break;
+            }
+            case GLFW_KEY_C: { mUsePerspectiveCamera = !mUsePerspectiveCamera; break; }
         }
     }
 }

@@ -10,6 +10,7 @@ class OrbitCamera
 public:
 
     // Constructor (Degrees!)
+    // Orthographic projection takes max radius as position
     OrbitCamera(
         glm::vec3 center,
         GLfloat alpha,
@@ -17,13 +18,14 @@ public:
         GLfloat radius,
         GLfloat minRadius,
         GLfloat maxRadius,
-        GLfloat fov);
+        GLfloat fov,
+        GLfloat orthoScale);
 
     // Destructor
     virtual ~OrbitCamera();
 
     // Update view and projection matrix (must be called at least once)
-    void update(int viewportWidth, int viewportHeight);
+    void update(int viewportWidth, int viewportHeight, bool perspective);
 
     // Reset camera
     void reset(glm::vec3 center, GLfloat alpha, GLfloat beta, GLfloat radius);
@@ -59,6 +61,7 @@ protected:
     GLfloat mMinRadius;
     GLfloat mMaxRadius;
     GLfloat mFov;
+    GLfloat mOrthoScale;
     glm::vec3 mPosition;
     glm::mat4 mViewMatrix;
     glm::mat4 mProjectionMatrix;

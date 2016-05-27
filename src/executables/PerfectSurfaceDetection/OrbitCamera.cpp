@@ -1,5 +1,7 @@
 #include "OrbitCamera.h"
 
+#include <iostream>
+
 const GLfloat CAMERA_BETA_BIAS = 0.0001f;
 
 OrbitCamera::OrbitCamera(
@@ -9,7 +11,8 @@ OrbitCamera::OrbitCamera(
     GLfloat radius,
     GLfloat minRadius,
     GLfloat maxRadius,
-    GLfloat fov)
+    GLfloat fov,
+    GLfloat orthoScale)
 {
     mCenter = center;
     mAlpha = alpha;
@@ -18,6 +21,7 @@ OrbitCamera::OrbitCamera(
     mMinRadius = minRadius;
     mMaxRadius = maxRadius;
     mFov = fov;
+    mOrthoScale = orthoScale;
     mPosition = glm::vec3(0, 0, 0);
     clampValues();
 }
@@ -27,19 +31,50 @@ OrbitCamera::~OrbitCamera()
     // Nothing to do
 }
 
-void OrbitCamera::update(int viewportWidth, int viewportHeight)
+void OrbitCamera::update(int viewportWidth, int viewportHeight, bool perspective)
 {
-    // Calculate current position
-    mPosition.x = mRadius * glm::sin(glm::radians(mBeta)) * glm::cos(glm::radians(mAlpha));
-    mPosition.y = mRadius * glm::cos(glm::radians(mBeta));
-    mPosition.z = mRadius * glm::sin(glm::radians(mBeta)) * glm::sin(glm::radians(mAlpha));
-    mPosition += mCenter;
+    // Calculate view and projection matrix
+    if(perspective)
+    {
+        // Perspective
+        mPosition.x = mRadius * glm::sin(glm::radians(mBeta)) * glm::cos(glm::radians(mAlpha));
+        mPosition.y = mRadius * glm::cos(glm::radians(mBeta));
+        mPosition.z = mRadius * glm::sin(glm::radians(mBeta)) * glm::sin(glm::radians(mAlpha));
+        mPosition += mCenter;
 
-    // Calculate view matrix using simple up vector
-    mViewMatrix= glm::lookAt(mPosition, mCenter, glm::vec3(0.0f, 1.0f, 0.0f));
+        // View matrix
+        mViewMatrix= glm::lookAt(mPosition, mCenter, glm::vec3(0.0f, 1.0f, 0.0f));
 
-    // Calculate projection matrix
-    mProjectionMatrix = glm::perspective(glm::radians(mFov), (GLfloat)viewportWidth / (GLfloat)viewportHeight, 0.1f, 1000.f);
+        // Projection matrix
+        mProjectionMatrix = glm::perspective(
+            glm::radians(mFov),
+            (GLfloat)viewportWidth / (GLfloat)viewportHeight,
+            0.1f,
+            mMaxRadius * 2.f);
+    }
+    else
+    {
+        // Orthographic (max radius is used to calculate camera point)
+        mPosition.x = mMaxRadius * glm::sin(glm::radians(mBeta)) * glm::cos(glm::radians(mAlpha));
+        mPosition.y = mMaxRadius * glm::cos(glm::radians(mBeta));
+        mPosition.z = mMaxRadius * glm::sin(glm::radians(mBeta)) * glm::sin(glm::radians(mAlpha));
+        mPosition += mCenter;
+
+        // View matrix
+        mViewMatrix= glm::lookAt(mPosition, mCenter, glm::vec3(0.0f, 1.0f, 0.0f));
+
+        // Projection matrix
+        GLfloat halfWidth = ((GLfloat) viewportWidth) * mOrthoScale;
+        GLfloat halfHeight = ((GLfloat) viewportHeight) * mOrthoScale;
+        GLfloat zoom = (mRadius - mMinRadius) / (mMaxRadius - mMinRadius);
+        mProjectionMatrix = glm::ortho(
+            zoom * -halfWidth,
+            zoom * halfWidth,
+            zoom * -halfHeight,
+            zoom * halfHeight,
+            0.1f,
+            mMaxRadius * 2.f);
+    }
 }
 
 void OrbitCamera::reset(glm::vec3 center, GLfloat alpha, GLfloat beta, GLfloat radius)

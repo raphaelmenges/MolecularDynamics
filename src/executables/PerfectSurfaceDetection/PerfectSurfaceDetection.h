@@ -57,10 +57,16 @@ private:
     const bool mUseGLSLImplementation = true;
     const float mCameraSmoothDuration = 1.5f;
 
+    // Controllable parameters
+    bool mRotateCamera = false;
+    bool mRotateLight = false;
+    int mSelectedAtom = 0;
+    bool mRenderImpostor = false;
+    bool mRenderWithProbeRadius = false;
+    bool mUsePerspectiveCamera = true;
+
     // Members
     GLFWwindow* mpWindow;
-    bool mRotateCamera;
-    bool mRotateLight;
     std::unique_ptr<OrbitCamera> mupCamera; // camera for visualization
     int mAtomCount;
     GLuint mAtomsSSBO; // SSBO with struct of position and radius for each atom
@@ -70,14 +76,11 @@ private:
     GLint mSurfaceAtomCount; // count of atoms in surface
     GLuint mQuery;
     std::vector<AtomStruct> mAtomStructs;
-    bool mRenderImpostor;
-    bool mRenderWithProbeRadius;
     glm::vec2 mCameraDeltaMovement;
     float mCameraSmoothTime;
     glm::vec3 mLightDirection;
     glm::vec3 mProteinMinExtent;
     glm::vec3 mProteinMaxExtent;
-    int mSelectedAtom;
 
     // ### CPP implementation of surface atoms detection ###
     void runCPPImplementation();
