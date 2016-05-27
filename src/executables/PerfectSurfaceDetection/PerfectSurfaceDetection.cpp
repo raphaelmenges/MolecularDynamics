@@ -199,6 +199,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     }
 
     // Output count
+    std::cout << "Internal atom count: " << mInternalCount << std::endl;
     std::cout << "Surface atom count: " << mSurfaceCount << std::endl;
 }
 
@@ -227,12 +228,8 @@ void PerfectSurfaceDetection::renderLoop()
     float prevCursorX, prevCursorY = 0;
 
     // Prepare shader programs for rendering
-    ShaderProgram proteinPointProgram = ShaderProgram("/PerfectSurfaceDetection/proteinPoint.vert", "/PerfectSurfaceDetection/point.frag");
-    ShaderProgram surfacePointProgram = ShaderProgram("/PerfectSurfaceDetection/surfacePoint.vert", "/PerfectSurfaceDetection/point.frag");
-    ShaderProgram selectionPointProgram = ShaderProgram("/PerfectSurfaceDetection/selectionPoint.vert", "/PerfectSurfaceDetection/point.frag");
-    ShaderProgram proteinImpostorProgram = ShaderProgram("/PerfectSurfaceDetection/proteinImpostor.vert", "/PerfectSurfaceDetection/impostor.geom", "/PerfectSurfaceDetection/impostor.frag");
-    ShaderProgram surfaceImpostorProgram = ShaderProgram("/PerfectSurfaceDetection/surfaceImpostor.vert", "/PerfectSurfaceDetection/impostor.geom", "/PerfectSurfaceDetection/impostor.frag");
-    ShaderProgram selectionImpostorProgram = ShaderProgram("/PerfectSurfaceDetection/selectionImpostor.vert", "/PerfectSurfaceDetection/impostor.geom", "/PerfectSurfaceDetection/impostor.frag");
+    ShaderProgram pointProgram = ShaderProgram("/PerfectSurfaceDetection/point.vert", "/PerfectSurfaceDetection/point.frag");
+    ShaderProgram impostorProgram = ShaderProgram("/PerfectSurfaceDetection/impostor.vert", "/PerfectSurfaceDetection/impostor.geom", "/PerfectSurfaceDetection/impostor.frag");
 
     // Bind SSBO with atoms
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mAtomsSSBO);
@@ -245,16 +242,6 @@ void PerfectSurfaceDetection::renderLoop()
     glBindTexture(GL_TEXTURE_BUFFER, mSurfaceIndicesTexture);
     glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, mSurfaceIndicesBuffer);
     glBindTexture(GL_TEXTURE_BUFFER, 0);
-
-    // Bind image with buffer where indices of surface atoms are read from
-    glBindImageTexture(
-        1,
-        mSurfaceIndicesTexture,
-        0,
-        GL_TRUE,
-        0,
-        GL_READ_ONLY,
-        GL_R32UI);
 
     // Call render function of Rendering.h with lambda function
     render(mpWindow, [&] (float deltaTime)
@@ -295,54 +282,70 @@ void PerfectSurfaceDetection::renderLoop()
         // Drawing
         if(mRenderImpostor)
         {
-            // Draw complete atoms with impostors
-            proteinImpostorProgram.use();
-            proteinImpostorProgram.update("view", mupCamera->getViewMatrix());
-            proteinImpostorProgram.update("projection", mupCamera->getProjectionMatrix());
-            proteinImpostorProgram.update("cameraWorldPos", mupCamera->getPosition());
-            proteinImpostorProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
-            proteinImpostorProgram.update("lightDir", mLightDirection);
-            glDrawArrays(GL_POINTS, 0, mAtomCount);
+            // Prepare impostor drawing
+            impostorProgram.use();
+            impostorProgram.update("view", mupCamera->getViewMatrix());
+            impostorProgram.update("projection", mupCamera->getProjectionMatrix());
+            impostorProgram.update("cameraWorldPos", mupCamera->getPosition());
+            impostorProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
+            impostorProgram.update("lightDir", mLightDirection);
+            impostorProgram.update("selectedIndex", mSelectedAtom);
 
-            // Draw surface atoms with impostors
-            surfaceImpostorProgram.use();
-            surfaceImpostorProgram.update("view", mupCamera->getViewMatrix());
-            surfaceImpostorProgram.update("projection", mupCamera->getProjectionMatrix());
-            surfaceImpostorProgram.update("cameraWorldPos", mupCamera->getPosition());
-            surfaceImpostorProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
-            surfaceImpostorProgram.update("lightDir", mLightDirection);
+            // Draw internal
+            glBindImageTexture(
+                1,
+                mInternalIndicesTexture,
+                0,
+                GL_TRUE,
+                0,
+                GL_READ_ONLY,
+                GL_R32UI);
+            impostorProgram.update("color", glm::vec3(1.f,1.f,1.f));
+            glDrawArrays(GL_POINTS, 0, mInternalCount);
+
+            // Draw surface
+            glBindImageTexture(
+                1,
+                mSurfaceIndicesTexture,
+                0,
+                GL_TRUE,
+                0,
+                GL_READ_ONLY,
+                GL_R32UI);
+            impostorProgram.update("color", glm::vec3(1.f,0.f,0.f));
             glDrawArrays(GL_POINTS, 0, mSurfaceCount);
-
-            // Draw selected atom with impostor
-            selectionImpostorProgram.use();
-            selectionImpostorProgram.update("view", mupCamera->getViewMatrix());
-            selectionImpostorProgram.update("projection", mupCamera->getProjectionMatrix());
-            selectionImpostorProgram.update("cameraWorldPos", mupCamera->getPosition());
-            selectionImpostorProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
-            selectionImpostorProgram.update("lightDir", mLightDirection);
-            selectionImpostorProgram.update("atomIndex", mSelectedAtom);
-            glDrawArrays(GL_POINTS, 0, 1);
         }
         else
         {
-            // Draw complete protein with points
-            proteinPointProgram.use();
-            proteinPointProgram.update("view", mupCamera->getViewMatrix());
-            proteinPointProgram.update("projection", mupCamera->getProjectionMatrix());
-            glDrawArrays(GL_POINTS, 0, mAtomCount);
+            // Prepare point drawing
+            pointProgram.use();
+            pointProgram.update("view", mupCamera->getViewMatrix());
+            pointProgram.update("projection", mupCamera->getProjectionMatrix());
+            pointProgram.update("selectedIndex", mSelectedAtom);
 
-            // Draw surface atoms with points
-            surfacePointProgram.use();
-            surfacePointProgram.update("view", mupCamera->getViewMatrix());
-            surfacePointProgram.update("projection", mupCamera->getProjectionMatrix());
+            // Draw internal
+            glBindImageTexture(
+                1,
+                mInternalIndicesTexture,
+                0,
+                GL_TRUE,
+                0,
+                GL_READ_ONLY,
+                GL_R32UI);
+            pointProgram.update("color", glm::vec3(1.f,1.f,1.f));
+            glDrawArrays(GL_POINTS, 0, mInternalCount);
+
+            // Draw surface
+            glBindImageTexture(
+                1,
+                mSurfaceIndicesTexture,
+                0,
+                GL_TRUE,
+                0,
+                GL_READ_ONLY,
+                GL_R32UI);
+            pointProgram.update("color", glm::vec3(1.f,0.f,0.f));
             glDrawArrays(GL_POINTS, 0, mSurfaceCount);
-
-            // Draw selected atom with point
-            selectionPointProgram.use();
-            selectionPointProgram.update("view", mupCamera->getViewMatrix());
-            selectionPointProgram.update("projection", mupCamera->getProjectionMatrix());
-            selectionPointProgram.update("atomIndex", mSelectedAtom);
-            glDrawArrays(GL_POINTS, 0, 1);
         }
     });
 }
@@ -475,6 +478,7 @@ void PerfectSurfaceDetection::runGLSLImplementation()
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, internalCounter);
     glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), NULL, GL_DYNAMIC_DRAW);
     resetAtomicCounter(internalCounter);
+
     GLuint surfaceCounter;
     glGenBuffers(1, &surfaceCounter);
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, surfaceCounter);

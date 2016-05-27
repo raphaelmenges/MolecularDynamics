@@ -192,8 +192,8 @@ void main()
         // Test whether atom is completely covered by other
         if((atomExtRadius + atomsDistance) <= otherAtomExtRadius)
         {
-            // Since it is completely covered, it is not at surface
-            return;
+            // Since it is completely covered, it is internal
+            returnAsInternal();
         }
 
         // ### INTERSECTION WITH OTHER ATOMS ###
@@ -295,7 +295,7 @@ void main()
                     // Maybe complete atom is cut away
                     if(pointInHalfspaceOfPlane(face, testPoint))
                     {
-                        return;
+                        returnAsInternal();
                     }
                 }
             }
@@ -400,5 +400,9 @@ void main()
     if(!endpointGenerated || endpointSurvivesCut)
     {
         returnAsSurface();
+    }
+    else
+    {
+        returnAsInternal();
     }
 }

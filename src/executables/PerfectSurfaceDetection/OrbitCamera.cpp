@@ -66,7 +66,7 @@ void OrbitCamera::update(int viewportWidth, int viewportHeight, bool perspective
         // Projection matrix
         GLfloat halfWidth = ((GLfloat) viewportWidth) * mOrthoScale;
         GLfloat halfHeight = ((GLfloat) viewportHeight) * mOrthoScale;
-        GLfloat zoom = (mRadius - mMinRadius) / (mMaxRadius - mMinRadius);
+        GLfloat zoom = glm::max(0.0000001f, (mRadius - mMinRadius) / (mMaxRadius - mMinRadius));
         mProjectionMatrix = glm::ortho(
             zoom * -halfWidth,
             zoom * halfWidth,
