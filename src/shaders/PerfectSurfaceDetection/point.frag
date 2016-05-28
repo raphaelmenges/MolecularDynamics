@@ -1,9 +1,9 @@
 #version 430
 
-in vec3 col;
+flat in vec3 color;
 layout(location = 0) out vec4 fragColor;
 
 void main()
 {
-    fragColor = vec4(col, 1);
+    fragColor = vec4(color, 1);
 }

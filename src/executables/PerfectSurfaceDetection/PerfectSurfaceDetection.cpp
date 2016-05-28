@@ -139,6 +139,14 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
         << mProteinMaxExtent.y << ", "
         << mProteinMaxExtent.z << std::endl;
 
+    // Use protein extend as initial value for min and max draw
+    mMinXDraw = mProteinMinExtent.x;
+    mMinYDraw = mProteinMinExtent.y;
+    mMinZDraw = mProteinMinExtent.z;
+    mMaxXDraw = mProteinMaxExtent.x;
+    mMaxYDraw = mProteinMaxExtent.y;
+    mMaxZDraw = mProteinMaxExtent.z;
+
     /*
     // Test atom radii
     for(const auto& rAtom : mAtomStructs)
@@ -257,7 +265,7 @@ void PerfectSurfaceDetection::renderLoop()
     float prevCursorX, prevCursorY = 0;
 
     // Prepare shader programs for rendering
-    ShaderProgram pointProgram = ShaderProgram("/PerfectSurfaceDetection/point.vert", "/PerfectSurfaceDetection/point.frag");
+    ShaderProgram pointProgram = ShaderProgram("/PerfectSurfaceDetection/point.vert", "/PerfectSurfaceDetection/point.geom", "/PerfectSurfaceDetection/point.frag");
     ShaderProgram impostorProgram = ShaderProgram("/PerfectSurfaceDetection/impostor.vert", "/PerfectSurfaceDetection/impostor.geom", "/PerfectSurfaceDetection/impostor.frag");
 
     // Bind SSBO with atoms
@@ -326,6 +334,8 @@ void PerfectSurfaceDetection::renderLoop()
             impostorProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
             impostorProgram.update("lightDir", mLightDirection);
             impostorProgram.update("selectedIndex", mSelectedAtom);
+            impostorProgram.update("minPosition", glm::vec3(mMinXDraw, mMinYDraw, mMinZDraw));
+            impostorProgram.update("maxPosition", glm::vec3(mMaxXDraw, mMaxYDraw, mMaxZDraw));
 
             // Draw internal
             if(mShowInternal)
@@ -364,6 +374,8 @@ void PerfectSurfaceDetection::renderLoop()
             pointProgram.update("view", mupCamera->getViewMatrix());
             pointProgram.update("projection", mupCamera->getProjectionMatrix());
             pointProgram.update("selectedIndex", mSelectedAtom);
+            pointProgram.update("minPosition", glm::vec3(mMinXDraw, mMinYDraw, mMinZDraw));
+            pointProgram.update("maxPosition", glm::vec3(mMaxXDraw, mMaxYDraw, mMaxZDraw));
 
             // Draw internal
             if(mShowInternal)
@@ -764,6 +776,13 @@ void PerfectSurfaceDetection::updateGUI()
     if(mShowDebuggingWindow)
     {
         ImGui::Begin("Debugging", NULL, 0);
+        ImGui::Text("Min / Max drawing");
+        ImGui::SliderFloat("Min X", &mMinXDraw, mProteinMinExtent.x, mProteinMaxExtent.x, "%.1f");
+        ImGui::SliderFloat("Max X", &mMaxXDraw, mProteinMinExtent.x, mProteinMaxExtent.x, "%.1f");
+        ImGui::SliderFloat("Min Y", &mMinYDraw, mProteinMinExtent.y, mProteinMaxExtent.y, "%.1f");
+        ImGui::SliderFloat("Max Y", &mMaxYDraw, mProteinMinExtent.y, mProteinMaxExtent.y, "%.1f");
+        ImGui::SliderFloat("Min Z", &mMinZDraw, mProteinMinExtent.z, mProteinMaxExtent.z, "%.1f");
+        ImGui::SliderFloat("Max Z", &mMaxZDraw, mProteinMinExtent.z, mProteinMaxExtent.z, "%.1f");
         ImGui::End();
     }
 

@@ -1,7 +1,7 @@
 #version 430
 
 // Color of rendered point
-out vec3 col;
+out vec3 vertColor;
 
 // Struct for atom
 struct AtomStruct
@@ -30,18 +30,15 @@ void main()
 {
     // Extract position
     int index = int(imageLoad(Indices,int(gl_VertexID)).x);
-    vec3 position = atoms[index].center;
-    vec4 viewPosition = view * vec4(position, 1);
-    viewPosition.z += 0.01; // move towards camera since all protein's atoms get rendered before that and z buffer is filled
-    gl_Position = projection * viewPosition;
+    gl_Position = vec4(atoms[index].center, 1);
 
     // Set color
     if(index == selectedIndex)
     {
-        col = vec3(0,1,0);
+        vertColor = vec3(0,1,0);
     }
     else
     {
-        col = color;
+        vertColor = color;
     }
 }

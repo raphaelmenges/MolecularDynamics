@@ -67,6 +67,12 @@ private:
     bool mShowSurface = true;
     bool mShowComputationWindow = true;
     bool mShowDebuggingWindow = true;
+    float mMinXDraw = 0;
+    float mMinYDraw = 0;
+    float mMinZDraw = 0;
+    float mMaxXDraw = 0;
+    float mMaxYDraw = 0;
+    float mMaxZDraw = 0;
 
     // Debugging output
     std::string mComputeInformation = "";

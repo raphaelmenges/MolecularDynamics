@@ -31,9 +31,7 @@ void main()
 {
     // Extract position
     int index = int(imageLoad(Indices,int(gl_VertexID)).x);
-    vec3 center = atoms[index].center;
-    vec3 vector = normalize(cameraWorldPos - center);
-    gl_Position = vec4(center + 0.01 * vector, 1);
+    gl_Position = vec4(atoms[index].center, 1);
 
     // Extract radius
     vertRadius = atoms[index].radius + probeRadius;
