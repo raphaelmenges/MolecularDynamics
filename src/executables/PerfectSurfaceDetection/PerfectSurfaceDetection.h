@@ -52,8 +52,7 @@ private:
     void resetAtomicCounter(GLuint atomicCounter) const;
 
     // Setup
-    const float mProbeRadius = 1.2f;
-    const bool mUseGLSLImplementation = true;
+    const bool mInitiallyUseGLSLImplementation = true;
     const float mCameraSmoothDuration = 1.5f;
     const int mCPPImplementationThreads = 8;
 
@@ -74,6 +73,7 @@ private:
     float mMaxXDraw = 0;
     float mMaxYDraw = 0;
     float mMaxZDraw = 0;
+    float mProbeRadius = 1.2f;
 
     // Debugging output
     std::string mComputeInformation = "";
@@ -105,7 +105,7 @@ private:
     GLuint mQuery;
 
     // ### CPP implementation of surface atoms detection ###
-    void runCPPImplementation();
+    void runCPPImplementation(bool threaded);
 
     // ### GLSL implementation of surface atoms detection ###
     void runGLSLImplementation();

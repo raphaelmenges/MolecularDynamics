@@ -228,13 +228,13 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     std::cout << "Time for data transfer on GPU: " << std::to_string(timeElapsed) << "ns" << std::endl;
 
     // # Run implementation to extract surface atoms
-    if(mUseGLSLImplementation)
+    if(mInitiallyUseGLSLImplementation)
     {
         runGLSLImplementation();
     }
     else
     {
-        runCPPImplementation();
+        runCPPImplementation(true);
     }
 
     // Output count
@@ -503,7 +503,7 @@ void PerfectSurfaceDetection::resetAtomicCounter(GLuint atomicCounter) const
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
 }
 
-void PerfectSurfaceDetection::runCPPImplementation()
+void PerfectSurfaceDetection::runCPPImplementation(bool threaded)
 {
     std::cout << "CPP implementation used!" << std::endl;
 
@@ -519,66 +519,74 @@ void PerfectSurfaceDetection::runCPPImplementation()
     std::cout << "*** ALGORITHM OUTPUT START ***" << std::endl;
 
     /*
-    for(int i = 0; i < mAtomCount; i++) // all atoms
-    {
-        cppImplementation.execute(i, mAtomCount, mProbeRadius, mAtomStructs, internalIndices, surfaceIndices);
-    }
+
     */
 
-    // Do it in threads
-    int numThreads = mCPPImplementationThreads;
-    std::vector<std::vector<unsigned int> > internalIndicesSubvectors;
-    std::vector<std::vector<unsigned int> > surfaceIndicesSubvectors;
-    internalIndicesSubvectors.resize(numThreads);
-    surfaceIndicesSubvectors.resize(numThreads);
-    std::vector<std::thread> threads;
-
-    // Lauch threads
-    for(int i = 0; i < numThreads; i++)
+    if(threaded)
     {
-        // Calculate min and max index
-        int count = mAtomCount / numThreads;
-        int offset = count * i;
-        threads.push_back(
-            std::thread([&](
-                int minIndex,
-                int maxIndex,
-                std::vector<unsigned int>& internalIndicesSubvector,
-                std::vector<unsigned int>& surfaceIndicesSubvector)
-            {
-                CPPImplementation threadCppImplementation;
-                for(int a = minIndex; a <= maxIndex; a++)
+        // Do it in threads
+        int numThreads = mCPPImplementationThreads;
+        std::vector<std::vector<unsigned int> > internalIndicesSubvectors;
+        std::vector<std::vector<unsigned int> > surfaceIndicesSubvectors;
+        internalIndicesSubvectors.resize(numThreads);
+        surfaceIndicesSubvectors.resize(numThreads);
+        std::vector<std::thread> threads;
+
+        // Lauch threads
+        for(int i = 0; i < numThreads; i++)
+        {
+            // Calculate min and max index
+            int count = mAtomCount / numThreads;
+            int offset = count * i;
+            threads.push_back(
+                std::thread([&](
+                    int minIndex,
+                    int maxIndex,
+                    std::vector<unsigned int>& internalIndicesSubvector,
+                    std::vector<unsigned int>& surfaceIndicesSubvector)
                 {
-                    threadCppImplementation.execute(
-                        a,
-                        mAtomCount,
-                        mProbeRadius,
-                        mAtomStructs,
-                        internalIndicesSubvector,
-                        surfaceIndicesSubvector);
-                }
-            },
-            offset, // minIndex
-            i == numThreads - 1 ? mAtomCount - 1 : offset+count-1, // maxIndex
-            std::ref(internalIndicesSubvectors[i]), // internal indices
-            std::ref(surfaceIndicesSubvectors[i]))); // external indices
+                    CPPImplementation threadCppImplementation;
+                    for(int a = minIndex; a <= maxIndex; a++)
+                    {
+                        threadCppImplementation.execute(
+                            a,
+                            mAtomCount,
+                            mProbeRadius,
+                            mAtomStructs,
+                            internalIndicesSubvector,
+                            surfaceIndicesSubvector);
+                    }
+                },
+                offset, // minIndex
+                i == numThreads - 1 ? mAtomCount - 1 : offset+count-1, // maxIndex
+                std::ref(internalIndicesSubvectors[i]), // internal indices
+                std::ref(surfaceIndicesSubvectors[i]))); // external indices
+        }
+
+        // Join threads
+        for(int i = 0; i < numThreads; i++)
+        {
+            // Joint thread i
+            threads[i].join();
+
+            // Collect results from it
+            internalIndices.insert(
+                internalIndices.end(),
+                internalIndicesSubvectors[i].begin(),
+                internalIndicesSubvectors[i].end());
+            surfaceIndices.insert(
+                surfaceIndices.end(),
+                surfaceIndicesSubvectors[i].begin(),
+                surfaceIndicesSubvectors[i].end());
+        }
     }
-
-    // Join threads
-    for(int i = 0; i < numThreads; i++)
+    else
     {
-        // Joint thread i
-        threads[i].join();
-
-        // Collect results from it
-        internalIndices.insert(
-            internalIndices.end(),
-            internalIndicesSubvectors[i].begin(),
-            internalIndicesSubvectors[i].end());
-        surfaceIndices.insert(
-            surfaceIndices.end(),
-            surfaceIndicesSubvectors[i].begin(),
-            surfaceIndicesSubvectors[i].end());
+        // Do all atoms in main thread
+        for(int a = 0; a < mAtomCount; a++)
+        {
+            cppImplementation.execute(a, mAtomCount, mProbeRadius, mAtomStructs, internalIndices, surfaceIndices);
+        }
     }
 
     std::cout << "*** ALGORITHM OUTPUT END ***" << std::endl;
@@ -598,7 +606,9 @@ void PerfectSurfaceDetection::runCPPImplementation()
     mSurfaceCount = surfaceIndices.size();
 
     // Update compute information
-    updateComputationInformation("CPU", computationTime);
+    updateComputationInformation(
+        threaded ? "Multi-Core CPU" : "Single-Core CPU",
+        computationTime);
 }
 
 void PerfectSurfaceDetection::runGLSLImplementation()
@@ -712,7 +722,7 @@ void PerfectSurfaceDetection::runGLSLImplementation()
     mSurfaceCount = readAtomicCounter(surfaceCounter);
 
     // Update compute information
-    updateComputationInformation("GPU", computationTime);
+    updateComputationInformation("GPGPU", computationTime);
 
     // TODO: Delete atomic counter
 }
@@ -827,8 +837,10 @@ void PerfectSurfaceDetection::updateGUI()
     if(mShowComputationWindow)
     {
         ImGui::Begin("Computation", NULL, 0);
-        if(ImGui::Button("Compute with GPU")) { runGLSLImplementation(); }
-        if(ImGui::Button("Compute with CPU")) { runCPPImplementation(); }
+        ImGui::SliderFloat("Probe radius", &mProbeRadius, 0.f, 2.f, "%.1f");
+        if(ImGui::Button("Run GPGPU")) { runGLSLImplementation(); }
+        if(ImGui::Button("Run Single-Core CPU")) { runCPPImplementation(false); }
+        if(ImGui::Button("Run Multi-Core CPU")) { runCPPImplementation(true); }
         ImGui::Text(mComputeInformation.c_str());
         ImGui::End();
     }
