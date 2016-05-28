@@ -6,6 +6,7 @@
 
 #include <glm/glm.hpp>
 #include <vector>
+#include <map>
 #include "AtomStruct.h"
 
 class CPPImplementation
@@ -58,6 +59,15 @@ private:
     int cuttingFaceIndicators[neighborsMaxCount]; // Indicator whether cutting face was cut away by other (1 == not cut away)
     int cuttingFaceIndicesCount = 0; // Count of not cut away cutting faces
     int cuttingFaceIndices[neighborsMaxCount]; // Indices of cutting faces which are not cut away by other
+
+    struct OptimziationStruct
+    {
+        float valueUnderSqrt;
+        glm::vec3 linePoint;
+        glm::vec3 lineDir;
+    };
+
+    std::map<int, std::map<int, OptimziationStruct> > optimizationMap; // Map of faces and other faces point to cached values
 };
 
 #endif // CPP_IMPLEMENTATION_H

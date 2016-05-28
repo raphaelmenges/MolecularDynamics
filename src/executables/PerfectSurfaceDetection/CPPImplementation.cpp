@@ -244,6 +244,16 @@ void CPPImplementation::execute(
 
                 // Only interesting case is for zero endpoints, because then there is no cut on atom's sphere
                 notCutEachOther = (valueUnderSQRT < 0);
+
+                // CPP EXLUSIVE
+                if(!notCutEachOther)
+                {
+                    OptimziationStruct s;
+                    s.linePoint = linePoint;
+                    s.lineDir = lineDir;
+                    s.valueUnderSqrt = valueUnderSQRT;
+                    optimizationMap[i][j] = s;
+                }
             }
 
             // ### CHECK WHETHER CUTTING FACE CAN BE FORGOT ###
@@ -317,6 +327,7 @@ void CPPImplementation::execute(
             int otherIndex = cuttingFaceIndices[j];
             glm::vec4 otherFace = cuttingFaces[otherIndex];
 
+            /*
             // Intersection of faces, resulting in line
             glm::vec3 lineDir; glm::vec3 linePoint;
             intersectPlanes(
@@ -328,6 +339,12 @@ void CPPImplementation::execute(
             // Intersection of line with sphere, resulting in two, one or no endpoints
             // https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
             float valueUnderSQRT = underSQRT(linePoint, lineDir, atomCenter, atomExtRadius);
+            */
+
+            // CPP EXLUSIVE
+            float valueUnderSQRT = optimizationMap[i][j].valueUnderSqrt;
+            glm::vec3 linePoint = optimizationMap[i][j].linePoint;
+            glm::vec3 lineDir = optimizationMap[i][j].lineDir;
 
             // Left part of equation
             float left = -(glm::dot(lineDir, (linePoint - atomCenter)));
