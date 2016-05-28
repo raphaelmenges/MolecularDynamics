@@ -84,13 +84,13 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
 
     // # Load protein
 
-    /*
+    // /*
     // Path to protein molecule
     std::vector<std::string> paths;
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
-    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1a19.pdb");
+    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1a19.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1vis.pdb");
-    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/2mp3.pdb");
+    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/2mp3.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/4d2i.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/2AtomsIntersection.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/3AtomsIntersection.pdb");
@@ -116,15 +116,15 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
                 0.01f * mAtomLUT.vdW_radii_picometer.at(
                     pAtom->getElement())));
     }
-    */
+    // */
 
-    // /*
+    /*
     // Simple PDB loader
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Polymerase-of-E-coli-DNA.txt", mProteinMinExtent, mProteinMaxExtent);
     mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Myoglobin.txt", mProteinMinExtent, mProteinMaxExtent);
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Nitrogen-Paracoccus-Cytochrome-C550.txt", mProteinMinExtent, mProteinMaxExtent);
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/8AtomsIntersection.txt", mProteinMinExtent, mProteinMaxExtent);
-    // */
+    */
 
     // Count of atoms
     mAtomCount = mAtomStructs.size();
@@ -732,6 +732,8 @@ void PerfectSurfaceDetection::updateGUI()
     // Window variables
     bool showDebugginWindow = false;
 
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.75f));
+
     // Main menu bar
     if (ImGui::BeginMainMenuBar())
     {
@@ -833,6 +835,9 @@ void PerfectSurfaceDetection::updateGUI()
         ImGui::EndMainMenuBar();
     }
 
+    ImGui::PopStyleColor();
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.2f, 0.2f, 0.2f, 0.75f));
+
     // Computation window
     if(mShowComputationWindow)
     {
@@ -858,6 +863,8 @@ void PerfectSurfaceDetection::updateGUI()
         ImGui::SliderFloat("Max Z", &mMaxZDraw, mProteinMinExtent.z, mProteinMaxExtent.z, "%.1f");
         ImGui::End();
     }
+
+    ImGui::PopStyleColor();
 
     ImGui::Render();
 }
