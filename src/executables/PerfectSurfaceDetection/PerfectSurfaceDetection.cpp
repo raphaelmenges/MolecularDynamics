@@ -559,7 +559,7 @@ void PerfectSurfaceDetection::runCPPImplementation()
                 }
             },
             offset, // minIndex
-            offset+count-1, // maxIndex
+            i == numThreads - 1 ? mAtomCount - 1 : offset+count-1, // maxIndex
             std::ref(internalIndicesSubvectors[i]), // internal indices
             std::ref(surfaceIndicesSubvectors[i]))); // external indices
     }
@@ -694,7 +694,7 @@ void PerfectSurfaceDetection::runGLSLImplementation()
     glBeginQuery(GL_TIME_ELAPSED, mQuery);
 
     // Dispatch
-    glDispatchCompute((mAtomCount / 16) + 1, 1, 1);
+    glDispatchCompute((mAtomCount / 128) + 1, 1, 1);
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
     // Print time for execution
