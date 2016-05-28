@@ -55,6 +55,7 @@ private:
     const float mProbeRadius = 1.2f;
     const bool mUseGLSLImplementation = true;
     const float mCameraSmoothDuration = 1.5f;
+    const int mCPPImplementationThreads = 8;
 
     // Controllable parameters
     bool mRotateCamera = false;

@@ -15,6 +15,8 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#include <thread>
+#include <functional>
 
 // ### Class implementation ###
 
@@ -515,11 +517,70 @@ void PerfectSurfaceDetection::runCPPImplementation()
     // Do it for each atom
     double time = glfwGetTime();
     std::cout << "*** ALGORITHM OUTPUT START ***" << std::endl;
+
+    /*
     for(int i = 0; i < mAtomCount; i++) // all atoms
-    // for(int i = 0; i < 1; i++) // just first atom
     {
         cppImplementation.execute(i, mAtomCount, mProbeRadius, mAtomStructs, internalIndices, surfaceIndices);
     }
+    */
+
+    // Do it in threads
+    int numThreads = mCPPImplementationThreads;
+    std::vector<std::vector<unsigned int> > internalIndicesSubvectors;
+    std::vector<std::vector<unsigned int> > surfaceIndicesSubvectors;
+    internalIndicesSubvectors.resize(numThreads);
+    surfaceIndicesSubvectors.resize(numThreads);
+    std::vector<std::thread> threads;
+
+    // Lauch threads
+    for(int i = 0; i < numThreads; i++)
+    {
+        // Calculate min and max index
+        int count = mAtomCount / numThreads;
+        int offset = count * i;
+        threads.push_back(
+            std::thread([&](
+                int minIndex,
+                int maxIndex,
+                std::vector<unsigned int>& internalIndicesSubvector,
+                std::vector<unsigned int>& surfaceIndicesSubvector)
+            {
+                CPPImplementation threadCppImplementation;
+                for(int a = minIndex; a <= maxIndex; a++)
+                {
+                    threadCppImplementation.execute(
+                        a,
+                        mAtomCount,
+                        mProbeRadius,
+                        mAtomStructs,
+                        internalIndicesSubvector,
+                        surfaceIndicesSubvector);
+                }
+            },
+            offset, // minIndex
+            offset+count-1, // maxIndex
+            std::ref(internalIndicesSubvectors[i]), // internal indices
+            std::ref(surfaceIndicesSubvectors[i]))); // external indices
+    }
+
+    // Join threads
+    for(int i = 0; i < numThreads; i++)
+    {
+        // Joint thread i
+        threads[i].join();
+
+        // Collect results from it
+        internalIndices.insert(
+            internalIndices.end(),
+            internalIndicesSubvectors[i].begin(),
+            internalIndicesSubvectors[i].end());
+        surfaceIndices.insert(
+            surfaceIndices.end(),
+            surfaceIndicesSubvectors[i].begin(),
+            surfaceIndicesSubvectors[i].end());
+    }
+
     std::cout << "*** ALGORITHM OUTPUT END ***" << std::endl;
     float computationTime = (float) (1000.0 * (glfwGetTime() - time));
 
