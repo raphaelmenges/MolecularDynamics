@@ -32,7 +32,9 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // Init ImGui
     ImGui_ImplGlfwGL3_Init(mpWindow, true);
     ImGuiIO& io = ImGui::GetIO();
-    io.Fonts->AddFontDefault();
+    std::string fontpath = std::string(IMGUI_FONTS_PATH) + "/DroidSans.ttf";
+    io.Fonts->AddFontFromFileTTF(fontpath.c_str(), 16);
+    //io.Fonts->AddFontDefault();
 
     // Clear color
     glClearColor(0.f, 0.f, 0.f, 1.f);
@@ -394,8 +396,8 @@ void PerfectSurfaceDetection::renderLoop()
             }
         }
 
-        // GUI rendering
-        renderGUI();
+        // GUI updating
+        updateGUI();
     });
 }
 
@@ -507,7 +509,7 @@ void PerfectSurfaceDetection::runCPPImplementation()
         cppImplementation.execute(i, mAtomCount, mProbeRadius, mAtomStructs, internalIndices, surfaceIndices);
     }
     std::cout << "*** ALGORITHM OUTPUT END ***" << std::endl;
-    std::cout << "Time for execution on CPU: " << std::to_string(1000.0 * (glfwGetTime() - time)) << "ms" << std::endl;
+    float computationTime = (float) (1000.0 * (glfwGetTime() - time));
 
     // Fill output atom indices to image buffers
     glBindBuffer(GL_TEXTURE_BUFFER, mInternalIndicesBuffer);
@@ -521,6 +523,9 @@ void PerfectSurfaceDetection::runCPPImplementation()
     // Fetch count
     mInternalCount = internalIndices.size();
     mSurfaceCount = surfaceIndices.size();
+
+    // Update compute information
+    updateComputationInformation("CPU", computationTime);
 }
 
 void PerfectSurfaceDetection::runGLSLImplementation()
@@ -627,23 +632,26 @@ void PerfectSurfaceDetection::runGLSLImplementation()
         glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT_AVAILABLE, &done);
     }
     glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT, &timeElapsed);
-    std::cout << "Time for execution on GPU: " << std::to_string(timeElapsed) << "ns (= " << std::to_string(timeElapsed / 1000000.f) << "ms)" << std::endl;
+    float computationTime = timeElapsed / 1000000.f;
 
     // Fetch count
     mInternalCount = readAtomicCounter(internalCounter);
     mSurfaceCount = readAtomicCounter(surfaceCounter);
 
+    // Update compute information
+    updateComputationInformation("GPU", computationTime);
+
     // TODO: Delete atomic counter
 }
 
-void PerfectSurfaceDetection::renderGUI()
+void PerfectSurfaceDetection::updateGUI()
 {
+    // Window variables
+    bool showDebugginWindow = false;
+
+    // Main menu bar
     if (ImGui::BeginMainMenuBar())
     {
-        // Styling
-        ImColor col = ImColor(1.0f,0.78f,0.58f,1.0f);
-        ImGui::PushStyleColor(ImGuiCol_TextDisabled, col);
-
         // General menu
         if (ImGui::BeginMenu("Menu"))
         {
@@ -706,6 +714,31 @@ void PerfectSurfaceDetection::renderGUI()
             ImGui::EndMenu();
         }
 
+        // Window menu
+        if (ImGui::BeginMenu("Window"))
+        {
+            // Computation window
+            if(mShowComputationWindow)
+            {
+                if(ImGui::MenuItem("Hide Computation", "", false, true)) { mShowComputationWindow = false; }
+            }
+            else
+            {
+                if(ImGui::MenuItem("Show Computation", "", false, true)) { mShowComputationWindow = true; }
+            }
+
+            // Debugging window
+            if(mShowDebuggingWindow)
+            {
+                if(ImGui::MenuItem("Hide Debugging", "", false, true)) { mShowDebuggingWindow = false; }
+            }
+            else
+            {
+                if(ImGui::MenuItem("Show Debugging", "", false, true)) { mShowDebuggingWindow = true; }
+            }
+            ImGui::EndMenu();
+        }
+
         // Frametime
         float framerate = ImGui::GetIO().Framerate;
         std::stringstream stream;
@@ -713,13 +746,41 @@ void PerfectSurfaceDetection::renderGUI()
         std::string fps = "FPS: " + stream.str();
         ImGui::MenuItem(fps.c_str(), "", false, false);
 
-        // Pop styling
-        ImGui::PopStyleColor();
-
         // End main menu bar
         ImGui::EndMainMenuBar();
     }
+
+    // Computation window
+    if(mShowComputationWindow)
+    {
+        ImGui::Begin("Computation", NULL, 0);
+        if(ImGui::Button("Compute with GPU")) { runGLSLImplementation(); }
+        if(ImGui::Button("Compute with CPU")) { runCPPImplementation(); }
+        ImGui::Text(mComputeInformation.c_str());
+        ImGui::End();
+    }
+
+    // Debugging window
+    if(mShowDebuggingWindow)
+    {
+        ImGui::Begin("Debugging", NULL, 0);
+        ImGui::End();
+    }
+
     ImGui::Render();
+}
+
+void PerfectSurfaceDetection::updateComputationInformation(std::string device, float computationTime)
+{
+    std::stringstream stream;
+    stream <<
+        device << " used" << "\n"
+        << "Probe radius: " + std::to_string(mProbeRadius) << "\n"
+        << "Time: " << computationTime << "ms" << "\n"
+        << "Atom count: " + std::to_string(mAtomCount) << "\n"
+        << "Internal atoms: " + std::to_string(mInternalCount) << "\n"
+        << "Surface atoms: " + std::to_string(mSurfaceCount);
+    mComputeInformation = stream.str();
 }
 
 // ### Main function ###

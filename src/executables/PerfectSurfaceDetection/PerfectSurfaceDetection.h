@@ -65,6 +65,11 @@ private:
     bool mUsePerspectiveCamera = true;
     bool mShowInternal = true;
     bool mShowSurface = true;
+    bool mShowComputationWindow = true;
+    bool mShowDebuggingWindow = true;
+
+    // Debugging output
+    std::string mComputeInformation = "";
 
     // Members
     GLFWwindow* mpWindow;
@@ -98,8 +103,11 @@ private:
     // ### GLSL implementation of surface atoms detection ###
     void runGLSLImplementation();
 
-    // Render GUI
-    void renderGUI();
+    // Update GUI
+    void updateGUI();
+
+    // Update computation information
+    void updateComputationInformation(std::string device, float computationTime);
 
 };
 
