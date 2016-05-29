@@ -518,25 +518,20 @@ void PerfectSurfaceDetection::runCPPImplementation(bool threaded)
     double time = glfwGetTime();
     std::cout << "*** ALGORITHM OUTPUT START ***" << std::endl;
 
-    /*
-
-    */
-
     if(threaded)
     {
         // Do it in threads
-        int numThreads = mCPPImplementationThreads;
         std::vector<std::vector<unsigned int> > internalIndicesSubvectors;
         std::vector<std::vector<unsigned int> > surfaceIndicesSubvectors;
-        internalIndicesSubvectors.resize(numThreads);
-        surfaceIndicesSubvectors.resize(numThreads);
+        internalIndicesSubvectors.resize(mCPPThreads);
+        surfaceIndicesSubvectors.resize(mCPPThreads);
         std::vector<std::thread> threads;
 
         // Lauch threads
-        for(int i = 0; i < numThreads; i++)
+        for(int i = 0; i < mCPPThreads; i++)
         {
             // Calculate min and max index
-            int count = mAtomCount / numThreads;
+            int count = mAtomCount / mCPPThreads;
             int offset = count * i;
             threads.push_back(
                 std::thread([&](
@@ -558,13 +553,13 @@ void PerfectSurfaceDetection::runCPPImplementation(bool threaded)
                     }
                 },
                 offset, // minIndex
-                i == numThreads - 1 ? mAtomCount - 1 : offset+count-1, // maxIndex
+                i == mCPPThreads - 1 ? mAtomCount - 1 : offset+count-1, // maxIndex
                 std::ref(internalIndicesSubvectors[i]), // internal indices
                 std::ref(surfaceIndicesSubvectors[i]))); // external indices
         }
 
         // Join threads
-        for(int i = 0; i < numThreads; i++)
+        for(int i = 0; i < mCPPThreads; i++)
         {
             // Joint thread i
             threads[i].join();
@@ -607,7 +602,7 @@ void PerfectSurfaceDetection::runCPPImplementation(bool threaded)
 
     // Update compute information
     updateComputationInformation(
-        threaded ? "Multi-Core CPU" : "Single-Core CPU",
+        threaded ? ("Multi-Core CPU (" + std::to_string(mCPPThreads) + " Threads)") : "Single-Core CPU",
         computationTime);
 }
 
@@ -846,6 +841,7 @@ void PerfectSurfaceDetection::updateGUI()
         if(ImGui::Button("Run GPGPU")) { runGLSLImplementation(); }
         if(ImGui::Button("Run Single-Core CPU")) { runCPPImplementation(false); }
         if(ImGui::Button("Run Multi-Core CPU")) { runCPPImplementation(true); }
+        ImGui::SliderInt("CPU Cores", &mCPPThreads, 1, 24);
         ImGui::Text(mComputeInformation.c_str());
         ImGui::End();
     }

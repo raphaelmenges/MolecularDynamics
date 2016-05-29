@@ -54,7 +54,6 @@ private:
     // Setup
     const bool mInitiallyUseGLSLImplementation = true;
     const float mCameraSmoothDuration = 1.5f;
-    const int mCPPImplementationThreads = 8;
 
     // Controllable parameters
     bool mRotateCamera = false;
@@ -74,6 +73,7 @@ private:
     float mMaxYDraw = 0;
     float mMaxZDraw = 0;
     float mProbeRadius = 1.2f;
+    int mCPPThreads = 8;
 
     // Debugging output
     std::string mComputeInformation = "";

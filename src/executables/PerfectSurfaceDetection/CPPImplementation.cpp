@@ -61,7 +61,7 @@ float CPPImplementation::underSQRT(
 // ## Function to test whether endpoint is NOT cut away. Called after cutting face list is optimized
 bool CPPImplementation::testEndpoint(glm::vec3 endpoint, int excludeA, int excludeB) const
 {
-    if(logging) { std::cout << "Testing an endpoint: " << endpoint.x << ", " << endpoint.y << ", " << endpoint.z << std::endl; }
+    /* if(logging) { std::cout << "Testing an endpoint: " << endpoint.x << ", " << endpoint.y << ", " << endpoint.z << std::endl; } */
 
     // Iterate over cuttingFaceIndices entries
     for(int i = 0; i < cuttingFaceIndicesCount; i++)
@@ -77,11 +77,11 @@ bool CPPImplementation::testEndpoint(glm::vec3 endpoint, int excludeA, int exclu
             cuttingFaces[index],
             endpoint))
         {
-            if(logging) { std::cout << "Endpoint killed by cutting face" << std::endl; }
+            /* if(logging) { std::cout << "Endpoint killed by cutting face" << std::endl; } */
             return false;
         }
     }
-    if(logging) { std::cout << "Endpoint survived" << std::endl; }
+    /* if(logging) { std::cout << "Endpoint survived" << std::endl; } */
     return true;
 }
 
@@ -101,10 +101,10 @@ void CPPImplementation::execute(
     int atomIndex = executionIndex;
 
     // Check whether in range
-    if(atomIndex >= atomCount) { return; }
+    /* if(atomIndex >= atomCount) { return; } */
 
-    if(logging) { std::cout << std::endl; }
-    if(logging) { std::cout << "### Execution for atom: " << atomIndex << std::endl; }
+    /* if(logging) { std::cout << std::endl; } */
+    /* if(logging) { std::cout << "### Execution for atom: " << atomIndex << std::endl; } */
 
     // When no endpoint was generated at all, atom is surface (value is false then)
     bool endpointGenerated = false;
@@ -114,11 +114,11 @@ void CPPImplementation::execute(
 
     // Own center
     glm::vec3 atomCenter = atoms[atomIndex].center;
-    if(logging) { std::cout << "Atom center: " << atomCenter.x << ", " << atomCenter.y << ", " << atomCenter.z << std::endl; }
+    /* if(logging) { std::cout << "Atom center: " << atomCenter.x << ", " << atomCenter.y << ", " << atomCenter.z << std::endl; } */
 
     // Own extended radius
     float atomExtRadius = atoms[atomIndex].radius + probeRadius;
-    if(logging) { std::cout << "Atom extended radius: " << atomExtRadius << std::endl; }
+    /* if(logging) { std::cout << "Atom extended radius: " << atomExtRadius << std::endl; } */
 
     // ### BUILD UP OF CUTTING FACE LIST ###
 
@@ -167,7 +167,7 @@ void CPPImplementation::execute(
             + ((atomExtRadius * atomExtRadius)
             - (otherAtomExtRadius * otherAtomExtRadius))
             / (2.0 * (atomsDistance * atomsDistance));
-        if(logging) { std::cout << "h: " << h << std::endl; }
+        /* if(logging) { std::cout << "h: " << h << std::endl; } */
 
         // ### CUTTING FACE LIST ###
 
@@ -176,18 +176,18 @@ void CPPImplementation::execute(
         //cuttingFaceRadii[cuttingFaceCount] =
         //    sqrt((atomExtRadius * atomExtRadius)
         //    - (h * h * atomsDistance * atomsDistance));
-        //if(logging) { std::cout << "Cutting face radius: " << cuttingFaceRadii[cuttingFaceCount] << std::endl; }
+        ///* if(logging) { std::cout << "Cutting face radius: " << cuttingFaceRadii[cuttingFaceCount] << std::endl; } */
 
         // Save center of face
         glm::vec3 faceCenter = atomCenter + (h * connection);
         cuttingFaceCenters[cuttingFaceCount] = faceCenter;
-        if(logging) { std::cout << "Cutting face center: " << faceCenter.x << ", " << faceCenter.y << ", " << faceCenter.z << std::endl; }
+        /* if(logging) { std::cout << "Cutting face center: " << faceCenter.x << ", " << faceCenter.y << ", " << faceCenter.z << std::endl; } */
 
         // Save plane equation of face
         glm::vec3 faceNormal = glm::normalize(connection);
         float faceDistance = glm::dot(faceCenter, faceNormal);
         cuttingFaces[cuttingFaceCount] = glm::vec4(faceNormal, faceDistance);
-        if(logging) { std::cout << "Cutting face distance: " << faceDistance << std::endl; }
+        /* if(logging) { std::cout << "Cutting face distance: " << faceDistance << std::endl; } */
 
         // Initialize cutting face indicator with: 1 == was not cut away (yet)
         cuttingFaceIndicators[cuttingFaceCount] = 1;
@@ -210,7 +210,7 @@ void CPPImplementation::execute(
         // Test every cutting face for intersection line with other
         for(int j = i+1; j < cuttingFaceCount; j++)
         {
-            if(logging) { std::cout << "Testing cutting faces: " << i << ", " << j << std::endl; }
+            /* if(logging) { std::cout << "Testing cutting faces: " << i << ", " << j << std::endl; } */
 
             // Already cut away
             if((cuttingFaceIndicators[i] == 0) || (cuttingFaceIndicators[j] == 0)) { continue; }
@@ -233,14 +233,14 @@ void CPPImplementation::execute(
                     linePoint,
                     lineDir);
 
-                if(logging) { std::cout << "Cutting faces " << i << " and " << j << " do intersect" << std::endl; }
-                if(logging) { std::cout << "Line point: " << linePoint.x << ", " << linePoint.y << ", " << linePoint.z << std::endl; }
-                if(logging) { std::cout << "Line direction: " << lineDir.x << ", " << lineDir.y << ", " << lineDir.z << std::endl; }
+                /* if(logging) { std::cout << "Cutting faces " << i << " and " << j << " do intersect" << std::endl; } */
+                /* if(logging) { std::cout << "Line point: " << linePoint.x << ", " << linePoint.y << ", " << linePoint.z << std::endl; } */
+                /* if(logging) { std::cout << "Line direction: " << lineDir.x << ", " << lineDir.y << ", " << lineDir.z << std::endl; } */
 
                 // Intersection of line with sphere, resulting in two, one or no endpoints
                 // https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
                 float valueUnderSQRT = underSQRT(linePoint, lineDir, atomCenter, atomExtRadius);
-                if(logging) { std::cout << "Value under SQRT: " << valueUnderSQRT << std::endl; }
+                /* if(logging) { std::cout << "Value under SQRT: " << valueUnderSQRT << std::endl; } */
 
                 // Only interesting case is for zero endpoints, because then there is no cut on atom's sphere
                 notCutEachOther = (valueUnderSQRT < 0);
@@ -251,7 +251,7 @@ void CPPImplementation::execute(
             // Faces do not cut each other on sphere, so they produce not later endpoints. Check them now
             if(notCutEachOther)
             {
-                if(logging) { std::cout << "Following cutting faces do not cut each other on surface: " << i << ", " << j << std::endl; }
+                /* if(logging) { std::cout << "Following cutting faces do not cut each other on surface: " << i << ", " << j << std::endl; } */
 
                 // Connection between faces' center (vector from face to other face)
                 glm::vec3 connection = otherFaceCenter - faceCenter;
@@ -281,7 +281,7 @@ void CPPImplementation::execute(
                 }
             }
 
-            if(logging) { std::cout << std::endl; }
+            /* if(logging) { std::cout << std::endl; } */
         }
     }
 
@@ -300,7 +300,7 @@ void CPPImplementation::execute(
         }
     }
 
-    if(logging) { std::cout << "Cutting face count: " << cuttingFaceCount << ". After optimization: " << cuttingFaceIndicesCount << std::endl; }
+    /* if(logging) { std::cout << "Cutting face count: " << cuttingFaceCount << ". After optimization: " << cuttingFaceIndicesCount << std::endl; } */
 
     // ### GO OVER OPTIMIZED CUTTING FACE LIST AND TEST ENDPOINTS ###
 

@@ -47,7 +47,7 @@ private:
 
     // Members
     static const int neighborsMaxCount = 200;
-    static const bool logging = false;
+    static const bool logging = false; // one has to remove /* */ before activating logging
 
     // All cutting faces, also those who gets cut away by others
     int cuttingFaceCount = 0;
