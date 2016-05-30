@@ -745,11 +745,11 @@ void PerfectSurfaceDetection::updateGUI()
             // Impostors
             if(mRenderImpostor)
             {
-                if(ImGui::MenuItem("Show Points", "P", false, true)) { mRenderImpostor = false; }
+                if(ImGui::MenuItem("Show Atom Points", "P", false, true)) { mRenderImpostor = false; }
             }
             else
             {
-                if(ImGui::MenuItem("Show Impostor", "P", false, true)) { mRenderImpostor = true; }
+                if(ImGui::MenuItem("Show Atom Impostor", "P", false, true)) { mRenderImpostor = true; }
             }
 
             // Camera
