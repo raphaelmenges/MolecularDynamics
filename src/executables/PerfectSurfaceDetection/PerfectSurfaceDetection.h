@@ -57,6 +57,8 @@ private:
     // Setup
     const bool mInitiallyUseGLSLImplementation = true;
     const float mCameraSmoothDuration = 1.5f;
+    const float mAtomPointSize = 15.f;
+    const float mSamplePointSize = 2.f;
 
     // Controllable parameters
     bool mRotateCamera = false;
@@ -77,6 +79,8 @@ private:
     float mMaxZDraw = 0;
     float mProbeRadius = 1.2f;
     int mCPPThreads = 8;
+    int mSurfaceTestAtomSampleCount = 20;
+    bool mShowSamplePoint = true;
 
     // Debugging output
     std::string mComputeInformation = "";
@@ -112,7 +116,6 @@ private:
     GLuint mSurfaceTestVAO;
     std::unique_ptr<ShaderProgram> mupSurfaceTestProgram;
     int mSurfaceTestSampleCount = 0;
-
 
     // ### CPP implementation of surface atoms detection ###
     void runCPPImplementation(bool threaded);
