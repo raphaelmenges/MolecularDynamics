@@ -20,8 +20,6 @@ layout(std430, binding = 0) restrict readonly buffer AtomBuffer
 layout(binding = 1, r32ui) readonly restrict uniform uimageBuffer Indices;
 
 // Uniforms
-uniform mat4 projection;
-uniform mat4 view;
 uniform int selectedIndex;
 uniform vec3 color;
 

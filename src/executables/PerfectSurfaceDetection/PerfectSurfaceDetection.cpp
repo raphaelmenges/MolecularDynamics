@@ -84,18 +84,18 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
 
     // # Load protein
 
-    /*
+    // /*
     // Path to protein molecule
     std::vector<std::string> paths;
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
-    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1a19.pdb");
+    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1a19.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1vis.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/2mp3.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/4d2i.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/2AtomsIntersection.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/3AtomsIntersection.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/7AtomsIntersection.pdb");
-    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/8AtomsIntersection.pdb");
+    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/8AtomsIntersection.pdb");
 
     // Load protein
     MdTrajWrapper mdwrap;
@@ -116,15 +116,15 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
                 0.01f * mAtomLUT.vdW_radii_picometer.at(
                     pAtom->getElement())));
     }
-    */
+    // */
 
-    // /*
+    /*
     // Simple PDB loader
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Polymerase-of-E-coli-DNA.txt", mProteinMinExtent, mProteinMaxExtent);
     mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Myoglobin.txt", mProteinMinExtent, mProteinMaxExtent);
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Nitrogen-Paracoccus-Cytochrome-C550.txt", mProteinMinExtent, mProteinMaxExtent);
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/8AtomsIntersection.txt", mProteinMinExtent, mProteinMaxExtent);
-    // */
+    */
 
     // Count of atoms
     mAtomCount = mAtomStructs.size();
@@ -240,6 +240,11 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // Output count
     std::cout << "Internal atom count: " << mInternalCount << std::endl;
     std::cout << "Surface atom count: " << mSurfaceCount << std::endl;
+
+    // Prepare testing the surface
+    glGenBuffers(1, &mSurfaceTestVBO);
+    glGenVertexArrays(1, &mSurfaceTestVAO);
+    mupSurfaceTestProgram = std::unique_ptr<ShaderProgram>(new ShaderProgram("/PerfectSurfaceDetection/sample.vert", "/PerfectSurfaceDetection/sample.frag"));
 }
 
 PerfectSurfaceDetection::~PerfectSurfaceDetection()
@@ -248,6 +253,10 @@ PerfectSurfaceDetection::~PerfectSurfaceDetection()
     // - ssbo
     // - texture
     // - buffer
+
+    // Testing surface
+    glDeleteVertexArrays(1, &mSurfaceTestVAO);
+    glDeleteBuffers(1, &mSurfaceTestVBO);
 
     // Delete query object
     glDeleteQueries(1, &mQuery);
@@ -325,7 +334,7 @@ void PerfectSurfaceDetection::renderLoop()
             mLightDirection = - glm::normalize(mupCamera->getPosition() - mupCamera->getCenter());
         }
 
-        // Drawing
+        // Drawing of molecule
         if(mRenderImpostor)
         {
             // Prepare impostor drawing
@@ -409,6 +418,14 @@ void PerfectSurfaceDetection::renderLoop()
                 glDrawArrays(GL_POINTS, 0, mSurfaceCount);
             }
         }
+
+        // Drawing of surface test
+        mupSurfaceTestProgram->use();
+        mupSurfaceTestProgram->update("view", mupCamera->getViewMatrix());
+        mupSurfaceTestProgram->update("projection", mupCamera->getProjectionMatrix());
+        glBindVertexArray(mSurfaceTestVAO);
+        glDrawArrays(GL_POINTS, 0, mSurfaceTestSampleCount);
+        glBindVertexArray(0);
 
         // GUI updating
         updateGUI();
@@ -684,7 +701,6 @@ void PerfectSurfaceDetection::runGLSLImplementation()
                        GL_WRITE_ONLY,
                        GL_R32UI);
 
-
     // Print time for setup
     glEndQuery(GL_TIME_ELAPSED);
     GLuint done = 0;
@@ -843,6 +859,7 @@ void PerfectSurfaceDetection::updateGUI()
         if(ImGui::Button("Run Multi-Core CPU")) { runCPPImplementation(true); }
         ImGui::SliderInt("CPU Cores", &mCPPThreads, 1, 24);
         ImGui::Text(mComputeInformation.c_str());
+        if(ImGui::Button("Test Surface")) { testSurface(); }
         ImGui::End();
     }
 
@@ -876,6 +893,67 @@ void PerfectSurfaceDetection::updateComputationInformation(std::string device, f
         << "Internal atoms: " + std::to_string(mInternalCount) << "\n"
         << "Surface atoms: " + std::to_string(mSurfaceCount);
     mComputeInformation = stream.str();
+}
+
+void PerfectSurfaceDetection::testSurface()
+{
+    std::cout << "Test of Surface started" << std::endl;
+
+    // Put seed in GUI
+    std::srand(0);
+
+    // Vector of samples
+    std::vector<glm::vec3> samples;
+
+    // Go over atoms
+    for(const auto& rAtom : mAtomStructs)
+    {
+        // Get position and radius
+        glm::vec3 atomCenter = rAtom.center;
+        float atomRadius = rAtom.radius;
+        float atomExtRadius = atomRadius + mProbeRadius;
+
+        // Do some samples per atom TODO parameter in GUI?
+        for(int i = 0; i < 100; i++)
+        {
+            // Generate samples (http://mathworld.wolfram.com/SpherePointPicking.html)
+            float u = (float)((double)std::rand() / (double)RAND_MAX);
+            float v = (float)((double)std::rand() / (double)RAND_MAX);
+            float theta = 2.f * glm::pi<float>() * u;
+            float phi = glm::acos(2.f * v - 1);
+
+            // Generate sample point
+            glm::vec3 samplePosition(
+                atomExtRadius * glm::sin(phi) * glm::cos(theta),
+                atomExtRadius * glm::cos(phi),
+                atomExtRadius * glm::sin(phi) * glm::sin(theta));
+            samplePosition += atomCenter;
+
+            // Push back to vector
+            samples.push_back(samplePosition);
+        }
+    }
+
+    // Bind vertex array object
+    glBindVertexArray(mSurfaceTestVAO);
+
+    // Fill vertex buffer with vertices
+    glBindBuffer(GL_ARRAY_BUFFER, mSurfaceTestVBO);
+    glBufferData(GL_ARRAY_BUFFER, samples.size() * sizeof(glm::vec3), samples.data(), GL_DYNAMIC_DRAW);
+
+    // Bind it to shader program
+    GLint posAttrib = glGetAttribLocation(mupSurfaceTestProgram->getProgramHandle(), "position");
+    glEnableVertexAttribArray(posAttrib);
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    // Unbind everything
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    // Remember about sample count for drawing
+    mSurfaceTestSampleCount = samples.size();
+
+    std::cout << "Test of Surface completed" << std::endl;
 }
 
 // ### Main function ###
