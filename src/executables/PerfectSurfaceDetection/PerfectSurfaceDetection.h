@@ -36,6 +36,8 @@ public:
     // Render
     void renderLoop();
 
+private:
+
     // Keyboard callback for GLFW
     void keyCallback(int key, int scancode, int action, int mods);
 
@@ -45,24 +47,26 @@ public:
     // Scroll callback for GLFW
     void scrollCallback(double xoffset, double yoffset);
 
-private:
-
     // Atomic counter functions
     GLuint readAtomicCounter(GLuint atomicCounter) const;
     void resetAtomicCounter(GLuint atomicCounter) const;
 
+    // Test for correctness of algorithm
+    void testSurface();
+
     // Setup
     const bool mInitiallyUseGLSLImplementation = true;
     const float mCameraSmoothDuration = 1.5f;
-    const int mCPPImplementationThreads = 8;
+    const float mAtomPointSize = 15.f;
+    const float mSamplePointSize = 2.f;
 
     // Controllable parameters
     bool mRotateCamera = false;
     bool mRotateLight = false;
     int mSelectedAtom = 0;
-    bool mRenderImpostor = false;
+    bool mRenderImpostor = true;
     bool mRenderWithProbeRadius = false;
-    bool mUsePerspectiveCamera = true;
+    bool mUsePerspectiveCamera = false;
     bool mShowInternal = true;
     bool mShowSurface = true;
     bool mShowComputationWindow = true;
@@ -74,6 +78,9 @@ private:
     float mMaxYDraw = 0;
     float mMaxZDraw = 0;
     float mProbeRadius = 1.2f;
+    int mCPPThreads = 8;
+    int mSurfaceTestAtomSampleCount = 20;
+    bool mShowSamplePoint = true;
 
     // Debugging output
     std::string mComputeInformation = "";
@@ -103,6 +110,12 @@ private:
 
     // Queries
     GLuint mQuery;
+
+    // Samples for testing the surface
+    GLuint mSurfaceTestVBO;
+    GLuint mSurfaceTestVAO;
+    std::unique_ptr<ShaderProgram> mupSurfaceTestProgram;
+    int mSurfaceTestSampleCount = 0;
 
     // ### CPP implementation of surface atoms detection ###
     void runCPPImplementation(bool threaded);

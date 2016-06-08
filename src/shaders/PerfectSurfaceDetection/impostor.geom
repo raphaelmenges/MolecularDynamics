@@ -22,7 +22,7 @@ void main()
     position = gl_in[0].gl_Position.xyz;
 
     // Decide whether to render impostor
-    if(all(greaterThan(position, minPosition)) && all(lessThan(position, maxPosition)))
+    if(all(greaterThanEqual(position, minPosition)) && all(lessThanEqual(position, maxPosition)))
     {
         // Set color and radius which is for all vertices the same
         color = vertColor[0];

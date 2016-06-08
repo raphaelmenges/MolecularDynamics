@@ -17,7 +17,7 @@ void main()
     vec3 position = gl_in[0].gl_Position.xyz;
 
     // Decide whether to render point
-    if(all(greaterThan(position, minPosition)) && all(lessThan(position, maxPosition)))
+    if(all(greaterThanEqual(position, minPosition)) && all(lessThanEqual(position, maxPosition)))
     {
         // Color
         color = vertColor[0];
