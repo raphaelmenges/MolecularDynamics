@@ -18,7 +18,7 @@ link_dependency(GLFW3)
 link_dependency(GLM)
 link_dependency(DevIL)
 link_dependency(ASSIMP)
-link_dependency(ZLIB)
+#link_dependency(ZLIB)
 
 # Include externals folder
 include_directories(${EXTERNALS_PATH})
