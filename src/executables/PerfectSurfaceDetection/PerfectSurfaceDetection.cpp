@@ -720,7 +720,7 @@ void PerfectSurfaceDetection::runGLSLImplementation()
     glBeginQuery(GL_TIME_ELAPSED, mQuery);
 
     // Dispatch
-    glDispatchCompute((mAtomCount / 64) + 1, 1, 1);
+    glDispatchCompute((mAtomCount / 4) + 1, 1, 1);
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
     // Print time for execution

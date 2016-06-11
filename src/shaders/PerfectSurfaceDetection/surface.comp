@@ -1,7 +1,7 @@
 #version 430 core
 
 // ## Workgroup layout (just linear of atoms)
-layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = 4, local_size_y = 1, local_size_z = 1) in;
 
 // ## Constant values
 const int neighborsMaxCount = 200;
@@ -10,13 +10,13 @@ const int neighborsMaxCount = 200;
 
 // All cutting faces, also those who gets cut away by others
 int cuttingFaceCount = 0;
-vec4 cuttingFaces[neighborsMaxCount];
-vec3 cuttingFaceCenters[neighborsMaxCount];
+shared vec4 cuttingFaces[neighborsMaxCount * int(gl_WorkGroupSize.x)];
+shared vec3 cuttingFaceCenters[neighborsMaxCount * int(gl_WorkGroupSize.x)];
 
 // Selection of cutting faces which get intersected pairwaise and produce endpoints
-int cuttingFaceIndicators[neighborsMaxCount]; // Indicator whether cutting face was cut away by other (1 == not cut away)
+shared int cuttingFaceIndicators[neighborsMaxCount * int(gl_WorkGroupSize.x)]; // Indicator whether cutting face was cut away by other (1 == not cut away)
 int cuttingFaceIndicesCount = 0; // Count of not cut away cutting faces
-int cuttingFaceIndices[neighborsMaxCount]; // Indices of cutting faces which are not cut away by other
+shared int cuttingFaceIndices[neighborsMaxCount * int(gl_WorkGroupSize.x)]; // Indices of cutting faces which are not cut away by other
 
 // ## Uniforms
 uniform int atomCount;
@@ -42,6 +42,12 @@ layout(binding = 2) uniform atomic_uint SurfaceCount;
 // ## Image buffers with output indices of internal and surface atoms
 layout(binding = 3, r32ui) restrict writeonly uniform uimageBuffer InternalIndices;
 layout(binding = 4, r32ui) restrict writeonly uniform uimageBuffer SurfaceIndices;
+
+// ## Calculate index in shared arrays
+int sidx(int localIndex)
+{
+    return (int(gl_LocalInvocationID.x) * neighborsMaxCount) + localIndex;
+}
 
 // ## Save as internal
 void saveAsInternal()
@@ -120,14 +126,14 @@ bool testEndpoint(vec3 endpoint, int excludeA, int excludeB)
     for(int i = 0; i < cuttingFaceIndicesCount; i++)
     {
         // Index of cutting face
-        int index = cuttingFaceIndices[i];
+        int index = cuttingFaceIndices[sidx(i)];
 
         // Do not test against faces which created endpoint
         if(index == excludeA || index == excludeB) { continue; }
 
         // Test whether endpoint is in halfspace of cut away part
         if(pointInHalfspaceOfPlane(
-            cuttingFaces[index],
+            cuttingFaces[sidx(index)],
             endpoint))
         {
             return false;
@@ -210,15 +216,15 @@ void main()
 
         // Save center of face
         vec3 faceCenter = atomCenter + (h * connection);
-        cuttingFaceCenters[cuttingFaceCount] = faceCenter;
+        cuttingFaceCenters[sidx(cuttingFaceCount)] = faceCenter;
 
         // Save plane equation of face
         vec3 faceNormal = normalize(connection);
         float faceDistance = dot(faceCenter, faceNormal);
-        cuttingFaces[cuttingFaceCount] = vec4(faceNormal, faceDistance);
+        cuttingFaces[sidx(cuttingFaceCount)] = vec4(faceNormal, faceDistance);
 
         // Initialize cutting face indicator with: 1 == was not cut away (yet)
-        cuttingFaceIndicators[cuttingFaceCount] = 1;
+        cuttingFaceIndicators[sidx(cuttingFaceCount)] = 1;
 
         // Increment cutting face list index and break if max count of neighbors reached
         cuttingFaceCount++;
@@ -229,21 +235,21 @@ void main()
     for(int i = 0; i < cuttingFaceCount - 1; i++)
     {
         // Already cut away
-        if(cuttingFaceIndicators[i] == 0) { continue; }
+        if(cuttingFaceIndicators[sidx(i)] == 0) { continue; }
 
         // Values of cutting face
-        vec4 face = cuttingFaces[i];
-        vec3 faceCenter = cuttingFaceCenters[i];
+        vec4 face = cuttingFaces[sidx(i)];
+        vec3 faceCenter = cuttingFaceCenters[sidx(i)];
 
         // Test every cutting face for intersection line with other
         for(int j = i+1; j < cuttingFaceCount; j++)
         {
             // Already cut away
-            if(cuttingFaceIndicators[j] == 0) { continue; }
+            if(cuttingFaceIndicators[sidx(j)] == 0) { continue; }
 
             // Values of other cutting face
-            vec4 otherFace = cuttingFaces[j];
-            vec3 otherFaceCenter = cuttingFaceCenters[j];
+            vec4 otherFace = cuttingFaces[sidx(j)];
+            vec3 otherFaceCenter = cuttingFaceCenters[sidx(j)];
 
             // Check for parallelity, first
             bool notCutEachOther = (1.0 <= abs(dot(face.xyz, otherFace.xyz))); // If already parallel, they do not cut
@@ -283,11 +289,11 @@ void main()
                     // Inclusion
                     if(pointInHalfspaceOfPlane(face, testPoint))
                     {
-                        cuttingFaceIndicators[j] = 0;
+                        cuttingFaceIndicators[sidx(j)] = 0;
                     }
                     else
                     {
-                        cuttingFaceIndicators[i] = 0;
+                        cuttingFaceIndicators[sidx(i)] = 0;
                     }
                 }
                 else
@@ -307,10 +313,10 @@ void main()
     for(int i = 0; i < cuttingFaceCount; i++)
     {
         // Check whether cutting face is still there after preprocessing
-        if(cuttingFaceIndicators[i] == 1)
+        if(cuttingFaceIndicators[sidx(i)] == 1)
         {
             // Save index of that cutting face
-            cuttingFaceIndices[cuttingFaceIndicesCount] = i;
+            cuttingFaceIndices[sidx(cuttingFaceIndicesCount)] = i;
 
             // Increase count of those cutting faces
             cuttingFaceIndicesCount++;
@@ -322,15 +328,15 @@ void main()
     for(int i = 0; i < cuttingFaceIndicesCount; i++)
     {
         // Values of cutting face
-        int index = cuttingFaceIndices[i];
-        vec4 face = cuttingFaces[index];
+        int index = cuttingFaceIndices[sidx(i)];
+        vec4 face = cuttingFaces[sidx(index)];
 
         // Test every cutting face for intersection line with other
         for(int j = i+1; j < cuttingFaceIndicesCount; j++)
         {
             // Values of other cutting face
-            int otherIndex = cuttingFaceIndices[j];
-            vec4 otherFace = cuttingFaces[otherIndex];
+            int otherIndex = cuttingFaceIndices[sidx(j)];
+            vec4 otherFace = cuttingFaces[sidx(otherIndex)];
 
             // Intersection of faces, resulting in line
             vec3 lineDir; vec3 linePoint;
