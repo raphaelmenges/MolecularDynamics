@@ -213,7 +213,7 @@ void CPPImplementation::execute(
             /* if(logging) { std::cout << "Testing cutting faces: " << i << ", " << j << std::endl; } */
 
             // Already cut away
-            if((cuttingFaceIndicators[i] == 0) || (cuttingFaceIndicators[j] == 0)) { continue; }
+            if(cuttingFaceIndicators[j] == 0) { continue; }
 
             // Values of other cutting face
             glm::vec4 otherFace = cuttingFaces[j];

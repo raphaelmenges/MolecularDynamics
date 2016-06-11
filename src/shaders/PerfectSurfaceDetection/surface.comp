@@ -239,7 +239,7 @@ void main()
         for(int j = i+1; j < cuttingFaceCount; j++)
         {
             // Already cut away
-            if((cuttingFaceIndicators[i] == 0) || (cuttingFaceIndicators[j] == 0)) { continue; }
+            if(cuttingFaceIndicators[j] == 0) { continue; }
 
             // Values of other cutting face
             vec4 otherFace = cuttingFaces[j];
