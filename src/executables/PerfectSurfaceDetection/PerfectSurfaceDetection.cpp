@@ -189,6 +189,18 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
             45.f,
             0.05f));
 
+    // # Create cache
+    struct CacheStruct
+    {
+        glm::vec4 cuttingFace;
+        glm::vec3 cuttingFaceCenter;
+        int cuttingFaceIndicator;
+        glm::vec3 padding;
+        int cuttingFaceIndex;
+    };
+    int maxNeighborCount = 200; // TODO: move somewhere else and sync with shader and cpp implementation...
+    std::vector<CacheStruct> cacheStructs(maxNeighborCount * mAtomCount);
+
     // Create query to measure execution time
     glGenQueries(1, &mQuery);
 
@@ -200,10 +212,16 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // Start query for time measurement
     glBeginQuery(GL_TIME_ELAPSED, mQuery);
 
-    // Fill into SSBO
+    // Fill atoms into SSBO
     glGenBuffers(1, &mAtomsSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, mAtomsSSBO);
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(AtomStruct) * mAtomStructs.size(), mAtomStructs.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    // Fill cache into SSBO (TODO: only necessary for GLSL implementation, so move it there)
+    glGenBuffers(1, &mCacheSSBO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mCacheSSBO);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(CacheStruct) * cacheStructs.size(), cacheStructs.data(), GL_DYNAMIC_COPY);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     // # Prepare uint image to write indices of surface atoms. Lets call it image list in shader for easier understanding
@@ -686,19 +704,22 @@ void PerfectSurfaceDetection::runGLSLImplementation()
     // Bind SSBO with atoms
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mAtomsSSBO);
 
+    // Bind SSBO with cache
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mCacheSSBO);
+
     // Bind atomic counter
-    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, internalCounter);
-    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 2, surfaceCounter);
+    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 2, internalCounter);
+    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 3, surfaceCounter);
 
     // Bind image where indices of surface atoms are written to
-    glBindImageTexture(3,
+    glBindImageTexture(4,
                        mInternalIndicesTexture,
                        0,
                        GL_TRUE,
                        0,
                        GL_WRITE_ONLY,
                        GL_R32UI);
-    glBindImageTexture(4,
+    glBindImageTexture(5,
                        mSurfaceIndicesTexture,
                        0,
                        GL_TRUE,

@@ -101,6 +101,7 @@ private:
 
     // SSBO
     GLuint mAtomsSSBO; // SSBO with struct of position and radius for each atom
+    GLuint mCacheSSBO; // SSBO with struct for caching values in compute shader
 
     // Images
     GLuint mInternalIndicesTexture; // list of indices of internal output atoms encoded in uint32
