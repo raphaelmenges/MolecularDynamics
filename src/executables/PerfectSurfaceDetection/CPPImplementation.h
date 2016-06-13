@@ -24,6 +24,10 @@ private:
 
     void setup();
 
+    bool checkParallelism(
+        glm::vec4 plane,
+        glm::vec4 otherPlane) const;
+
     bool pointInHalfspaceOfPlane(
         glm::vec4 plane,
         glm::vec3 point) const;

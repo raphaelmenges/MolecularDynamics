@@ -63,6 +63,14 @@ void saveAsSurface()
     imageStore(SurfaceIndices, int(idx), uvec4(gl_GlobalInvocationID.x));
 }
 
+// ## Check for parallelism
+bool checkParallelism(
+    vec4 plane,
+    vec4 otherPlane)
+{
+    return (1.0 <= abs(dot(plane.xyz, otherPlane.xyz)));
+}
+
 // ## Determines whether point lies in halfspace of plane direction
 // http://stackoverflow.com/questions/15688232/check-which-side-of-a-plane-points-are-on
 bool pointInHalfspaceOfPlane(
@@ -245,8 +253,8 @@ void main()
             vec4 otherFace = cuttingFaces[j];
             vec3 otherFaceCenter = cuttingFaceCenters[j];
 
-            // Check for parallelity, first
-            bool notCutEachOther = (1.0 <= abs(dot(face.xyz, otherFace.xyz))); // If already parallel, they do not cut
+            // Check for parallelism, first
+            bool notCutEachOther = checkParallelism(face, otherFace); // If already parallel, they do not cut
 
             // Do further checking when not parallel
             if(!notCutEachOther)
@@ -331,6 +339,9 @@ void main()
             // Values of other cutting face
             int otherIndex = cuttingFaceIndices[j];
             vec4 otherFace = cuttingFaces[otherIndex];
+
+            // Check for parallelism
+            if(checkParallelism(face, otherFace)) { continue; }
 
             // Intersection of faces, resulting in line
             vec3 lineDir; vec3 linePoint;

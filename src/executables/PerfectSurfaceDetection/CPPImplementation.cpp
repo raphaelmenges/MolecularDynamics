@@ -8,6 +8,14 @@ void CPPImplementation::setup()
     cuttingFaceIndicesCount = 0;
 }
 
+// ## Check for parallelism
+bool CPPImplementation::checkParallelism(
+    glm::vec4 plane,
+    glm::vec4 otherPlane) const
+{
+    return (1.0 <= glm::abs(glm::dot(glm::vec3(plane.x, plane.y, plane.z), glm::vec3(otherPlane.x, otherPlane.y, otherPlane.z))));
+}
+
 // ## Determines whether point lies in halfspace of plane's normal direction
 // http://stackoverflow.com/questions/15688232/check-which-side-of-a-plane-points-are-on
 bool CPPImplementation::pointInHalfspaceOfPlane(
@@ -219,8 +227,8 @@ void CPPImplementation::execute(
             glm::vec4 otherFace = cuttingFaces[j];
             glm::vec3 otherFaceCenter = cuttingFaceCenters[j];
 
-            // Check for parallelity, first
-            bool notCutEachOther = (1.0 <= glm::abs(glm::dot(glm::vec3(face.x, face.y, face.z), glm::vec3(otherFace.x, otherFace.y, otherFace.z)))); // If already parallel, they do not cut
+            // Check for parallelism, first
+            bool notCutEachOther = checkParallelism(face, otherFace); // If already parallel, they do not cut
 
             // Do further checking when not parallel
             if(!notCutEachOther)
@@ -316,6 +324,9 @@ void CPPImplementation::execute(
             // Values of other cutting face
             int otherIndex = cuttingFaceIndices[j];
             glm::vec4 otherFace = cuttingFaces[otherIndex];
+
+            // Check for parallelism
+            if(checkParallelism(face, otherFace)) { continue; }
 
             // Intersection of faces, resulting in line
             glm::vec3 lineDir; glm::vec3 linePoint;
