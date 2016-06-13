@@ -876,6 +876,7 @@ void PerfectSurfaceDetection::updateGUI()
         ImGui::Text(mComputeInformation.c_str());
         ImGui::SliderInt("Samples", &mSurfaceTestAtomSampleCount, 1, 10000);
         if(ImGui::Button("Test Surface")) { testSurface(); }
+        ImGui::Text(mTestOutput.c_str());
         ImGui::End();
     }
 
@@ -933,6 +934,9 @@ void PerfectSurfaceDetection::testSurface()
     // Vector of samples
     std::vector<glm::vec3> samples;
 
+    // Count cases of failure
+    int failures = 0;
+
     // Go over atoms
     for(int i = 0; i < mAtomStructs.size(); i++)
     {
@@ -972,7 +976,7 @@ void PerfectSurfaceDetection::testSurface()
         glm::vec3 atomCenter = mAtomStructs[i].center;
         float atomExtRadius = mAtomStructs[i].radius + mProbeRadius;
 
-        // Do some samples per atom TODO parameter in GUI?
+        // Do some samples per atom
         for(int j = 0; j < mSurfaceTestAtomSampleCount; j++)
         {
             // Generate samples (http://mathworld.wolfram.com/SpherePointPicking.html)
@@ -1012,9 +1016,15 @@ void PerfectSurfaceDetection::testSurface()
                 // If sample was created by internal atom and is not classified as internal in test, something went terrible wrong
                 if(internalAtom)
                 {
+                    // Sample is not inside any other atom's extended hull but should be
                     std::cout << "Atom " << i << " is proably wrongly classified as internal by algorithm";
+
+                    // Increment failures
+                    failures++;
                 }
             }
+
+            // TODO: test whether one or more samples survive of surface atom (not that important and only indication, no proof)
         }
     }
 
@@ -1036,6 +1046,9 @@ void PerfectSurfaceDetection::testSurface()
 
     // Remember about complete count of samples for drawing
     mSurfaceTestSampleCount = samples.size();
+
+    // Draw output of test to GUI
+    mTestOutput = "Wrong classification as internal for " + std::to_string(failures) + " samples.";
 
     std::cout << "*** SURFACE TEST END ***" << std::endl;
 }

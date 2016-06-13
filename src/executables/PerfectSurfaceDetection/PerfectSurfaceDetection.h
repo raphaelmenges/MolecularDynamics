@@ -84,6 +84,7 @@ private:
 
     // Debugging output
     std::string mComputeInformation = "";
+    std::string mTestOutput = "";
 
     // Members
     GLFWwindow* mpWindow;
