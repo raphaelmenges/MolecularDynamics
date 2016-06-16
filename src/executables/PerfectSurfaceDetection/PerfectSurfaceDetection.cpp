@@ -644,11 +644,11 @@ void PerfectSurfaceDetection::updateGUI()
             // Sample point of surface test
             if(mShowSamplePoint)
             {
-                if(ImGui::MenuItem("Hide Sample Point", "T", false, true)) { mShowSamplePoint = false; }
+                if(ImGui::MenuItem("Hide Sample Points", "T", false, true)) { mShowSamplePoint = false; }
             }
             else
             {
-                if(ImGui::MenuItem("Show Sample Point", "T", false, true)) { mShowSamplePoint = true; }
+                if(ImGui::MenuItem("Show Sample Points", "T", false, true)) { mShowSamplePoint = true; }
             }
             ImGui::EndMenu();
         }
@@ -734,10 +734,11 @@ void PerfectSurfaceDetection::testSurface()
     std::cout << "*** SURFACE TEST START ***" << std::endl;
 
     // Read data back from OpenGL buffers
+    std::vector<GLuint> inputIndices = readTextureBuffer(mInputIndicesBuffer, mInputCount);
     std::vector<GLuint> internalIndices = readTextureBuffer(mInternalIndicesBuffer, mInternalCount);
     std::vector<GLuint> surfaceIndices = readTextureBuffer(mSurfaceIndicesBuffer, mSurfaceCount);
 
-    // Put seed in GUI
+    // TODO: Put seed in GUI
     std::srand(0);
 
     // Vector of samples
@@ -747,8 +748,8 @@ void PerfectSurfaceDetection::testSurface()
     int internalSampleFailures = 0;
     int surfaceAtomsFailures = 0;
 
-    // Go over atoms
-    for(int i = 0; i < mAtomStructs.size(); i++)
+    // Go over atoms (using indices from input indices buffer)
+    for(int i : inputIndices) // using results from algorithm here. Not so good for independend test but necessary for layers
     {
         // Just to see, that something is going on
         std::cout << "Processing Atom: " << i << std::endl;
@@ -808,7 +809,7 @@ void PerfectSurfaceDetection::testSurface()
 
             // Go over all atoms and test, whether sample is inside in at least one
             bool inside = false;
-            for(int k = 0; k < mAtomStructs.size(); k++)
+            for(int k : inputIndices)
             {
                 // Test not against atom that generated sample
                 if(k == i) { continue; };
@@ -970,6 +971,7 @@ void PerfectSurfaceDetection::runCPPImplementation(bool threaded)
     glBindBuffer(0, mSurfaceIndicesBuffer);
 
     // Fetch count
+    mInputCount = mAtomCount;
     mInternalCount = internalIndices.size();
     mSurfaceCount = surfaceIndices.size();
 
@@ -1032,14 +1034,13 @@ void PerfectSurfaceDetection::runGLSLImplementation()
     // # Do it as often as indicated
     for(int i = 0; i <= mLayerRemovalCount; i++)
     {
-        int inputCount = 0;
         if(i == 0)
         {
             // Reset input indices buffer (just set 0..mAtomCount-1);
             resetInputIndicesBuffer();
 
             // All atoms are input
-            inputCount = mAtomCount;
+            mInputCount = mAtomCount;
         }
         else
         {
@@ -1052,7 +1053,7 @@ void PerfectSurfaceDetection::runGLSLImplementation()
             mInternalIndicesBuffer = b;
 
             // Old internal are now input
-            inputCount = (int)readAtomicCounter(internalCounter);
+            mInputCount = (int)readAtomicCounter(internalCounter);
         }
 
         // Reset atomic counter
@@ -1060,7 +1061,7 @@ void PerfectSurfaceDetection::runGLSLImplementation()
         resetAtomicCounter(internalCounter);
 
         // Tell shader about count of input atoms
-        computeProgram.update("inputCount", inputCount);
+        computeProgram.update("inputCount", mInputCount);
 
         // Bind texture as image where input indices are listed
         glBindImageTexture(3,
@@ -1088,7 +1089,7 @@ void PerfectSurfaceDetection::runGLSLImplementation()
                            GL_R32UI);
 
         // Dispatch
-        glDispatchCompute((inputCount / 64) + 1, 1, 1);
+        glDispatchCompute((mInputCount / 64) + 1, 1, 1);
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
     }
 

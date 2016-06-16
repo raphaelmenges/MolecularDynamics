@@ -110,8 +110,9 @@ private:
     glm::vec3 mLightDirection;
     glm::vec3 mProteinMinExtent;
     glm::vec3 mProteinMaxExtent;
-    GLint mInternalCount; // general count of internal atoms
-    GLint mSurfaceCount; // general count of surface atoms
+    GLint mInputCount; // count of input atoms
+    GLint mInternalCount; // count of internal atoms
+    GLint mSurfaceCount; // count of surface atoms
 
     // SSBO
     GLuint mAtomsSSBO; // SSBO with struct of position and radius for each atom
