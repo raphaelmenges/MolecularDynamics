@@ -38,10 +38,15 @@ void main()
     vec3 worldNormal = normalize(relativeWorldPos);
     vec3 worldPos = position + relativeWorldPos;
 
-    // TESTING
+    // TODO / TESTING (Note: one can already discard atoms which are completely hidden in geometry shader
     vec3 testColor = color;
     if(worldPos.x < minPosition.x)
     {
+        worldPos.x = minPosition.x;
+        if(abs(length(worldPos - position)) > radius)
+        {
+            discard;
+        }
         testColor = vec3(0,0,1);
     }
     if(worldPos.x > maxPosition.x)
