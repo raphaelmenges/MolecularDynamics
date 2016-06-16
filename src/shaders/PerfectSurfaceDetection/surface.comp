@@ -19,7 +19,7 @@ int cuttingFaceIndicesCount = 0; // Count of not cut away cutting faces
 int cuttingFaceIndices[neighborsMaxCount]; // Indices of cutting faces which are not cut away by other
 
 // ## Uniforms
-uniform int atomCount;
+uniform int inputCount;
 uniform float probeRadius;
 
 // ## Struct of atom
@@ -39,9 +39,12 @@ layout(std430, binding = 0) readonly restrict buffer AtomBuffer
 layout(binding = 1) uniform atomic_uint InternalCount;
 layout(binding = 2) uniform atomic_uint SurfaceCount;
 
+// ## Image buffer with input indices
+layout(binding = 3, r32ui) restrict readonly uniform uimageBuffer InputIndices;
+
 // ## Image buffers with output indices of internal and surface atoms
-layout(binding = 3, r32ui) restrict writeonly uniform uimageBuffer InternalIndices;
-layout(binding = 4, r32ui) restrict writeonly uniform uimageBuffer SurfaceIndices;
+layout(binding = 4, r32ui) restrict writeonly uniform uimageBuffer InternalIndices;
+layout(binding = 5, r32ui) restrict writeonly uniform uimageBuffer SurfaceIndices;
 
 // ## Save as internal
 void saveAsInternal()
@@ -147,10 +150,13 @@ bool testEndpoint(vec3 endpoint, int excludeA, int excludeB)
 void main()
 {
     // Index
-    int atomIndex = int(gl_GlobalInvocationID.x);
+    int inputIndicesIndex = int(gl_GlobalInvocationID.x); ;
 
     // Check whether in range
-    if(atomIndex >= atomCount) { return; }
+    if(inputIndicesIndex >= inputCount) { return; }
+
+    // Extract index of atom in AtomBuffer
+    int atomIndex = int(imageLoad(InputIndices, inputIndicesIndex));
 
     // When no endpoint was generated at all, atom is surface (value is false then)
     bool endpointGenerated = false;
@@ -169,7 +175,7 @@ void main()
     // ### BUILD UP OF CUTTING FACE LIST ###
 
     // Go over other atoms and build cutting face list
-    for(int i = 0; i < atomCount; i++)
+    for(int i = 0; i < inputCount; i++)
     {
         // Do not cut with itself
         if(i == atomIndex) { continue; }

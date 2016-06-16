@@ -27,7 +27,7 @@ uniform vec3 color;
 void main()
 {
     // Extract position
-    int index = int(imageLoad(Indices,int(gl_VertexID)).x);
+    int index = int(imageLoad(Indices, int(gl_VertexID)).x);
     gl_Position = vec4(atoms[index].center, 1);
 
     // Set color

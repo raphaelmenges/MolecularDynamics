@@ -84,11 +84,11 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
 
     // # Load protein
 
-    /*
+    // /*
     // Path to protein molecule
     std::vector<std::string> paths;
-    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
-    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1a19.pdb");
+    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
+    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1a19.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1vis.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/2mp3.pdb");
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/4d2i.pdb");
@@ -116,15 +116,15 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
                 0.01f * mAtomLUT.vdW_radii_picometer.at(
                     pAtom->getElement())));
     }
-    */
+    // */
 
-    // /*
+    /*
     // Simple PDB loader
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Polymerase-of-E-coli-DNA.txt", mProteinMinExtent, mProteinMaxExtent);
     mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Myoglobin.txt", mProteinMinExtent, mProteinMaxExtent);
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Nitrogen-Paracoccus-Cytochrome-C550.txt", mProteinMinExtent, mProteinMaxExtent);
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/8AtomsIntersection.txt", mProteinMinExtent, mProteinMaxExtent);
-    // */
+    */
 
     // Count of atoms
     mAtomCount = mAtomStructs.size();
@@ -206,16 +206,35 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(AtomStruct) * mAtomStructs.size(), mAtomStructs.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-    // # Prepare uint image to write indices of surface atoms. Lets call it image list in shader for easier understanding
+    // # Prepare buffers
 
     // Buffers
-    glGenBuffers(1, &mInternalIndicesBuffer); // just generate, filled in GLSL or CPP implementatin method
-    glGenBuffers(1, &mSurfaceIndicesBuffer); // just generate, filled in GLSL or CPP implementatin method
+    glGenBuffers(1, &mInputIndicesBuffer);
+    glGenBuffers(1, &mInternalIndicesBuffer);
+    glGenBuffers(1, &mSurfaceIndicesBuffer);
 
     // TODO: understand why buffer to texture binding is necessary in GLSL method and in renderLoop()
     // Texture (which will be bound as image, connected to buffer in renderLoop(), since it seems that is has to be done after buffer fill)
+    glGenTextures(1, &mInputIndicesTexture);
     glGenTextures(1, &mInternalIndicesTexture);
     glGenTextures(1, &mSurfaceIndicesTexture);
+
+    // Intially filling of mInputIndicesBuffer
+    std::vector<GLuint> inputIndices;
+    inputIndices.reserve(mAtomCount);
+    for(uint i = 0; i < mAtomCount; i++) { inputIndices.push_back(i); }
+    glBindBuffer(GL_TEXTURE_BUFFER, mInputIndicesBuffer);
+    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * inputIndices.size(), inputIndices.data(), GL_DYNAMIC_COPY); // Same copy policy as other buffers
+    glBindBuffer(0, mInternalIndicesBuffer);
+
+    // Prepare output buffer
+    glBindBuffer(GL_TEXTURE_BUFFER, mInternalIndicesBuffer);
+    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * mAtomCount, 0, GL_DYNAMIC_COPY); // DYNAMIC_COPY because filled by GPU and read by GPU
+    glBindBuffer(GL_TEXTURE_BUFFER, 0);
+
+    glBindBuffer(GL_TEXTURE_BUFFER, mSurfaceIndicesBuffer);
+    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * mAtomCount, 0, GL_DYNAMIC_COPY); // DYNAMIC_COPY because filled by GPU and read by GPU
+    glBindBuffer(GL_TEXTURE_BUFFER, 0);
 
     // Print time for data transfer
     glEndQuery(GL_TIME_ELAPSED);
@@ -648,16 +667,11 @@ void PerfectSurfaceDetection::runGLSLImplementation()
     glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), NULL, GL_DYNAMIC_DRAW);
     resetAtomicCounter(surfaceCounter);
 
-    // # Prepare output buffer
-    glBindBuffer(GL_TEXTURE_BUFFER, mInternalIndicesBuffer);
-    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * mAtomCount, 0, GL_DYNAMIC_COPY); // DYNAMIC_COPY because filled by GPU and read by GPU
-    glBindBuffer(GL_TEXTURE_BUFFER, 0);
-
-    glBindBuffer(GL_TEXTURE_BUFFER, mSurfaceIndicesBuffer);
-    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * mAtomCount, 0, GL_DYNAMIC_COPY); // DYNAMIC_COPY because filled by GPU and read by GPU
-    glBindBuffer(GL_TEXTURE_BUFFER, 0);
-
     // Bind buffer to texture which is used as image
+    glBindTexture(GL_TEXTURE_BUFFER, mInputIndicesTexture);
+    glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, mInputIndicesBuffer);
+    glBindTexture(GL_TEXTURE_BUFFER, 0);
+
     glBindTexture(GL_TEXTURE_BUFFER, mInternalIndicesTexture);
     glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, mInternalIndicesBuffer);
     glBindTexture(GL_TEXTURE_BUFFER, 0);
@@ -678,7 +692,7 @@ void PerfectSurfaceDetection::runGLSLImplementation()
     computeProgram.use();
 
     // Tell shader about count of atoms
-    computeProgram.update("atomCount", mAtomCount);
+    computeProgram.update("inputCount", mAtomCount);
 
     // Probe radius
     computeProgram.update("probeRadius", mProbeRadius);
@@ -690,15 +704,24 @@ void PerfectSurfaceDetection::runGLSLImplementation()
     glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, internalCounter);
     glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 2, surfaceCounter);
 
-    // Bind image where indices of surface atoms are written to
+    // Bind image where input indices are listed
     glBindImageTexture(3,
+                       mInputIndicesTexture,
+                       0,
+                       GL_TRUE,
+                       0,
+                       GL_READ_ONLY,
+                       GL_R32UI);
+
+    // Bind images where output indices are written to
+    glBindImageTexture(4,
                        mInternalIndicesTexture,
                        0,
                        GL_TRUE,
                        0,
                        GL_WRITE_ONLY,
                        GL_R32UI);
-    glBindImageTexture(4,
+    glBindImageTexture(5,
                        mSurfaceIndicesTexture,
                        0,
                        GL_TRUE,

@@ -104,6 +104,8 @@ private:
     GLuint mAtomsSSBO; // SSBO with struct of position and radius for each atom
 
     // Images
+    GLuint mInputIndicesTexture; // list of indices of input atoms encoded in uint32
+    GLuint mInputIndicesBuffer;
     GLuint mInternalIndicesTexture; // list of indices of internal output atoms encoded in uint32
     GLuint mInternalIndicesBuffer;
     GLuint mSurfaceIndicesTexture; // list of indices of surface output atoms encoded in uint32
