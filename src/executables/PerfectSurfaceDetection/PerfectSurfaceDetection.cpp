@@ -142,12 +142,12 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
         << mProteinMaxExtent.z << std::endl;
 
     // Use protein extend as initial value for min and max draw
-    mMinXDraw = mProteinMinExtent.x;
-    mMinYDraw = mProteinMinExtent.y;
-    mMinZDraw = mProteinMinExtent.z;
-    mMaxXDraw = mProteinMaxExtent.x;
-    mMaxYDraw = mProteinMaxExtent.y;
-    mMaxZDraw = mProteinMaxExtent.z;
+    mMinXDraw = mProteinMinExtent.x + mMinDrawingExtentOffset;
+    mMinYDraw = mProteinMinExtent.y + mMinDrawingExtentOffset;
+    mMinZDraw = mProteinMinExtent.z + mMinDrawingExtentOffset;
+    mMaxXDraw = mProteinMaxExtent.x + mMaxDrawingExtentOffset;
+    mMaxYDraw = mProteinMaxExtent.y + mMaxDrawingExtentOffset;
+    mMaxZDraw = mProteinMaxExtent.z + mMaxDrawingExtentOffset;
 
     /*
     // Test atom radii
@@ -374,9 +374,9 @@ void PerfectSurfaceDetection::renderLoop()
                 glDrawArrays(GL_POINTS, 0, mInternalCount);
             }
 
+            // Draw surface
             if(mShowSurface)
             {
-                // Draw surface
                 glBindImageTexture(
                     1,
                     mSurfaceIndicesTexture,
@@ -715,12 +715,12 @@ void PerfectSurfaceDetection::updateGUI()
     {
         ImGui::Begin("Debugging", NULL, 0);
         ImGui::Text("Min / Max drawing");
-        ImGui::SliderFloat("Min X", &mMinXDraw, mProteinMinExtent.x, mProteinMaxExtent.x, "%.1f");
-        ImGui::SliderFloat("Max X", &mMaxXDraw, mProteinMinExtent.x, mProteinMaxExtent.x, "%.1f");
-        ImGui::SliderFloat("Min Y", &mMinYDraw, mProteinMinExtent.y, mProteinMaxExtent.y, "%.1f");
-        ImGui::SliderFloat("Max Y", &mMaxYDraw, mProteinMinExtent.y, mProteinMaxExtent.y, "%.1f");
-        ImGui::SliderFloat("Min Z", &mMinZDraw, mProteinMinExtent.z, mProteinMaxExtent.z, "%.1f");
-        ImGui::SliderFloat("Max Z", &mMaxZDraw, mProteinMinExtent.z, mProteinMaxExtent.z, "%.1f");
+        ImGui::SliderFloat("Min X", &mMinXDraw, mMinDrawingExtentOffset + mProteinMinExtent.x, mMaxDrawingExtentOffset + mProteinMaxExtent.x, "%.1f");
+        ImGui::SliderFloat("Max X", &mMaxXDraw, mMinDrawingExtentOffset + mProteinMinExtent.x, mMaxDrawingExtentOffset + mProteinMaxExtent.x, "%.1f");
+        ImGui::SliderFloat("Min Y", &mMinYDraw, mMinDrawingExtentOffset + mProteinMinExtent.y, mMaxDrawingExtentOffset + mProteinMaxExtent.y, "%.1f");
+        ImGui::SliderFloat("Max Y", &mMaxYDraw, mMinDrawingExtentOffset + mProteinMinExtent.y, mMaxDrawingExtentOffset + mProteinMaxExtent.y, "%.1f");
+        ImGui::SliderFloat("Min Z", &mMinZDraw, mMinDrawingExtentOffset + mProteinMinExtent.z, mMaxDrawingExtentOffset + mProteinMaxExtent.z, "%.1f");
+        ImGui::SliderFloat("Max Z", &mMaxZDraw, mMinDrawingExtentOffset + mProteinMinExtent.z, mMaxDrawingExtentOffset + mProteinMaxExtent.z, "%.1f");
         ImGui::End();
     }
 

@@ -71,6 +71,8 @@ private:
     const float mCameraSmoothDuration = 1.5f;
     const float mAtomPointSize = 15.f;
     const float mSamplePointSize = 2.f;
+    const float mMinDrawingExtentOffset = -5.f;
+    const float mMaxDrawingExtentOffset = 5.f;
 
     // Controllable parameters
     bool mRotateCamera = false;

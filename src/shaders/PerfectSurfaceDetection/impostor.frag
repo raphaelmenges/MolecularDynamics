@@ -11,6 +11,8 @@ uniform mat4 view;
 uniform mat4 projection;
 uniform vec3 cameraWorldPos;
 uniform vec3 lightDir;
+uniform vec3 minPosition;
+uniform vec3 maxPosition;
 
 void main()
 {
@@ -36,6 +38,17 @@ void main()
     vec3 worldNormal = normalize(relativeWorldPos);
     vec3 worldPos = position + relativeWorldPos;
 
+    // TESTING
+    vec3 testColor = color;
+    if(worldPos.x < minPosition.x)
+    {
+        testColor = vec3(0,0,1);
+    }
+    if(worldPos.x > maxPosition.x)
+    {
+        testColor = vec3(0,1,1);
+    }
+
     // Set depth of pixel by projecting pixel position into clip space
     vec4 projPos = projection * view * vec4(worldPos, 1.0);
     float projDepth = projPos.z / projPos.w;
@@ -53,7 +66,7 @@ void main()
     specular *= 0.5 * lighting;
 
     // Some "ambient" lighting combined with specular
-    vec3 finalColor = mix(color * mix(vec3(0.4, 0.45, 0.5), vec3(1.0, 1.0, 1.0), lighting), vec3(1,1,1), specular);
+    vec3 finalColor = mix(testColor * mix(vec3(0.4, 0.45, 0.5), vec3(1.0, 1.0, 1.0), lighting), vec3(1,1,1), specular);
 
     // Output color
     outColor = vec4(finalColor, 1);
