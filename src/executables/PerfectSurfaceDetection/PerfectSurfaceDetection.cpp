@@ -935,7 +935,8 @@ void PerfectSurfaceDetection::testSurface()
     std::vector<glm::vec3> samples;
 
     // Count cases of failure
-    int failures = 0;
+    int internalSampleFailures = 0;
+    int surfaceAtomsFailures = 0;
 
     // Go over atoms
     for(int i = 0; i < mAtomStructs.size(); i++)
@@ -969,12 +970,16 @@ void PerfectSurfaceDetection::testSurface()
         }
         if(!found)
         {
-            std::cout << "ERROR: Atom " << i << " neither classified as internal nor as surface";
+            std::cout << "ERROR: Atom " << i << " neither classified as internal nor as surface. Algorithm has failed";
+            return;
         }
 
         // Get position and radius
         glm::vec3 atomCenter = mAtomStructs[i].center;
         float atomExtRadius = mAtomStructs[i].radius + mProbeRadius;
+
+        // Count samples which are classified as internal
+        int internalSamples = 0;
 
         // Do some samples per atom
         for(int j = 0; j < mSurfaceTestAtomSampleCount; j++)
@@ -1008,7 +1013,11 @@ void PerfectSurfaceDetection::testSurface()
             }
 
             // Check result
-            if(!inside)
+            if(inside)
+            {
+                internalSamples++;
+            }
+            else
             {
                 // Push back to vector only, if NOT inside
                 samples.push_back(samplePosition);
@@ -1019,12 +1028,16 @@ void PerfectSurfaceDetection::testSurface()
                     // Sample is not inside any other atom's extended hull but should be
                     std::cout << "Atom " << i << " is proably wrongly classified as internal by algorithm";
 
-                    // Increment failures
-                    failures++;
+                    // Increment internalSampleFailures
+                    internalSampleFailures++;
                 }
             }
+        }
 
-            // TODO: test whether one or more samples survive of surface atom (not that important and only indication, no proof)
+        // If all samples are classified internal and the atom was classified as surface by the algorithm something MAY have went wront
+        if((internalSamples == mSurfaceTestAtomSampleCount) && !internalAtom)
+        {
+            surfaceAtomsFailures++;
         }
     }
 
@@ -1048,7 +1061,8 @@ void PerfectSurfaceDetection::testSurface()
     mSurfaceTestSampleCount = samples.size();
 
     // Draw output of test to GUI
-    mTestOutput = "Wrong classification as internal for " + std::to_string(failures) + " samples.";
+    mTestOutput = "Wrong classification as internal for " + std::to_string(internalSampleFailures) + " samples.\n";
+    mTestOutput += "Maybe wrong classification as surface for " + std::to_string(surfaceAtomsFailures) + " atoms.";
 
     std::cout << "*** SURFACE TEST END ***" << std::endl;
 }
