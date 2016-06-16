@@ -84,7 +84,7 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
 
     // # Load protein
 
-    // /*
+    /*
     // Path to protein molecule
     std::vector<std::string> paths;
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
@@ -116,15 +116,15 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
                 0.01f * mAtomLUT.vdW_radii_picometer.at(
                     pAtom->getElement())));
     }
-    // */
+    */
 
-    /*
+    // /*
     // Simple PDB loader
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Polymerase-of-E-coli-DNA.txt", mProteinMinExtent, mProteinMaxExtent);
     mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Myoglobin.txt", mProteinMinExtent, mProteinMaxExtent);
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Nitrogen-Paracoccus-Cytochrome-C550.txt", mProteinMinExtent, mProteinMaxExtent);
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/8AtomsIntersection.txt", mProteinMinExtent, mProteinMaxExtent);
-    */
+    // */
 
     // Count of atoms
     mAtomCount = mAtomStructs.size();
@@ -220,14 +220,9 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     glGenTextures(1, &mSurfaceIndicesTexture);
 
     // Intially filling of mInputIndicesBuffer
-    std::vector<GLuint> inputIndices;
-    inputIndices.reserve(mAtomCount);
-    for(uint i = 0; i < mAtomCount; i++) { inputIndices.push_back(i); }
-    glBindBuffer(GL_TEXTURE_BUFFER, mInputIndicesBuffer);
-    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * inputIndices.size(), inputIndices.data(), GL_DYNAMIC_COPY); // Same copy policy as other buffers
-    glBindBuffer(0, mInternalIndicesBuffer);
+    resetInputIndicesBuffer();
 
-    // Prepare output buffer
+    // Prepare output buffer with maximum of necessary space
     glBindBuffer(GL_TEXTURE_BUFFER, mInternalIndicesBuffer);
     glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * mAtomCount, 0, GL_DYNAMIC_COPY); // DYNAMIC_COPY because filled by GPU and read by GPU
     glBindBuffer(GL_TEXTURE_BUFFER, 0);
@@ -544,226 +539,36 @@ void PerfectSurfaceDetection::resetAtomicCounter(GLuint atomicCounter) const
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
 }
 
-void PerfectSurfaceDetection::runCPPImplementation(bool threaded)
+void PerfectSurfaceDetection::resetInputIndicesBuffer()
 {
-    std::cout << "CPP implementation used!" << std::endl;
-
-    // # Prepare output vectors
-    std::vector<unsigned int> internalIndices;
-    std::vector<unsigned int> surfaceIndices;
-
-    // # Simulate compute shader
-    CPPImplementation cppImplementation;
-
-    // Do it for each atom
-    double time = glfwGetTime();
-    std::cout << "*** ALGORITHM OUTPUT START ***" << std::endl;
-
-    if(threaded)
-    {
-        // Do it in threads
-        std::vector<std::vector<unsigned int> > internalIndicesSubvectors;
-        std::vector<std::vector<unsigned int> > surfaceIndicesSubvectors;
-        internalIndicesSubvectors.resize(mCPPThreads);
-        surfaceIndicesSubvectors.resize(mCPPThreads);
-        std::vector<std::thread> threads;
-
-        // Lauch threads
-        for(int i = 0; i < mCPPThreads; i++)
-        {
-            // Calculate min and max index
-            int count = mAtomCount / mCPPThreads;
-            int offset = count * i;
-            threads.push_back(
-                std::thread([&](
-                    int minIndex,
-                    int maxIndex,
-                    std::vector<unsigned int>& internalIndicesSubvector,
-                    std::vector<unsigned int>& surfaceIndicesSubvector)
-                {
-                    CPPImplementation threadCppImplementation;
-                    for(int a = minIndex; a <= maxIndex; a++)
-                    {
-                        threadCppImplementation.execute(
-                            a,
-                            mAtomCount,
-                            mProbeRadius,
-                            mAtomStructs,
-                            internalIndicesSubvector,
-                            surfaceIndicesSubvector);
-                    }
-                },
-                offset, // minIndex
-                i == mCPPThreads - 1 ? mAtomCount - 1 : offset+count-1, // maxIndex
-                std::ref(internalIndicesSubvectors[i]), // internal indices
-                std::ref(surfaceIndicesSubvectors[i]))); // external indices
-        }
-
-        // Join threads
-        for(int i = 0; i < mCPPThreads; i++)
-        {
-            // Joint thread i
-            threads[i].join();
-
-            // Collect results from it
-            internalIndices.insert(
-                internalIndices.end(),
-                internalIndicesSubvectors[i].begin(),
-                internalIndicesSubvectors[i].end());
-            surfaceIndices.insert(
-                surfaceIndices.end(),
-                surfaceIndicesSubvectors[i].begin(),
-                surfaceIndicesSubvectors[i].end());
-        }
-    }
-    else
-    {
-        // Do all atoms in main thread
-        for(int a = 0; a < mAtomCount; a++)
-        {
-            cppImplementation.execute(a, mAtomCount, mProbeRadius, mAtomStructs, internalIndices, surfaceIndices);
-        }
-    }
-
-    std::cout << "*** ALGORITHM OUTPUT END ***" << std::endl;
-    float computationTime = (float) (1000.0 * (glfwGetTime() - time));
-
-    // Fill output atom indices to image buffers
-    glBindBuffer(GL_TEXTURE_BUFFER, mInternalIndicesBuffer);
-    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * internalIndices.size(), internalIndices.data(), GL_STATIC_DRAW);
+    std::vector<GLuint> inputIndices;
+    inputIndices.reserve(mAtomCount);
+    for(uint i = 0; i < mAtomCount; i++) { inputIndices.push_back(i); }
+    glBindBuffer(GL_TEXTURE_BUFFER, mInputIndicesBuffer);
+    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * inputIndices.size(), inputIndices.data(), GL_DYNAMIC_COPY); // Same copy policy as other buffers
     glBindBuffer(0, mInternalIndicesBuffer);
-
-    glBindBuffer(GL_TEXTURE_BUFFER, mSurfaceIndicesBuffer);
-    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * surfaceIndices.size(), surfaceIndices.data(), GL_STATIC_DRAW);
-    glBindBuffer(0, mSurfaceIndicesBuffer);
-
-    // Fetch count
-    mInternalCount = internalIndices.size();
-    mSurfaceCount = surfaceIndices.size();
-
-    // Update compute information
-    updateComputationInformation(
-        threaded ? ("Multi-Core CPU (" + std::to_string(mCPPThreads) + " Threads)") : "Single-Core CPU",
-        computationTime);
 }
 
-void PerfectSurfaceDetection::runGLSLImplementation()
+std::vector<GLuint> PerfectSurfaceDetection::readTextureBuffer(GLuint buffer, int size) const
 {
-    std::cout << "GLSL implementation used!" << std::endl;
+    std::vector<GLuint> data;
+    data.resize(size);
+    glBindBuffer(GL_TEXTURE_BUFFER, buffer);
+    glGetBufferSubData(GL_TEXTURE_BUFFER, 0, sizeof(GLuint) * size, data.data());
+    return data;
+}
 
-    // # Compile shader
-    ShaderProgram computeProgram(GL_COMPUTE_SHADER, "/PerfectSurfaceDetection/surface.comp");
-
-    // # Prepare atomic counter for writing results to unique position in image
-    GLuint internalCounter;
-    glGenBuffers(1, &internalCounter);
-    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, internalCounter);
-    glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), NULL, GL_DYNAMIC_DRAW);
-    resetAtomicCounter(internalCounter);
-
-    GLuint surfaceCounter;
-    glGenBuffers(1, &surfaceCounter);
-    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, surfaceCounter);
-    glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), NULL, GL_DYNAMIC_DRAW);
-    resetAtomicCounter(surfaceCounter);
-
-    // Bind buffer to texture which is used as image
-    glBindTexture(GL_TEXTURE_BUFFER, mInputIndicesTexture);
-    glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, mInputIndicesBuffer);
-    glBindTexture(GL_TEXTURE_BUFFER, 0);
-
-    glBindTexture(GL_TEXTURE_BUFFER, mInternalIndicesTexture);
-    glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, mInternalIndicesBuffer);
-    glBindTexture(GL_TEXTURE_BUFFER, 0);
-
-    glBindTexture(GL_TEXTURE_BUFFER, mSurfaceIndicesTexture);
-    glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, mSurfaceIndicesBuffer);
-    glBindTexture(GL_TEXTURE_BUFFER, 0);
-
-    // # Execute compute shader to determine surface atoms
-
-    // Variable to measure elapsed time
-    GLuint timeElapsed = 0;
-
-    // Start query for time measurement
-    glBeginQuery(GL_TIME_ELAPSED, mQuery);
-
-    // Use compute shader program
-    computeProgram.use();
-
-    // Tell shader about count of atoms
-    computeProgram.update("inputCount", mAtomCount);
-
-    // Probe radius
-    computeProgram.update("probeRadius", mProbeRadius);
-
-    // Bind SSBO with atoms
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mAtomsSSBO);
-
-    // Bind atomic counter
-    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, internalCounter);
-    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 2, surfaceCounter);
-
-    // Bind image where input indices are listed
-    glBindImageTexture(3,
-                       mInputIndicesTexture,
-                       0,
-                       GL_TRUE,
-                       0,
-                       GL_READ_ONLY,
-                       GL_R32UI);
-
-    // Bind images where output indices are written to
-    glBindImageTexture(4,
-                       mInternalIndicesTexture,
-                       0,
-                       GL_TRUE,
-                       0,
-                       GL_WRITE_ONLY,
-                       GL_R32UI);
-    glBindImageTexture(5,
-                       mSurfaceIndicesTexture,
-                       0,
-                       GL_TRUE,
-                       0,
-                       GL_WRITE_ONLY,
-                       GL_R32UI);
-
-    // Print time for setup
-    glEndQuery(GL_TIME_ELAPSED);
-    GLuint done = 0;
-    while(done == 0)
-    {
-        glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT_AVAILABLE, &done);
-    }
-    glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT, &timeElapsed);
-    std::cout << "Time for setup on GPU: " << std::to_string(timeElapsed) << "ns" << std::endl;
-
-    // Start query for time measurement
-    glBeginQuery(GL_TIME_ELAPSED, mQuery);
-
-    // Dispatch
-    glDispatchCompute((mAtomCount / 64) + 1, 1, 1);
-    glMemoryBarrier(GL_ALL_BARRIER_BITS);
-
-    // Print time for execution
-    glEndQuery(GL_TIME_ELAPSED);
-    done = 0;
-    while(done == 0)
-    {
-        glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT_AVAILABLE, &done);
-    }
-    glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT, &timeElapsed);
-    float computationTime = timeElapsed / 1000000.f;
-
-    // Fetch count
-    mInternalCount = readAtomicCounter(internalCounter);
-    mSurfaceCount = readAtomicCounter(surfaceCounter);
-
-    // Update compute information
-    updateComputationInformation("GPGPU", computationTime);
-
-    // TODO: Delete atomic counter
+void PerfectSurfaceDetection::updateComputationInformation(std::string device, float computationTime)
+{
+    std::stringstream stream;
+    stream <<
+        device << " used" << "\n"
+        << "Probe radius: " + std::to_string(mProbeRadius) << "\n"
+        << "Time: " << computationTime << "ms" << "\n"
+        << "Atom count: " + std::to_string(mAtomCount) << "\n"
+        << "Internal atoms: " + std::to_string(mInternalCount) << "\n"
+        << "Surface atoms: " + std::to_string(mSurfaceCount);
+    mComputeInformation = stream.str();
 }
 
 void PerfectSurfaceDetection::updateGUI()
@@ -892,10 +697,12 @@ void PerfectSurfaceDetection::updateGUI()
     {
         ImGui::Begin("Computation", NULL, 0);
         ImGui::SliderFloat("Probe radius", &mProbeRadius, 0.f, 2.f, "%.1f");
+        ImGui::SliderInt("Layer removal count", &mLayerRemovalCount, 0, 5);
+        ImGui::SliderInt("CPU Cores", &mCPPThreads, 1, 24);
         if(ImGui::Button("Run GPGPU")) { runGLSLImplementation(); }
         if(ImGui::Button("Run Single-Core CPU")) { runCPPImplementation(false); }
         if(ImGui::Button("Run Multi-Core CPU")) { runCPPImplementation(true); }
-        ImGui::SliderInt("CPU Cores", &mCPPThreads, 1, 24);
+
         ImGui::Text(mComputeInformation.c_str());
         ImGui::SliderInt("Samples", &mSurfaceTestAtomSampleCount, 1, 10000);
         if(ImGui::Button("Test Surface")) { testSurface(); }
@@ -922,34 +729,13 @@ void PerfectSurfaceDetection::updateGUI()
     ImGui::Render();
 }
 
-void PerfectSurfaceDetection::updateComputationInformation(std::string device, float computationTime)
-{
-    std::stringstream stream;
-    stream <<
-        device << " used" << "\n"
-        << "Probe radius: " + std::to_string(mProbeRadius) << "\n"
-        << "Time: " << computationTime << "ms" << "\n"
-        << "Atom count: " + std::to_string(mAtomCount) << "\n"
-        << "Internal atoms: " + std::to_string(mInternalCount) << "\n"
-        << "Surface atoms: " + std::to_string(mSurfaceCount);
-    mComputeInformation = stream.str();
-}
-
 void PerfectSurfaceDetection::testSurface()
 {
     std::cout << "*** SURFACE TEST START ***" << std::endl;
 
     // Read data back from OpenGL buffers
-    std::vector<GLuint> internalIndices;
-    internalIndices.resize(mInternalCount);
-    glBindBuffer(GL_TEXTURE_BUFFER, mInternalIndicesBuffer);
-    glGetBufferSubData(GL_TEXTURE_BUFFER, 0, sizeof(GLuint) * mInternalCount, internalIndices.data());
-
-    std::vector<GLuint> surfaceIndices;
-    surfaceIndices.resize(mSurfaceCount);
-    glBindBuffer(GL_TEXTURE_BUFFER, mSurfaceIndicesBuffer);
-    glGetBufferSubData(GL_TEXTURE_BUFFER, 0, sizeof(GLuint) * mSurfaceCount, surfaceIndices.data());
-    glBindBuffer(GL_TEXTURE_BUFFER, 0);
+    std::vector<GLuint> internalIndices = readTextureBuffer(mInternalIndicesBuffer, mInternalCount);
+    std::vector<GLuint> surfaceIndices = readTextureBuffer(mSurfaceIndicesBuffer, mSurfaceCount);
 
     // Put seed in GUI
     std::srand(0);
@@ -1088,6 +874,244 @@ void PerfectSurfaceDetection::testSurface()
     mTestOutput += "Maybe wrong classification as surface for " + std::to_string(surfaceAtomsFailures) + " atoms.";
 
     std::cout << "*** SURFACE TEST END ***" << std::endl;
+}
+
+void PerfectSurfaceDetection::runCPPImplementation(bool threaded)
+{
+    std::cout << "CPP implementation used!" << std::endl;
+
+    // # Prepare output vectors
+    std::vector<unsigned int> internalIndices;
+    std::vector<unsigned int> surfaceIndices;
+
+    // # Simulate compute shader
+    CPPImplementation cppImplementation;
+
+    // Do it for each atom
+    double time = glfwGetTime();
+    std::cout << "*** ALGORITHM OUTPUT START ***" << std::endl;
+
+    if(threaded)
+    {
+        // Do it in threads
+        std::vector<std::vector<unsigned int> > internalIndicesSubvectors;
+        std::vector<std::vector<unsigned int> > surfaceIndicesSubvectors;
+        internalIndicesSubvectors.resize(mCPPThreads);
+        surfaceIndicesSubvectors.resize(mCPPThreads);
+        std::vector<std::thread> threads;
+
+        // Lauch threads
+        for(int i = 0; i < mCPPThreads; i++)
+        {
+            // Calculate min and max index
+            int count = mAtomCount / mCPPThreads;
+            int offset = count * i;
+            threads.push_back(
+                std::thread([&](
+                    int minIndex,
+                    int maxIndex,
+                    std::vector<unsigned int>& internalIndicesSubvector,
+                    std::vector<unsigned int>& surfaceIndicesSubvector)
+                {
+                    CPPImplementation threadCppImplementation;
+                    for(int a = minIndex; a <= maxIndex; a++)
+                    {
+                        threadCppImplementation.execute(
+                            a,
+                            mAtomCount,
+                            mProbeRadius,
+                            mAtomStructs,
+                            internalIndicesSubvector,
+                            surfaceIndicesSubvector);
+                    }
+                },
+                offset, // minIndex
+                i == mCPPThreads - 1 ? mAtomCount - 1 : offset+count-1, // maxIndex
+                std::ref(internalIndicesSubvectors[i]), // internal indices
+                std::ref(surfaceIndicesSubvectors[i]))); // external indices
+        }
+
+        // Join threads
+        for(int i = 0; i < mCPPThreads; i++)
+        {
+            // Joint thread i
+            threads[i].join();
+
+            // Collect results from it
+            internalIndices.insert(
+                internalIndices.end(),
+                internalIndicesSubvectors[i].begin(),
+                internalIndicesSubvectors[i].end());
+            surfaceIndices.insert(
+                surfaceIndices.end(),
+                surfaceIndicesSubvectors[i].begin(),
+                surfaceIndicesSubvectors[i].end());
+        }
+    }
+    else
+    {
+        // Do all atoms in main thread
+        for(int a = 0; a < mAtomCount; a++)
+        {
+            cppImplementation.execute(a, mAtomCount, mProbeRadius, mAtomStructs, internalIndices, surfaceIndices);
+        }
+    }
+
+    std::cout << "*** ALGORITHM OUTPUT END ***" << std::endl;
+    float computationTime = (float) (1000.0 * (glfwGetTime() - time));
+
+    // Fill output atom indices to image buffers
+    glBindBuffer(GL_TEXTURE_BUFFER, mInternalIndicesBuffer);
+    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * internalIndices.size(), internalIndices.data(), GL_STATIC_DRAW);
+    glBindBuffer(0, mInternalIndicesBuffer);
+
+    glBindBuffer(GL_TEXTURE_BUFFER, mSurfaceIndicesBuffer);
+    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * surfaceIndices.size(), surfaceIndices.data(), GL_STATIC_DRAW);
+    glBindBuffer(0, mSurfaceIndicesBuffer);
+
+    // Fetch count
+    mInternalCount = internalIndices.size();
+    mSurfaceCount = surfaceIndices.size();
+
+    // Update compute information
+    updateComputationInformation(
+        threaded ? ("Multi-Core CPU (" + std::to_string(mCPPThreads) + " Threads)") : "Single-Core CPU",
+        computationTime);
+}
+
+void PerfectSurfaceDetection::runGLSLImplementation()
+{
+    std::cout << "GLSL implementation used!" << std::endl;
+
+    // # Compile shader
+    ShaderProgram computeProgram(GL_COMPUTE_SHADER, "/PerfectSurfaceDetection/surface.comp");
+
+    // # Prepare atomic counter for writing results to unique position in image
+    GLuint internalCounter;
+    glGenBuffers(1, &internalCounter);
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, internalCounter);
+    glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), NULL, GL_DYNAMIC_DRAW);
+
+    GLuint surfaceCounter;
+    glGenBuffers(1, &surfaceCounter);
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, surfaceCounter);
+    glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), NULL, GL_DYNAMIC_DRAW);
+
+    // Bind buffer to texture which is used as image
+    glBindTexture(GL_TEXTURE_BUFFER, mInputIndicesTexture);
+    glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, mInputIndicesBuffer);
+    glBindTexture(GL_TEXTURE_BUFFER, 0);
+
+    glBindTexture(GL_TEXTURE_BUFFER, mInternalIndicesTexture);
+    glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, mInternalIndicesBuffer);
+    glBindTexture(GL_TEXTURE_BUFFER, 0);
+
+    glBindTexture(GL_TEXTURE_BUFFER, mSurfaceIndicesTexture);
+    glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, mSurfaceIndicesBuffer);
+    glBindTexture(GL_TEXTURE_BUFFER, 0);
+
+    // Variable to measure elapsed time
+    GLuint timeElapsed = 0;
+
+    // Use compute shader program
+    computeProgram.use();
+
+    // Probe radius
+    computeProgram.update("probeRadius", mProbeRadius);
+
+    // Bind SSBO with atoms
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mAtomsSSBO);
+
+    // Bind atomic counter
+    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, internalCounter);
+    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 2, surfaceCounter);
+
+    // Start query for time measurement
+    glBeginQuery(GL_TIME_ELAPSED, mQuery);
+
+    // # Do it as often as indicated
+    for(int i = 0; i <= mLayerRemovalCount; i++)
+    {
+        int inputCount = 0;
+        if(i == 0)
+        {
+            // Reset input indices buffer (just set 0..mAtomCount-1);
+            resetInputIndicesBuffer();
+
+            // All atoms are input
+            inputCount = mAtomCount;
+        }
+        else
+        {
+            // Swap input and internal indices buffer
+            GLuint a = mInputIndicesTexture;
+            GLuint b = mInputIndicesBuffer;
+            mInputIndicesTexture = mInternalIndicesTexture;
+            mInputIndicesBuffer = mInternalIndicesBuffer;
+            mInternalIndicesTexture = a;
+            mInternalIndicesBuffer = b;
+
+            // Old internal are now input
+            inputCount = (int)readAtomicCounter(internalCounter);
+        }
+
+        // Reset atomic counter
+        resetAtomicCounter(surfaceCounter);
+        resetAtomicCounter(internalCounter);
+
+        // Tell shader about count of input atoms
+        computeProgram.update("inputCount", inputCount);
+
+        // Bind texture as image where input indices are listed
+        glBindImageTexture(3,
+                           mInputIndicesTexture,
+                           0,
+                           GL_TRUE,
+                           0,
+                           GL_READ_ONLY,
+                           GL_R32UI);
+
+        // Bind textures as images where output indices are written to
+        glBindImageTexture(4,
+                           mInternalIndicesTexture,
+                           0,
+                           GL_TRUE,
+                           0,
+                           GL_WRITE_ONLY,
+                           GL_R32UI);
+        glBindImageTexture(5,
+                           mSurfaceIndicesTexture,
+                           0,
+                           GL_TRUE,
+                           0,
+                           GL_WRITE_ONLY,
+                           GL_R32UI);
+
+        // Dispatch
+        glDispatchCompute((inputCount / 64) + 1, 1, 1);
+        glMemoryBarrier(GL_ALL_BARRIER_BITS);
+    }
+
+    // Print time for execution
+    glEndQuery(GL_TIME_ELAPSED);
+    GLuint done = 0;
+    while(done == 0)
+    {
+        glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT_AVAILABLE, &done);
+    }
+    glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT, &timeElapsed);
+    float computationTime = timeElapsed / 1000000.f;
+
+    // Fetch count
+    mInternalCount = readAtomicCounter(internalCounter);
+    mSurfaceCount = readAtomicCounter(surfaceCounter);
+
+    // Update compute information
+    updateComputationInformation("GPGPU", computationTime);
+
+    // Delete atomic counter buffers
+    glDeleteBuffers(1, &internalCounter);
+    glDeleteBuffers(1, &surfaceCounter);
 }
 
 // ### Main function ###

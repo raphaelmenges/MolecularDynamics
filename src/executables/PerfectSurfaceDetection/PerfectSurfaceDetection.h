@@ -51,6 +51,18 @@ private:
     GLuint readAtomicCounter(GLuint atomicCounter) const;
     void resetAtomicCounter(GLuint atomicCounter) const;
 
+    // Read values from texture buffer
+    std::vector<GLuint> readTextureBuffer(GLuint buffer, int size) const;
+
+    // Reset input indices buffer
+    void resetInputIndicesBuffer();
+
+    // Update computation information
+    void updateComputationInformation(std::string device, float computationTime);
+
+    // Update GUI
+    void updateGUI();
+
     // Test for correctness of algorithm
     void testSurface();
 
@@ -81,6 +93,7 @@ private:
     int mCPPThreads = 8;
     int mSurfaceTestAtomSampleCount = 20;
     bool mShowSamplePoint = true;
+    int mLayerRemovalCount = 0;
 
     // Debugging output
     std::string mComputeInformation = "";
@@ -125,12 +138,6 @@ private:
 
     // ### GLSL implementation of surface atoms detection ###
     void runGLSLImplementation();
-
-    // Update GUI
-    void updateGUI();
-
-    // Update computation information
-    void updateComputationInformation(std::string device, float computationTime);
 
 };
 
