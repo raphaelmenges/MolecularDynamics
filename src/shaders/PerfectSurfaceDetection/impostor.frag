@@ -2,7 +2,7 @@
 
 in vec2 uv;
 flat in float radius;
-flat in vec3 position;
+flat in vec3 center;
 flat in vec3 color;
 out vec4 outColor;
 layout (depth_less) out float gl_FragDepth; // Makes optimizations possible
@@ -11,8 +11,7 @@ uniform mat4 view;
 uniform mat4 projection;
 uniform vec3 cameraWorldPos;
 uniform vec3 lightDir;
-uniform vec3 minPosition;
-uniform vec3 maxPosition;
+uniform float cuttingPlane;
 
 void main()
 {
@@ -36,22 +35,24 @@ void main()
     vec3 relativeViewPos = normal * radius;
     vec3 relativeWorldPos = vec3(relativeViewPos.x * cameraRight + relativeViewPos.y * cameraUp + relativeViewPos.z * cameraDepth);
     vec3 worldNormal = normalize(relativeWorldPos);
-    vec3 worldPos = position + relativeWorldPos;
+    vec3 worldPos = center + relativeWorldPos;
 
-    // TODO / TESTING (Note: one can already discard atoms which are completely hidden in geometry shader
-    vec3 testColor = color;
-    if(worldPos.x < minPosition.x)
+    // Cut at given clipping plane (could be optimized to use less ifs...)
+    vec4 viewPos = view * vec4(worldPos, 1);
+    if(-viewPos.z < cuttingPlane)
     {
-        worldPos.x = minPosition.x;
-        if(abs(length(worldPos - position)) > radius)
+        // Check, whether back fragment on sphere is not inside clipping plane
+        vec4 viewCenter = view * vec4(center, 1);
+        if(-((2 * (viewCenter.z - viewPos.z)) + viewCenter.z) >= cuttingPlane)
         {
+            // Change normal, only. Not the depth. Used for intersection
+            worldNormal = normalize(cameraWorldPos - center);
+        }
+        else
+        {
+            // It is also inside clipping plane, so discard it completely since fragment is not used to visualize cutting plane
             discard;
         }
-        testColor = vec3(0,0,1);
-    }
-    if(worldPos.x > maxPosition.x)
-    {
-        testColor = vec3(0,1,1);
     }
 
     // Set depth of pixel by projecting pixel position into clip space
@@ -61,7 +62,7 @@ void main()
 
     // Diffuse lighting (hacked together, not correct)
     vec4 nrmLightDirection = normalize(vec4(lightDir, 0));
-    float lighting = max(0,dot(normal, vec3(view * -nrmLightDirection))); // Do it in view space (therefore is normal here ok)
+    float lighting = max(0,dot(worldNormal, -nrmLightDirection.xyz)); // Do it in view space (therefore is normal here ok)
 
     // Specular lighting (camera pos in view matrix last column is in view coordinates?)
     vec3 reflectionVector = reflect(nrmLightDirection.xyz, worldNormal);
@@ -71,7 +72,7 @@ void main()
     specular *= 0.5 * lighting;
 
     // Some "ambient" lighting combined with specular
-    vec3 finalColor = mix(testColor * mix(vec3(0.4, 0.45, 0.5), vec3(1.0, 1.0, 1.0), lighting), vec3(1,1,1), specular);
+    vec3 finalColor = mix(color * mix(vec3(0.4, 0.45, 0.5), vec3(1.0, 1.0, 1.0), lighting), vec3(1,1,1), specular);
 
     // Output color
     outColor = vec4(finalColor, 1);

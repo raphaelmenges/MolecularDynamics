@@ -8,7 +8,7 @@ in vec3 vertColor[1];
 in float vertRadius[1];
 out vec2 uv;
 flat out float radius;
-flat out vec3 position;
+flat out vec3 center;
 flat out vec3 color;
 
 uniform mat4 projection;
@@ -16,8 +16,8 @@ uniform mat4 view;
 
 void main()
 {
-    // Get position
-    position = gl_in[0].gl_Position.xyz;
+    // Get center
+    center = gl_in[0].gl_Position.xyz;
 
     // Set color and radius which is for all vertices the same
     color = vertColor[0];

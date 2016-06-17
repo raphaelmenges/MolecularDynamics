@@ -141,14 +141,6 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
         << mProteinMaxExtent.y << ", "
         << mProteinMaxExtent.z << std::endl;
 
-    // Use protein extend as initial value for min and max draw
-    mMinXDraw = mProteinMinExtent.x + mMinDrawingExtentOffset;
-    mMinYDraw = mProteinMinExtent.y + mMinDrawingExtentOffset;
-    mMinZDraw = mProteinMinExtent.z + mMinDrawingExtentOffset;
-    mMaxXDraw = mProteinMaxExtent.x + mMaxDrawingExtentOffset;
-    mMaxYDraw = mProteinMaxExtent.y + mMaxDrawingExtentOffset;
-    mMaxZDraw = mProteinMaxExtent.z + mMaxDrawingExtentOffset;
-
     /*
     // Test atom radii
     for(const auto& rAtom : mAtomStructs)
@@ -181,8 +173,8 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     mupCamera = std::unique_ptr<OrbitCamera>(
         new OrbitCamera(
             cameraCenter,
-            90.f,
-            90.f,
+            mCameraDefaultAlpha,
+            mCameraDefaultBeta,
             cameraRadius,
             cameraRadius / 2.f,
             5.f * cameraRadius,
@@ -356,8 +348,7 @@ void PerfectSurfaceDetection::renderLoop()
             impostorProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
             impostorProgram.update("lightDir", mLightDirection);
             impostorProgram.update("selectedIndex", mSelectedAtom);
-            impostorProgram.update("minPosition", glm::vec3(mMinXDraw, mMinYDraw, mMinZDraw));
-            impostorProgram.update("maxPosition", glm::vec3(mMaxXDraw, mMaxYDraw, mMaxZDraw));
+            impostorProgram.update("cuttingPlane", mCuttingPlane);
 
             // Draw internal
             if(mShowInternal)
@@ -399,8 +390,7 @@ void PerfectSurfaceDetection::renderLoop()
             pointProgram.update("view", mupCamera->getViewMatrix());
             pointProgram.update("projection", mupCamera->getProjectionMatrix());
             pointProgram.update("selectedIndex", mSelectedAtom);
-            pointProgram.update("minPosition", glm::vec3(mMinXDraw, mMinYDraw, mMinZDraw));
-            pointProgram.update("maxPosition", glm::vec3(mMaxXDraw, mMaxYDraw, mMaxZDraw));
+            pointProgram.update("cuttingPlane", mCuttingPlane);
 
             // Draw internal
             if(mShowInternal)
@@ -473,7 +463,7 @@ void PerfectSurfaceDetection::keyCallback(int key, int scancode, int action, int
                 std::cout << "Selected atom: " << mSelectedAtom << std::endl;
                 break;
             }
-            case GLFW_KEY_C: { mUsePerspectiveCamera = !mUsePerspectiveCamera; break; }
+            // case GLFW_KEY_C: { mUsePerspectiveCamera = !mUsePerspectiveCamera; break; }
             case GLFW_KEY_I: { mShowInternal = !mShowInternal; break; }
             case GLFW_KEY_S: { mShowSurface = !mShowSurface; break; }
             case GLFW_KEY_T: { mShowSamplePoint = !mShowSamplePoint; break; }
@@ -543,7 +533,7 @@ void PerfectSurfaceDetection::resetInputIndicesBuffer()
 {
     std::vector<GLuint> inputIndices;
     inputIndices.reserve(mAtomCount);
-    for(uint i = 0; i < mAtomCount; i++) { inputIndices.push_back(i); }
+    for(unsigned int i = 0; i < (unsigned int)mAtomCount; i++) { inputIndices.push_back(i); }
     glBindBuffer(GL_TEXTURE_BUFFER, mInputIndicesBuffer);
     glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * inputIndices.size(), inputIndices.data(), GL_DYNAMIC_COPY); // Same copy policy as other buffers
     glBindBuffer(0, mInternalIndicesBuffer);
@@ -573,9 +563,6 @@ void PerfectSurfaceDetection::updateComputationInformation(std::string device, f
 
 void PerfectSurfaceDetection::updateGUI()
 {
-    // Window variables
-    bool showDebugginWindow = false;
-
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.75f));
 
     // Main menu bar
@@ -602,6 +589,7 @@ void PerfectSurfaceDetection::updateGUI()
             }
 
             // Camera
+            /*
             if(mUsePerspectiveCamera)
             {
                 if(ImGui::MenuItem("Orthographic Projection", "C", false, true)) { mUsePerspectiveCamera = false; }
@@ -610,6 +598,7 @@ void PerfectSurfaceDetection::updateGUI()
             {
                 if(ImGui::MenuItem("Perspective Projection", "C", false, true)) { mUsePerspectiveCamera = true; }
             }
+            */
 
             // Internal atoms
             if(mShowInternal)
@@ -666,6 +655,16 @@ void PerfectSurfaceDetection::updateGUI()
                 if(ImGui::MenuItem("Show Computation", "", false, true)) { mShowComputationWindow = true; }
             }
 
+            // Camera window
+            if(mShowCameraWindow)
+            {
+                if(ImGui::MenuItem("Hide Camera", "", false, true)) { mShowCameraWindow = false; }
+            }
+            else
+            {
+                if(ImGui::MenuItem("Show Camera", "", false, true)) { mShowCameraWindow = true; }
+            }
+
             // Debugging window
             if(mShowDebuggingWindow)
             {
@@ -702,11 +701,43 @@ void PerfectSurfaceDetection::updateGUI()
         if(ImGui::Button("Run GPGPU")) { runGLSLImplementation(); }
         if(ImGui::Button("Run Single-Core CPU")) { runCPPImplementation(false); }
         if(ImGui::Button("Run Multi-Core CPU")) { runCPPImplementation(true); }
-
+        ImGui::Text("Layer removal GPU only!");
         ImGui::Text(mComputeInformation.c_str());
         ImGui::SliderInt("Samples", &mSurfaceTestAtomSampleCount, 1, 10000);
+        ImGui::SliderInt("Sample Seed", &mSurfaceTestSeed, 0, 1337);
         if(ImGui::Button("Test Surface")) { testSurface(); }
         ImGui::Text(mTestOutput.c_str());
+        ImGui::End();
+    }
+
+    // Camera window
+    if(mShowCameraWindow)
+    {
+        ImGui::Begin("Camera", NULL, 0);
+        ImGui::SliderFloat("Cutting Plane Offset", &mCuttingPlane, 0.f, 200.f, "%.1f");
+        if(ImGui::Button("X-Axis"))
+        {
+            mupCamera->setAlpha(0);
+            mupCamera->setBeta(90);
+        }
+        ImGui::SameLine();
+        if(ImGui::Button("Y-Axis"))
+        {
+            // Internal, this is not possible. There is some epsilon on beta inside the camera object
+            mupCamera->setAlpha(0);
+            mupCamera->setBeta(0);
+        }
+        ImGui::SameLine();
+        if(ImGui::Button("Z-Axis"))
+        {
+            mupCamera->setAlpha(90.f);
+            mupCamera->setBeta(90.f);
+        }
+        if(ImGui::Button("Reset Camera"))
+        {
+            mupCamera->setAlpha(mCameraDefaultAlpha);
+            mupCamera->setBeta(mCameraDefaultBeta);
+        }
         ImGui::End();
     }
 
@@ -714,13 +745,6 @@ void PerfectSurfaceDetection::updateGUI()
     if(mShowDebuggingWindow)
     {
         ImGui::Begin("Debugging", NULL, 0);
-        ImGui::Text("Min / Max drawing");
-        ImGui::SliderFloat("Min X", &mMinXDraw, mMinDrawingExtentOffset + mProteinMinExtent.x, mMaxDrawingExtentOffset + mProteinMaxExtent.x, "%.1f");
-        ImGui::SliderFloat("Max X", &mMaxXDraw, mMinDrawingExtentOffset + mProteinMinExtent.x, mMaxDrawingExtentOffset + mProteinMaxExtent.x, "%.1f");
-        ImGui::SliderFloat("Min Y", &mMinYDraw, mMinDrawingExtentOffset + mProteinMinExtent.y, mMaxDrawingExtentOffset + mProteinMaxExtent.y, "%.1f");
-        ImGui::SliderFloat("Max Y", &mMaxYDraw, mMinDrawingExtentOffset + mProteinMinExtent.y, mMaxDrawingExtentOffset + mProteinMaxExtent.y, "%.1f");
-        ImGui::SliderFloat("Min Z", &mMinZDraw, mMinDrawingExtentOffset + mProteinMinExtent.z, mMaxDrawingExtentOffset + mProteinMaxExtent.z, "%.1f");
-        ImGui::SliderFloat("Max Z", &mMaxZDraw, mMinDrawingExtentOffset + mProteinMinExtent.z, mMaxDrawingExtentOffset + mProteinMaxExtent.z, "%.1f");
         ImGui::End();
     }
 
@@ -738,8 +762,8 @@ void PerfectSurfaceDetection::testSurface()
     std::vector<GLuint> internalIndices = readTextureBuffer(mInternalIndicesBuffer, mInternalCount);
     std::vector<GLuint> surfaceIndices = readTextureBuffer(mSurfaceIndicesBuffer, mSurfaceCount);
 
-    // TODO: Put seed in GUI
-    std::srand(0);
+    // Seed
+    std::srand(mSurfaceTestSeed);
 
     // Vector of samples
     std::vector<glm::vec3> samples;
@@ -749,7 +773,7 @@ void PerfectSurfaceDetection::testSurface()
     int surfaceAtomsFailures = 0;
 
     // Go over atoms (using indices from input indices buffer)
-    for(int i : inputIndices) // using results from algorithm here. Not so good for independend test but necessary for layers
+    for(unsigned int i : inputIndices) // using results from algorithm here. Not so good for independend test but necessary for layers
     {
         // Just to see, that something is going on
         std::cout << "Processing Atom: " << i << std::endl;
@@ -809,7 +833,7 @@ void PerfectSurfaceDetection::testSurface()
 
             // Go over all atoms and test, whether sample is inside in at least one
             bool inside = false;
-            for(int k : inputIndices)
+            for(unsigned int k : inputIndices)
             {
                 // Test not against atom that generated sample
                 if(k == i) { continue; };
@@ -880,6 +904,10 @@ void PerfectSurfaceDetection::testSurface()
 void PerfectSurfaceDetection::runCPPImplementation(bool threaded)
 {
     std::cout << "CPP implementation used!" << std::endl;
+
+    // Note
+    // No input indices used, just complete molecule is processed.
+    // No support for layer removal.
 
     // # Prepare output vectors
     std::vector<unsigned int> internalIndices;

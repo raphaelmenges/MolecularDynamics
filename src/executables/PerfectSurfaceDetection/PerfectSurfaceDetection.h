@@ -73,6 +73,8 @@ private:
     const float mSamplePointSize = 2.f;
     const float mMinDrawingExtentOffset = -5.f;
     const float mMaxDrawingExtentOffset = 5.f;
+    const float mCameraDefaultAlpha = 90.f;
+    const float mCameraDefaultBeta = 45.f;
 
     // Controllable parameters
     bool mRotateCamera = false;
@@ -80,22 +82,21 @@ private:
     int mSelectedAtom = 0;
     bool mRenderImpostor = true;
     bool mRenderWithProbeRadius = false;
-    bool mUsePerspectiveCamera = false;
+    bool mUsePerspectiveCamera = false; // removed from GUI since both spheres
+                                        // and cut of spheres is only correct
+                                        // for orthographic projection
     bool mShowInternal = true;
     bool mShowSurface = true;
     bool mShowComputationWindow = true;
+    bool mShowCameraWindow = true;
     bool mShowDebuggingWindow = true;
-    float mMinXDraw = 0;
-    float mMinYDraw = 0;
-    float mMinZDraw = 0;
-    float mMaxXDraw = 0;
-    float mMaxYDraw = 0;
-    float mMaxZDraw = 0;
     float mProbeRadius = 1.2f;
     int mCPPThreads = 8;
     int mSurfaceTestAtomSampleCount = 20;
     bool mShowSamplePoint = true;
     int mLayerRemovalCount = 0;
+    float mCuttingPlane = 0.f;
+    int mSurfaceTestSeed = 0;
 
     // Debugging output
     std::string mComputeInformation = "";
