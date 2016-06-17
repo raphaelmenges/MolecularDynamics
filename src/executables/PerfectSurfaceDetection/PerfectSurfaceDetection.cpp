@@ -701,7 +701,7 @@ void PerfectSurfaceDetection::updateGUI()
         if(ImGui::Button("Run GPGPU")) { runGLSLImplementation(); }
         if(ImGui::Button("Run Single-Core CPU")) { runCPPImplementation(false); }
         if(ImGui::Button("Run Multi-Core CPU")) { runCPPImplementation(true); }
-        ImGui::Text("Layer removal GPU only!");
+        ImGui::Text("Layer removal is GPU only!");
         ImGui::Text(mComputeInformation.c_str());
         ImGui::SliderInt("Samples", &mSurfaceTestAtomSampleCount, 1, 10000);
         ImGui::SliderInt("Sample Seed", &mSurfaceTestSeed, 0, 1337);
