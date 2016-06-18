@@ -82,7 +82,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     };
     setScrollCallback(mpWindow, kS);
 
-    // # Load protein
+    // # Load PDB protein
 
     /*
     // Path to protein molecule
@@ -118,13 +118,43 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     }
     */
 
-    // /*
-    // Simple PDB loader
+    /*
+    // Simple PDB loader (provided by scientist who wrote paper where the surface extraction algorithm bases on)
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Polymerase-of-E-coli-DNA.txt", mProteinMinExtent, mProteinMaxExtent);
     mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Myoglobin.txt", mProteinMinExtent, mProteinMaxExtent);
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Nitrogen-Paracoccus-Cytochrome-C550.txt", mProteinMinExtent, mProteinMaxExtent);
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/8AtomsIntersection.txt", mProteinMinExtent, mProteinMaxExtent);
-    // */
+    */
+
+    // TESTING
+
+    // Protein animation loader (PDB and XTC)
+    std::vector<std::string> paths;
+    paths.push_back("/home/raphael/ownCloud/Daten/GIIIA_Native.pdb");
+    // paths.push_back("/home/raphael/ownCloud/Daten/MD_GIIIA_Native_100ns.xtc"); // XTC file is not allowed to be published :(
+
+    // Load protein
+    MdTrajWrapper mdwrap;
+    std::unique_ptr<Protein> upProtein = std::move(mdwrap.load(paths));
+
+    // Get min/max extent of protein
+    upProtein->minMax(); // first, one has to calculate min and max value of protein
+    mProteinMinExtent = upProtein->getMin();
+    mProteinMaxExtent = upProtein->getMax();
+
+    // Vector which is used as data for SSBO and CPP implementation
+    for(Atom const * pAtom : *(upProtein->getAtoms()))
+    {
+        // Push back all atoms (CONVERTING PICOMETER TO ANGSTROM)
+        mAtomStructs.push_back(
+            AtomStruct(
+                pAtom->getPosition(),
+                0.01f * mAtomLUT.vdW_radii_picometer.at(
+                    pAtom->getElement())));
+    }
+
+
+    // END OF TESTING
 
     // Count of atoms
     mAtomCount = mAtomStructs.size();
