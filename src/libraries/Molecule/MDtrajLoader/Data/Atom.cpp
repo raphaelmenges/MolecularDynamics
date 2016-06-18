@@ -53,15 +53,15 @@ float Atom::getZ() {
     return positions_.at(0).z;
 }
 
-float Atom::getXAtFrame(int i) {
+float Atom::getXAtFrame(int i) const {
     return positions_.at(i).x;
 }
 
-float Atom::getYAtFrame(int i) {
+float Atom::getYAtFrame(int i) const {
     return positions_.at(i).y;
 }
 
-float Atom::getZAtFrame(int i) {
+float Atom::getZAtFrame(int i) const {
     return positions_.at(i).z;
 }
 

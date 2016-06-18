@@ -131,7 +131,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     // Protein animation loader (PDB and XTC)
     std::vector<std::string> paths;
     paths.push_back("/home/raphael/ownCloud/Daten/GIIIA_Native.pdb");
-    // paths.push_back("/home/raphael/ownCloud/Daten/MD_GIIIA_Native_100ns.xtc"); // XTC file is not allowed to be published :(
+    paths.push_back("/home/raphael/ownCloud/Daten/MD_GIIIA_Native_100ns.xtc"); // XTC file is not allowed to be published :(
 
     // Load protein
     MdTrajWrapper mdwrap;
@@ -145,10 +145,17 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     // Vector which is used as data for SSBO and CPP implementation
     for(Atom const * pAtom : *(upProtein->getAtoms()))
     {
+        // Decide which frame to extract
+        int frame = (int)(0.0f * (float)(pAtom->getFrameCount()-1));
+        std::cout << pAtom->getFrameCount() << std::endl;
+
         // Push back all atoms (CONVERTING PICOMETER TO ANGSTROM)
         mAtomStructs.push_back(
             AtomStruct(
-                pAtom->getPosition(),
+                glm::vec3(
+                    pAtom->getXAtFrame(frame),
+                    pAtom->getYAtFrame(frame),
+                    pAtom->getZAtFrame(frame)),
                 0.01f * mAtomLUT.vdW_radii_picometer.at(
                     pAtom->getElement())));
     }

@@ -45,37 +45,43 @@ public:
 
     /**
     @brief returns the x position of pdb
-    @param [out] string returns x position of pdb
+    @param [out] float returns x position of pdb
     */
     float getX();
     /**
     @brief returns the y position of pdb
-    @param [out] string returns y position of pdb
+    @param [out] float returns y position of pdb
     */
     float getY();
     /**
     @brief returns the y position of pdb
-    @param [out] string returns y position of pdb
+    @param [out] float returns y position of pdb
     */
     float getZ();
 
     //get atom on frame i
     /**
     @brief returns the x position of the atom on frame i, i = 1 gives frame 1
-    @param [out] string returns x position of atom on frame i
+    @param [out] float returns x position of atom on frame i
     */
-    float getXAtFrame(int i);
+    float getXAtFrame(int i) const;
     //get atom on frame i
     /**
     @brief returns the y position of the atom on frame i, i = 1 gives frame 1
-    @param [out] string returns y position of atom on frame i
+    @param [out] float returns y position of atom on frame i
     */
-    float getYAtFrame(int i);
+    float getYAtFrame(int i) const;
     /**
     @brief returns the z position of the atom on frame i, i = 1 gives frame 1
-    @param [out] string returns z position of atom on frame i
+    @param [out] float returns z position of atom on frame i
     */
-    float getZAtFrame(int i);
+    float getZAtFrame(int i) const;
+
+    /**
+    @brief returns the count of frames
+    @param [out] int returns count of frames
+    */
+    int getFrameCount() const { return positions_.size(); }
 
     /**
     @brief returns the position of the pdb, position [0] is always the pdb position
