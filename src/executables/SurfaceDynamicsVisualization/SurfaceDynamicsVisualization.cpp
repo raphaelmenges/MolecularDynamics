@@ -1,4 +1,4 @@
-#include "PerfectSurfaceDetection.h"
+#include "SurfaceDynamicsVisualization.h"
 
 #include "CPPImplementation.h"
 #include "imgui/imgui.h"
@@ -20,7 +20,7 @@
 
 // ### Class implementation ###
 
-PerfectSurfaceDetection::PerfectSurfaceDetection()
+SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
 {
     // # Setup members
     mSurfaceCount = 0;
@@ -250,10 +250,10 @@ PerfectSurfaceDetection::PerfectSurfaceDetection()
     // Prepare testing the surface
     glGenBuffers(1, &mSurfaceTestVBO);
     glGenVertexArrays(1, &mSurfaceTestVAO);
-    mupSurfaceTestProgram = std::unique_ptr<ShaderProgram>(new ShaderProgram("/PerfectSurfaceDetection/sample.vert", "/PerfectSurfaceDetection/sample.frag"));
+    mupSurfaceTestProgram = std::unique_ptr<ShaderProgram>(new ShaderProgram("/SurfaceDynamicsVisualization/sample.vert", "/SurfaceDynamicsVisualization/sample.frag"));
 }
 
-PerfectSurfaceDetection::~PerfectSurfaceDetection()
+SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
 {
     // TODO: Delete OpenGL stuff
     // - ssbo
@@ -268,7 +268,7 @@ PerfectSurfaceDetection::~PerfectSurfaceDetection()
     glDeleteQueries(1, &mQuery);
 }
 
-void PerfectSurfaceDetection::renderLoop()
+void SurfaceDynamicsVisualization::renderLoop()
 {
     // Setup OpenGL
     glEnable(GL_DEPTH_TEST);
@@ -279,8 +279,8 @@ void PerfectSurfaceDetection::renderLoop()
     float prevCursorX, prevCursorY = 0;
 
     // Prepare shader programs for rendering
-    ShaderProgram pointProgram = ShaderProgram("/PerfectSurfaceDetection/point.vert", "/PerfectSurfaceDetection/point.geom", "/PerfectSurfaceDetection/point.frag");
-    ShaderProgram impostorProgram = ShaderProgram("/PerfectSurfaceDetection/impostor.vert", "/PerfectSurfaceDetection/impostor.geom", "/PerfectSurfaceDetection/impostor.frag");
+    ShaderProgram pointProgram = ShaderProgram("/SurfaceDynamicsVisualization/point.vert", "/SurfaceDynamicsVisualization/point.geom", "/SurfaceDynamicsVisualization/point.frag");
+    ShaderProgram impostorProgram = ShaderProgram("/SurfaceDynamicsVisualization/impostor.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
 
     // Bind SSBO with atoms
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mAtomsSSBO);
@@ -440,7 +440,7 @@ void PerfectSurfaceDetection::renderLoop()
     });
 }
 
-void PerfectSurfaceDetection::keyCallback(int key, int scancode, int action, int mods)
+void SurfaceDynamicsVisualization::keyCallback(int key, int scancode, int action, int mods)
 {
     if (action == GLFW_PRESS)
     {
@@ -471,7 +471,7 @@ void PerfectSurfaceDetection::keyCallback(int key, int scancode, int action, int
     }
 }
 
-void PerfectSurfaceDetection::mouseButtonCallback(int button, int action, int mods)
+void SurfaceDynamicsVisualization::mouseButtonCallback(int button, int action, int mods)
 {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
     {
@@ -491,12 +491,12 @@ void PerfectSurfaceDetection::mouseButtonCallback(int button, int action, int mo
     }
 }
 
-void PerfectSurfaceDetection::scrollCallback(double xoffset, double yoffset)
+void SurfaceDynamicsVisualization::scrollCallback(double xoffset, double yoffset)
 {
     mupCamera->setRadius(mupCamera->getRadius() - 0.5f * (float)yoffset);
 }
 
-GLuint PerfectSurfaceDetection::readAtomicCounter(GLuint atomicCounter) const
+GLuint SurfaceDynamicsVisualization::readAtomicCounter(GLuint atomicCounter) const
 {
     // Read atomic counter
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomicCounter);
@@ -512,7 +512,7 @@ GLuint PerfectSurfaceDetection::readAtomicCounter(GLuint atomicCounter) const
     return mapping[0];
 }
 
-void PerfectSurfaceDetection::resetAtomicCounter(GLuint atomicCounter) const
+void SurfaceDynamicsVisualization::resetAtomicCounter(GLuint atomicCounter) const
 {
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomicCounter);
 
@@ -529,7 +529,7 @@ void PerfectSurfaceDetection::resetAtomicCounter(GLuint atomicCounter) const
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
 }
 
-void PerfectSurfaceDetection::resetInputIndicesBuffer()
+void SurfaceDynamicsVisualization::resetInputIndicesBuffer()
 {
     std::vector<GLuint> inputIndices;
     inputIndices.reserve(mAtomCount);
@@ -539,7 +539,7 @@ void PerfectSurfaceDetection::resetInputIndicesBuffer()
     glBindBuffer(0, mInternalIndicesBuffer);
 }
 
-std::vector<GLuint> PerfectSurfaceDetection::readTextureBuffer(GLuint buffer, int size) const
+std::vector<GLuint> SurfaceDynamicsVisualization::readTextureBuffer(GLuint buffer, int size) const
 {
     std::vector<GLuint> data;
     data.resize(size);
@@ -548,7 +548,7 @@ std::vector<GLuint> PerfectSurfaceDetection::readTextureBuffer(GLuint buffer, in
     return data;
 }
 
-void PerfectSurfaceDetection::updateComputationInformation(std::string device, float computationTime)
+void SurfaceDynamicsVisualization::updateComputationInformation(std::string device, float computationTime)
 {
     std::stringstream stream;
     stream <<
@@ -561,7 +561,7 @@ void PerfectSurfaceDetection::updateComputationInformation(std::string device, f
     mComputeInformation = stream.str();
 }
 
-void PerfectSurfaceDetection::updateGUI()
+void SurfaceDynamicsVisualization::updateGUI()
 {
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.75f));
 
@@ -753,7 +753,7 @@ void PerfectSurfaceDetection::updateGUI()
     ImGui::Render();
 }
 
-void PerfectSurfaceDetection::testSurface()
+void SurfaceDynamicsVisualization::testSurface()
 {
     std::cout << "*** SURFACE TEST START ***" << std::endl;
 
@@ -901,7 +901,7 @@ void PerfectSurfaceDetection::testSurface()
     std::cout << "*** SURFACE TEST END ***" << std::endl;
 }
 
-void PerfectSurfaceDetection::runCPPImplementation(bool threaded)
+void SurfaceDynamicsVisualization::runCPPImplementation(bool threaded)
 {
     std::cout << "CPP implementation used!" << std::endl;
 
@@ -1009,12 +1009,12 @@ void PerfectSurfaceDetection::runCPPImplementation(bool threaded)
         computationTime);
 }
 
-void PerfectSurfaceDetection::runGLSLImplementation()
+void SurfaceDynamicsVisualization::runGLSLImplementation()
 {
     std::cout << "GLSL implementation used!" << std::endl;
 
     // # Compile shader
-    ShaderProgram computeProgram(GL_COMPUTE_SHADER, "/PerfectSurfaceDetection/surface.comp");
+    ShaderProgram computeProgram(GL_COMPUTE_SHADER, "/SurfaceDynamicsVisualization/surface.comp");
 
     // # Prepare atomic counter for writing results to unique position in image
     GLuint internalCounter;
@@ -1147,7 +1147,7 @@ void PerfectSurfaceDetection::runGLSLImplementation()
 
 int main()
 {
-    PerfectSurfaceDetection detection;
+    SurfaceDynamicsVisualization detection;
     detection.renderLoop();
     return 0;
 }

@@ -1,5 +1,5 @@
-#ifndef PERFECT_SURFACE_DETECTION_H
-#define PERFECT_SURFACE_DETECTION_H
+#ifndef SURFACE_DYNAMICS_VISUALIZATION_H
+#define SURFACE_DYNAMICS_VISUALIZATION_H
 
 #include <memory>
 #include <GL/glew.h>
@@ -23,15 +23,15 @@ class Protein;
 class OrbitCamera;
 
 // Class
-class PerfectSurfaceDetection
+class SurfaceDynamicsVisualization
 {
 public:
 
     // Constructor
-    PerfectSurfaceDetection();
+    SurfaceDynamicsVisualization();
 
     // Destructor
-    virtual ~PerfectSurfaceDetection();
+    virtual ~SurfaceDynamicsVisualization();
 
     // Render
     void renderLoop();
@@ -145,4 +145,4 @@ private:
 
 };
 
-#endif // PERFECT_SURFACE_DETECTION_H
+#endif // SURFACE_DYNAMICS_VISUALIZATION_H
