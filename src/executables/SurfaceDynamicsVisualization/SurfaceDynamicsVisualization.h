@@ -4,6 +4,7 @@
 #include <memory>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
 
 #include "ShaderTools/ShaderProgram.h"
 #include "Molecule/MDtrajLoader/Data/AtomLUT.h"
@@ -75,6 +76,9 @@ private:
     const float mMaxDrawingExtentOffset = 5.f;
     const float mCameraDefaultAlpha = 90.f;
     const float mCameraDefaultBeta = 45.f;
+    const glm::vec3 mInternalAtomColor = glm::vec3(0.75f, 0.75f, 0.75f);
+    const glm::vec3 mSurfaceAtomColor = glm::vec3(1.f, 0.25f, 0.f);
+    const glm::vec3 mSamplePointColor = glm::vec3(0.f, 0.5f, 1.f);
 
     // Controllable parameters
     bool mRotateCamera = false;
@@ -97,6 +101,7 @@ private:
     int mLayerRemovalCount = 0;
     float mCuttingPlane = 0.f;
     int mSurfaceTestSeed = 0;
+    bool mShowAxesGizmo = false;
 
     // Debugging output
     std::string mComputeInformation = "";

@@ -181,7 +181,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
             45.f,
             0.05f));
 
-    // Create query to measure execution time
+    // # Create query to measure execution time
     glGenQueries(1, &mQuery);
 
      // Variable to measure elapsed time
@@ -278,9 +278,35 @@ void SurfaceDynamicsVisualization::renderLoop()
     // Cursor
     float prevCursorX, prevCursorY = 0;
 
-    // Prepare shader programs for rendering
-    ShaderProgram pointProgram = ShaderProgram("/SurfaceDynamicsVisualization/point.vert", "/SurfaceDynamicsVisualization/point.geom", "/SurfaceDynamicsVisualization/point.frag");
-    ShaderProgram impostorProgram = ShaderProgram("/SurfaceDynamicsVisualization/impostor.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
+    // # Create gizmo to display coordinate system axes
+    GLuint axisGizmoVBO = 0;
+    GLuint axisGizmoVAO = 0;
+    ShaderProgram axisGizmoProgram("/SurfaceDynamicsVisualization/axis.vert", "/SurfaceDynamicsVisualization/axis.frag");
+
+    // Generate and bind vertex array object
+    glGenVertexArrays(1, &axisGizmoVAO);
+    glBindVertexArray(axisGizmoVAO);
+
+    // Fill vertex buffer with vertices
+    std::vector<glm::vec3> axisVertices;
+    axisVertices.push_back(glm::vec3(0,0,0));
+    axisVertices.push_back(glm::vec3(1,0,0));
+    glGenBuffers(1, &axisGizmoVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, axisGizmoVBO);
+    glBufferData(GL_ARRAY_BUFFER, axisVertices.size() * sizeof(glm::vec3), axisVertices.data(), GL_STATIC_DRAW);
+
+    // Bind it to shader program
+    GLint posAttrib = glGetAttribLocation(axisGizmoProgram.getProgramHandle(), "position");
+    glEnableVertexAttribArray(posAttrib);
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    // Unbind everything
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    // # Prepare shader programs for rendering the protein
+    ShaderProgram pointProgram("/SurfaceDynamicsVisualization/point.vert", "/SurfaceDynamicsVisualization/point.geom", "/SurfaceDynamicsVisualization/point.frag");
+    ShaderProgram impostorProgram("/SurfaceDynamicsVisualization/impostor.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
 
     // Bind SSBO with atoms
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mAtomsSSBO);
@@ -361,7 +387,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                     0,
                     GL_READ_ONLY,
                     GL_R32UI);
-                impostorProgram.update("color", glm::vec3(1.f,1.f,1.f));
+                impostorProgram.update("color", mInternalAtomColor);
                 glDrawArrays(GL_POINTS, 0, mInternalCount);
             }
 
@@ -376,7 +402,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                     0,
                     GL_READ_ONLY,
                     GL_R32UI);
-                impostorProgram.update("color", glm::vec3(1.f,0.f,0.f));
+                impostorProgram.update("color", mSurfaceAtomColor);
                 glDrawArrays(GL_POINTS, 0, mSurfaceCount);
             }
         }
@@ -403,7 +429,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                     0,
                     GL_READ_ONLY,
                     GL_R32UI);
-                pointProgram.update("color", glm::vec3(1.f,1.f,1.f));
+                pointProgram.update("color", mInternalAtomColor);
                 glDrawArrays(GL_POINTS, 0, mInternalCount);
             }
 
@@ -418,7 +444,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                     0,
                     GL_READ_ONLY,
                     GL_R32UI);
-                pointProgram.update("color", glm::vec3(1.f,0.f,0.f));
+                pointProgram.update("color", mSurfaceAtomColor);
                 glDrawArrays(GL_POINTS, 0, mSurfaceCount);
             }
         }
@@ -430,14 +456,54 @@ void SurfaceDynamicsVisualization::renderLoop()
             mupSurfaceTestProgram->use();
             mupSurfaceTestProgram->update("view", mupCamera->getViewMatrix());
             mupSurfaceTestProgram->update("projection", mupCamera->getProjectionMatrix());
+            mupSurfaceTestProgram->update("color", mSamplePointColor);
             glBindVertexArray(mSurfaceTestVAO);
             glDrawArrays(GL_POINTS, 0, mSurfaceTestSampleCount);
             glBindVertexArray(0);
         }
 
+        // Drawing of coordinates system axes
+        if(mShowAxesGizmo)
+        {
+            glDisable(GL_DEPTH_TEST);
+            glBindVertexArray(axisGizmoVAO);
+
+            // General shader setup
+            axisGizmoProgram.use();
+            axisGizmoProgram.update("view", mupCamera->getViewMatrix());
+            axisGizmoProgram.update("projection", mupCamera->getProjectionMatrix());
+
+            // X axis
+            glm::mat4 axisModelMatrix = glm::translate(glm::mat4(1.f), mupCamera->getCenter());
+            axisGizmoProgram.update("model", axisModelMatrix);
+            axisGizmoProgram.update("color", glm::vec3(1.f, 0.f, 0.f));
+            glDrawArrays(GL_LINES, 0, axisVertices.size());
+
+            // Y axis
+            axisModelMatrix = glm::translate(glm::mat4(1.f), mupCamera->getCenter());
+            axisModelMatrix = glm::rotate(axisModelMatrix, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            axisGizmoProgram.update("model", axisModelMatrix);
+            axisGizmoProgram.update("color", glm::vec3(0.f, 1.f, 0.f));
+            glDrawArrays(GL_LINES, 0, axisVertices.size());
+
+            // Z axis
+            axisModelMatrix = glm::translate(glm::mat4(1.f), mupCamera->getCenter());
+            axisModelMatrix = glm::rotate(axisModelMatrix, glm::radians(270.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            axisGizmoProgram.update("model", axisModelMatrix);
+            axisGizmoProgram.update("color", glm::vec3(0.f, 0.f, 1.f));
+            glDrawArrays(GL_LINES, 0, axisVertices.size());
+
+            glBindVertexArray(0);
+            glEnable(GL_DEPTH_TEST);
+        }
+
         // GUI updating
         updateGUI();
     });
+
+    // Delete OpenGL structures
+    glDeleteVertexArrays(1, &axisGizmoVAO);
+    glDeleteBuffers(1, &axisGizmoVBO);
 }
 
 void SurfaceDynamicsVisualization::keyCallback(int key, int scancode, int action, int mods)
@@ -453,20 +519,19 @@ void SurfaceDynamicsVisualization::keyCallback(int key, int scancode, int action
             {
                 mSelectedAtom++;
                 if(mSelectedAtom >= mAtomCount) { mSelectedAtom = 0; }
-                std::cout << "Selected atom: " << mSelectedAtom << std::endl;
                 break;
             }
             case GLFW_KEY_LEFT:
             {
                 mSelectedAtom--;
                 if(mSelectedAtom < 0) { mSelectedAtom = mAtomCount - 1; }
-                std::cout << "Selected atom: " << mSelectedAtom << std::endl;
                 break;
             }
             // case GLFW_KEY_C: { mUsePerspectiveCamera = !mUsePerspectiveCamera; break; }
             case GLFW_KEY_I: { mShowInternal = !mShowInternal; break; }
             case GLFW_KEY_S: { mShowSurface = !mShowSurface; break; }
             case GLFW_KEY_T: { mShowSamplePoint = !mShowSamplePoint; break; }
+            case GLFW_KEY_A: { mShowAxesGizmo = !mShowAxesGizmo; break; }
         }
     }
 }
@@ -639,6 +704,16 @@ void SurfaceDynamicsVisualization::updateGUI()
             {
                 if(ImGui::MenuItem("Show Sample Points", "T", false, true)) { mShowSamplePoint = true; }
             }
+
+            // Axes gizmo
+            if(mShowAxesGizmo)
+            {
+                if(ImGui::MenuItem("Hide Axes Gizmo", "A", false, true)) { mShowAxesGizmo = false; }
+            }
+            else
+            {
+                if(ImGui::MenuItem("Show Axes Gizmo", "A", false, true)) { mShowAxesGizmo = true; }
+            }
             ImGui::EndMenu();
         }
 
@@ -704,7 +779,7 @@ void SurfaceDynamicsVisualization::updateGUI()
         ImGui::Text("Layer removal is GPU only!");
         ImGui::Text(mComputeInformation.c_str());
         ImGui::SliderInt("Samples", &mSurfaceTestAtomSampleCount, 1, 10000);
-        ImGui::SliderInt("Sample Seed", &mSurfaceTestSeed, 0, 1337);
+        ImGui::SliderInt("Seed", &mSurfaceTestSeed, 0, 1337);
         if(ImGui::Button("Test Surface")) { testSurface(); }
         ImGui::Text(mTestOutput.c_str());
         ImGui::End();
@@ -745,6 +820,7 @@ void SurfaceDynamicsVisualization::updateGUI()
     if(mShowDebuggingWindow)
     {
         ImGui::Begin("Debugging", NULL, 0);
+        ImGui::Text(std::string("Selected Atom: " + std::to_string(mSelectedAtom)).c_str());
         ImGui::End();
     }
 
