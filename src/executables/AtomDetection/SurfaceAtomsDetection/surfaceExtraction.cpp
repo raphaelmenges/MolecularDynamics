@@ -211,7 +211,7 @@ glm::mat4 rotationMatrix(vec3 axis, float angle)
 void SurfaceExtraction::init()
 {
     //window = generateWindow(128,128);
-    window = generateWindow(256,256);
+    window = generateWindow("OpenGLWindow", 256, 256);
     //window = generateWindow(512,512);
 
     //rot90Y = rotationMatrix(glm::vec3(0,1,0), 90.0f/180.0f * 3.14159265358979323846264338327950288f);

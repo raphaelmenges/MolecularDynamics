@@ -29,7 +29,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     mLightDirection = glm::normalize(glm::vec3(-0.5, -0.75, -0.3));
 
     // Create window
-    mpWindow = generateWindow();
+    mpWindow = generateWindow("Surface Dynamics Visualization");
 
     // Init ImGui
     ImGui_ImplGlfwGL3_Init(mpWindow, true);
@@ -646,13 +646,13 @@ void SurfaceDynamicsVisualization::updateGUI()
         if (ImGui::BeginMenu("Window"))
         {
             // Computation window
-            if(mShowComputationWindow)
+            if(mShowSurfaceComputationWindow)
             {
-                if(ImGui::MenuItem("Hide Computation", "", false, true)) { mShowComputationWindow = false; }
+                if(ImGui::MenuItem("Hide Computation", "", false, true)) { mShowSurfaceComputationWindow = false; }
             }
             else
             {
-                if(ImGui::MenuItem("Show Computation", "", false, true)) { mShowComputationWindow = true; }
+                if(ImGui::MenuItem("Show Computation", "", false, true)) { mShowSurfaceComputationWindow = true; }
             }
 
             // Camera window
@@ -692,9 +692,9 @@ void SurfaceDynamicsVisualization::updateGUI()
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.2f, 0.2f, 0.2f, 0.75f));
 
     // Computation window
-    if(mShowComputationWindow)
+    if(mShowSurfaceComputationWindow)
     {
-        ImGui::Begin("Computation", NULL, 0);
+        ImGui::Begin("Surface Computation", NULL, 0);
         ImGui::SliderFloat("Probe radius", &mProbeRadius, 0.f, 2.f, "%.1f");
         ImGui::SliderInt("Layer removal count", &mLayerRemovalCount, 0, 5);
         ImGui::SliderInt("CPU Cores", &mCPPThreads, 1, 24);

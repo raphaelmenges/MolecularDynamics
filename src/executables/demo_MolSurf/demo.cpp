@@ -12,7 +12,7 @@ float r(float size) {
 }
 
 int main(int argc, char *argv[]) {
-    GLFWwindow* window = generateWindow(1024,768);
+    GLFWwindow* window = generateWindow("OpenGLWindow", 1024, 768);
 
     float rotX = 0.0f;
     float rotY = 0.0f;

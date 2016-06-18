@@ -87,7 +87,7 @@ private:
                                         // for orthographic projection
     bool mShowInternal = true;
     bool mShowSurface = true;
-    bool mShowComputationWindow = true;
+    bool mShowSurfaceComputationWindow = true;
     bool mShowCameraWindow = true;
     bool mShowDebuggingWindow = true;
     float mProbeRadius = 1.2f;
