@@ -374,9 +374,10 @@ void SurfaceDynamicsVisualization::renderLoop()
             impostorProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
             impostorProgram.update("lightDir", mLightDirection);
             impostorProgram.update("selectedIndex", mSelectedAtom);
-            impostorProgram.update("cuttingPlane", mCuttingPlane);
+            impostorProgram.update("clippingPlane", mClippingPlane);
 
-            // Draw internal
+            // Draw internal (first, because at clipping plane are all set to same
+            // viewport depth which means internal are always in front of surface)
             if(mShowInternal)
             {
                 glBindImageTexture(
@@ -416,7 +417,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             pointProgram.update("view", mupCamera->getViewMatrix());
             pointProgram.update("projection", mupCamera->getProjectionMatrix());
             pointProgram.update("selectedIndex", mSelectedAtom);
-            pointProgram.update("cuttingPlane", mCuttingPlane);
+            pointProgram.update("clippingPlane", mClippingPlane);
 
             // Draw internal
             if(mShowInternal)
@@ -628,7 +629,7 @@ void SurfaceDynamicsVisualization::updateComputationInformation(std::string devi
 
 void SurfaceDynamicsVisualization::updateGUI()
 {
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.75f));
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.75f)); // window background
 
     // Main menu bar
     if (ImGui::BeginMainMenuBar())
@@ -763,8 +764,13 @@ void SurfaceDynamicsVisualization::updateGUI()
         ImGui::EndMainMenuBar();
     }
 
-    ImGui::PopStyleColor();
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.2f, 0.2f, 0.2f, 0.75f));
+    ImGui::PopStyleColor(); // window background
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.2f, 0.2f, 0.2f, 0.75f)); // window background
+    ImGui::PushStyleColor(ImGuiCol_TitleBg, ImVec4(0.2f, 0.2f, 0.2f, 0.75f)); // window title
+    ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, ImVec4(0.0f, 0.0f, 0.0f, 0.5f)); // scrollbar grab
+    ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // scrollbar background
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.5f)); // button
+
 
     // Computation window
     if(mShowSurfaceComputationWindow)
@@ -774,7 +780,9 @@ void SurfaceDynamicsVisualization::updateGUI()
         ImGui::SliderInt("Layer removal count", &mLayerRemovalCount, 0, 5);
         ImGui::SliderInt("CPU Cores", &mCPPThreads, 1, 24);
         if(ImGui::Button("Run GPGPU")) { runGLSLImplementation(); }
+        ImGui::SameLine();
         if(ImGui::Button("Run Single-Core CPU")) { runCPPImplementation(false); }
+        ImGui::SameLine();
         if(ImGui::Button("Run Multi-Core CPU")) { runCPPImplementation(true); }
         ImGui::Text("Layer removal is GPU only!");
         ImGui::Text(mComputeInformation.c_str());
@@ -789,7 +797,18 @@ void SurfaceDynamicsVisualization::updateGUI()
     if(mShowCameraWindow)
     {
         ImGui::Begin("Camera", NULL, 0);
-        ImGui::SliderFloat("Cutting Plane Offset", &mCuttingPlane, 0.f, 200.f, "%.1f");
+        ImGui::SliderFloat("Clipping Plane Offset", &mClippingPlane, mClippingPlaneMin, mClippingPlaneMax, "%.1f");
+        if(ImGui::Button("+0.1"))
+        {
+            mClippingPlane += 0.1f;
+            mClippingPlane = glm::clamp(mClippingPlane, mClippingPlaneMin, mClippingPlaneMax);
+        }
+        ImGui::SameLine();
+        if(ImGui::Button("-0.1"))
+        {
+            mClippingPlane -= 0.1f;
+            mClippingPlane = glm::clamp(mClippingPlane, mClippingPlaneMin, mClippingPlaneMax);
+        }
         if(ImGui::Button("X-Axis"))
         {
             mupCamera->setAlpha(0);
@@ -824,7 +843,11 @@ void SurfaceDynamicsVisualization::updateGUI()
         ImGui::End();
     }
 
-    ImGui::PopStyleColor();
+    ImGui::PopStyleColor(); // button
+    ImGui::PopStyleColor(); // scrollbar background
+    ImGui::PopStyleColor(); // scrollbar grab
+    ImGui::PopStyleColor(); // window title
+    ImGui::PopStyleColor(); // window background
 
     ImGui::Render();
 }

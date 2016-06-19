@@ -9,14 +9,14 @@ flat out vec3 color;
 
 uniform mat4 projection;
 uniform mat4 view;
-uniform float cuttingPlane;
+uniform float clippingPlane;
 
 void main()
 {
     vec3 center = gl_in[0].gl_Position.xyz;
 
     // Decide whether to render point
-    if(-(view * gl_in[0].gl_Position).z >= cuttingPlane)
+    if(-(view * gl_in[0].gl_Position).z >= clippingPlane)
     {
         // Color
         color = vertColor[0];
