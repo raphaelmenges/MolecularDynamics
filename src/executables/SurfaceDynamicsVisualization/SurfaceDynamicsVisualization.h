@@ -94,7 +94,7 @@ private:
     bool mShowSurfaceComputationWindow = true;
     bool mShowCameraWindow = true;
     bool mShowDebuggingWindow = true;
-    float mProbeRadius = 1.2f;
+    float mProbeRadius = 1.4f;
     int mCPPThreads = 8;
     int mSurfaceTestAtomSampleCount = 20;
     bool mShowSamplePoint = true;

@@ -84,7 +84,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
 
     // # Load protein
 
-    /*
+    // /*
     // Path to protein molecule
     std::vector<std::string> paths;
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
@@ -116,15 +116,15 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
                 0.01f * mAtomLUT.vdW_radii_picometer.at(
                     pAtom->getElement())));
     }
-    */
+    // */
 
-    // /*
+    /*
     // Simple PDB loader
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Polymerase-of-E-coli-DNA.txt", mProteinMinExtent, mProteinMaxExtent);
     mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Myoglobin.txt", mProteinMinExtent, mProteinMaxExtent);
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Nitrogen-Paracoccus-Cytochrome-C550.txt", mProteinMinExtent, mProteinMaxExtent);
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/8AtomsIntersection.txt", mProteinMinExtent, mProteinMaxExtent);
-    // */
+    */
 
     // Count of atoms
     mAtomCount = mAtomStructs.size();
