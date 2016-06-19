@@ -55,7 +55,7 @@ void main()
         }
         else
         {
-            // It is also inside clipping plane, so discard it completely since fragment is not used to visualize clipping plane
+            // It is inside clipping plane, so discard it completely since fragment is not used to visualize clipping plane
             discard;
         }
     }
