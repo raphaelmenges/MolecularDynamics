@@ -1,6 +1,5 @@
 #include "OrbitCamera.h"
-
-#include <iostream>
+#include <glm/gtc/matrix_transform.hpp>
 
 const GLfloat CAMERA_BETA_BIAS = 0.0001f;
 

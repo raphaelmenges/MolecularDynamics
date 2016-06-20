@@ -4,7 +4,7 @@
 #include "imgui/imgui.h"
 #include "imgui/examples/opengl3_example/imgui_impl_glfw_gl3.h"
 
-#include "OrbitCamera.h"
+#include "Utils/OrbitCamera.h"
 #include "ShaderTools/Renderer.h"
 #include "Molecule/MDtrajLoader/MdTraj/MdTrajWrapper.h"
 #include "Molecule/MDtrajLoader/Data/Protein.h"
