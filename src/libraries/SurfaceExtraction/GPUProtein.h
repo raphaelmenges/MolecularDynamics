@@ -39,7 +39,7 @@ public:
     virtual ~GPUProtein();
 
     // Bind SSBO with atoms (readonly)
-    void bind(int slot);
+    void bind(GLuint slot) const;
 
     // Get count of atoms in protein
     int getAtomCount() const { return mAtomCount; }

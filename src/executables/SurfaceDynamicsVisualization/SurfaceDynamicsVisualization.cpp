@@ -5,6 +5,7 @@
 #include "imgui/examples/opengl3_example/imgui_impl_glfw_gl3.h"
 
 #include "Utils/OrbitCamera.h"
+#include "Utils/AtomicCounter.h"
 #include "SurfaceExtraction/GPUProtein.h"
 #include "ShaderTools/Renderer.h"
 #include "Molecule/MDtrajLoader/MdTraj/MdTrajWrapper.h"
@@ -526,39 +527,6 @@ void SurfaceDynamicsVisualization::mouseButtonCallback(int button, int action, i
 void SurfaceDynamicsVisualization::scrollCallback(double xoffset, double yoffset)
 {
     mupCamera->setRadius(mupCamera->getRadius() - 0.5f * (float)yoffset);
-}
-
-GLuint SurfaceDynamicsVisualization::readAtomicCounter(GLuint atomicCounter) const
-{
-    // Read atomic counter
-    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomicCounter);
-
-    GLuint *mapping = (GLuint*)glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER,
-                                                0,
-                                                sizeof(GLuint),
-                                                GL_MAP_READ_BIT);
-
-    glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
-    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
-
-    return mapping[0];
-}
-
-void SurfaceDynamicsVisualization::resetAtomicCounter(GLuint atomicCounter) const
-{
-    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomicCounter);
-
-    // Map the buffer
-    GLuint* mapping = (GLuint*)glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER,
-                                                0 ,
-                                                sizeof(GLuint),
-                                                GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
-    // Set memory to new value
-    memset(mapping, 0, sizeof(GLuint));
-
-    // Unmap the buffer
-    glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
-    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
 }
 
 void SurfaceDynamicsVisualization::resetInputIndicesBuffer()
@@ -1087,15 +1055,8 @@ void SurfaceDynamicsVisualization::runGLSLImplementation()
     ShaderProgram computeProgram(GL_COMPUTE_SHADER, "/SurfaceDynamicsVisualization/surface.comp");
 
     // # Prepare atomic counter for writing results to unique position in image
-    GLuint internalCounter;
-    glGenBuffers(1, &internalCounter);
-    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, internalCounter);
-    glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), NULL, GL_DYNAMIC_DRAW);
-
-    GLuint surfaceCounter;
-    glGenBuffers(1, &surfaceCounter);
-    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, surfaceCounter);
-    glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), NULL, GL_DYNAMIC_DRAW);
+    AtomicCounter internalCounter;
+    AtomicCounter surfaceCounter;
 
     // Bind buffer to texture which is used as image
     glBindTexture(GL_TEXTURE_BUFFER, mInputIndicesTexture);
@@ -1123,8 +1084,8 @@ void SurfaceDynamicsVisualization::runGLSLImplementation()
     mupGPUProtein->bind(0);
 
     // Bind atomic counter
-    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, internalCounter);
-    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 2, surfaceCounter);
+    internalCounter.bind(1);
+    surfaceCounter.bind(2);
 
     // Start query for time measurement
     glBeginQuery(GL_TIME_ELAPSED, mQuery);
@@ -1151,12 +1112,12 @@ void SurfaceDynamicsVisualization::runGLSLImplementation()
             mInternalIndicesBuffer = b;
 
             // Old internal are now input
-            mInputCount = (int)readAtomicCounter(internalCounter);
+            mInputCount = (int)internalCounter.read();
         }
 
         // Reset atomic counter
-        resetAtomicCounter(surfaceCounter);
-        resetAtomicCounter(internalCounter);
+        internalCounter.reset();
+        surfaceCounter.reset();
 
         // Tell shader about count of input atoms
         computeProgram.update("inputCount", mInputCount);
@@ -1202,15 +1163,11 @@ void SurfaceDynamicsVisualization::runGLSLImplementation()
     float computationTime = timeElapsed / 1000000.f;
 
     // Fetch count
-    mInternalCount = readAtomicCounter(internalCounter);
-    mSurfaceCount = readAtomicCounter(surfaceCounter);
+    mInternalCount = internalCounter.read();
+    mSurfaceCount = surfaceCounter.read();
 
     // Update compute information
     updateComputationInformation("GPGPU", computationTime);
-
-    // Delete atomic counter buffers
-    glDeleteBuffers(1, &internalCounter);
-    glDeleteBuffers(1, &surfaceCounter);
 }
 
 // ### Main function ###

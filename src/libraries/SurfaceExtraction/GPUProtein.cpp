@@ -27,7 +27,7 @@ GPUProtein::~GPUProtein()
     glDeleteBuffers(1, &mSSBO);
 }
 
-void GPUProtein::bind(int slot)
+void GPUProtein::bind(GLuint slot) const
 {
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, slot, mSSBO);
 }

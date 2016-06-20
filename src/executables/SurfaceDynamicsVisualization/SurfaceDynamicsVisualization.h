@@ -42,10 +42,6 @@ private:
     // Scroll callback for GLFW
     void scrollCallback(double xoffset, double yoffset);
 
-    // Atomic counter functions
-    GLuint readAtomicCounter(GLuint atomicCounter) const;
-    void resetAtomicCounter(GLuint atomicCounter) const;
-
     // Read values from texture buffer
     std::vector<GLuint> readTextureBuffer(GLuint buffer, int size) const;
 
