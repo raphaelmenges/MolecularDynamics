@@ -107,14 +107,14 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     mProteinMaxExtent = upProtein->getMax();
 
     // Vector which is used as data for SSBO and CPP implementation
-    for(Atom const * pAtom : *(upProtein->getAtoms()))
+    int atomCount = upProtein->getAtoms()->size();
+    for(int i = 0; i < atomCount; i++)
     {
         // Push back all atoms (CONVERTING PICOMETER TO ANGSTROM)
         mAtomStructs.push_back(
             AtomStruct(
-                pAtom->getPosition(),
-                0.01f * mAtomLUT.vdW_radii_picometer.at(
-                    pAtom->getElement())));
+                upProtein->getAtoms()->at(i)->getPosition(),
+                upProtein->getRadiusAt(i)));
     }
     // */
 
