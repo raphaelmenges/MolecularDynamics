@@ -11,7 +11,7 @@ std::map<std::string, float> radiiLookup =
 {"H", 1.2f}, {"N", 1.55f}, {"C", 1.7f}, {"O", 1.52f}, {"S", 1.8f}, {"P", 1.8f}
 };
 
-std::vector<AtomStruct> parseSimplePDB(std::string filepath, glm::vec3& rMinExtent, glm::vec3& rMaxExtent)
+std::vector<GPUAtom> parseSimplePDB(std::string filepath, glm::vec3& rMinExtent, glm::vec3& rMaxExtent)
 {
     // Initialize min / max extent values
     rMinExtent.x = std::numeric_limits<float>::max();
@@ -25,7 +25,7 @@ std::vector<AtomStruct> parseSimplePDB(std::string filepath, glm::vec3& rMinExte
     std::ifstream in(filepath);
 
     // Create vector
-    std::vector<AtomStruct> atoms;
+    std::vector<GPUAtom> atoms;
 
     // Check whether file was found
     if (!in)
@@ -102,7 +102,7 @@ std::vector<AtomStruct> parseSimplePDB(std::string filepath, glm::vec3& rMinExte
             float radius = radiiLookup.at(line);
 
             // Add found atom to vector
-            atoms.push_back(AtomStruct(center, radius));
+            atoms.push_back(GPUAtom(center, radius));
         }
     }
 

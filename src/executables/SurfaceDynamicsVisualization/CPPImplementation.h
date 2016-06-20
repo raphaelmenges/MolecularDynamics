@@ -4,9 +4,9 @@
 // Notes
 // - Face is defined by vec4(Normal, Distance from origin)
 
+#include "SurfaceExtraction/GPUProtein.h"
 #include <glm/glm.hpp>
 #include <vector>
-#include "AtomStruct.h"
 
 class CPPImplementation
 {
@@ -16,7 +16,7 @@ public:
         int executionIndex,
         int atomCount,
         float probeRadius,
-        const std::vector<AtomStruct>& atoms,
+        const std::vector<GPUAtom>& atoms,
         std::vector<unsigned int>& internalIndices,
         std::vector<unsigned int>& surfaceIndices);
 

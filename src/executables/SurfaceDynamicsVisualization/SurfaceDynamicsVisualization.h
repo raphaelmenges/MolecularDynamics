@@ -7,20 +7,14 @@
 #include <glm/glm.hpp>
 
 #include "ShaderTools/ShaderProgram.h"
-#include "Molecule/MDtrajLoader/Data/AtomLUT.h"
-#include "AtomStruct.h"
+#include "SurfaceExtraction/GPUProtein.h"
 
 // Notes:
 // - Calculations done in angstrom
 
-// TODO
-// - Delete OpenGL stuff after usage
-// - Work group size?
-// - Binding points ok? not sure whether atomic counter and image use the same
-// - Instead of direclty use ALL atoms as input, us index list InputIndices
-
 // Forward declaration
 class Protein;
+class GPUProtein;
 class OrbitCamera;
 
 // Class
@@ -112,9 +106,6 @@ private:
     // Members
     GLFWwindow* mpWindow;
     std::unique_ptr<OrbitCamera> mupCamera; // camera for visualization
-    int mAtomCount;
-    AtomLUT mAtomLUT;
-    std::vector<AtomStruct> mAtomStructs;
     glm::vec2 mCameraDeltaMovement;
     float mCameraSmoothTime;
     glm::vec3 mLightDirection;
@@ -123,9 +114,7 @@ private:
     GLint mInputCount; // count of input atoms
     GLint mInternalCount; // count of internal atoms
     GLint mSurfaceCount; // count of surface atoms
-
-    // SSBO
-    GLuint mAtomsSSBO; // SSBO with struct of position and radius for each atom
+    std::unique_ptr<GPUProtein> mupGPUProtein; // protein on GPU
 
     // Images
     GLuint mInputIndicesTexture; // list of indices of input atoms encoded in uint32

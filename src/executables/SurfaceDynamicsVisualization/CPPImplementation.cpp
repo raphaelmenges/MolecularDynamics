@@ -98,7 +98,7 @@ void CPPImplementation::execute(
     int executionIndex,
     int atomCount,
     float probeRadius,
-    const std::vector<AtomStruct>& atoms,
+    const std::vector<GPUAtom>& atoms,
     std::vector<unsigned int>& internalIndices,
     std::vector<unsigned int>& surfaceIndices)
 {

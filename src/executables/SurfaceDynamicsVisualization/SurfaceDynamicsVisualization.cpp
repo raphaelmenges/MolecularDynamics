@@ -5,6 +5,7 @@
 #include "imgui/examples/opengl3_example/imgui_impl_glfw_gl3.h"
 
 #include "Utils/OrbitCamera.h"
+#include "SurfaceExtraction/GPUProtein.h"
 #include "ShaderTools/Renderer.h"
 #include "Molecule/MDtrajLoader/MdTraj/MdTrajWrapper.h"
 #include "Molecule/MDtrajLoader/Data/Protein.h"
@@ -106,28 +107,18 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     mProteinMinExtent = upProtein->getMin();
     mProteinMaxExtent = upProtein->getMax();
 
-    // Vector which is used as data for SSBO and CPP implementation
-    int atomCount = upProtein->getAtoms()->size();
-    for(int i = 0; i < atomCount; i++)
-    {
-        // Push back all atoms (CONVERTING PICOMETER TO ANGSTROM)
-        mAtomStructs.push_back(
-            AtomStruct(
-                upProtein->getAtoms()->at(i)->getPosition(),
-                upProtein->getRadiusAt(i)));
-    }
     // */
 
     /*
-    // Simple PDB loader
+    // Simple PDB loader (TODO: GPUProtein adaption)
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Polymerase-of-E-coli-DNA.txt", mProteinMinExtent, mProteinMaxExtent);
     mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Myoglobin.txt", mProteinMinExtent, mProteinMaxExtent);
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Nitrogen-Paracoccus-Cytochrome-C550.txt", mProteinMinExtent, mProteinMaxExtent);
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/8AtomsIntersection.txt", mProteinMinExtent, mProteinMaxExtent);
     */
 
-    // Count of atoms
-    mAtomCount = mAtomStructs.size();
+    // Fill GPUProtein
+    mupGPUProtein = std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()));
 
     // Test protein extent
     std::cout
@@ -150,7 +141,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     */
 
     // Output atom count
-    std::cout << "Atom count: " << mAtomCount << std::endl;
+    std::cout << "Atom count: " << mupGPUProtein->getAtomCount() << std::endl;
 
     /*
     // # Some simple rotation matrix for easy test of rotation invariance
@@ -184,20 +175,6 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     // # Create query to measure execution time
     glGenQueries(1, &mQuery);
 
-     // Variable to measure elapsed time
-    GLuint timeElapsed = 0;
-
-    // # Prepare atoms input (position + radius)
-
-    // Start query for time measurement
-    glBeginQuery(GL_TIME_ELAPSED, mQuery);
-
-    // Fill into SSBO
-    glGenBuffers(1, &mAtomsSSBO);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mAtomsSSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(AtomStruct) * mAtomStructs.size(), mAtomStructs.data(), GL_STATIC_DRAW);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
     // # Prepare buffers
 
     // Buffers
@@ -216,22 +193,12 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
 
     // Prepare output buffer with maximum of necessary space
     glBindBuffer(GL_TEXTURE_BUFFER, mInternalIndicesBuffer);
-    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * mAtomCount, 0, GL_DYNAMIC_COPY); // DYNAMIC_COPY because filled by GPU and read by GPU
+    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * mupGPUProtein->getAtomCount(), 0, GL_DYNAMIC_COPY); // DYNAMIC_COPY because filled by GPU and read by GPU
     glBindBuffer(GL_TEXTURE_BUFFER, 0);
 
     glBindBuffer(GL_TEXTURE_BUFFER, mSurfaceIndicesBuffer);
-    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * mAtomCount, 0, GL_DYNAMIC_COPY); // DYNAMIC_COPY because filled by GPU and read by GPU
+    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * mupGPUProtein->getAtomCount(), 0, GL_DYNAMIC_COPY); // DYNAMIC_COPY because filled by GPU and read by GPU
     glBindBuffer(GL_TEXTURE_BUFFER, 0);
-
-    // Print time for data transfer
-    glEndQuery(GL_TIME_ELAPSED);
-    GLuint done = 0;
-    while(done == 0)
-    {
-        glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT_AVAILABLE, &done);
-    }
-    glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT, &timeElapsed);
-    std::cout << "Time for data transfer on GPU: " << std::to_string(timeElapsed) << "ns" << std::endl;
 
     // # Run implementation to extract surface atoms
     if(mInitiallyUseGLSLImplementation)
@@ -256,7 +223,6 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
 SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
 {
     // TODO: Delete OpenGL stuff
-    // - ssbo
     // - texture
     // - buffer
 
@@ -309,7 +275,7 @@ void SurfaceDynamicsVisualization::renderLoop()
     ShaderProgram impostorProgram("/SurfaceDynamicsVisualization/impostor.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
 
     // Bind SSBO with atoms
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mAtomsSSBO);
+    mupGPUProtein->bind(0);
 
     // Bind buffer to texture (may not be done before buffer filling? Probably not necessary for GLSL implementation since already bound there and filled on GPU)
     glBindTexture(GL_TEXTURE_BUFFER, mInternalIndicesTexture);
@@ -519,13 +485,13 @@ void SurfaceDynamicsVisualization::keyCallback(int key, int scancode, int action
             case GLFW_KEY_RIGHT:
             {
                 mSelectedAtom++;
-                if(mSelectedAtom >= mAtomCount) { mSelectedAtom = 0; }
+                if(mSelectedAtom >= mupGPUProtein->getAtomCount()) { mSelectedAtom = 0; }
                 break;
             }
             case GLFW_KEY_LEFT:
             {
                 mSelectedAtom--;
-                if(mSelectedAtom < 0) { mSelectedAtom = mAtomCount - 1; }
+                if(mSelectedAtom < 0) { mSelectedAtom = mupGPUProtein->getAtomCount() - 1; }
                 break;
             }
             // case GLFW_KEY_C: { mUsePerspectiveCamera = !mUsePerspectiveCamera; break; }
@@ -598,8 +564,8 @@ void SurfaceDynamicsVisualization::resetAtomicCounter(GLuint atomicCounter) cons
 void SurfaceDynamicsVisualization::resetInputIndicesBuffer()
 {
     std::vector<GLuint> inputIndices;
-    inputIndices.reserve(mAtomCount);
-    for(unsigned int i = 0; i < (unsigned int)mAtomCount; i++) { inputIndices.push_back(i); }
+    inputIndices.reserve(mupGPUProtein->getAtomCount());
+    for(unsigned int i = 0; i < (unsigned int)mupGPUProtein->getAtomCount(); i++) { inputIndices.push_back(i); }
     glBindBuffer(GL_TEXTURE_BUFFER, mInputIndicesBuffer);
     glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * inputIndices.size(), inputIndices.data(), GL_DYNAMIC_COPY); // Same copy policy as other buffers
     glBindBuffer(0, mInternalIndicesBuffer);
@@ -621,7 +587,7 @@ void SurfaceDynamicsVisualization::updateComputationInformation(std::string devi
         device << " used" << "\n"
         << "Probe radius: " + std::to_string(mProbeRadius) << "\n"
         << "Time: " << computationTime << "ms" << "\n"
-        << "Atom count: " + std::to_string(mAtomCount) << "\n"
+        << "Atom count: " + std::to_string(mupGPUProtein->getAtomCount()) << "\n"
         << "Internal atoms: " + std::to_string(mInternalCount) << "\n"
         << "Surface atoms: " + std::to_string(mSurfaceCount);
     mComputeInformation = stream.str();
@@ -771,7 +737,6 @@ void SurfaceDynamicsVisualization::updateGUI()
     ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // scrollbar background
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.5f)); // button
 
-
     // Computation window
     if(mShowSurfaceComputationWindow)
     {
@@ -871,6 +836,9 @@ void SurfaceDynamicsVisualization::testSurface()
     int internalSampleFailures = 0;
     int surfaceAtomsFailures = 0;
 
+    // Copy atoms of protein to stack
+    auto atoms = mupGPUProtein->getAtoms();
+
     // Go over atoms (using indices from input indices buffer)
     for(unsigned int i : inputIndices) // using results from algorithm here. Not so good for independend test but necessary for layers
     {
@@ -908,8 +876,8 @@ void SurfaceDynamicsVisualization::testSurface()
         }
 
         // Get position and radius
-        glm::vec3 atomCenter = mAtomStructs[i].center;
-        float atomExtRadius = mAtomStructs[i].radius + mProbeRadius;
+        glm::vec3 atomCenter = atoms[i].center;
+        float atomExtRadius = atoms[i].radius + mProbeRadius;
 
         // Count samples which are classified as internal
         int internalSamples = 0;
@@ -938,7 +906,7 @@ void SurfaceDynamicsVisualization::testSurface()
                 if(k == i) { continue; };
 
                 // Actual test
-                if(glm::distance(samplePosition, mAtomStructs[k].center) < (mAtomStructs[k].radius + mProbeRadius))
+                if(glm::distance(samplePosition, atoms[k].center) < (atoms[k].radius + mProbeRadius))
                 {
                     inside = true;
                     break;
@@ -1008,6 +976,9 @@ void SurfaceDynamicsVisualization::runCPPImplementation(bool threaded)
     // No input indices used, just complete molecule is processed.
     // No support for layer removal.
 
+    // Copy atoms of protein to stack
+    auto atoms = mupGPUProtein->getAtoms();
+
     // # Prepare output vectors
     std::vector<unsigned int> internalIndices;
     std::vector<unsigned int> surfaceIndices;
@@ -1032,7 +1003,7 @@ void SurfaceDynamicsVisualization::runCPPImplementation(bool threaded)
         for(int i = 0; i < mCPPThreads; i++)
         {
             // Calculate min and max index
-            int count = mAtomCount / mCPPThreads;
+            int count = atoms.size() / mCPPThreads;
             int offset = count * i;
             threads.push_back(
                 std::thread([&](
@@ -1046,15 +1017,15 @@ void SurfaceDynamicsVisualization::runCPPImplementation(bool threaded)
                     {
                         threadCppImplementation.execute(
                             a,
-                            mAtomCount,
+                            atoms.size(),
                             mProbeRadius,
-                            mAtomStructs,
+                            atoms,
                             internalIndicesSubvector,
                             surfaceIndicesSubvector);
                     }
                 },
                 offset, // minIndex
-                i == mCPPThreads - 1 ? mAtomCount - 1 : offset+count-1, // maxIndex
+                i == mCPPThreads - 1 ? atoms.size() - 1 : offset+count-1, // maxIndex
                 std::ref(internalIndicesSubvectors[i]), // internal indices
                 std::ref(surfaceIndicesSubvectors[i]))); // external indices
         }
@@ -1079,9 +1050,9 @@ void SurfaceDynamicsVisualization::runCPPImplementation(bool threaded)
     else
     {
         // Do all atoms in main thread
-        for(int a = 0; a < mAtomCount; a++)
+        for(int a = 0; a < atoms.size(); a++)
         {
-            cppImplementation.execute(a, mAtomCount, mProbeRadius, mAtomStructs, internalIndices, surfaceIndices);
+            cppImplementation.execute(a, atoms.size(), mProbeRadius, atoms, internalIndices, surfaceIndices);
         }
     }
 
@@ -1098,7 +1069,7 @@ void SurfaceDynamicsVisualization::runCPPImplementation(bool threaded)
     glBindBuffer(0, mSurfaceIndicesBuffer);
 
     // Fetch count
-    mInputCount = mAtomCount;
+    mInputCount = atoms.size();
     mInternalCount = internalIndices.size();
     mSurfaceCount = surfaceIndices.size();
 
@@ -1149,7 +1120,7 @@ void SurfaceDynamicsVisualization::runGLSLImplementation()
     computeProgram.update("probeRadius", mProbeRadius);
 
     // Bind SSBO with atoms
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mAtomsSSBO);
+    mupGPUProtein->bind(0);
 
     // Bind atomic counter
     glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, internalCounter);
@@ -1167,7 +1138,7 @@ void SurfaceDynamicsVisualization::runGLSLImplementation()
             resetInputIndicesBuffer();
 
             // All atoms are input
-            mInputCount = mAtomCount;
+            mInputCount = mupGPUProtein->getAtomCount();
         }
         else
         {
