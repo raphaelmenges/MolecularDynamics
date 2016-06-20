@@ -1,19 +1,13 @@
 #include "SurfaceDynamicsVisualization.h"
-
 #include "CPPImplementation.h"
-#include "imgui/imgui.h"
-#include "imgui/examples/opengl3_example/imgui_impl_glfw_gl3.h"
-
 #include "Utils/OrbitCamera.h"
-#include "Utils/AtomicCounter.h"
-#include "SurfaceExtraction/GPUProtein.h"
 #include "ShaderTools/Renderer.h"
 #include "Molecule/MDtrajLoader/MdTraj/MdTrajWrapper.h"
 #include "Molecule/MDtrajLoader/Data/Protein.h"
 #include "SimpleLoader.h"
-
+#include "imgui/imgui.h"
+#include "imgui/examples/opengl3_example/imgui_impl_glfw_gl3.h"
 #include <glm/gtx/component_wise.hpp>
-
 #include <iostream>
 #include <sstream>
 #include <iomanip>
@@ -25,7 +19,6 @@
 SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
 {
     // # Setup members
-    mSurfaceCount = 0;
     mCameraDeltaMovement = glm::vec2(0,0);
     mCameraSmoothTime = 1.f;
     mLightDirection = glm::normalize(glm::vec3(-0.5, -0.75, -0.3));
@@ -173,33 +166,9 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
             45.f,
             0.05f));
 
-    // # Create query to measure execution time
-    glGenQueries(1, &mQuery);
-
-    // # Prepare buffers
-
-    // Buffers
-    glGenBuffers(1, &mInputIndicesBuffer);
-    glGenBuffers(1, &mInternalIndicesBuffer);
-    glGenBuffers(1, &mSurfaceIndicesBuffer);
 
     // TODO: understand why buffer to texture binding is necessary in GLSL method and in renderLoop()
     // Texture (which will be bound as image, connected to buffer in renderLoop(), since it seems that is has to be done after buffer fill)
-    glGenTextures(1, &mInputIndicesTexture);
-    glGenTextures(1, &mInternalIndicesTexture);
-    glGenTextures(1, &mSurfaceIndicesTexture);
-
-    // Intially filling of mInputIndicesBuffer
-    resetInputIndicesBuffer();
-
-    // Prepare output buffer with maximum of necessary space
-    glBindBuffer(GL_TEXTURE_BUFFER, mInternalIndicesBuffer);
-    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * mupGPUProtein->getAtomCount(), 0, GL_DYNAMIC_COPY); // DYNAMIC_COPY because filled by GPU and read by GPU
-    glBindBuffer(GL_TEXTURE_BUFFER, 0);
-
-    glBindBuffer(GL_TEXTURE_BUFFER, mSurfaceIndicesBuffer);
-    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * mupGPUProtein->getAtomCount(), 0, GL_DYNAMIC_COPY); // DYNAMIC_COPY because filled by GPU and read by GPU
-    glBindBuffer(GL_TEXTURE_BUFFER, 0);
 
     // # Run implementation to extract surface atoms
     if(mInitiallyUseGLSLImplementation)
@@ -211,10 +180,6 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
         runCPPImplementation(true);
     }
 
-    // Output count
-    std::cout << "Internal atom count: " << mInternalCount << std::endl;
-    std::cout << "Surface atom count: " << mSurfaceCount << std::endl;
-
     // Prepare testing the surface
     glGenBuffers(1, &mSurfaceTestVBO);
     glGenVertexArrays(1, &mSurfaceTestVAO);
@@ -223,16 +188,9 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
 
 SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
 {
-    // TODO: Delete OpenGL stuff
-    // - texture
-    // - buffer
-
     // Testing surface
     glDeleteVertexArrays(1, &mSurfaceTestVAO);
     glDeleteBuffers(1, &mSurfaceTestVBO);
-
-    // Delete query object
-    glDeleteQueries(1, &mQuery);
 }
 
 void SurfaceDynamicsVisualization::renderLoop()
@@ -279,6 +237,7 @@ void SurfaceDynamicsVisualization::renderLoop()
     mupGPUProtein->bind(0);
 
     // Bind buffer to texture (may not be done before buffer filling? Probably not necessary for GLSL implementation since already bound there and filled on GPU)
+    /*
     glBindTexture(GL_TEXTURE_BUFFER, mInternalIndicesTexture);
     glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, mInternalIndicesBuffer);
     glBindTexture(GL_TEXTURE_BUFFER, 0);
@@ -286,6 +245,7 @@ void SurfaceDynamicsVisualization::renderLoop()
     glBindTexture(GL_TEXTURE_BUFFER, mSurfaceIndicesTexture);
     glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, mSurfaceIndicesBuffer);
     glBindTexture(GL_TEXTURE_BUFFER, 0);
+    */
 
     // Call render function of Rendering.h with lambda function
     render(mpWindow, [&] (float deltaTime)
@@ -347,31 +307,17 @@ void SurfaceDynamicsVisualization::renderLoop()
             // viewport depth which means internal are always in front of surface)
             if(mShowInternal)
             {
-                glBindImageTexture(
-                    1,
-                    mInternalIndicesTexture,
-                    0,
-                    GL_TRUE,
-                    0,
-                    GL_READ_ONLY,
-                    GL_R32UI);
+                mupGPUSurface->bindInternalIndicesForDrawing(0, 1);
                 impostorProgram.update("color", mInternalAtomColor);
-                glDrawArrays(GL_POINTS, 0, mInternalCount);
+                glDrawArrays(GL_POINTS, 0, mupGPUSurface->getCountOfInternalAtoms(0));
             }
 
             // Draw surface
             if(mShowSurface)
             {
-                glBindImageTexture(
-                    1,
-                    mSurfaceIndicesTexture,
-                    0,
-                    GL_TRUE,
-                    0,
-                    GL_READ_ONLY,
-                    GL_R32UI);
+                mupGPUSurface->bindSurfaceIndicesForDrawing(0, 1);
                 impostorProgram.update("color", mSurfaceAtomColor);
-                glDrawArrays(GL_POINTS, 0, mSurfaceCount);
+                glDrawArrays(GL_POINTS, 0, mupGPUSurface->getCountOfSurfaceAtoms(0));
             }
         }
         else
@@ -389,31 +335,17 @@ void SurfaceDynamicsVisualization::renderLoop()
             // Draw internal
             if(mShowInternal)
             {
-                glBindImageTexture(
-                    1,
-                    mInternalIndicesTexture,
-                    0,
-                    GL_TRUE,
-                    0,
-                    GL_READ_ONLY,
-                    GL_R32UI);
+                mupGPUSurface->bindInternalIndicesForDrawing(0, 1);
                 pointProgram.update("color", mInternalAtomColor);
-                glDrawArrays(GL_POINTS, 0, mInternalCount);
+                glDrawArrays(GL_POINTS, 0, mupGPUSurface->getCountOfInternalAtoms(0));
             }
 
             // Draw surface
             if(mShowSurface)
             {
-                glBindImageTexture(
-                    1,
-                    mSurfaceIndicesTexture,
-                    0,
-                    GL_TRUE,
-                    0,
-                    GL_READ_ONLY,
-                    GL_R32UI);
+                mupGPUSurface->bindSurfaceIndicesForDrawing(0, 1);
                 pointProgram.update("color", mSurfaceAtomColor);
-                glDrawArrays(GL_POINTS, 0, mSurfaceCount);
+                glDrawArrays(GL_POINTS, 0, mupGPUSurface->getCountOfSurfaceAtoms(0));
             }
         }
 
@@ -529,27 +461,9 @@ void SurfaceDynamicsVisualization::scrollCallback(double xoffset, double yoffset
     mupCamera->setRadius(mupCamera->getRadius() - 0.5f * (float)yoffset);
 }
 
-void SurfaceDynamicsVisualization::resetInputIndicesBuffer()
-{
-    std::vector<GLuint> inputIndices;
-    inputIndices.reserve(mupGPUProtein->getAtomCount());
-    for(unsigned int i = 0; i < (unsigned int)mupGPUProtein->getAtomCount(); i++) { inputIndices.push_back(i); }
-    glBindBuffer(GL_TEXTURE_BUFFER, mInputIndicesBuffer);
-    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * inputIndices.size(), inputIndices.data(), GL_DYNAMIC_COPY); // Same copy policy as other buffers
-    glBindBuffer(0, mInternalIndicesBuffer);
-}
-
-std::vector<GLuint> SurfaceDynamicsVisualization::readTextureBuffer(GLuint buffer, int size) const
-{
-    std::vector<GLuint> data;
-    data.resize(size);
-    glBindBuffer(GL_TEXTURE_BUFFER, buffer);
-    glGetBufferSubData(GL_TEXTURE_BUFFER, 0, sizeof(GLuint) * size, data.data());
-    return data;
-}
-
 void SurfaceDynamicsVisualization::updateComputationInformation(std::string device, float computationTime)
 {
+    /*
     std::stringstream stream;
     stream <<
         device << " used" << "\n"
@@ -559,6 +473,7 @@ void SurfaceDynamicsVisualization::updateComputationInformation(std::string devi
         << "Internal atoms: " + std::to_string(mInternalCount) << "\n"
         << "Surface atoms: " + std::to_string(mSurfaceCount);
     mComputeInformation = stream.str();
+    */
 }
 
 void SurfaceDynamicsVisualization::updateGUI()
@@ -787,6 +702,7 @@ void SurfaceDynamicsVisualization::updateGUI()
 
 void SurfaceDynamicsVisualization::testSurface()
 {
+    /*
     std::cout << "*** SURFACE TEST START ***" << std::endl;
 
     // Read data back from OpenGL buffers
@@ -934,10 +850,13 @@ void SurfaceDynamicsVisualization::testSurface()
     mTestOutput += "Maybe wrong classification as surface for " + std::to_string(surfaceAtomsFailures) + " atoms.";
 
     std::cout << "*** SURFACE TEST END ***" << std::endl;
+
+    */
 }
 
 void SurfaceDynamicsVisualization::runCPPImplementation(bool threaded)
 {
+    /*
     std::cout << "CPP implementation used!" << std::endl;
 
     // Note
@@ -1045,129 +964,17 @@ void SurfaceDynamicsVisualization::runCPPImplementation(bool threaded)
     updateComputationInformation(
         threaded ? ("Multi-Core CPU (" + std::to_string(mCPPThreads) + " Threads)") : "Single-Core CPU",
         computationTime);
+    */
 }
 
 void SurfaceDynamicsVisualization::runGLSLImplementation()
 {
     std::cout << "GLSL implementation used!" << std::endl;
 
-    // # Compile shader
-    ShaderProgram computeProgram(GL_COMPUTE_SHADER, "/SurfaceDynamicsVisualization/surface.comp");
-
-    // # Prepare atomic counter for writing results to unique position in image
-    AtomicCounter internalCounter;
-    AtomicCounter surfaceCounter;
-
-    // Bind buffer to texture which is used as image
-    glBindTexture(GL_TEXTURE_BUFFER, mInputIndicesTexture);
-    glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, mInputIndicesBuffer);
-    glBindTexture(GL_TEXTURE_BUFFER, 0);
-
-    glBindTexture(GL_TEXTURE_BUFFER, mInternalIndicesTexture);
-    glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, mInternalIndicesBuffer);
-    glBindTexture(GL_TEXTURE_BUFFER, 0);
-
-    glBindTexture(GL_TEXTURE_BUFFER, mSurfaceIndicesTexture);
-    glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, mSurfaceIndicesBuffer);
-    glBindTexture(GL_TEXTURE_BUFFER, 0);
-
-    // Variable to measure elapsed time
-    GLuint timeElapsed = 0;
-
-    // Use compute shader program
-    computeProgram.use();
-
-    // Probe radius
-    computeProgram.update("probeRadius", mProbeRadius);
-
-    // Bind SSBO with atoms
-    mupGPUProtein->bind(0);
-
-    // Bind atomic counter
-    internalCounter.bind(1);
-    surfaceCounter.bind(2);
-
-    // Start query for time measurement
-    glBeginQuery(GL_TIME_ELAPSED, mQuery);
-
-    // # Do it as often as indicated
-    for(int i = 0; i <= mLayerRemovalCount; i++)
-    {
-        if(i == 0)
-        {
-            // Reset input indices buffer (just set 0..mAtomCount-1);
-            resetInputIndicesBuffer();
-
-            // All atoms are input
-            mInputCount = mupGPUProtein->getAtomCount();
-        }
-        else
-        {
-            // Swap input and internal indices buffer
-            GLuint a = mInputIndicesTexture;
-            GLuint b = mInputIndicesBuffer;
-            mInputIndicesTexture = mInternalIndicesTexture;
-            mInputIndicesBuffer = mInternalIndicesBuffer;
-            mInternalIndicesTexture = a;
-            mInternalIndicesBuffer = b;
-
-            // Old internal are now input
-            mInputCount = (int)internalCounter.read();
-        }
-
-        // Reset atomic counter
-        internalCounter.reset();
-        surfaceCounter.reset();
-
-        // Tell shader about count of input atoms
-        computeProgram.update("inputCount", mInputCount);
-
-        // Bind texture as image where input indices are listed
-        glBindImageTexture(3,
-                           mInputIndicesTexture,
-                           0,
-                           GL_TRUE,
-                           0,
-                           GL_READ_ONLY,
-                           GL_R32UI);
-
-        // Bind textures as images where output indices are written to
-        glBindImageTexture(4,
-                           mInternalIndicesTexture,
-                           0,
-                           GL_TRUE,
-                           0,
-                           GL_WRITE_ONLY,
-                           GL_R32UI);
-        glBindImageTexture(5,
-                           mSurfaceIndicesTexture,
-                           0,
-                           GL_TRUE,
-                           0,
-                           GL_WRITE_ONLY,
-                           GL_R32UI);
-
-        // Dispatch
-        glDispatchCompute((mInputCount / 64) + 1, 1, 1);
-        glMemoryBarrier(GL_ALL_BARRIER_BITS);
-    }
-
-    // Print time for execution
-    glEndQuery(GL_TIME_ELAPSED);
-    GLuint done = 0;
-    while(done == 0)
-    {
-        glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT_AVAILABLE, &done);
-    }
-    glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT, &timeElapsed);
-    float computationTime = timeElapsed / 1000000.f;
-
-    // Fetch count
-    mInternalCount = internalCounter.read();
-    mSurfaceCount = surfaceCounter.read();
+    mupGPUSurface = std::move(mGPUSurfaceExtraction.calcSurface(mupGPUProtein.get(), mProbeRadius, false));
 
     // Update compute information
-    updateComputationInformation("GPGPU", computationTime);
+    updateComputationInformation("GPGPU", mupGPUSurface->getComputationTime());
 }
 
 // ### Main function ###

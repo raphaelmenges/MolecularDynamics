@@ -8,6 +8,7 @@
 
 #include "ShaderTools/ShaderProgram.h"
 #include "SurfaceExtraction/GPUProtein.h"
+#include "SurfaceExtraction/GPUSurfaceExtraction.h"
 
 // Notes:
 // - Calculations done in angstrom
@@ -41,12 +42,6 @@ private:
 
     // Scroll callback for GLFW
     void scrollCallback(double xoffset, double yoffset);
-
-    // Read values from texture buffer
-    std::vector<GLuint> readTextureBuffer(GLuint buffer, int size) const;
-
-    // Reset input indices buffer
-    void resetInputIndicesBuffer();
 
     // Update computation information
     void updateComputationInformation(std::string device, float computationTime);
@@ -107,21 +102,9 @@ private:
     glm::vec3 mLightDirection;
     glm::vec3 mProteinMinExtent;
     glm::vec3 mProteinMaxExtent;
-    GLint mInputCount; // count of input atoms
-    GLint mInternalCount; // count of internal atoms
-    GLint mSurfaceCount; // count of surface atoms
     std::unique_ptr<GPUProtein> mupGPUProtein; // protein on GPU
-
-    // Images
-    GLuint mInputIndicesTexture; // list of indices of input atoms encoded in uint32
-    GLuint mInputIndicesBuffer;
-    GLuint mInternalIndicesTexture; // list of indices of internal output atoms encoded in uint32
-    GLuint mInternalIndicesBuffer;
-    GLuint mSurfaceIndicesTexture; // list of indices of surface output atoms encoded in uint32
-    GLuint mSurfaceIndicesBuffer;
-
-    // Queries
-    GLuint mQuery;
+    GPUSurfaceExtraction mGPUSurfaceExtraction; // factory for GPUSurfaces
+    std::unique_ptr<GPUSurface> mupGPUSurface; // TODO: testing
 
     // Samples for testing the surface
     GLuint mSurfaceTestVBO;
