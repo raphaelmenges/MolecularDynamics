@@ -10,6 +10,7 @@
 
 // framework includes
 #include "Molecule/MDtrajLoader/MdTraj/MdTrajWrapper.h"
+#include "Utils/Logger.h"
 
 // project specific includes
 #include "SimpleProtein.h"

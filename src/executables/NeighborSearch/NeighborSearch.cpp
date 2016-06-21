@@ -91,13 +91,14 @@ NeighborSearch::~NeighborSearch()
 //____________________________________CORE__________________________________//
 void NeighborSearch::loadProtein(std::string fileName)
 {
+    Logger::instance().print("Load protein " + fileName); Logger::instance().tabIn();
 
     /*
      * concatenate full path
      */
     std::string subfolder = "/molecules/";
     std::string filePath = RESOURCES_PATH + subfolder + fileName;
-    std::cout << "Load protein from path: " << filePath << std::endl;
+    Logger::instance().print("Loading from path: " + filePath);
 
     /*
      * load protein from pdb file
@@ -115,6 +116,7 @@ void NeighborSearch::loadProtein(std::string fileName)
 
     m_proteins.push_back(protein);
 
+    Logger::instance().tabOut(); Logger::instance().print("Finished loading " + fileName);
 }
 
 void NeighborSearch::execute(){
@@ -339,9 +341,11 @@ void NeighborSearch::scrollCallback(double xoffset, double yoffset)
 //__________________________________________________________________________//
 int main() {
 
+    Logger::instance().print("Start Neighborhood search"); Logger::instance().tabIn();
     NeighborSearch neighborSearch;
     neighborSearch.loadProtein("PDB/1a19.pdb");
     neighborSearch.execute();
+    Logger::instance().tabOut(); Logger::instance().print("Exit Neighborhood search");
 
     return 0;
 }

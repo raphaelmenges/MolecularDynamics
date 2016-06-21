@@ -16,10 +16,11 @@
 // framework includes
 #include "ShaderTools/Renderer.h"
 #include "ShaderTools/ShaderProgram.h"
+#include "Utils/Logger.h"
 
 // local includes
 #include "ProteinLoader.h"
-#include "OrbitCamera.h"
+#include "Utils/OrbitCamera.h"
 
 class NeighborSearch {
 
