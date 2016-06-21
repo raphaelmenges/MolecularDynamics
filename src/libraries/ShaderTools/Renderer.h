@@ -32,9 +32,9 @@
  * @param posY 	 Position of the window on the y axis
  * @return 		 Pointer to the window instance
  */
-GLFWwindow* generateWindow(int width = 1280, int height = 720, int posX = 100, int posY = 100) {
+GLFWwindow* generateWindow(std::string title = "OpenGL Window", int width = 1280, int height = 720, int posX = 100, int posY = 100) {
     glfwInit();
-    GLFWwindow* window = glfwCreateWindow(width, height, "OpenGL Window", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
     glfwSetWindowPos(window, posX, posY);
     glfwSetWindowSize(window, width, height);
     glfwMakeContextCurrent(window);

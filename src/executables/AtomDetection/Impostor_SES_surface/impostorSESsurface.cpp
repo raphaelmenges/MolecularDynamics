@@ -652,7 +652,7 @@ int main(int argc, char *argv[]) {
 
     ImpostorSESsurface demo;
     demo.perspectiveProj = false;
-    demo.window = generateWindow(512,512);
+    demo.window = generateWindow("OpenGLWindow", 512, 512);
     demo.preprocess_f = 2.0; // factor by which the detection resolution is downscaled
     demo.init();
     demo.initSES();

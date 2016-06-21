@@ -1,16 +1,18 @@
+// Author: Raphael Menges
+// Simple orbit camera. Supports perspective and orthographic projection.
+
 #ifndef ORBIT_CAMERA_H
 #define ORBIT_CAMERA_H
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
 class OrbitCamera
 {
 public:
 
     // Constructor (Degrees!)
-    // Orthographic projection takes max radius as position
+    // Orthographic projection takes max radius as position for cmaera
     OrbitCamera(
         glm::vec3 center,
         GLfloat alpha,
@@ -32,8 +34,8 @@ public:
 
     // Setter
     void setCenter(glm::vec3 center);
-    void setAlpha(GLfloat alpha);
-    void setBeta(GLfloat beta);
+    void setAlpha(GLfloat alpha); // degrees
+    void setBeta(GLfloat beta); // degrees
     void setRadius(GLfloat radius);
 
     // Getter
@@ -45,7 +47,7 @@ public:
     GLfloat getBeta() const;
     GLfloat getRadius() const;
 
-protected:
+private:
 
     // Internal clamping
     void clampValues();
@@ -55,8 +57,8 @@ protected:
 
     // Members
     glm::vec3 mCenter;
-    GLfloat mAlpha; // horizontal rotation
-    GLfloat mBeta; // vertical rotation
+    GLfloat mAlpha; // horizontal rotation; [0,360[ degree
+    GLfloat mBeta; // vertical rotation; [0,180[ degree
     GLfloat mRadius;
     GLfloat mMinRadius;
     GLfloat mMaxRadius;
