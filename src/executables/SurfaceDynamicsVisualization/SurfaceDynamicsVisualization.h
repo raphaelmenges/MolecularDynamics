@@ -102,10 +102,10 @@ private:
     glm::vec3 mLightDirection;
     glm::vec3 mProteinMinExtent;
     glm::vec3 mProteinMaxExtent;
-    std::unique_ptr<GPUProtein> mupGPUProtein; // protein on GPU
+    std::vector<std::unique_ptr<GPUProtein> > mGPUProteins; // proteins on GPU
     std::unique_ptr<GPUSurfaceExtraction> mupGPUSurfaceExtraction;  // factory for GPUSurfaces
                                                                     // (unique pointer because has to be constructed after OpenGL initialization)
-    std::unique_ptr<GPUSurface> mupGPUSurface; // TODO: testing
+    std::vector<std::unique_ptr<GPUSurface> > mGPUSurfaces; // vector with surfaces
     int mFrame = 0;
     int mLayer = 0;
 

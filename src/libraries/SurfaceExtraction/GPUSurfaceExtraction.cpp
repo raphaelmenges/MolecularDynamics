@@ -162,7 +162,7 @@ GPUSurfaceExtraction::~GPUSurfaceExtraction()
     glDeleteQueries(1, &mQuery);
 }
 
-std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calcSurface(GPUProtein const * pGPUProtein, float probeRadius, bool extractLayers) const
+std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(GPUProtein const * pGPUProtein, float probeRadius, bool extractLayers) const
 {
     // Prepare atomic counter for writing results to unique position in image
     AtomicCounter internalCounter;

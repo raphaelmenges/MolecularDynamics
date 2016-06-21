@@ -137,7 +137,7 @@ public:
     virtual ~GPUSurfaceExtraction();
 
     // Factory for GPUSurface objects
-    std::unique_ptr<GPUSurface> calcSurface(GPUProtein const * pGPUProtein, float probeRadius, bool extractLayers) const;
+    std::unique_ptr<GPUSurface> calculateSurface(GPUProtein const * pGPUProtein, float probeRadius, bool extractLayers) const;
 
 private:
 

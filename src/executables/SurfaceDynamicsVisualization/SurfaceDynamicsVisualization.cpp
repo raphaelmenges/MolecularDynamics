@@ -82,7 +82,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
 
     // # Load protein
 
-    // /*
+    /*
     // Path to protein molecule
     std::vector<std::string> paths;
     // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
@@ -104,7 +104,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     mProteinMinExtent = upProtein->getMin();
     mProteinMaxExtent = upProtein->getMax();
 
-    // */
+    */
 
     /*
     // Simple PDB loader (TODO: GPUProtein adaption)
@@ -114,8 +114,19 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/8AtomsIntersection.txt", mProteinMinExtent, mProteinMaxExtent);
     */
 
+    // Load series of proteins
+    MdTrajWrapper mdwrap;
+    std::vector<std::string> paths;
+    paths.push_back("/home/raphael/Temp/XTC/Output_0.pdb");
+    std::unique_ptr<Protein> upProtein = std::move(mdwrap.load(paths));
+
+    // Get min/max extent of protein
+    upProtein->minMax(); // first, one has to calculate min and max value of protein
+    mProteinMinExtent = upProtein->getMin();
+    mProteinMaxExtent = upProtein->getMax();
+
     // Fill GPUProtein
-    mupGPUProtein = std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()));
+    mGPUProteins.push_back(std::move(std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()))));
 
     // Test protein extent
     std::cout
@@ -129,31 +140,31 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
         << mProteinMaxExtent.y << ", "
         << mProteinMaxExtent.z << std::endl;
 
-    /*
-    // Test atom radii
-    for(const auto& rAtom : mAtomStructs)
-    {
-        std::cout << "Radius in Angstrom: " << rAtom.radius << std::endl;
-    }
-    */
+    // Load other animation frames
+    paths.clear();
+    paths.push_back("/home/raphael/Temp/XTC/Output_1.pdb");
+    upProtein = std::move(mdwrap.load(paths));
+    mGPUProteins.push_back(std::move(std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()))));
 
-    // Output atom count
-    std::cout << "Atom count: " << mupGPUProtein->getAtomCount() << std::endl;
+    paths.clear();
+    paths.push_back("/home/raphael/Temp/XTC/Output_2.pdb");
+    upProtein = std::move(mdwrap.load(paths));
+    mGPUProteins.push_back(std::move(std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()))));
 
-    /*
-    // # Some simple rotation matrix for easy test of rotation invariance
-    // glm::mat4 rotation = glm::rotate(glm::mat4(1.f), glm::radians(45.f), glm::normalize(glm::vec3(-1,1,1)));
-    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.f), glm::radians(0.f), glm::normalize(glm::vec3(0.6f,-1.f,0.f)));
-    glm::vec3 translation = glm::vec3(3.544,-8.454,1);
-    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.f), translation);
+    paths.clear();
+    paths.push_back("/home/raphael/Temp/XTC/Output_3.pdb");
+    upProtein = std::move(mdwrap.load(paths));
+    mGPUProteins.push_back(std::move(std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()))));
 
-    // Go over atom structs and transform them
-    for(auto& rAtomStruct : mAtomStructs)
-    {
-        glm::vec4 newAtomCenter = translationMatrix * (rotationMatrix * glm::vec4(rAtomStruct.center, 1));
-        rAtomStruct.center = glm::vec3(newAtomCenter.x, newAtomCenter.y, newAtomCenter.z);
-    }
-    */
+    paths.clear();
+    paths.push_back("/home/raphael/Temp/XTC/Output_4.pdb");
+    upProtein = std::move(mdwrap.load(paths));
+    mGPUProteins.push_back(std::move(std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()))));
+
+    paths.clear();
+    paths.push_back("/home/raphael/Temp/XTC/Output_5.pdb");
+    upProtein = std::move(mdwrap.load(paths));
+    mGPUProteins.push_back(std::move(std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()))));
 
     // # Create camera
     glm::vec3 cameraCenter = (mProteinMinExtent + mProteinMaxExtent) / 2.f;
@@ -168,10 +179,6 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
             5.f * cameraRadius,
             45.f,
             0.05f));
-
-
-    // TODO: understand why buffer to texture binding is necessary in GLSL method and in renderLoop()
-    // Texture (which will be bound as image, connected to buffer in renderLoop(), since it seems that is has to be done after buffer fill)
 
     // # Run implementation to extract surface atoms
     if(mInitiallyUseGLSLImplementation)
@@ -236,9 +243,6 @@ void SurfaceDynamicsVisualization::renderLoop()
     ShaderProgram pointProgram("/SurfaceDynamicsVisualization/point.vert", "/SurfaceDynamicsVisualization/point.geom", "/SurfaceDynamicsVisualization/point.frag");
     ShaderProgram impostorProgram("/SurfaceDynamicsVisualization/impostor.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
 
-    // Bind SSBO with atoms
-    mupGPUProtein->bind(0);
-
     // Bind buffer to texture (may not be done before buffer filling? Probably not necessary for GLSL implementation since already bound there and filled on GPU)
     /*
     glBindTexture(GL_TEXTURE_BUFFER, mInternalIndicesTexture);
@@ -262,6 +266,9 @@ void SurfaceDynamicsVisualization::renderLoop()
         // Viewport size
         glm::vec2 resolution = getResolution(mpWindow);
         glViewport(0, 0, resolution.x, resolution.y);
+
+        // Bind SSBO with atoms (TODO: only at frame change)
+        mGPUProteins.at(mFrame)->bind(0);
 
         // Calculate cursor movement
         double cursorX, cursorY;
@@ -310,17 +317,17 @@ void SurfaceDynamicsVisualization::renderLoop()
             // viewport depth which means internal are always in front of surface)
             if(mShowInternal)
             {
-                mupGPUSurface->bindInternalIndicesForDrawing(mLayer, 1);
+                mGPUSurfaces.at(mFrame)->bindInternalIndicesForDrawing(mLayer, 1);
                 impostorProgram.update("color", mInternalAtomColor);
-                glDrawArrays(GL_POINTS, 0, mupGPUSurface->getCountOfInternalAtoms(0));
+                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame)->getCountOfInternalAtoms(0));
             }
 
             // Draw surface
             if(mShowSurface)
             {
-                mupGPUSurface->bindSurfaceIndicesForDrawing(mLayer, 1);
+                mGPUSurfaces.at(mFrame)->bindSurfaceIndicesForDrawing(mLayer, 1);
                 impostorProgram.update("color", mSurfaceAtomColor);
-                glDrawArrays(GL_POINTS, 0, mupGPUSurface->getCountOfSurfaceAtoms(0));
+                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame)->getCountOfSurfaceAtoms(0));
             }
         }
         else
@@ -338,17 +345,17 @@ void SurfaceDynamicsVisualization::renderLoop()
             // Draw internal
             if(mShowInternal)
             {
-                mupGPUSurface->bindInternalIndicesForDrawing(mLayer, 1);
+                mGPUSurfaces.at(mFrame)->bindInternalIndicesForDrawing(mLayer, 1);
                 pointProgram.update("color", mInternalAtomColor);
-                glDrawArrays(GL_POINTS, 0, mupGPUSurface->getCountOfInternalAtoms(0));
+                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame)->getCountOfInternalAtoms(0));
             }
 
             // Draw surface
             if(mShowSurface)
             {
-                mupGPUSurface->bindSurfaceIndicesForDrawing(mLayer, 1);
+                mGPUSurfaces.at(mFrame)->bindSurfaceIndicesForDrawing(mLayer, 1);
                 pointProgram.update("color", mSurfaceAtomColor);
-                glDrawArrays(GL_POINTS, 0, mupGPUSurface->getCountOfSurfaceAtoms(0));
+                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame)->getCountOfSurfaceAtoms(0));
             }
         }
 
@@ -421,13 +428,13 @@ void SurfaceDynamicsVisualization::keyCallback(int key, int scancode, int action
             case GLFW_KEY_RIGHT:
             {
                 mSelectedAtom++;
-                if(mSelectedAtom >= mupGPUProtein->getAtomCount()) { mSelectedAtom = 0; }
+                if(mSelectedAtom >= mGPUProteins.at(mFrame)->getAtomCount()) { mSelectedAtom = 0; }
                 break;
             }
             case GLFW_KEY_LEFT:
             {
                 mSelectedAtom--;
-                if(mSelectedAtom < 0) { mSelectedAtom = mupGPUProtein->getAtomCount() - 1; }
+                if(mSelectedAtom < 0) { mSelectedAtom = mGPUProteins.at(mFrame)->getAtomCount() - 1; }
                 break;
             }
             // case GLFW_KEY_C: { mUsePerspectiveCamera = !mUsePerspectiveCamera; break; }
@@ -701,7 +708,8 @@ void SurfaceDynamicsVisualization::updateGUI()
     if(mShowVisualizationWindow)
     {
         ImGui::Begin("Visualization", NULL, 0);
-        ImGui::SliderInt("Layer", &mLayer, 0, mupGPUSurface->getLayerCount() - 1);
+        ImGui::SliderInt("Frame", &mFrame, 0, mGPUSurfaces.size() - 1); // TODO: extra method to set frame: one has to clamp layers for example, reset selected atom...
+        ImGui::SliderInt("Layer", &mLayer, 0, mGPUSurfaces.at(mFrame)->getLayerCount() - 1);
 
         // Show / hide internal atoms
         if(mShowInternal)
@@ -1027,10 +1035,13 @@ void SurfaceDynamicsVisualization::runGLSLImplementation()
 {
     std::cout << "GLSL implementation used!" << std::endl;
 
-    mupGPUSurface = std::move(mupGPUSurfaceExtraction->calcSurface(mupGPUProtein.get(), mProbeRadius, true));
+    for(const auto& rupGPUProtein : mGPUProteins)
+    {
+        mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(rupGPUProtein.get(), mProbeRadius, true)));
+    }
 
     // Update compute information
-    updateComputationInformation("GPGPU", mupGPUSurface->getComputationTime());
+    // updateComputationInformation("GPGPU", mupGPUSurface->getComputationTime());
 }
 
 // ### Main function ###
