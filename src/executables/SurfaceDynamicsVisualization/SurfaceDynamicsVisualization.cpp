@@ -23,8 +23,11 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     mCameraSmoothTime = 1.f;
     mLightDirection = glm::normalize(glm::vec3(-0.5, -0.75, -0.3));
 
-    // Create window
+    // Create window (which initializes OpenGL)
     mpWindow = generateWindow("Surface Dynamics Visualization");
+
+    // Construct GPUSurfaceExtraction object after OpenGL has been initialized
+    mupGPUSurfaceExtraction = std::unique_ptr<GPUSurfaceExtraction>(new GPUSurfaceExtraction);
 
     // Init ImGui
     ImGui_ImplGlfwGL3_Init(mpWindow, true);
@@ -971,7 +974,7 @@ void SurfaceDynamicsVisualization::runGLSLImplementation()
 {
     std::cout << "GLSL implementation used!" << std::endl;
 
-    mupGPUSurface = std::move(mGPUSurfaceExtraction.calcSurface(mupGPUProtein.get(), mProbeRadius, false));
+    mupGPUSurface = std::move(mupGPUSurfaceExtraction->calcSurface(mupGPUProtein.get(), mProbeRadius, false));
 
     // Update compute information
     updateComputationInformation("GPGPU", mupGPUSurface->getComputationTime());

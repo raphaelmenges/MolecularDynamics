@@ -103,7 +103,8 @@ private:
     glm::vec3 mProteinMinExtent;
     glm::vec3 mProteinMaxExtent;
     std::unique_ptr<GPUProtein> mupGPUProtein; // protein on GPU
-    GPUSurfaceExtraction mGPUSurfaceExtraction; // factory for GPUSurfaces
+    std::unique_ptr<GPUSurfaceExtraction> mupGPUSurfaceExtraction;  // factory for GPUSurfaces
+                                                                    // (unique pointer because has to be constructed after OpenGL initialization)
     std::unique_ptr<GPUSurface> mupGPUSurface; // TODO: testing
 
     // Samples for testing the surface
