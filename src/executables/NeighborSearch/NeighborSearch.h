@@ -53,7 +53,6 @@ private:
     glm::vec2 m_CameraDeltaMovement;
     float m_CameraSmoothTime;
     bool m_rotateCamera = false;
-    bool m_rotateLight = false;
 
     // rendering
     glm::vec3 m_lightDirection;

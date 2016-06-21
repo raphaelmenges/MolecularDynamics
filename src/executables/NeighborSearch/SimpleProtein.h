@@ -21,13 +21,16 @@ public:
     std::string name;
     std::vector<SimpleAtom> atoms;
     GLuint atomsSSBO;
+    glm::vec3 bbMin;
+    glm::vec3 bbMax;
 
     //_____________________________________//
     //           CONSTRUCTOR               //
     //_____________________________________//
     SimpleProtein(std::string name = "Protein") : name(name)
     {
-
+        bbMin = glm::vec3(0.0f, 0.0f, 0.0f);
+        bbMax = glm::vec3(0.0f, 0.0f, 0.0f);
     }
 
     void setName(std::string name)
@@ -37,7 +40,9 @@ public:
 
     void createAtom(std::string name, glm::vec3 pos, float radius)
     {
-        SimpleAtom atom(name, pos, radius);
+        SimpleAtom atom;
+        atom.pos = pos;
+        atom.radius = radius;
         atoms.push_back(std::move(atom));
     }
 

@@ -5,6 +5,9 @@
 #ifndef OPENGL_FRAMEWORK_PROTEINLOADER_H
 #define OPENGL_FRAMEWORK_PROTEINLOADER_H
 
+// standard includes
+#include <limits>
+
 // framework includes
 #include "Molecule/MDtrajLoader/MdTraj/MdTrajWrapper.h"
 
@@ -26,7 +29,7 @@ public:
     //_____________________________________//
     //             METHODS                 //
     //_____________________________________//
-    void loadPDB(std::string filePath, SimpleProtein &protein);
+    void loadPDB(std::string filePath, SimpleProtein &protein, glm::vec3 &minPosition, glm::vec3 &maxPosition);
 
 };
 

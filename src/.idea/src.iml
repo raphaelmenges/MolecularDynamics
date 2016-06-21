@@ -155,12 +155,9 @@
       <sourceFolder url="file://$MODULE_DIR$/shaders/Impostor/impostorSpheres_discardFragments_Instanced.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/Impostor/Impostor3DSphere.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/Impostor/Impostor3DSphereTetrahedron.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/impostor.vert" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/impostor.geom" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/point.geom" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/impostor.vert" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/impostor.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/point.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/point.vert" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/3DObject/modelViewProjectionInstanced.vert" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/3DObject/environmentMapping.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/3DObject/equirectangularSky.frag" isTestSource="false" />

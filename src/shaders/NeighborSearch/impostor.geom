@@ -16,21 +16,31 @@ uniform mat4 view;
 
 void main()
 {
-    // Get position
+    /*
+     * Get atom position
+     */
     position = gl_in[0].gl_Position.xyz;
 
-    // Set color and radius which is for all vertices the same
+    /*
+     * Set color and radius which is for all vertices the same
+     */
     color = vertColor[0];
     radius = vertRadius[0];
 
-    // GLSL is column-major! Get world space camera vectors
+    /*
+     * GLSL is column-major! Get world space camera vectors
+     */
     vec3 cameraRight = vec3(view[0][0], view[1][0], view[2][0]); // First row of view matrix
     vec3 cameraUp = vec3(view[0][1], view[1][1], view[2][1]); // Second row of view matrix
 
-    // Combine matrices
+    /*
+     * combine camera view and projection matrices
+     */
     mat4 M = projection * view;
 
-    // Emit triangle
+    /*
+     * create triangle billboard
+     */
     gl_Position = M * (gl_in[0].gl_Position + radius * vec4(-2 * cameraRight - cameraUp, 0));
     uv = 2 * (vec2(-0.5, 0) - 0.5);
     EmitVertex();

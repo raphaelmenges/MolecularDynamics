@@ -14,8 +14,17 @@ ProteinLoader::~ProteinLoader()
 
 }
 
-void ProteinLoader::loadPDB(std::string filePath, SimpleProtein &protein)
+void ProteinLoader::loadPDB(std::string filePath, SimpleProtein &protein, glm::vec3 &minPosition, glm::vec3 &maxPosition)
 {
+
+    /*
+     * set start values of min and max position
+     */
+    double min = std::numeric_limits<double>::min();
+    double max = std::numeric_limits<double>::max();
+    minPosition = glm::vec3(max, max, max);
+    maxPosition = glm::vec3(min, min, min);
+
     /*
      * the informations we need to create our atoms
      */
@@ -62,6 +71,17 @@ void ProteinLoader::loadPDB(std::string filePath, SimpleProtein &protein)
         positionZ = xyz_carray[id + 2] * 10;
         glm::vec3 position(positionX, positionY, positionZ);
         positions.push_back(position);
+
+        /*
+         * get min and max
+         */
+        minPosition.x = (positionX < minPosition.x) ? positionX : minPosition.x;
+        minPosition.y = (positionY < minPosition.y) ? positionY : minPosition.y;
+        minPosition.z = (positionZ < minPosition.z) ? positionZ : minPosition.z;
+
+        maxPosition.x = (positionX > maxPosition.x) ? positionX : maxPosition.x;
+        maxPosition.y = (positionY > maxPosition.y) ? positionY : maxPosition.y;
+        maxPosition.z = (positionZ > maxPosition.z) ? positionZ : maxPosition.z;
     }
     Py_DECREF(xyz_py);
 

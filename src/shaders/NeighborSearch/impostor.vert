@@ -26,14 +26,20 @@ uniform vec3 color;
 // Main function
 void main()
 {
-    // Extract position
+    /*
+     * get atom center for every vertex id
+     */
     int index = int(gl_VertexID);
     gl_Position = vec4(atoms[index].center, 1);
 
-    // Extract radius
+    /*
+     * get the radius for the corresponding atom
+     */
     vertRadius = atoms[index].radius + probeRadius;
 
-    // Set color
+    /*
+     * color selected atom different to all atoms
+     */
     if(index == selectedIndex)
     {
         vertColor = vec3(0,1,0);

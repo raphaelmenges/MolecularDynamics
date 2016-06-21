@@ -103,7 +103,7 @@ void NeighborSearch::loadProtein(std::string fileName)
      * load protein from pdb file
      */
     SimpleProtein protein;
-    m_proteinLoader.loadPDB(filePath, protein);
+    m_proteinLoader.loadPDB(filePath, protein, protein.bbMin, protein.bbMax);
 
     /*
      * generate, bind, fill and then unbind atom ssbo buffer
@@ -144,7 +144,16 @@ void NeighborSearch::execute(){
      * setup camera
      */
     glm::vec3 cameraCenter = glm::vec3(0.0, 0.0, 0.0);
-    float cameraRadius = 30.0f;
+    float cameraRadius = 0.0f;
+    for (int i = 0; i < m_proteins.size(); i++)
+    {
+        SimpleProtein protein = m_proteins.at(i);
+        cameraCenter = cameraCenter + ((protein.bbMax + protein.bbMin) / 2);
+        float radius = glm::length(protein.bbMax - protein.bbMin);
+        cameraRadius = (radius > cameraRadius) ? radius : cameraRadius;
+    }
+    std::cout << "Camera radius is " << cameraRadius << std::endl;
+
     mp_camera = std::unique_ptr<OrbitCamera>(
             new OrbitCamera(
                     cameraCenter,
@@ -197,7 +206,6 @@ void NeighborSearch::execute(){
          * update camera
          */
         if(m_rotateCamera) {
-            std::cout << "rotate camera" << std::endl;
             m_CameraDeltaMovement = glm::vec2(cursorDeltaX, cursorDeltaY);
             m_CameraSmoothTime = 1.f;
         }
@@ -209,10 +217,7 @@ void NeighborSearch::execute(){
         /*
          * light direction equals view direction of the camera
          */
-        if(m_rotateLight) {
-            std::cout << "rotate light" << std::endl;
-            m_lightDirection = glm::normalize(mp_camera->getPosition() - mp_camera->getCenter());
-        }
+        m_lightDirection = glm::normalize(-mp_camera->getPosition() + mp_camera->getCenter());
 
         /*
          * draw proteins as impostor
@@ -224,13 +229,13 @@ void NeighborSearch::execute(){
         impostorProgram.update("probeRadius", 0.f);
         impostorProgram.update("lightDir", m_lightDirection);
         impostorProgram.update("selectedIndex", m_selectedAtom);
+        impostorProgram.update("color", glm::vec3(1.f,1.f,1.f));
 
         /*
          * Draw atoms
          */
-        impostorProgram.update("color", glm::vec3(1.f,1.f,1.f));
         for (int i = 0; i < m_proteins.size(); i++) {
-            glDrawArrays(GL_POINTS, 0, m_proteins.at(i).atoms.size());
+            glDrawArrays(GL_POINTS, 0, (GLsizei)m_proteins.at(i).atoms.size());
         }
 
 
@@ -317,19 +322,12 @@ void NeighborSearch::mouseButtonCallback(int button, int action, int mods)
     {
         m_rotateCamera = false;
     }
-    else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
-    {
-        m_rotateLight = true;
-    }
-    else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE)
-    {
-        m_rotateLight = false;
-    }
 }
 
 void NeighborSearch::scrollCallback(double xoffset, double yoffset)
 {
     mp_camera->setRadius(mp_camera->getRadius() - 0.5f * (float)yoffset);
+    std::cout << "Camera radius is now " << mp_camera->getRadius() << std::endl;
 }
 
 

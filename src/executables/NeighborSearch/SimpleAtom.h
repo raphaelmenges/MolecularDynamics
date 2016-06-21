@@ -12,24 +12,8 @@ public:
     //_____________________________________//
     //            VARIABLES                //
     //_____________________________________//
-    std::string name;
     glm::vec3 pos;
     float radius;
-
-    //_____________________________________//
-    //           CONSTRUCTOR               //
-    //_____________________________________//
-    SimpleAtom(std::string name, glm::vec3 pos, float radius)
-    {
-        this->name = name;
-        this->pos = pos;
-        this->radius = radius;
-    }
-
-    ~SimpleAtom()
-    {
-
-    }
 
 };
 
