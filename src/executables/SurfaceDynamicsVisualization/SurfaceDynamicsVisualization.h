@@ -85,10 +85,10 @@ private:
     int mCPPThreads = 8;
     int mSurfaceTestAtomSampleCount = 20;
     bool mShowSamplePoint = true;
-    int mLayerRemovalCount = 0;
     float mClippingPlane = 0.f;
     int mSurfaceTestSeed = 0;
     bool mShowAxesGizmo = false;
+    bool mShowVisualizationWindow = true;
 
     // Debugging output
     std::string mComputeInformation = "";
@@ -106,6 +106,8 @@ private:
     std::unique_ptr<GPUSurfaceExtraction> mupGPUSurfaceExtraction;  // factory for GPUSurfaces
                                                                     // (unique pointer because has to be constructed after OpenGL initialization)
     std::unique_ptr<GPUSurface> mupGPUSurface; // TODO: testing
+    int mFrame = 0;
+    int mLayer = 0;
 
     // Samples for testing the surface
     GLuint mSurfaceTestVBO;

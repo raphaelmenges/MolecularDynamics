@@ -310,7 +310,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             // viewport depth which means internal are always in front of surface)
             if(mShowInternal)
             {
-                mupGPUSurface->bindInternalIndicesForDrawing(0, 1);
+                mupGPUSurface->bindInternalIndicesForDrawing(mLayer, 1);
                 impostorProgram.update("color", mInternalAtomColor);
                 glDrawArrays(GL_POINTS, 0, mupGPUSurface->getCountOfInternalAtoms(0));
             }
@@ -318,7 +318,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             // Draw surface
             if(mShowSurface)
             {
-                mupGPUSurface->bindSurfaceIndicesForDrawing(0, 1);
+                mupGPUSurface->bindSurfaceIndicesForDrawing(mLayer, 1);
                 impostorProgram.update("color", mSurfaceAtomColor);
                 glDrawArrays(GL_POINTS, 0, mupGPUSurface->getCountOfSurfaceAtoms(0));
             }
@@ -338,7 +338,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             // Draw internal
             if(mShowInternal)
             {
-                mupGPUSurface->bindInternalIndicesForDrawing(0, 1);
+                mupGPUSurface->bindInternalIndicesForDrawing(mLayer, 1);
                 pointProgram.update("color", mInternalAtomColor);
                 glDrawArrays(GL_POINTS, 0, mupGPUSurface->getCountOfInternalAtoms(0));
             }
@@ -346,7 +346,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             // Draw surface
             if(mShowSurface)
             {
-                mupGPUSurface->bindSurfaceIndicesForDrawing(0, 1);
+                mupGPUSurface->bindSurfaceIndicesForDrawing(mLayer, 1);
                 pointProgram.update("color", mSurfaceAtomColor);
                 glDrawArrays(GL_POINTS, 0, mupGPUSurface->getCountOfSurfaceAtoms(0));
             }
@@ -482,6 +482,7 @@ void SurfaceDynamicsVisualization::updateComputationInformation(std::string devi
 void SurfaceDynamicsVisualization::updateGUI()
 {
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.75f)); // window background
+    ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4(0.2f, 0.2f, 0.2f, 0.25f)); // menu bar background
 
     // Main menu bar
     if (ImGui::BeginMainMenuBar())
@@ -593,6 +594,16 @@ void SurfaceDynamicsVisualization::updateGUI()
                 if(ImGui::MenuItem("Show Camera", "", false, true)) { mShowCameraWindow = true; }
             }
 
+            // Visualization window
+            if(mShowVisualizationWindow)
+            {
+                if(ImGui::MenuItem("Hide Visualization", "", false, true)) { mShowVisualizationWindow = false; }
+            }
+            else
+            {
+                if(ImGui::MenuItem("Show Visualization", "", false, true)) { mShowVisualizationWindow = true; }
+            }
+
             // Debugging window
             if(mShowDebuggingWindow)
             {
@@ -616,6 +627,7 @@ void SurfaceDynamicsVisualization::updateGUI()
         ImGui::EndMainMenuBar();
     }
 
+    ImGui::PopStyleColor(); // menu bar background
     ImGui::PopStyleColor(); // window background
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.2f, 0.2f, 0.2f, 0.75f)); // window background
     ImGui::PushStyleColor(ImGuiCol_TitleBg, ImVec4(0.2f, 0.2f, 0.2f, 0.75f)); // window title
@@ -628,7 +640,6 @@ void SurfaceDynamicsVisualization::updateGUI()
     {
         ImGui::Begin("Surface Computation", NULL, 0);
         ImGui::SliderFloat("Probe radius", &mProbeRadius, 0.f, 2.f, "%.1f");
-        ImGui::SliderInt("Layer removal count", &mLayerRemovalCount, 0, 5);
         ImGui::SliderInt("CPU Cores", &mCPPThreads, 1, 24);
         if(ImGui::Button("Run GPGPU")) { runGLSLImplementation(); }
         ImGui::SameLine();
@@ -683,6 +694,48 @@ void SurfaceDynamicsVisualization::updateGUI()
             mupCamera->setAlpha(mCameraDefaultAlpha);
             mupCamera->setBeta(mCameraDefaultBeta);
         }
+        ImGui::End();
+    }
+
+    // Visualization window
+    if(mShowVisualizationWindow)
+    {
+        ImGui::Begin("Visualization", NULL, 0);
+        ImGui::SliderInt("Layer", &mLayer, 0, mupGPUSurface->getLayerCount() - 1);
+
+        // Show / hide internal atoms
+        if(mShowInternal)
+        {
+            if(ImGui::Button("Hide Internal", ImVec2(90, 22)))
+            {
+                mShowInternal = false;
+            }
+        }
+        else
+        {
+            if(ImGui::Button("Show Internal", ImVec2(90, 22)))
+            {
+                mShowInternal = true;
+            }
+        }
+        ImGui::SameLine();
+
+        // Show / hide surface atoms
+        if(mShowSurface)
+        {
+            if(ImGui::Button("Hide Surface", ImVec2(90, 22)))
+            {
+                mShowSurface = false;
+            }
+        }
+        else
+        {
+            if(ImGui::Button("Show Surface", ImVec2(90, 22)))
+            {
+                mShowSurface = true;
+            }
+        }
+
         ImGui::End();
     }
 
@@ -974,7 +1027,7 @@ void SurfaceDynamicsVisualization::runGLSLImplementation()
 {
     std::cout << "GLSL implementation used!" << std::endl;
 
-    mupGPUSurface = std::move(mupGPUSurfaceExtraction->calcSurface(mupGPUProtein.get(), mProbeRadius, false));
+    mupGPUSurface = std::move(mupGPUSurfaceExtraction->calcSurface(mupGPUProtein.get(), mProbeRadius, true));
 
     // Update compute information
     updateComputationInformation("GPGPU", mupGPUSurface->getComputationTime());

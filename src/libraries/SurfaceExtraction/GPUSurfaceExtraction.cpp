@@ -195,7 +195,7 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calcSurface(GPUProtein const *
 
     // Do it as often as indicated
     bool firstRun = true;
-    if(firstRun || (extractLayers && (inputCount > 0)))
+    while(firstRun || (extractLayers && (inputCount > 0)))
     {
         // Remember that run
         firstRun = false;
