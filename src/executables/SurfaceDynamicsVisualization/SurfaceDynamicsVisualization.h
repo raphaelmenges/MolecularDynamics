@@ -110,10 +110,10 @@ private:
     int mLayer = 0;
 
     // Samples for testing the surface
-    GLuint mSurfaceTestVBO;
-    GLuint mSurfaceTestVAO;
-    std::unique_ptr<ShaderProgram> mupSurfaceTestProgram;
-    int mSurfaceTestSampleCount = 0;
+    GLuint mSurfaceValidationVBO;
+    GLuint mSurfaceValidationVAO;
+    std::unique_ptr<ShaderProgram> mupSurfaceValidationProgram;
+    int mSurfaceValidationSampleCount = 0;
 
     // ### CPP implementation of surface atoms detection ###
     void runCPPImplementation(bool threaded);

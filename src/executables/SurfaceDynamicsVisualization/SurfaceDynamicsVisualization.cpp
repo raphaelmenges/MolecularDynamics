@@ -192,16 +192,16 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     }
 
     // Prepare testing the surface
-    glGenBuffers(1, &mSurfaceTestVBO);
-    glGenVertexArrays(1, &mSurfaceTestVAO);
-    mupSurfaceTestProgram = std::unique_ptr<ShaderProgram>(new ShaderProgram("/SurfaceDynamicsVisualization/sample.vert", "/SurfaceDynamicsVisualization/sample.frag"));
+    glGenBuffers(1, &mSurfaceValidationVBO);
+    glGenVertexArrays(1, &mSurfaceValidationVAO);
+    mupSurfaceValidationProgram = std::unique_ptr<ShaderProgram>(new ShaderProgram("/SurfaceDynamicsVisualization/sample.vert", "/SurfaceDynamicsVisualization/sample.frag"));
 }
 
 SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
 {
-    // Testing surface
-    glDeleteVertexArrays(1, &mSurfaceTestVAO);
-    glDeleteBuffers(1, &mSurfaceTestVBO);
+    // Surface validation
+    glDeleteVertexArrays(1, &mSurfaceValidationVAO);
+    glDeleteBuffers(1, &mSurfaceValidationVBO);
 }
 
 void SurfaceDynamicsVisualization::renderLoop()
@@ -364,12 +364,12 @@ void SurfaceDynamicsVisualization::renderLoop()
         if(mShowSamplePoint)
         {
             glPointSize(mSamplePointSize);
-            mupSurfaceTestProgram->use();
-            mupSurfaceTestProgram->update("view", mupCamera->getViewMatrix());
-            mupSurfaceTestProgram->update("projection", mupCamera->getProjectionMatrix());
-            mupSurfaceTestProgram->update("color", mSamplePointColor);
-            glBindVertexArray(mSurfaceTestVAO);
-            glDrawArrays(GL_POINTS, 0, mSurfaceTestSampleCount);
+            mupSurfaceValidationProgram->use();
+            mupSurfaceValidationProgram->update("view", mupCamera->getViewMatrix());
+            mupSurfaceValidationProgram->update("projection", mupCamera->getProjectionMatrix());
+            mupSurfaceValidationProgram->update("color", mSamplePointColor);
+            glBindVertexArray(mSurfaceValidationVAO);
+            glDrawArrays(GL_POINTS, 0, mSurfaceValidationSampleCount);
             glBindVertexArray(0);
         }
 
@@ -767,13 +767,10 @@ void SurfaceDynamicsVisualization::updateGUI()
 
 void SurfaceDynamicsVisualization::testSurface()
 {
-    /*
-    std::cout << "*** SURFACE TEST START ***" << std::endl;
-
     // Read data back from OpenGL buffers
-    std::vector<GLuint> inputIndices = readTextureBuffer(mInputIndicesBuffer, mInputCount);
-    std::vector<GLuint> internalIndices = readTextureBuffer(mInternalIndicesBuffer, mInternalCount);
-    std::vector<GLuint> surfaceIndices = readTextureBuffer(mSurfaceIndicesBuffer, mSurfaceCount);
+    std::vector<GLuint> inputIndices = mGPUSurfaces.at(mFrame)->getInputIndices(mLayer);
+    std::vector<GLuint> internalIndices = mGPUSurfaces.at(mFrame)->getInternalIndices(mLayer);
+    std::vector<GLuint> surfaceIndices = mGPUSurfaces.at(mFrame)->getSurfaceIndices(mLayer);
 
     // Seed
     std::srand(mSurfaceTestSeed);
@@ -786,7 +783,7 @@ void SurfaceDynamicsVisualization::testSurface()
     int surfaceAtomsFailures = 0;
 
     // Copy atoms of protein to stack
-    auto atoms = mupGPUProtein->getAtoms();
+    auto atoms = mGPUProteins.at(mFrame)->getAtoms();
 
     // Go over atoms (using indices from input indices buffer)
     for(unsigned int i : inputIndices) // using results from algorithm here. Not so good for independend test but necessary for layers
@@ -892,14 +889,14 @@ void SurfaceDynamicsVisualization::testSurface()
     }
 
     // Bind vertex array object
-    glBindVertexArray(mSurfaceTestVAO);
+    glBindVertexArray(mSurfaceValidationVAO);
 
     // Fill vertex buffer with vertices
-    glBindBuffer(GL_ARRAY_BUFFER, mSurfaceTestVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, mSurfaceValidationVBO);
     glBufferData(GL_ARRAY_BUFFER, samples.size() * sizeof(glm::vec3), samples.data(), GL_DYNAMIC_DRAW);
 
     // Bind it to shader program
-    GLint posAttrib = glGetAttribLocation(mupSurfaceTestProgram->getProgramHandle(), "position");
+    GLint posAttrib = glGetAttribLocation(mupSurfaceValidationProgram->getProgramHandle(), "position");
     glEnableVertexAttribArray(posAttrib);
     glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
@@ -908,15 +905,11 @@ void SurfaceDynamicsVisualization::testSurface()
     glBindVertexArray(0);
 
     // Remember about complete count of samples for drawing
-    mSurfaceTestSampleCount = samples.size();
+    mSurfaceValidationSampleCount = samples.size();
 
     // Draw output of test to GUI
     mTestOutput = "Wrong classification as internal for " + std::to_string(internalSampleFailures) + " samples.\n";
     mTestOutput += "Maybe wrong classification as surface for " + std::to_string(surfaceAtomsFailures) + " atoms.";
-
-    std::cout << "*** SURFACE TEST END ***" << std::endl;
-
-    */
 }
 
 void SurfaceDynamicsVisualization::runCPPImplementation(bool threaded)
