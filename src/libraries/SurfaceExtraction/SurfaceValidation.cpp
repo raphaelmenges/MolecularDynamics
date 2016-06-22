@@ -5,19 +5,41 @@
 
 SurfaceValidation::SurfaceValidation()
 {
-    // Generate VBO and VAO
-    glGenBuffers(1, &mVBO);
-    glGenVertexArrays(1, &mVAO);
+    // Generate VBOs and VAOs
+    glGenBuffers(1, &mInternalVBO);
+    glGenVertexArrays(1, &mInternalVAO);
+    glGenBuffers(1, &mSurfaceVBO);
+    glGenVertexArrays(1, &mSurfaceVAO);
 
     // Load shader for drawing
     mupShaderProgram = std::unique_ptr<ShaderProgram>(new ShaderProgram("/SurfaceExtraction/sample.vert", "/SurfaceExtraction/sample.frag"));
+
+    // Bind buffers to attributes for internal samples
+    GLint posAttrib = glGetAttribLocation(mupShaderProgram->getProgramHandle(), "position");
+    glBindVertexArray(mInternalVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, mInternalVBO);
+    glEnableVertexAttribArray(posAttrib);
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    // Bind buffers to attributes for surface samples
+    glBindVertexArray(mSurfaceVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, mSurfaceVBO);
+    glEnableVertexAttribArray(posAttrib);
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
 }
 
 SurfaceValidation::~SurfaceValidation()
 {
-    // Delete VBO and VAO
-    glDeleteVertexArrays(1, &mVAO);
-    glDeleteBuffers(1, &mVBO);
+    // Delete VBOs and VAOs
+    glDeleteVertexArrays(1, &mSurfaceVAO);
+    glDeleteBuffers(1, &mSurfaceVBO);
+    glDeleteVertexArrays(1, &mInternalVAO);
+    glDeleteBuffers(1, &mInternalVBO);
 }
 
 void SurfaceValidation::validate(
@@ -27,10 +49,12 @@ void SurfaceValidation::validate(
     float probeRadius,
     unsigned int sampleSeed,
     int samplesPerAtomCount,
-    std::string& rInformation)
+    std::string& rInformation,
+    std::vector<GLuint> rMaybeIncorrectSurfaceAtomIndices)
 {
-    // Clear information
+    // Clear references
     rInformation.clear();
+    rMaybeIncorrectSurfaceAtomIndices.clear();
 
     // Read data back from OpenGL buffers
     std::vector<GLuint> inputIndices = pGPUSurface->getInputIndices(layer);
@@ -40,8 +64,9 @@ void SurfaceValidation::validate(
     // Seed
     std::srand(sampleSeed);
 
-    // Vector of samples
-    std::vector<glm::vec3> samples;
+    // Vectors of samples
+    std::vector<glm::vec3> internalSamples;
+    std::vector<glm::vec3> surfaceSamples;
 
     // Count cases of failure
     int internalSampleFailures = 0;
@@ -93,8 +118,8 @@ void SurfaceValidation::validate(
         glm::vec3 atomCenter = atoms[i].center;
         float atomExtRadius = atoms[i].radius + probeRadius;
 
-        // Count samples which are classified as internal
-        int internalSamples = 0;
+        // Count samples which are classified as internal for that atom
+        int atomInternalSampleCount = 0;
 
         // Do some samples per atom
         for(int j = 0; j < samplesPerAtomCount; j++)
@@ -130,47 +155,46 @@ void SurfaceValidation::validate(
             // Check result
             if(inside)
             {
-                internalSamples++;
+                // Count to check whether atom was classified as surface and all samples are inside
+                atomInternalSampleCount++;
+
+                // Push back to vector
+                internalSamples.push_back(samplePosition);
             }
             else
             {
-                // Push back to vector only, if NOT inside
-                samples.push_back(samplePosition);
-
-                // If sample was created by internal atom and is not classified as internal in test, something went terrible wrong
+                // If sample was created by internal atom and is not classified as internal in test, something went terribly wrong
                 if(internalAtom)
                 {
                     // Sample is not inside any other atom's extended hull but should be
                     internalSampleFailures++;
                 }
+
+                // Push back to vector
+                surfaceSamples.push_back(samplePosition);
             }
         }
 
         // If all samples are classified internal and the atom was classified as surface by the algorithm something MAY have went wront
-        if((internalSamples == samplesPerAtomCount) && !internalAtom)
+        if((atomInternalSampleCount == samplesPerAtomCount) && !internalAtom)
         {
+            rMaybeIncorrectSurfaceAtomIndices.push_back(i);
             surfaceAtomsFailures++;
         }
     }
 
-    // Bind vertex array object
-    glBindVertexArray(mVAO);
-
     // Fill vertex buffer with vertices
-    glBindBuffer(GL_ARRAY_BUFFER, mVBO);
-    glBufferData(GL_ARRAY_BUFFER, samples.size() * sizeof(glm::vec3), samples.data(), GL_DYNAMIC_DRAW);
-
-    // Bind it to shader program
-    GLint posAttrib = glGetAttribLocation(mupShaderProgram->getProgramHandle(), "position");
-    glEnableVertexAttribArray(posAttrib);
-    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-    // Unbind everything
+    glBindBuffer(GL_ARRAY_BUFFER, mInternalVBO);
+    glBufferData(GL_ARRAY_BUFFER, internalSamples.size() * sizeof(glm::vec3), internalSamples.data(), GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mSurfaceVBO);
+    glBufferData(GL_ARRAY_BUFFER, surfaceSamples.size() * sizeof(glm::vec3), surfaceSamples.data(), GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // Remember about complete count of samples for drawing
-    mSampleCount = samples.size();
+    mInternalSampleCount = internalSamples.size();
+    mSurfaceSampleCount = surfaceSamples.size();
 
     // Draw output of test to GUI
     rInformation = "Wrong classification as internal for " + std::to_string(internalSampleFailures) + " samples.\n";
@@ -182,14 +206,33 @@ void SurfaceValidation::drawSamples(
         glm::vec3 internalSampleColor,
         glm::vec3 surfaceSampleColor,
         const glm::mat4& rViewMatrix,
-        const glm::mat4& rProjectionMatrix) const
+        const glm::mat4& rProjectionMatrix,
+        bool drawInternalSamples,
+        bool drawSurfaceSamples) const
 {
-    glPointSize(pointSize);
-    mupShaderProgram->use();
-    mupShaderProgram->update("view", rViewMatrix);
-    mupShaderProgram->update("projection", rProjectionMatrix);
-    mupShaderProgram->update("color", surfaceSampleColor);
-    glBindVertexArray(mVAO);
-    glDrawArrays(GL_POINTS, 0, mSampleCount);
-    glBindVertexArray(0);
+    if(drawInternalSamples || drawSurfaceSamples)
+    {
+        glPointSize(pointSize);
+        mupShaderProgram->use();
+        mupShaderProgram->update("view", rViewMatrix);
+        mupShaderProgram->update("projection", rProjectionMatrix);
+
+        // Draw internal samples
+        if(drawInternalSamples)
+        {
+            mupShaderProgram->update("color", internalSampleColor);
+            glBindVertexArray(mInternalVAO);
+            glDrawArrays(GL_POINTS, 0, mInternalSampleCount);
+        }
+
+        // Draw surface samples
+        if(drawSurfaceSamples)
+        {
+            mupShaderProgram->update("color", surfaceSampleColor);
+            glBindVertexArray(mSurfaceVAO);
+            glDrawArrays(GL_POINTS, 0, mSurfaceSampleCount);
+        }
+
+        glBindVertexArray(0);
+    }
 }

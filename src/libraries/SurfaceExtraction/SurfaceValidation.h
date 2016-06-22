@@ -31,7 +31,8 @@ public:
         float probeRadius,
         unsigned int sampleSeed,
         int samplesPerAtomCount,
-        std::string& rInformation);
+        std::string& rInformation,
+        std::vector<GLuint> rMaybeIncorrectSurfaceAtomIndices);
 
     // Draw sample points (internal sample means sample that was cut away by atom)
     void drawSamples(
@@ -39,21 +40,30 @@ public:
         glm::vec3 internalSampleColor,
         glm::vec3 surfaceSampleColor,
         const glm::mat4& rViewMatrix,
-        const glm::mat4& rProjectionMatrix) const;
+        const glm::mat4& rProjectionMatrix,
+        bool drawInternalSamples = true,
+        bool drawSurfaceSamples = true) const;
 
 private:
 
-    // VBO for samples
-    GLuint mVBO;
+    // VBO for samples which were validated as surface
+    GLuint mInternalVBO;
 
-    // VAO for samples
-    GLuint mVAO;
+    // VAO for samples which were validated as surface
+    GLuint mInternalVAO;
+
+    // VBO for samples which were validated as surface
+    GLuint mSurfaceVBO;
+
+    // VAO for samples which were validated as surface
+    GLuint mSurfaceVAO;
 
     // Shader program for samples
     std::unique_ptr<ShaderProgram> mupShaderProgram;
 
     // Count of samples for drawing
-    int mSampleCount = 0;
+    int mInternalSampleCount = 0;
+    int mSurfaceSampleCount = 0;
 };
 
 #endif // SURFACE_EXTRACTION_H

@@ -61,7 +61,8 @@ private:
     const float mCameraDefaultBeta = 45.f;
     const glm::vec3 mInternalAtomColor = glm::vec3(0.75f, 0.75f, 0.75f);
     const glm::vec3 mSurfaceAtomColor = glm::vec3(1.f, 0.25f, 0.f);
-    const glm::vec3 mSamplePointColor = glm::vec3(0.f, 1.0f, 0.25f);
+    const glm::vec3 mInternalSamplePointColor = glm::vec3(1.f, 0.9f, 0.0f);
+    const glm::vec3 mSurfaceSamplePointColor = glm::vec3(0.f, 1.0f, 0.2f);
     const float mClippingPlaneMin = 0.f;
     const float mClippingPlaneMax = 200.f;
 

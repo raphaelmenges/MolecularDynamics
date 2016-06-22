@@ -349,8 +349,8 @@ void SurfaceDynamicsVisualization::renderLoop()
         {
             mupSurfaceValidation->drawSamples(
                 mSamplePointSize,
-                glm::vec3(1,1,1),
-                mSamplePointColor,
+                mInternalSamplePointColor,
+                mSurfaceSamplePointColor,
                 mupCamera->getViewMatrix(),
                 mupCamera->getProjectionMatrix());
         }
@@ -648,7 +648,8 @@ void SurfaceDynamicsVisualization::updateGUI()
                 mProbeRadius,
                 mSurfaceValidationSeed,
                 mSurfaceValidationAtomSampleCount,
-                mValidationInformation);
+                mValidationInformation,
+                std::vector<GLuint>());
         }
         ImGui::Text(mValidationInformation.c_str());
         ImGui::End();
