@@ -80,6 +80,9 @@ private:
         // Get buffer handle
         GLuint getBuffer() const { return mBuffer; }
 
+        // Read values from texture buffer
+        std::vector<GLuint> read(int size) const;
+
     private:
 
         // Handle for texture which is defined by buffer
@@ -91,9 +94,6 @@ private:
         // Size of data in buffer
         GLuint mSize;
     };
-
-    // Read values from texture buffer
-    std::vector<GLuint> readTextureBuffer(GLuint buffer, int size) const;
 
     // Internal indices
     std::vector<std::unique_ptr<GPUTextureBuffer> > mInternalIndices;
@@ -109,11 +109,11 @@ private:
 
     // ### SET / USED BY GPUSurfaceExtraction ###
 
-    // Create new layer (should be called by GPUSurfaceExtraction, only. Returns count of layers
+    // Create new layer. Returns count of layers
     int addLayer(int reservedSize);
 
      // Bind as images (input is readonly, internal and surface are writeonly)
-    void bindForComputation(int layer, GLuint input, GLuint internal, GLuint surface) const;
+    void bindForComputation(int layer, GLuint inputSlot, GLuint internalSlot, GLuint surfaceSlot) const;
 
     // Count of internal atoms (pushed back by addLayer and filled by GPUSurfaceExtraction)
     std::vector<int> mInternalCounts;

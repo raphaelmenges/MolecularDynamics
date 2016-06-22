@@ -3,7 +3,7 @@
 
 GPUSurface::GPUSurface(int atomCount)
 {
-    // Create first input structure
+    // Create first input index list [0, atomCount[
     std::vector<GLuint> inputIndices;
     inputIndices.reserve(atomCount);
     for(GLuint i = 0; i < (GLuint)atomCount; i++) { inputIndices.push_back(i); }
@@ -29,22 +29,22 @@ std::vector<GLuint> GPUSurface::getInputIndices(int layer) const
 {
     if(layer == 0)
     {
-        return readTextureBuffer(mupInitialInputIndices->getBuffer(), mupInitialInputIndices->getSize());
+        return mupInitialInputIndices->read(mupInitialInputIndices->getSize()); // size may be used here because completely filled with indices
     }
     else
     {
-       return readTextureBuffer(mInternalIndices.at(layer-1)->getBuffer(), mInternalCounts.at(layer-1));
+       return mInternalIndices.at(layer-1)->read(mInternalCounts.at(layer-1));
     }
 }
 
 std::vector<GLuint> GPUSurface::getInternalIndices(int layer) const
 {
-    return readTextureBuffer(mInternalIndices.at(layer)->getBuffer(), mInternalCounts.at(layer));
+    return mInternalIndices.at(layer)->read(mInternalCounts.at(layer));
 }
 
 std::vector<GLuint> GPUSurface::getSurfaceIndices(int layer) const
 {
-    return readTextureBuffer(mSurfaceIndices.at(layer)->getBuffer(), mSurfaceCounts.at(layer));
+    return mSurfaceIndices.at(layer)->read(mSurfaceCounts.at(layer));
 }
 
 GPUSurface::GPUTextureBuffer::GPUTextureBuffer(int size)
@@ -110,11 +110,11 @@ void GPUSurface::GPUTextureBuffer::bindAsImage(GLuint slot, GPUAccess access) co
         GL_R32UI);
 }
 
-std::vector<GLuint> GPUSurface::readTextureBuffer(GLuint buffer, int size) const
+std::vector<GLuint> GPUSurface::GPUTextureBuffer::read(int size) const
 {
     std::vector<GLuint> data;
     data.resize(size);
-    glBindBuffer(GL_TEXTURE_BUFFER, buffer);
+    glBindBuffer(GL_TEXTURE_BUFFER, mBuffer);
     glGetBufferSubData(GL_TEXTURE_BUFFER, 0, sizeof(GLuint) * size, data.data());
     glBindBuffer(GL_TEXTURE_BUFFER, 0);
     return data;
@@ -130,21 +130,21 @@ int GPUSurface::addLayer(int reservedSize)
     return mLayerCount;
 }
 
-void GPUSurface::bindForComputation(int layer, GLuint input, GLuint internal, GLuint surface) const
+void GPUSurface::bindForComputation(int layer, GLuint inputSlot, GLuint internalSlot, GLuint surfaceSlot) const
 {
     // Bind texture as image where input indices are listed
     if(layer == 0)
     {
-        mupInitialInputIndices->bindAsImage(input, GPUTextureBuffer::GPUAccess::READ_ONLY);
+        mupInitialInputIndices->bindAsImage(inputSlot, GPUTextureBuffer::GPUAccess::READ_ONLY);
     }
     else
     {
-        mInternalIndices.at(layer-1)->bindAsImage(input, GPUTextureBuffer::GPUAccess::READ_ONLY);
+        mInternalIndices.at(layer-1)->bindAsImage(inputSlot, GPUTextureBuffer::GPUAccess::READ_ONLY);
     }
 
     // Bind textures as images where output indices are written to
-    mInternalIndices.at(layer)->bindAsImage(internal, GPUTextureBuffer::GPUAccess::WRITE_ONLY);
-    mSurfaceIndices.at(layer)->bindAsImage(surface, GPUTextureBuffer::GPUAccess::WRITE_ONLY);
+    mInternalIndices.at(layer)->bindAsImage(internalSlot, GPUTextureBuffer::GPUAccess::WRITE_ONLY);
+    mSurfaceIndices.at(layer)->bindAsImage(surfaceSlot, GPUTextureBuffer::GPUAccess::WRITE_ONLY);
 }
 
 GPUSurfaceExtraction::GPUSurfaceExtraction()
@@ -207,8 +207,9 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(GPUProtein co
         // Tell shader program about count of input atoms
         mupComputeProgram->update("inputCount", inputCount);
 
-        // Add new layer to GPUSurface with buffers which could take all input indices
-        int layer = (upGPUSurface->addLayer(inputCount) - 1);
+        // Add new layer to GPUSurface with buffers which could take all incoming indices
+        // It is more reserved than use, therefore count of internal and surface must be saved extra
+        int layer = upGPUSurface->addLayer(inputCount) - 1;
 
         // Bind that layer
         upGPUSurface->bindForComputation(layer, 3, 4, 5);
@@ -217,7 +218,7 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(GPUProtein co
         glDispatchCompute((inputCount / 64) + 1, 1, 1);
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
-        // Save new count of internal as next count of input atoms
+        // Save count of internal as next count of input atoms
         inputCount = internalCounter.read();
 
         // Tell added layer about counts calculated on graphics card
