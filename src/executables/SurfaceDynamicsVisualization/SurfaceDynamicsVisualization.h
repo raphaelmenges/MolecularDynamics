@@ -9,6 +9,7 @@
 #include "ShaderTools/ShaderProgram.h"
 #include "SurfaceExtraction/GPUProtein.h"
 #include "SurfaceExtraction/GPUSurfaceExtraction.h"
+#include "SurfaceExtraction/SurfaceValidation.h"
 
 // Notes:
 // - Calculations done in angstrom
@@ -49,9 +50,6 @@ private:
     // Update GUI
     void updateGUI();
 
-    // Test for correctness of algorithm
-    void testSurface();
-
     // Setup
     const bool mInitiallyUseGLSLImplementation = true;
     const float mCameraSmoothDuration = 1.5f;
@@ -86,7 +84,7 @@ private:
     int mSurfaceValidationAtomSampleCount = 20;
     bool mShowSamplePoint = true;
     float mClippingPlane = 0.f;
-    int mSurfaceTestSeed = 0;
+    int mSurfaceValidationSeed = 0;
     bool mShowAxesGizmo = false;
     bool mShowVisualizationWindow = true;
 
@@ -109,10 +107,8 @@ private:
     int mFrame = 0;
     int mLayer = 0;
 
-    // Samples for testing the surface
-    GLuint mSurfaceValidationVBO;
-    GLuint mSurfaceValidationVAO;
-    std::unique_ptr<ShaderProgram> mupSurfaceValidationProgram;
+    // Surface validation
+    std::unique_ptr<SurfaceValidation> mupSurfaceValidation;
     int mSurfaceValidationSampleCount = 0;
 
     // ### CPP implementation of surface atoms detection ###
