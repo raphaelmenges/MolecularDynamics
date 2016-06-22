@@ -78,12 +78,12 @@ private:
                                         // for orthographic projection
     bool mShowInternal = true;
     bool mShowSurface = true;
-    bool mShowSurfaceComputationWindow = true;
+    bool mShowSurfaceExtractionWindow = true;
     bool mShowCameraWindow = true;
     bool mShowDebuggingWindow = true;
     float mProbeRadius = 1.4f;
     int mCPPThreads = 8;
-    int mSurfaceTestAtomSampleCount = 20;
+    int mSurfaceValidationAtomSampleCount = 20;
     bool mShowSamplePoint = true;
     float mClippingPlane = 0.f;
     int mSurfaceTestSeed = 0;
@@ -92,7 +92,7 @@ private:
 
     // Debugging output
     std::string mComputeInformation = "";
-    std::string mTestOutput = "";
+    std::string mValidationInformation = "";
 
     // Members
     GLFWwindow* mpWindow;

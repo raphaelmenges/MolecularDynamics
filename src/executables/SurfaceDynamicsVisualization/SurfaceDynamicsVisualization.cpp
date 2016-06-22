@@ -129,18 +129,6 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     // Fill GPUProtein
     mGPUProteins.push_back(std::move(std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()))));
 
-    // Test protein extent
-    std::cout
-        << "Min extent of protein: "
-        << mProteinMinExtent.x << ", "
-        << mProteinMinExtent.y << ", "
-        << mProteinMinExtent.z << std::endl;
-    std::cout
-        << "Max extent of protein: "
-        << mProteinMaxExtent.x << ", "
-        << mProteinMaxExtent.y << ", "
-        << mProteinMaxExtent.z << std::endl;
-
     // Load other animation frames
     paths.clear();
     paths.push_back("/home/raphael/Temp/XTC/Output_1.pdb");
@@ -583,13 +571,13 @@ void SurfaceDynamicsVisualization::updateGUI()
         if (ImGui::BeginMenu("Window"))
         {
             // Computation window
-            if(mShowSurfaceComputationWindow)
+            if(mShowSurfaceExtractionWindow)
             {
-                if(ImGui::MenuItem("Hide Computation", "", false, true)) { mShowSurfaceComputationWindow = false; }
+                if(ImGui::MenuItem("Hide Computation", "", false, true)) { mShowSurfaceExtractionWindow = false; }
             }
             else
             {
-                if(ImGui::MenuItem("Show Computation", "", false, true)) { mShowSurfaceComputationWindow = true; }
+                if(ImGui::MenuItem("Show Computation", "", false, true)) { mShowSurfaceExtractionWindow = true; }
             }
 
             // Camera window
@@ -643,8 +631,8 @@ void SurfaceDynamicsVisualization::updateGUI()
     ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // scrollbar background
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.5f)); // button
 
-    // Computation window
-    if(mShowSurfaceComputationWindow)
+    // Extraction window
+    if(mShowSurfaceExtractionWindow)
     {
         ImGui::Begin("Surface Computation", NULL, 0);
         ImGui::SliderFloat("Probe radius", &mProbeRadius, 0.f, 2.f, "%.1f");
@@ -656,10 +644,10 @@ void SurfaceDynamicsVisualization::updateGUI()
         if(ImGui::Button("Run Multi-Core CPU")) { runCPPImplementation(true); }
         ImGui::Text("Layer removal is GPU only!");
         ImGui::Text(mComputeInformation.c_str());
-        ImGui::SliderInt("Samples", &mSurfaceTestAtomSampleCount, 1, 10000);
+        ImGui::SliderInt("Samples", &mSurfaceValidationAtomSampleCount, 1, 10000);
         ImGui::SliderInt("Seed", &mSurfaceTestSeed, 0, 1337);
         if(ImGui::Button("Test Surface")) { testSurface(); }
-        ImGui::Text(mTestOutput.c_str());
+        ImGui::Text(mValidationInformation.c_str());
         ImGui::End();
     }
 
@@ -789,7 +777,7 @@ void SurfaceDynamicsVisualization::testSurface()
     for(unsigned int i : inputIndices) // using results from algorithm here. Not so good for independend test but necessary for layers
     {
         // Just to see, that something is going on
-        std::cout << "Processing Atom: " << i << std::endl;
+        std::cout << "Validating Atom: " << i << std::endl;
 
         // Check, whether atom is internal or surface (would be faster to iterate over those structures, but this way the test is more testier)
         bool found = false;
@@ -817,7 +805,10 @@ void SurfaceDynamicsVisualization::testSurface()
         }
         if(!found)
         {
-            std::cout << "ERROR: Atom " << i << " neither classified as internal nor as surface. Algorithm has failed";
+            mValidationInformation =
+                "Atom "
+                + std::to_string(i)
+                + " neither classified as internal nor as surface.\nSurface extraction algorithm has failed.";
             return;
         }
 
@@ -829,7 +820,7 @@ void SurfaceDynamicsVisualization::testSurface()
         int internalSamples = 0;
 
         // Do some samples per atom
-        for(int j = 0; j < mSurfaceTestAtomSampleCount; j++)
+        for(int j = 0; j < mSurfaceValidationAtomSampleCount; j++)
         {
             // Generate samples (http://mathworld.wolfram.com/SpherePointPicking.html)
             float u = (float)((double)std::rand() / (double)RAND_MAX);
@@ -873,16 +864,13 @@ void SurfaceDynamicsVisualization::testSurface()
                 if(internalAtom)
                 {
                     // Sample is not inside any other atom's extended hull but should be
-                    std::cout << "Atom " << i << " is proably wrongly classified as internal by algorithm";
-
-                    // Increment internalSampleFailures
                     internalSampleFailures++;
                 }
             }
         }
 
         // If all samples are classified internal and the atom was classified as surface by the algorithm something MAY have went wront
-        if((internalSamples == mSurfaceTestAtomSampleCount) && !internalAtom)
+        if((internalSamples == mSurfaceValidationAtomSampleCount) && !internalAtom)
         {
             surfaceAtomsFailures++;
         }
@@ -908,8 +896,8 @@ void SurfaceDynamicsVisualization::testSurface()
     mSurfaceValidationSampleCount = samples.size();
 
     // Draw output of test to GUI
-    mTestOutput = "Wrong classification as internal for " + std::to_string(internalSampleFailures) + " samples.\n";
-    mTestOutput += "Maybe wrong classification as surface for " + std::to_string(surfaceAtomsFailures) + " atoms.";
+    mValidationInformation = "Wrong classification as internal for " + std::to_string(internalSampleFailures) + " samples.\n";
+    mValidationInformation += "Maybe wrong classification as surface for " + std::to_string(surfaceAtomsFailures) + " atoms.";
 }
 
 void SurfaceDynamicsVisualization::runCPPImplementation(bool threaded)
@@ -1027,8 +1015,6 @@ void SurfaceDynamicsVisualization::runCPPImplementation(bool threaded)
 
 void SurfaceDynamicsVisualization::runGLSLImplementation()
 {
-    std::cout << "GLSL implementation used!" << std::endl;
-
     for(const auto& rupGPUProtein : mGPUProteins)
     {
         mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(rupGPUProtein.get(), mProbeRadius, true)));
