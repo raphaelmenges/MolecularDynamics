@@ -12,7 +12,7 @@ SurfaceValidation::SurfaceValidation()
     glGenVertexArrays(1, &mSurfaceVAO);
 
     // Load shader for drawing
-    mupShaderProgram = std::unique_ptr<ShaderProgram>(new ShaderProgram("/SurfaceExtraction/sample.vert", "/SurfaceExtraction/sample.frag"));
+    mupShaderProgram = std::unique_ptr<ShaderProgram>(new ShaderProgram("/SurfaceExtraction/sample.vert", "/SurfaceExtraction/sample.geom", "/SurfaceExtraction/sample.frag"));
 
     // Bind buffers to attributes for internal samples
     GLint posAttrib = glGetAttribLocation(mupShaderProgram->getProgramHandle(), "position");
@@ -207,6 +207,7 @@ void SurfaceValidation::drawSamples(
         glm::vec3 surfaceSampleColor,
         const glm::mat4& rViewMatrix,
         const glm::mat4& rProjectionMatrix,
+        float clippingPlane,
         bool drawInternalSamples,
         bool drawSurfaceSamples) const
 {
@@ -216,6 +217,7 @@ void SurfaceValidation::drawSamples(
         mupShaderProgram->use();
         mupShaderProgram->update("view", rViewMatrix);
         mupShaderProgram->update("projection", rProjectionMatrix);
+        mupShaderProgram->update("clippingPlane", clippingPlane);
 
         // Draw internal samples
         if(drawInternalSamples)

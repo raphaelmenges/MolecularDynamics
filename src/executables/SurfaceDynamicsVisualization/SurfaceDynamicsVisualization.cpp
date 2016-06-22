@@ -345,14 +345,15 @@ void SurfaceDynamicsVisualization::renderLoop()
         }
 
         // Drawing of surface test
-        if(mShowSamplePoint)
+        if(mShowValidationSamples)
         {
             mupSurfaceValidation->drawSamples(
                 mSamplePointSize,
                 mInternalSamplePointColor,
                 mSurfaceSamplePointColor,
                 mupCamera->getViewMatrix(),
-                mupCamera->getProjectionMatrix());
+                mupCamera->getProjectionMatrix(),
+                mClippingPlane);
         }
 
         // Drawing of coordinates system axes
@@ -423,7 +424,7 @@ void SurfaceDynamicsVisualization::keyCallback(int key, int scancode, int action
             // case GLFW_KEY_C: { mUsePerspectiveCamera = !mUsePerspectiveCamera; break; }
             case GLFW_KEY_I: { mShowInternal = !mShowInternal; break; }
             case GLFW_KEY_S: { mShowSurface = !mShowSurface; break; }
-            case GLFW_KEY_T: { mShowSamplePoint = !mShowSamplePoint; break; }
+            case GLFW_KEY_T: { mShowValidationSamples = !mShowValidationSamples; break; }
             case GLFW_KEY_A: { mShowAxesGizmo = !mShowAxesGizmo; break; }
         }
     }
@@ -540,13 +541,13 @@ void SurfaceDynamicsVisualization::updateGUI()
             }
 
             // Sample point of surface test
-            if(mShowSamplePoint)
+            if(mShowValidationSamples)
             {
-                if(ImGui::MenuItem("Hide Sample Points", "T", false, true)) { mShowSamplePoint = false; }
+                if(ImGui::MenuItem("Hide Validation Samples", "T", false, true)) { mShowValidationSamples = false; }
             }
             else
             {
-                if(ImGui::MenuItem("Show Sample Points", "T", false, true)) { mShowSamplePoint = true; }
+                if(ImGui::MenuItem("Show Validation Samples", "T", false, true)) { mShowValidationSamples = true; }
             }
 
             // Axes gizmo

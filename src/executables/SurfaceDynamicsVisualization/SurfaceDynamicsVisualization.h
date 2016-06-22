@@ -83,7 +83,7 @@ private:
     float mProbeRadius = 1.4f;
     int mCPPThreads = 8;
     int mSurfaceValidationAtomSampleCount = 20;
-    bool mShowSamplePoint = true;
+    bool mShowValidationSamples = true;
     float mClippingPlane = 0.f;
     int mSurfaceValidationSeed = 0;
     bool mShowAxesGizmo = false;

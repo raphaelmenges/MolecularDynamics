@@ -41,6 +41,7 @@ public:
         glm::vec3 surfaceSampleColor,
         const glm::mat4& rViewMatrix,
         const glm::mat4& rProjectionMatrix,
+        float clippingPlane,
         bool drawInternalSamples = true,
         bool drawSurfaceSamples = true) const;
 
