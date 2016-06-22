@@ -117,8 +117,8 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     // Load series of proteins
     MdTrajWrapper mdwrap;
     std::vector<std::string> paths;
-    // paths.push_back("/home/raphael/Temp/XTC/Output_0.pdb");
-    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1a19.pdb");
+    paths.push_back("/home/raphael/Temp/XTC/Output_0.pdb");
+    //paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1a19.pdb");
     std::unique_ptr<Protein> upProtein = std::move(mdwrap.load(paths));
 
     // Get min/max extent of protein
@@ -141,7 +141,6 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
         << mProteinMaxExtent.y << ", "
         << mProteinMaxExtent.z << std::endl;
 
-    /*
     // Load other animation frames
     paths.clear();
     paths.push_back("/home/raphael/Temp/XTC/Output_1.pdb");
@@ -167,7 +166,6 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     paths.push_back("/home/raphael/Temp/XTC/Output_5.pdb");
     upProtein = std::move(mdwrap.load(paths));
     mGPUProteins.push_back(std::move(std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()))));
-    */
 
     // # Create camera
     glm::vec3 cameraCenter = (mProteinMinExtent + mProteinMaxExtent) / 2.f;
@@ -322,7 +320,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             {
                 mGPUSurfaces.at(mFrame)->bindInternalIndicesForDrawing(mLayer, 1);
                 impostorProgram.update("color", mInternalAtomColor);
-                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame)->getCountOfInternalAtoms(0));
+                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame)->getCountOfInternalAtoms(mLayer));
             }
 
             // Draw surface
@@ -330,7 +328,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             {
                 mGPUSurfaces.at(mFrame)->bindSurfaceIndicesForDrawing(mLayer, 1);
                 impostorProgram.update("color", mSurfaceAtomColor);
-                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame)->getCountOfSurfaceAtoms(0));
+                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame)->getCountOfSurfaceAtoms(mLayer));
             }
         }
         else
@@ -350,7 +348,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             {
                 mGPUSurfaces.at(mFrame)->bindInternalIndicesForDrawing(mLayer, 1);
                 pointProgram.update("color", mInternalAtomColor);
-                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame)->getCountOfInternalAtoms(0));
+                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame)->getCountOfInternalAtoms(mLayer));
             }
 
             // Draw surface
@@ -358,7 +356,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             {
                 mGPUSurfaces.at(mFrame)->bindSurfaceIndicesForDrawing(mLayer, 1);
                 pointProgram.update("color", mSurfaceAtomColor);
-                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame)->getCountOfSurfaceAtoms(0));
+                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame)->getCountOfSurfaceAtoms(mLayer));
             }
         }
 
