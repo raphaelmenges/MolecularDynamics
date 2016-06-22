@@ -51,7 +51,7 @@ private:
     void updateGUI();
 
     // Setup
-    const bool mInitiallyUseGLSLImplementation = true;
+    const bool mInitiallyUseGLSLImplementation = false;
     const float mCameraSmoothDuration = 1.5f;
     const float mAtomPointSize = 15.f;
     const float mSamplePointSize = 2.f;
@@ -81,7 +81,7 @@ private:
     bool mShowCameraWindow = true;
     bool mShowDebuggingWindow = true;
     float mProbeRadius = 1.4f;
-    int mCPPThreads = 8;
+    int mCPUThreads = 8;
     int mSurfaceValidationAtomSampleCount = 20;
     bool mShowValidationSamples = true;
     float mClippingPlane = 0.f;
@@ -112,8 +112,8 @@ private:
     std::unique_ptr<SurfaceValidation> mupSurfaceValidation;
     int mSurfaceValidationSampleCount = 0;
 
-    // ### CPP implementation of surface atoms detection ###
-    void runCPPImplementation(bool threaded);
+    // ### CPU implementation of surface atoms detection ###
+    void runCPUImplementation();
 
     // ### GLSL implementation of surface atoms detection ###
     void runGLSLImplementation();

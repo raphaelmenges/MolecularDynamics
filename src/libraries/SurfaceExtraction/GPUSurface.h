@@ -81,6 +81,9 @@ private:
         // Read values from texture buffer
         std::vector<GLuint> read(int size) const;
 
+        // Fill buffer
+        void fillBuffer(const std::vector<GLuint>& rData) const;
+
     private:
 
         // Handle for texture which is defined by buffer
@@ -110,8 +113,14 @@ private:
     // Create new layer. Returns count of layers
     int addLayer(int reservedSize);
 
-     // Bind as images (input is readonly, internal and surface are writeonly)
+    // Bind as images (input is readonly, internal and surface are writeonly)
     void bindForComputation(int layer, GLuint inputSlot, GLuint internalSlot, GLuint surfaceSlot) const;
+
+    // Simple filling of internal buffer
+    void fillInternalBuffer(int layer, const std::vector<GLuint>& rData);
+
+    // Simple filling of surface buffer
+    void fillSurfaceBuffer(int layer, const std::vector<GLuint>& rData);
 
     // Count of internal atoms (pushed back by addLayer and filled by GPUSurfaceExtraction)
     std::vector<int> mInternalCounts;

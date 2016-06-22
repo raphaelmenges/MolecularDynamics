@@ -120,6 +120,13 @@ std::vector<GLuint> GPUSurface::GPUTextureBuffer::read(int size) const
     return data;
 }
 
+void GPUSurface::GPUTextureBuffer::fillBuffer(const std::vector<GLuint>& rData) const
+{
+    glBindBuffer(GL_TEXTURE_BUFFER, mBuffer);
+    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * rData.size(), rData.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_TEXTURE_BUFFER, 0);
+}
+
 int GPUSurface::addLayer(int reservedSize)
 {
     mInternalIndices.push_back(std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(reservedSize)));
@@ -145,4 +152,16 @@ void GPUSurface::bindForComputation(int layer, GLuint inputSlot, GLuint internal
     // Bind textures as images where output indices are written to
     mInternalIndices.at(layer)->bindAsImage(internalSlot, GPUTextureBuffer::GPUAccess::WRITE_ONLY);
     mSurfaceIndices.at(layer)->bindAsImage(surfaceSlot, GPUTextureBuffer::GPUAccess::WRITE_ONLY);
+}
+
+void GPUSurface::fillInternalBuffer(int layer, const std::vector<GLuint>& rData)
+{
+    mInternalIndices.at(layer)->fillBuffer(rData);
+    mInternalCounts[layer] = rData.size();
+}
+
+void GPUSurface::fillSurfaceBuffer(int layer, const std::vector<GLuint>& rData)
+{
+    mSurfaceIndices.at(layer)->fillBuffer(rData);
+    mSurfaceCounts[layer] = rData.size();
 }

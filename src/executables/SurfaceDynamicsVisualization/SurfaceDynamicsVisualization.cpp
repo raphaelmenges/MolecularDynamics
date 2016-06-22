@@ -11,8 +11,6 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
-#include <thread>
-#include <functional>
 
 // ### Class implementation ###
 
@@ -176,7 +174,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     }
     else
     {
-        runCPPImplementation(true);
+        runCPUImplementation();
     }
 
     // Prepare validation of the surface
@@ -631,12 +629,10 @@ void SurfaceDynamicsVisualization::updateGUI()
     {
         ImGui::Begin("Surface Computation", NULL, 0);
         ImGui::SliderFloat("Probe radius", &mProbeRadius, 0.f, 2.f, "%.1f");
-        ImGui::SliderInt("CPU Cores", &mCPPThreads, 1, 24);
+        ImGui::SliderInt("CPU Cores", &mCPUThreads, 1, 24);
         if(ImGui::Button("Run GPGPU")) { runGLSLImplementation(); }
         ImGui::SameLine();
-        if(ImGui::Button("Run Single-Core CPU")) { runCPPImplementation(false); }
-        ImGui::SameLine();
-        if(ImGui::Button("Run Multi-Core CPU")) { runCPPImplementation(true); }
+        if(ImGui::Button("Run Multi-Core CPU")) { runCPUImplementation(); }
         ImGui::Text(mComputeInformation.c_str());
         ImGui::SliderInt("Samples", &mSurfaceValidationAtomSampleCount, 1, 10000);
         ImGui::SliderInt("Seed", &mSurfaceValidationSeed, 0, 1337);
@@ -758,115 +754,17 @@ void SurfaceDynamicsVisualization::updateGUI()
     ImGui::Render();
 }
 
-void SurfaceDynamicsVisualization::runCPPImplementation(bool threaded)
+void SurfaceDynamicsVisualization::runCPUImplementation()
 {
+    for(const auto& rupGPUProtein : mGPUProteins)
+    {
+        mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(rupGPUProtein.get(), mProbeRadius, true, true, mCPUThreads)));
+    }
+
     /*
-    std::cout << "CPP implementation used!" << std::endl;
-
-    // Note
-    // No input indices used, just complete molecule is processed.
-    // No support for layer removal.
-
-    // Copy atoms of protein to stack
-    auto atoms = mupGPUProtein->getAtoms();
-
-    // # Prepare output vectors
-    std::vector<unsigned int> internalIndices;
-    std::vector<unsigned int> surfaceIndices;
-
-    // # Simulate compute shader
-    CPPImplementation cppImplementation;
-
-    // Do it for each atom
-    double time = glfwGetTime();
-    std::cout << "*** ALGORITHM OUTPUT START ***" << std::endl;
-
-    if(threaded)
-    {
-        // Do it in threads
-        std::vector<std::vector<unsigned int> > internalIndicesSubvectors;
-        std::vector<std::vector<unsigned int> > surfaceIndicesSubvectors;
-        internalIndicesSubvectors.resize(mCPPThreads);
-        surfaceIndicesSubvectors.resize(mCPPThreads);
-        std::vector<std::thread> threads;
-
-        // Lauch threads
-        for(int i = 0; i < mCPPThreads; i++)
-        {
-            // Calculate min and max index
-            int count = atoms.size() / mCPPThreads;
-            int offset = count * i;
-            threads.push_back(
-                std::thread([&](
-                    int minIndex,
-                    int maxIndex,
-                    std::vector<unsigned int>& internalIndicesSubvector,
-                    std::vector<unsigned int>& surfaceIndicesSubvector)
-                {
-                    CPPImplementation threadCppImplementation;
-                    for(int a = minIndex; a <= maxIndex; a++)
-                    {
-                        threadCppImplementation.execute(
-                            a,
-                            atoms.size(),
-                            mProbeRadius,
-                            atoms,
-                            internalIndicesSubvector,
-                            surfaceIndicesSubvector);
-                    }
-                },
-                offset, // minIndex
-                i == mCPPThreads - 1 ? atoms.size() - 1 : offset+count-1, // maxIndex
-                std::ref(internalIndicesSubvectors[i]), // internal indices
-                std::ref(surfaceIndicesSubvectors[i]))); // external indices
-        }
-
-        // Join threads
-        for(int i = 0; i < mCPPThreads; i++)
-        {
-            // Joint thread i
-            threads[i].join();
-
-            // Collect results from it
-            internalIndices.insert(
-                internalIndices.end(),
-                internalIndicesSubvectors[i].begin(),
-                internalIndicesSubvectors[i].end());
-            surfaceIndices.insert(
-                surfaceIndices.end(),
-                surfaceIndicesSubvectors[i].begin(),
-                surfaceIndicesSubvectors[i].end());
-        }
-    }
-    else
-    {
-        // Do all atoms in main thread
-        for(int a = 0; a < atoms.size(); a++)
-        {
-            cppImplementation.execute(a, atoms.size(), mProbeRadius, atoms, internalIndices, surfaceIndices);
-        }
-    }
-
-    std::cout << "*** ALGORITHM OUTPUT END ***" << std::endl;
-    float computationTime = (float) (1000.0 * (glfwGetTime() - time));
-
-    // Fill output atom indices to image buffers
-    glBindBuffer(GL_TEXTURE_BUFFER, mInternalIndicesBuffer);
-    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * internalIndices.size(), internalIndices.data(), GL_STATIC_DRAW);
-    glBindBuffer(0, mInternalIndicesBuffer);
-
-    glBindBuffer(GL_TEXTURE_BUFFER, mSurfaceIndicesBuffer);
-    glBufferData(GL_TEXTURE_BUFFER, sizeof(GLuint) * surfaceIndices.size(), surfaceIndices.data(), GL_STATIC_DRAW);
-    glBindBuffer(0, mSurfaceIndicesBuffer);
-
-    // Fetch count
-    mInputCount = atoms.size();
-    mInternalCount = internalIndices.size();
-    mSurfaceCount = surfaceIndices.size();
-
     // Update compute information
     updateComputationInformation(
-        threaded ? ("Multi-Core CPU (" + std::to_string(mCPPThreads) + " Threads)") : "Single-Core CPU",
+        threaded ? ("Multi-Core CPU (" + std::to_string(mCPUThreads) + " Threads)") : "Single-Core CPU",
         computationTime);
     */
 }
