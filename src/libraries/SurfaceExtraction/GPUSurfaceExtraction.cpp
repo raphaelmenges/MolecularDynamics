@@ -164,7 +164,7 @@ GPUSurfaceExtraction::~GPUSurfaceExtraction()
 
 std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(GPUProtein const * pGPUProtein, float probeRadius, bool extractLayers) const
 {
-    // Prepare atomic counter for writing results to unique position in image
+    // Prepare atomic counters for writing results to unique positions in images
     AtomicCounter internalCounter;
     AtomicCounter surfaceCounter;
 
@@ -197,7 +197,7 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(GPUProtein co
     bool firstRun = true;
     while(firstRun || (extractLayers && (inputCount > 0)))
     {
-        // Remember that run
+        // Remember the first run
         firstRun = false;
 
         // Reset atomic counter
@@ -207,8 +207,8 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(GPUProtein co
         // Tell shader program about count of input atoms
         mupComputeProgram->update("inputCount", inputCount);
 
-        // Add new layer to GPUSurface with buffers which could take all incoming indices
-        // It is more reserved than use, therefore count of internal and surface must be saved extra
+        // Add new layer to GPUSurface with buffers which could take all indices
+        // It is more reserved than later used, therefore count of internal and surface must be saved extra
         int layer = upGPUSurface->addLayer(inputCount) - 1;
 
         // Bind that layer
@@ -219,11 +219,11 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(GPUProtein co
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
         // Save count of internal as next count of input atoms
-        inputCount = internalCounter.read();
+        inputCount = (int)internalCounter.read();
 
         // Tell added layer about counts calculated on graphics card
         upGPUSurface->mInternalCounts.at(layer) = inputCount;
-        upGPUSurface->mSurfaceCounts.at(layer) = surfaceCounter.read();
+        upGPUSurface->mSurfaceCounts.at(layer) = (int)surfaceCounter.read();
     }
 
     // Print time for execution
