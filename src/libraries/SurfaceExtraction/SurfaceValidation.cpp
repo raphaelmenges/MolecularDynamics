@@ -1,6 +1,6 @@
 #include "SurfaceValidation.h"
-#include "GPUProtein.h"
-#include "GPUSurfaceExtraction.h"
+#include "SurfaceExtraction/GPUProtein.h"
+#include "SurfaceExtraction/GPUSurface.h"
 #include <stdlib.h>
 
 SurfaceValidation::SurfaceValidation()
