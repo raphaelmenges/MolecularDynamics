@@ -1,5 +1,4 @@
 #include "SurfaceDynamicsVisualization.h"
-#include "CPPImplementation.h"
 #include "Utils/OrbitCamera.h"
 #include "ShaderTools/Renderer.h"
 #include "Molecule/MDtrajLoader/MdTraj/MdTrajWrapper.h"
