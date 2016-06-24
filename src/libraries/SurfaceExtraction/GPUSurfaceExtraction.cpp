@@ -494,7 +494,7 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(
         // Join threads
         for(int i = 0; i < CPUThreadCount; i++)
         {
-            // Joint thread i
+            // Join thread i
             threads[i].join();
 
             // Collect results from it
