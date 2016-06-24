@@ -33,7 +33,7 @@ class GPUProtein
 public:
 
     // Constructor
-    GPUProtein(Protein * const pProtein);
+    GPUProtein(Protein * const pProtein, int frame);
 
     // Destructor
     virtual ~GPUProtein();

@@ -111,6 +111,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/8AtomsIntersection.txt", mProteinMinExtent, mProteinMaxExtent);
     */
 
+    /*
     // Load series of proteins
     MdTrajWrapper mdwrap;
     std::vector<std::string> paths;
@@ -151,6 +152,23 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     paths.push_back("/home/raphael/Temp/XTC/Output_5.pdb");
     upProtein = std::move(mdwrap.load(paths));
     mGPUProteins.push_back(std::move(std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()))));
+    */
+
+    // TODO: testing XTC loading
+    MdTrajWrapper mdwrap;
+    std::vector<std::string> paths;
+    paths.push_back("/home/raphael/Temp/XTC/GIIIA_Native.pdb");
+    paths.push_back("/home/raphael/Temp/XTC/MD_GIIIA_No_Water.xtc");
+    std::unique_ptr<Protein> upProtein = std::move(mdwrap.load(paths));
+    for(int i = 0; i < 1000; i++)
+    {
+        mGPUProteins.push_back(std::move(std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get(), i))));
+    }
+
+    // Get min/max extent of protein
+    upProtein->minMax(); // first, one has to calculate min and max value of protein
+    mProteinMinExtent = upProtein->getMin();
+    mProteinMaxExtent = upProtein->getMax();
 
     // # Create camera
     glm::vec3 cameraCenter = (mProteinMinExtent + mProteinMaxExtent) / 2.f;

@@ -1,7 +1,7 @@
 #include "GPUProtein.h"
 #include "Molecule/MDtrajLoader/Data/Protein.h"
 
-GPUProtein::GPUProtein(Protein * const pProtein)
+GPUProtein::GPUProtein(Protein * const pProtein, int frame)
 {
     // Create structures on CPU
     mAtomCount = pProtein->getAtoms()->size();
@@ -10,7 +10,7 @@ GPUProtein::GPUProtein(Protein * const pProtein)
         // Push back all atoms (CONVERTING PICOMETER TO ANGSTROM)
         mAtoms.push_back(
             GPUAtom(
-                pProtein->getAtoms()->at(i)->getPosition(),
+                pProtein->getAtoms()->at(i)->getPositionAtFrame(frame),
                 pProtein->getRadiusAt(i)));
     }
 
