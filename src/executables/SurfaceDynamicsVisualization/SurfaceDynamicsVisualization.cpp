@@ -759,6 +759,7 @@ void SurfaceDynamicsVisualization::updateGUI()
     {
         ImGui::Begin("Debugging", NULL, 0);
         ImGui::Text(std::string("Selected Atom: " + std::to_string(mSelectedAtom)).c_str());
+        ImGui::Text(std::string("Atom Count: " + std::to_string(mGPUProteins.at(mFrame)->getAtomCount())).c_str());
         ImGui::End();
     }
 
