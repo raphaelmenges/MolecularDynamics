@@ -265,14 +265,8 @@ void SurfaceDynamicsVisualization::renderLoop()
                     // Reset frame play time
                     mFramePlayTime = 0;
 
-                    // Increment time
-                    mFrame++;
-
-                    // Check whether frame is in valid interval
-                    if(mFrame >= mGPUSurfaces.size())
-                    {
-                        mFrame = 0;
-                    }
+                    // Increment time (checks are done by method)
+                    setFrame(mFrame + 1);
                 }
             }
         }
@@ -669,7 +663,7 @@ void SurfaceDynamicsVisualization::updateGUI()
         ImGui::SliderInt("CPU Cores", &mCPUThreads, 1, 24);
         if(ImGui::Button("Run GPGPU")) { runGLSLImplementation(); }
         ImGui::SameLine();
-        if(ImGui::Button("Run Multi-Core CPU")) { runCPUImplementation(); }
+        if(ImGui::Button("Run CPU")) { runCPUImplementation(); }
         ImGui::Text(mComputeInformation.c_str());
         ImGui::SliderInt("Samples", &mSurfaceValidationAtomSampleCount, 1, 10000);
         ImGui::SliderInt("Seed", &mSurfaceValidationSeed, 0, 1337);
@@ -752,7 +746,12 @@ void SurfaceDynamicsVisualization::updateGUI()
             }
         }
         ImGui::SliderInt("Rate", &mPlayRate, 0, 100);
-        ImGui::SliderInt("Frame", &mFrame, 0, mGPUSurfaces.size() - 1); // TODO: extra method to set frame: one has to clamp layers for example, reset selected atom, reset mFramePlayTime...
+        int frame = mFrame;
+        ImGui::SliderInt("Frame", &frame, 0, mGPUSurfaces.size() - 1);
+        if(frame != mFrame)
+        {
+            setFrame(frame);
+        }
 
         // Displayed layer
         ImGui::SliderInt("Layer", &mLayer, 0, mGPUSurfaces.at(mFrame)->getLayerCount() - 1);
@@ -809,6 +808,25 @@ void SurfaceDynamicsVisualization::updateGUI()
     ImGui::PopStyleColor(); // window background
 
     ImGui::Render();
+}
+
+void SurfaceDynamicsVisualization::setFrame(int frame)
+{
+    // Check whether frame is in valid interval
+    if(frame >= mGPUSurfaces.size())
+    {
+        frame = 0;
+    }
+
+    // Check whether there are enough layers to display
+    int layerCount = mGPUSurfaces.at(frame)->getLayerCount();
+    if(mLayer >= layerCount)
+    {
+        mLayer = layerCount -1;
+    }
+
+    // Write it to variable
+    mFrame = frame;
 }
 
 void SurfaceDynamicsVisualization::runCPUImplementation()

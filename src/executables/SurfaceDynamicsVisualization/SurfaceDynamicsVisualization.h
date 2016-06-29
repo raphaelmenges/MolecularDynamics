@@ -50,8 +50,11 @@ private:
     // Update GUI
     void updateGUI();
 
+    // Set frame
+    void setFrame(int frame);
+
     // Setup
-    const bool mInitiallyUseGLSLImplementation = false;
+    const bool mInitiallyUseGLSLImplementation = true;
     const float mCameraSmoothDuration = 1.5f;
     const float mAtomPointSize = 15.f;
     const float mSamplePointSize = 2.f;
@@ -107,7 +110,7 @@ private:
     std::unique_ptr<GPUSurfaceExtraction> mupGPUSurfaceExtraction;  // factory for GPUSurfaces
                                                                     // (unique pointer because has to be constructed after OpenGL initialization)
     std::vector<std::unique_ptr<GPUSurface> > mGPUSurfaces; // vector with surfaces
-    int mFrame = 0;
+    int mFrame = 0; // do not set it directly, let it be done by setFrame() method!
     int mLayer = 0;
     float mFramePlayTime = 0; // time of displaying a molecule state at playing the animation
 
