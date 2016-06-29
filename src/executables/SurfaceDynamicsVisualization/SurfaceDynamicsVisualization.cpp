@@ -160,7 +160,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     paths.push_back("/home/raphael/Temp/XTC/MD_GIIIA_No_Water.pdb");
     paths.push_back("/home/raphael/Temp/XTC/MD_GIIIA_No_Water.xtc");
     std::unique_ptr<Protein> upProtein = std::move(mdwrap.load(paths));
-    for(int i = 0; i < 1000; i++)
+    for(int i = 0; i < 100; i++)
     {
         mGPUProteins.push_back(std::move(std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get(), i))));
     }

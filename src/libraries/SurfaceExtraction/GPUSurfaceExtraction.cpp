@@ -427,10 +427,6 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(
     bool useCPU,
     int CPUThreadCount) const
 {
-    // Prepare atomic counters for writing results to unique positions in images
-    AtomicCounter internalCounter;
-    AtomicCounter surfaceCounter;
-
     // Input count
     int inputCount = pGPUProtein->getAtomCount(); // at first run, all are input
 
@@ -443,15 +439,15 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(
     // Decide which device to use for computation
     if(useCPU)
     {
+        // Start measuring time
+        double time = glfwGetTime();
+
         // Copy atoms of protein to stack
         auto atoms = pGPUProtein->getAtoms();
 
         // Create vector for indices
         std::vector<unsigned int> internalIndices;
         std::vector<unsigned int> surfaceIndices;
-
-        // Start measuring time
-        double time = glfwGetTime();
 
         // Do it in threads
         std::vector<std::vector<unsigned int> > internalIndicesSubvectors;
@@ -460,66 +456,94 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(
         surfaceIndicesSubvectors.resize(CPUThreadCount);
         std::vector<std::thread> threads;
 
-        // Launch threads
-        for(int i = 0; i < CPUThreadCount; i++)
+         // Do it as often as indicated
+        bool firstRun = true;
+        while(firstRun || (extractLayers && (inputCount > 0)))
         {
-            // Calculate min and max index
-            int count = atoms.size() / CPUThreadCount;
-            int offset = count * i;
-            threads.push_back(
-                std::thread([&](
-                    int minIndex,
-                    int maxIndex,
-                    std::vector<unsigned int>& internalIndicesSubvector,
-                    std::vector<unsigned int>& surfaceIndicesSubvector)
-                {
-                    CPUSurfaceExtraction threadCPUSurfaceExtraction;
-                    for(int a = minIndex; a <= maxIndex; a++)
+            // Remember the first run
+            firstRun = false;
+
+            // Clean thread data structure
+            threads.clear();
+
+            // Clean structures to combine results of threads
+            internalIndices.clear();
+            surfaceIndices.clear();
+
+            // Create new layer
+            int layer = (upGPUSurface->addLayer(inputCount) - 1);
+
+            // Launch threads
+            for(int i = 0; i < CPUThreadCount; i++)
+            {
+                // Calculate min and max index
+                int count = inputCount / CPUThreadCount;
+                int offset = count * i;
+                threads.push_back(
+                    std::thread([&](
+                        int minIndex,
+                        int maxIndex,
+                        std::vector<unsigned int>& rInternalIndicesSubvector,
+                        std::vector<unsigned int>& rSurfaceIndicesSubvector)
                     {
-                        threadCPUSurfaceExtraction.execute(
-                            a,
-                            atoms.size(),
-                            probeRadius,
-                            atoms,
-                            internalIndicesSubvector,
-                            surfaceIndicesSubvector);
-                    }
-                },
-                offset, // minIndex
-                i == CPUThreadCount - 1 ? atoms.size() - 1 : offset+count-1, // maxIndex
-                std::ref(internalIndicesSubvectors[i]), // internal indices
-                std::ref(surfaceIndicesSubvectors[i]))); // external indices
-        }
+                        // Clear structure which is used to accumulate results
+                        rInternalIndicesSubvector.clear();
+                        rSurfaceIndicesSubvector.clear();
 
-        // Join threads
-        for(int i = 0; i < CPUThreadCount; i++)
-        {
-            // Join thread i
-            threads[i].join();
+                        CPUSurfaceExtraction threadCPUSurfaceExtraction;
+                        for(int a = minIndex; a <= maxIndex; a++)
+                        {
+                            threadCPUSurfaceExtraction.execute(
+                                a,
+                                atoms.size(),
+                                probeRadius,
+                                atoms,
+                                rInternalIndicesSubvector,
+                                rSurfaceIndicesSubvector);
+                        }
+                    },
+                    offset, // minIndex which is assigned to thread
+                    i == (CPUThreadCount - 1) ? inputCount - 1 : (offset+count-1), // maxIndex which is assigned to thread
+                    std::ref(internalIndicesSubvectors[i]), // internal indices storage
+                    std::ref(surfaceIndicesSubvectors[i]))); // external indices storage
+            }
 
-            // Collect results from it
-            internalIndices.insert(
-                internalIndices.end(),
-                internalIndicesSubvectors[i].begin(),
-                internalIndicesSubvectors[i].end());
-            surfaceIndices.insert(
-                surfaceIndices.end(),
-                surfaceIndicesSubvectors[i].begin(),
-                surfaceIndicesSubvectors[i].end());
+            // Join threads
+            for(int i = 0; i < CPUThreadCount; i++)
+            {
+                // Join thread i
+                threads[i].join();
+
+                // Collect results from it
+                internalIndices.insert(
+                    internalIndices.end(),
+                    internalIndicesSubvectors[i].begin(),
+                    internalIndicesSubvectors[i].end());
+                surfaceIndices.insert(
+                    surfaceIndices.end(),
+                    surfaceIndicesSubvectors[i].begin(),
+                    surfaceIndicesSubvectors[i].end());
+            }
+
+            // Update input count
+            inputCount = (int)internalIndices.size(); // internal indices are input for next run
+
+            // Fill structures in GPUSurface
+            upGPUSurface->fillInternalBuffer(layer, internalIndices);
+            upGPUSurface->fillSurfaceBuffer(layer, surfaceIndices);
+            upGPUSurface->mInternalCounts.at(layer) = inputCount;
+            upGPUSurface->mSurfaceCounts.at(layer) = (int)surfaceIndices.size();
         }
 
         // Save computation time
-        computationTime = (float) (1000.0 * (glfwGetTime() - time));
-
-        // Fill structures in GPUSurface (TODO: what about input indices? No extra fill necessary?)
-        int layer = (upGPUSurface->addLayer((int)atoms.size()) - 1);
-        upGPUSurface->fillInternalBuffer(layer, internalIndices);
-        upGPUSurface->fillSurfaceBuffer(layer, surfaceIndices);
-        upGPUSurface->mInternalCounts.at(layer) = (int)internalIndices.size();
-        upGPUSurface->mSurfaceCounts.at(layer) = (int)surfaceIndices.size();
+        computationTime = (float) (1000.0 * (glfwGetTime() - time)); // miliseconds
     }
     else
     {
+        // Prepare atomic counters for writing results to unique positions in images
+        AtomicCounter internalCounter;
+        AtomicCounter surfaceCounter;
+
         // Use compute shader program
         mupComputeProgram->use();
 
