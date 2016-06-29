@@ -41,10 +41,10 @@ private:
             int executionIndex,
             int inputCount,
             float probeRadius,
-            const std::vector<GPUAtom>& atoms,
-            const std::vector<unsigned int>& inputIndices,
-            std::vector<unsigned int>& internalIndices,
-            std::vector<unsigned int>& surfaceIndices);
+            const std::vector<GPUAtom>& rAtoms,
+            const std::vector<unsigned int>& rInputIndices,
+            std::vector<unsigned int>& rInternalIndices,
+            std::vector<unsigned int>& rSurfaceIndices);
 
     private:
 

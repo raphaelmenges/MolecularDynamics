@@ -115,10 +115,10 @@ void GPUSurfaceExtraction::CPUSurfaceExtraction::execute(
     int executionIndex,
     int inputCount,
     float probeRadius,
-    const std::vector<GPUAtom>& atoms,
-    const std::vector<unsigned int>& inputIndices,
-    std::vector<unsigned int>& internalIndices,
-    std::vector<unsigned int>& surfaceIndices)
+    const std::vector<GPUAtom>& rAtoms,
+    const std::vector<unsigned int>& rInputIndices,
+    std::vector<unsigned int>& rInternalIndices,
+    std::vector<unsigned int>& rSurfaceIndices)
 {
     // Reset members for new execution
     setup();
@@ -130,7 +130,7 @@ void GPUSurfaceExtraction::CPUSurfaceExtraction::execute(
     if(inputIndicesIndex >= inputCount) { return; }
 
     // Index
-    int atomIndex = inputIndices.at(inputIndicesIndex);
+    int atomIndex = rInputIndices.at(inputIndicesIndex);
 
     // Check whether in range
     /* if(atomIndex >= atomCount) { return; } */
@@ -145,11 +145,11 @@ void GPUSurfaceExtraction::CPUSurfaceExtraction::execute(
     bool endpointSurvivesCut = false;
 
     // Own center
-    glm::vec3 atomCenter = atoms[atomIndex].center;
+    glm::vec3 atomCenter = rAtoms[atomIndex].center;
     /* if(mLogging) { std::cout << "Atom center: " << atomCenter.x << ", " << atomCenter.y << ", " << atomCenter.z << std::endl; } */
 
     // Own extended radius
-    float atomExtRadius = atoms[atomIndex].radius + probeRadius;
+    float atomExtRadius = rAtoms[atomIndex].radius + probeRadius;
     /* if(mLogging) { std::cout << "Atom extended radius: " << atomExtRadius << std::endl; } */
 
     // ### BUILD UP OF CUTTING FACE LIST ###
@@ -158,7 +158,7 @@ void GPUSurfaceExtraction::CPUSurfaceExtraction::execute(
     for(int i = 0; i < inputCount; i++)
     {
         // Read index of atom from input indices
-        int otherAtomIndex = inputIndices.at(i);
+        int otherAtomIndex = rInputIndices.at(i);
 
         // Do not cut with itself
         if(otherAtomIndex == atomIndex) { continue; }
@@ -166,8 +166,8 @@ void GPUSurfaceExtraction::CPUSurfaceExtraction::execute(
         // ### OTHER'S VALUES ###
 
         // Get values from other atom
-        glm::vec3 otherAtomCenter = atoms[otherAtomIndex].center;
-        float otherAtomExtRadius = atoms[otherAtomIndex].radius + probeRadius;
+        glm::vec3 otherAtomCenter = rAtoms[otherAtomIndex].center;
+        float otherAtomExtRadius = rAtoms[otherAtomIndex].radius + probeRadius;
 
         // ### INTERSECTION TEST ###
 
@@ -190,7 +190,7 @@ void GPUSurfaceExtraction::CPUSurfaceExtraction::execute(
         if((atomExtRadius + atomsDistance) <= otherAtomExtRadius)
         {
             // Since it is completely covered, it is internal
-            internalIndices.push_back((unsigned int) atomIndex); return;
+            rInternalIndices.push_back((unsigned int) atomIndex); return;
         }
 
         // ### INTERSECTION WITH OTHER ATOMS ###
@@ -311,7 +311,7 @@ void GPUSurfaceExtraction::CPUSurfaceExtraction::execute(
                     // Maybe complete atom is cut away
                     if(pointInHalfspaceOfPlane(face, testPoint))
                     {
-                        internalIndices.push_back((unsigned int) atomIndex); return;
+                        rInternalIndices.push_back((unsigned int) atomIndex); return;
                     }
                 }
             }
@@ -422,11 +422,11 @@ void GPUSurfaceExtraction::CPUSurfaceExtraction::execute(
     // If no endpoint was generated at all or one or more survived cutting, add this atom to surface
     if((!endpointGenerated) || endpointSurvivesCut)
     {
-        surfaceIndices.push_back((unsigned int) atomIndex);
+        rSurfaceIndices.push_back((unsigned int) atomIndex);
     }
     else
     {
-        internalIndices.push_back((unsigned int) atomIndex);
+        rInternalIndices.push_back((unsigned int) atomIndex);
     }
 }
 
