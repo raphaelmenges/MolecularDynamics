@@ -45,7 +45,7 @@ private:
     void scrollCallback(double xoffset, double yoffset);
 
     // Update computation information
-    void updateComputationInformation(std::string device, float computationTime);
+    void updateComputationInformation(std::string device, bool extractedLayers, float computationTime);
 
     // Update GUI
     void updateGUI();
@@ -54,7 +54,7 @@ private:
     void setFrame(int frame);
 
     // Setup
-    const bool mInitiallyUseGLSLImplementation = false;
+    const bool mInitiallyUseGLSLImplementation = true;
     const float mCameraSmoothDuration = 1.5f;
     const float mAtomPointSize = 15.f;
     const float mSamplePointSize = 2.f;

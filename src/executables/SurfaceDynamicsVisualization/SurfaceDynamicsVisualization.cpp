@@ -484,19 +484,15 @@ void SurfaceDynamicsVisualization::scrollCallback(double xoffset, double yoffset
     mupCamera->setRadius(mupCamera->getRadius() - 0.5f * (float)yoffset);
 }
 
-void SurfaceDynamicsVisualization::updateComputationInformation(std::string device, float computationTime)
+void SurfaceDynamicsVisualization::updateComputationInformation(std::string device, bool extractedLayers, float computationTime)
 {
-    /*
     std::stringstream stream;
     stream <<
         device << " used" << "\n"
         << "Probe radius: " + std::to_string(mProbeRadius) << "\n"
         << "Time: " << computationTime << "ms" << "\n"
-        << "Atom count: " + std::to_string(mupGPUProtein->getAtomCount()) << "\n"
-        << "Internal atoms: " + std::to_string(mInternalCount) << "\n"
-        << "Surface atoms: " + std::to_string(mSurfaceCount);
+        << "Extracted layers: " << (extractedLayers ? "yes" : "no");
     mComputeInformation = stream.str();
-    */
 }
 
 void SurfaceDynamicsVisualization::updateGUI()
@@ -831,28 +827,28 @@ void SurfaceDynamicsVisualization::setFrame(int frame)
 
 void SurfaceDynamicsVisualization::runCPUImplementation()
 {
+    float computationTime = 0;
     for(const auto& rupGPUProtein : mGPUProteins)
     {
         mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(rupGPUProtein.get(), mProbeRadius, true, true, mCPUThreads)));
+        computationTime += mGPUSurfaces.back()->getComputationTime();
     }
 
-    /*
     // Update compute information
-    updateComputationInformation(
-        threaded ? ("Multi-Core CPU (" + std::to_string(mCPUThreads) + " Threads)") : "Single-Core CPU",
-        computationTime);
-    */
+    updateComputationInformation("CPU with " + std::to_string(mCPUThreads) + " threads", true, computationTime);
 }
 
 void SurfaceDynamicsVisualization::runGLSLImplementation()
 {
+    float computationTime = 0;
     for(const auto& rupGPUProtein : mGPUProteins)
     {
         mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(rupGPUProtein.get(), mProbeRadius, true)));
+        computationTime += mGPUSurfaces.back()->getComputationTime();
     }
 
     // Update compute information
-    // updateComputationInformation("GPGPU", mupGPUSurface->getComputationTime());
+    updateComputationInformation("GPGPU", true, computationTime);
 }
 
 // ### Main function ###
