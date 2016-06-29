@@ -185,14 +185,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
             0.05f));
 
     // # Run implementation to extract surface atoms
-    if(mInitiallyUseGLSLImplementation)
-    {
-        runGLSLImplementation();
-    }
-    else
-    {
-        runCPUImplementation();
-    }
+    computeLayers(mInitiallyUseGLSLImplementation);
 
     // Prepare validation of the surface
     mupSurfaceValidation = std::unique_ptr<SurfaceValidation>(new SurfaceValidation());
@@ -657,9 +650,9 @@ void SurfaceDynamicsVisualization::updateGUI()
         ImGui::Begin("Surface Computation", NULL, 0);
         ImGui::SliderFloat("Probe radius", &mProbeRadius, 0.f, 2.f, "%.1f");
         ImGui::SliderInt("CPU Cores", &mCPUThreads, 1, 24);
-        if(ImGui::Button("Run GPGPU")) { runGLSLImplementation(); }
+        if(ImGui::Button("Run GPGPU")) { computeLayers(true); }
         ImGui::SameLine();
-        if(ImGui::Button("Run CPU")) { runCPUImplementation(); }
+        if(ImGui::Button("Run CPU")) { computeLayers(false); }
         ImGui::Text(mComputeInformation.c_str());
         ImGui::SliderInt("Samples", &mSurfaceValidationAtomSampleCount, 1, 10000);
         ImGui::SliderInt("Seed", &mSurfaceValidationSeed, 0, 1337);
@@ -825,30 +818,32 @@ void SurfaceDynamicsVisualization::setFrame(int frame)
     mFrame = frame;
 }
 
-void SurfaceDynamicsVisualization::runCPUImplementation()
+void SurfaceDynamicsVisualization::computeLayers(bool useGPU)
 {
+    // Reset surfaces
+    mGPUSurfaces.clear();
+
+    // Do it for all animation frames
     float computationTime = 0;
     for(const auto& rupGPUProtein : mGPUProteins)
     {
-        mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(rupGPUProtein.get(), mProbeRadius, true, true, mCPUThreads)));
+        if(useGPU)
+        {
+            mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(rupGPUProtein.get(), mProbeRadius, true)));
+        }
+        else
+        {
+            mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(rupGPUProtein.get(), mProbeRadius, true, true, mCPUThreads)));
+        }
         computationTime += mGPUSurfaces.back()->getComputationTime();
     }
 
     // Update compute information
-    updateComputationInformation("CPU with " + std::to_string(mCPUThreads) + " threads", true, computationTime);
-}
+    updateComputationInformation(
+        (useGPU ? "GPU" : "CPU with " + std::to_string(mCPUThreads) + " threads"), true, computationTime);
 
-void SurfaceDynamicsVisualization::runGLSLImplementation()
-{
-    float computationTime = 0;
-    for(const auto& rupGPUProtein : mGPUProteins)
-    {
-        mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(rupGPUProtein.get(), mProbeRadius, true)));
-        computationTime += mGPUSurfaces.back()->getComputationTime();
-    }
-
-    // Update compute information
-    updateComputationInformation("GPGPU", true, computationTime);
+    // Set to first animation frame
+    setFrame(0);
 }
 
 // ### Main function ###

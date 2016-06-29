@@ -53,6 +53,9 @@ private:
     // Set frame
     void setFrame(int frame);
 
+    // Compute layers
+    void computeLayers(bool useGPU);
+
     // Setup
     const bool mInitiallyUseGLSLImplementation = true;
     const float mCameraSmoothDuration = 1.5f;
@@ -117,13 +120,6 @@ private:
     // Surface validation
     std::unique_ptr<SurfaceValidation> mupSurfaceValidation;
     int mSurfaceValidationSampleCount = 0;
-
-    // ### CPU implementation of surface atoms detection ###
-    void runCPUImplementation();
-
-    // ### GLSL implementation of surface atoms detection ###
-    void runGLSLImplementation();
-
 };
 
 #endif // SURFACE_DYNAMICS_VISUALIZATION_H
