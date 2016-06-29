@@ -88,6 +88,8 @@ private:
     int mSurfaceValidationSeed = 0;
     bool mShowAxesGizmo = false;
     bool mShowVisualizationWindow = true;
+    bool mPlayAnimation = false;
+    int mPlayRate = 15;
 
     // Debugging output
     std::string mComputeInformation = "";
@@ -107,6 +109,7 @@ private:
     std::vector<std::unique_ptr<GPUSurface> > mGPUSurfaces; // vector with surfaces
     int mFrame = 0;
     int mLayer = 0;
+    float mFramePlayTime = 0; // time of displaying a molecule state at playing the animation
 
     // Surface validation
     std::unique_ptr<SurfaceValidation> mupSurfaceValidation;

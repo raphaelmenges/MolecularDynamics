@@ -157,7 +157,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     // TODO: testing XTC loading
     MdTrajWrapper mdwrap;
     std::vector<std::string> paths;
-    paths.push_back("/home/raphael/Temp/XTC/GIIIA_Native.pdb");
+    paths.push_back("/home/raphael/Temp/XTC/MD_GIIIA_No_Water.pdb");
     paths.push_back("/home/raphael/Temp/XTC/MD_GIIIA_No_Water.xtc");
     std::unique_ptr<Protein> upProtein = std::move(mdwrap.load(paths));
     for(int i = 0; i < 1000; i++)
@@ -243,20 +243,40 @@ void SurfaceDynamicsVisualization::renderLoop()
     ShaderProgram pointProgram("/SurfaceDynamicsVisualization/point.vert", "/SurfaceDynamicsVisualization/point.geom", "/SurfaceDynamicsVisualization/point.frag");
     ShaderProgram impostorProgram("/SurfaceDynamicsVisualization/impostor.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
 
-    // Bind buffer to texture (may not be done before buffer filling? Probably not necessary for GLSL implementation since already bound there and filled on GPU)
-    /*
-    glBindTexture(GL_TEXTURE_BUFFER, mInternalIndicesTexture);
-    glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, mInternalIndicesBuffer);
-    glBindTexture(GL_TEXTURE_BUFFER, 0);
-
-    glBindTexture(GL_TEXTURE_BUFFER, mSurfaceIndicesTexture);
-    glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, mSurfaceIndicesBuffer);
-    glBindTexture(GL_TEXTURE_BUFFER, 0);
-    */
-
     // Call render function of Rendering.h with lambda function
     render(mpWindow, [&] (float deltaTime)
     {
+        // If playing, decide whether to switch to next frame of animation
+        if(mPlayAnimation)
+        {
+            // Time each frame of animation should be displayed
+            float duration = 1.f / (float)mPlayRate;
+
+            // Go as many frames in animation forward as necessary to catch the time
+            float dT = deltaTime;
+            if(dT > 0)
+            {
+                mFramePlayTime += deltaTime;
+                if(mFramePlayTime >= duration)
+                {
+                    // Decrement dT by time which was to much for that animation frame
+                    dT -= mFramePlayTime - duration;
+
+                    // Reset frame play time
+                    mFramePlayTime = 0;
+
+                    // Increment time
+                    mFrame++;
+
+                    // Check whether frame is in valid interval
+                    if(mFrame >= mGPUSurfaces.size())
+                    {
+                        mFrame = 0;
+                    }
+                }
+            }
+        }
+
         // Clear buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -715,7 +735,26 @@ void SurfaceDynamicsVisualization::updateGUI()
     if(mShowVisualizationWindow)
     {
         ImGui::Begin("Visualization", NULL, 0);
-        ImGui::SliderInt("Frame", &mFrame, 0, mGPUSurfaces.size() - 1); // TODO: extra method to set frame: one has to clamp layers for example, reset selected atom...
+
+        // Animation
+        if(mPlayAnimation)
+        {
+            if(ImGui::Button("Pause", ImVec2(90, 22)))
+            {
+                mPlayAnimation = false;
+            }
+        }
+        else
+        {
+            if(ImGui::Button("Play", ImVec2(90, 22)))
+            {
+                mPlayAnimation = true;
+            }
+        }
+        ImGui::SliderInt("Rate", &mPlayRate, 0, 100);
+        ImGui::SliderInt("Frame", &mFrame, 0, mGPUSurfaces.size() - 1); // TODO: extra method to set frame: one has to clamp layers for example, reset selected atom, reset mFramePlayTime...
+
+        // Displayed layer
         ImGui::SliderInt("Layer", &mLayer, 0, mGPUSurfaces.at(mFrame)->getLayerCount() - 1);
 
         // Show / hide internal atoms
