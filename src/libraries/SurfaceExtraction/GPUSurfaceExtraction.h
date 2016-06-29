@@ -33,16 +33,16 @@ private:
 
     // More for debugging and performance purposes, therefore member of GPUSurfaceExtraction
     // Face is defined by vec4(Normal, Distance from origin)
-    // TODO: for the moment: just all atoms, no layers!
     class CPUSurfaceExtraction
     {
     public:
 
         void execute(
             int executionIndex,
-            int atomCount,
+            int inputCount,
             float probeRadius,
             const std::vector<GPUAtom>& atoms,
+            const std::vector<unsigned int>& inputIndices,
             std::vector<unsigned int>& internalIndices,
             std::vector<unsigned int>& surfaceIndices);
 

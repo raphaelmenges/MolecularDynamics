@@ -113,9 +113,10 @@ bool GPUSurfaceExtraction::CPUSurfaceExtraction::testEndpoint(glm::vec3 endpoint
 // ## Execution function
 void GPUSurfaceExtraction::CPUSurfaceExtraction::execute(
     int executionIndex,
-    int atomCount,
+    int inputCount,
     float probeRadius,
     const std::vector<GPUAtom>& atoms,
+    const std::vector<unsigned int>& inputIndices,
     std::vector<unsigned int>& internalIndices,
     std::vector<unsigned int>& surfaceIndices)
 {
@@ -123,7 +124,13 @@ void GPUSurfaceExtraction::CPUSurfaceExtraction::execute(
     setup();
 
     // Index
-    int atomIndex = executionIndex;
+    int inputIndicesIndex = executionIndex;
+
+    // Check whether in range
+    if(inputIndicesIndex >= inputCount) { return; }
+
+    // Index
+    int atomIndex = inputIndices.at(inputIndicesIndex);
 
     // Check whether in range
     /* if(atomIndex >= atomCount) { return; } */
@@ -148,16 +155,19 @@ void GPUSurfaceExtraction::CPUSurfaceExtraction::execute(
     // ### BUILD UP OF CUTTING FACE LIST ###
 
     // Go over other atoms and build cutting face list
-    for(int i = 0; i < atomCount; i++)
+    for(int i = 0; i < inputCount; i++)
     {
+        // Read index of atom from input indices
+        int otherAtomIndex = inputIndices.at(i);
+
         // Do not cut with itself
-        if(i == atomIndex) { continue; }
+        if(otherAtomIndex == atomIndex) { continue; }
 
         // ### OTHER'S VALUES ###
 
         // Get values from other atom
-        glm::vec3 otherAtomCenter = atoms[i].center;
-        float otherAtomExtRadius = atoms[i].radius + probeRadius;
+        glm::vec3 otherAtomCenter = atoms[otherAtomIndex].center;
+        float otherAtomExtRadius = atoms[otherAtomIndex].radius + probeRadius;
 
         // ### INTERSECTION TEST ###
 
@@ -446,14 +456,15 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(
         auto atoms = pGPUProtein->getAtoms();
 
         // Create vector for indices
-        std::vector<unsigned int> internalIndices;
-        std::vector<unsigned int> surfaceIndices;
+        std::vector<unsigned int> inputIndices; // read by all threads
+        std::vector<unsigned int> internalIndices; // combined vectors of all threads
+        std::vector<unsigned int> surfaceIndices; // combined vectors of all threads
 
         // Do it in threads
         std::vector<std::vector<unsigned int> > internalIndicesSubvectors;
         std::vector<std::vector<unsigned int> > surfaceIndicesSubvectors;
-        internalIndicesSubvectors.resize(CPUThreadCount);
-        surfaceIndicesSubvectors.resize(CPUThreadCount);
+        internalIndicesSubvectors.resize(CPUThreadCount); // one vector for each thread
+        surfaceIndicesSubvectors.resize(CPUThreadCount); // one vector for each thread
         std::vector<std::thread> threads;
 
          // Do it as often as indicated
@@ -473,6 +484,9 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(
             // Create new layer
             int layer = (upGPUSurface->addLayer(inputCount) - 1);
 
+            // Get input indices from surface
+            inputIndices = upGPUSurface->getInputIndices(layer);
+
             // Launch threads
             for(int i = 0; i < CPUThreadCount; i++)
             {
@@ -480,9 +494,10 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(
                 int count = inputCount / CPUThreadCount;
                 int offset = count * i;
                 threads.push_back(
-                    std::thread([&](
+                    std::thread([&inputCount, &probeRadius, &atoms]( // decide what to capture
                         int minIndex,
                         int maxIndex,
+                        const std::vector<unsigned int>& rInputIndices,
                         std::vector<unsigned int>& rInternalIndicesSubvector,
                         std::vector<unsigned int>& rSurfaceIndicesSubvector)
                     {
@@ -495,15 +510,17 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(
                         {
                             threadCPUSurfaceExtraction.execute(
                                 a,
-                                atoms.size(),
+                                inputCount,
                                 probeRadius,
                                 atoms,
+                                rInputIndices,
                                 rInternalIndicesSubvector,
                                 rSurfaceIndicesSubvector);
                         }
                     },
                     offset, // minIndex which is assigned to thread
                     i == (CPUThreadCount - 1) ? inputCount - 1 : (offset+count-1), // maxIndex which is assigned to thread
+                    std::ref(inputIndices), // indices storage
                     std::ref(internalIndicesSubvectors[i]), // internal indices storage
                     std::ref(surfaceIndicesSubvectors[i]))); // external indices storage
             }
