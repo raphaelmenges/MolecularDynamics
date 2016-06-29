@@ -96,6 +96,7 @@ private:
     bool mShowVisualizationWindow = true;
     bool mPlayAnimation = false;
     int mPlayRate = 15;
+    bool mShowValidationWindow = true;
 
     // Debugging output
     std::string mComputeInformation = "";

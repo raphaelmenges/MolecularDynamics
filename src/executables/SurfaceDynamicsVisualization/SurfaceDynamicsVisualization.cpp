@@ -622,6 +622,16 @@ void SurfaceDynamicsVisualization::updateGUI()
             {
                 if(ImGui::MenuItem("Show Debugging", "", false, true)) { mShowDebuggingWindow = true; }
             }
+
+            // Validation window
+            if(mShowValidationWindow)
+            {
+                if(ImGui::MenuItem("Hide Validation", "", false, true)) { mShowValidationWindow = false; }
+            }
+            else
+            {
+                if(ImGui::MenuItem("Show Validation", "", false, true)) { mShowValidationWindow = true; }
+            }
             ImGui::EndMenu();
         }
 
@@ -654,21 +664,6 @@ void SurfaceDynamicsVisualization::updateGUI()
         ImGui::SameLine();
         if(ImGui::Button("Run CPU")) { computeLayers(false); }
         ImGui::Text(mComputeInformation.c_str());
-        ImGui::SliderInt("Samples", &mSurfaceValidationAtomSampleCount, 1, 10000);
-        ImGui::SliderInt("Seed", &mSurfaceValidationSeed, 0, 1337);
-        if(ImGui::Button("Validate Surface"))
-        {
-            mupSurfaceValidation->validate(
-                mGPUProteins.at(mFrame).get(),
-                mGPUSurfaces.at(mFrame).get(),
-                mLayer,
-                mProbeRadius,
-                mSurfaceValidationSeed,
-                mSurfaceValidationAtomSampleCount,
-                mValidationInformation,
-                std::vector<GLuint>());
-        }
-        ImGui::Text(mValidationInformation.c_str());
         ImGui::End();
     }
 
@@ -787,6 +782,28 @@ void SurfaceDynamicsVisualization::updateGUI()
         ImGui::Begin("Debugging", NULL, 0);
         ImGui::Text(std::string("Selected Atom: " + std::to_string(mSelectedAtom)).c_str());
         ImGui::Text(std::string("Atom Count: " + std::to_string(mGPUProteins.at(mFrame)->getAtomCount())).c_str());
+        ImGui::End();
+    }
+
+    // Validation window
+    if(mShowValidationWindow)
+    {
+        ImGui::Begin("Validation", NULL, 0);
+        ImGui::SliderInt("Samples", &mSurfaceValidationAtomSampleCount, 1, 10000);
+        ImGui::SliderInt("Seed", &mSurfaceValidationSeed, 0, 1337);
+        if(ImGui::Button("Validate Surface"))
+        {
+            mupSurfaceValidation->validate(
+                mGPUProteins.at(mFrame).get(),
+                mGPUSurfaces.at(mFrame).get(),
+                mLayer,
+                mProbeRadius,
+                mSurfaceValidationSeed,
+                mSurfaceValidationAtomSampleCount,
+                mValidationInformation,
+                std::vector<GLuint>());
+        }
+        ImGui::Text(mValidationInformation.c_str());
         ImGui::End();
     }
 
