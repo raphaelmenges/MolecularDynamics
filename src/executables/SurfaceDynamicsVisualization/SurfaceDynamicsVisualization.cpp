@@ -307,6 +307,20 @@ void SurfaceDynamicsVisualization::renderLoop()
             mLightDirection = - glm::normalize(mupCamera->getPosition() - mupCamera->getCenter());
         }
 
+        // Drawing of surface validation before everything else, so sample points at same z coordinate as impostor are in front
+        if(mShowValidationSamples)
+        {
+            mupSurfaceValidation->drawSamples(
+                mSamplePointSize,
+                mInternalSamplePointColor,
+                mSurfaceSamplePointColor,
+                mupCamera->getViewMatrix(),
+                mupCamera->getProjectionMatrix(),
+                mClippingPlane,
+                mShowInternalSamples,
+                mShowSurfaceSamples);
+        }
+
         // Drawing of molecule
         if(mRenderImpostor)
         {
@@ -364,18 +378,6 @@ void SurfaceDynamicsVisualization::renderLoop()
                 pointProgram.update("color", mSurfaceAtomColor);
                 glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame)->getCountOfSurfaceAtoms(mLayer));
             }
-        }
-
-        // Drawing of surface test
-        if(mShowValidationSamples)
-        {
-            mupSurfaceValidation->drawSamples(
-                mSamplePointSize,
-                mInternalSamplePointColor,
-                mSurfaceSamplePointColor,
-                mupCamera->getViewMatrix(),
-                mupCamera->getProjectionMatrix(),
-                mClippingPlane);
         }
 
         // Drawing of coordinates system axes
@@ -789,6 +791,8 @@ void SurfaceDynamicsVisualization::updateGUI()
     if(mShowValidationWindow)
     {
         ImGui::Begin("Validation", NULL, 0);
+
+        // Do validation
         ImGui::SliderInt("Samples", &mSurfaceValidationAtomSampleCount, 1, 10000);
         ImGui::SliderInt("Seed", &mSurfaceValidationSeed, 0, 1337);
         if(ImGui::Button("Validate Surface"))
@@ -804,6 +808,40 @@ void SurfaceDynamicsVisualization::updateGUI()
                 std::vector<GLuint>());
         }
         ImGui::Text(mValidationInformation.c_str());
+
+        // Show / hide internal samples
+        if(mShowInternalSamples)
+        {
+            if(ImGui::Button("Hide Internal", ImVec2(90, 22)))
+            {
+                mShowInternalSamples = false;
+            }
+        }
+        else
+        {
+            if(ImGui::Button("Show Internal", ImVec2(90, 22)))
+            {
+                mShowInternalSamples = true;
+            }
+        }
+        ImGui::SameLine();
+
+        // Show / hide surface samples
+        if(mShowSurfaceSamples)
+        {
+            if(ImGui::Button("Hide Surface", ImVec2(90, 22)))
+            {
+                mShowSurfaceSamples = false;
+            }
+        }
+        else
+        {
+            if(ImGui::Button("Show Surface", ImVec2(90, 22)))
+            {
+                mShowSurfaceSamples = true;
+            }
+        }
+
         ImGui::End();
     }
 

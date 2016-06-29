@@ -97,10 +97,12 @@ private:
     bool mPlayAnimation = false;
     int mPlayRate = 15;
     bool mShowValidationWindow = true;
+    bool mShowInternalSamples = true;
+    bool mShowSurfaceSamples = true;
 
     // Debugging output
-    std::string mComputeInformation = "";
-    std::string mValidationInformation = "";
+    std::string mComputeInformation = "No computation info available";
+    std::string mValidationInformation = "No validation info available";
 
     // Members
     GLFWwindow* mpWindow;
