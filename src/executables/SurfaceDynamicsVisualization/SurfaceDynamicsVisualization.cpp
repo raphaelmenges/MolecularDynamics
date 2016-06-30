@@ -877,7 +877,7 @@ void SurfaceDynamicsVisualization::updateGUI()
         glGetIntegerv(0x9049, &availableMemory); // Nvidia only
         availableMemory = availableMemory / 1000;
         ImGui::Text(std::string("Available VRAM: " + std::to_string(availableMemory) + "MB").c_str());
-        // TODO: one may want to clean up glGetError if query failed (f.e. on Intel or AMD)
+        // TODO: one may want to clean up glGetError if query failed and show backup message (f.e. on Intel or AMD)
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background
