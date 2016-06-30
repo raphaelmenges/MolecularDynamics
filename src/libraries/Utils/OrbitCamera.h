@@ -47,7 +47,7 @@ public:
     GLfloat getBeta() const;
     GLfloat getRadius() const;
     glm::vec3 getDirection() const; // normalized
-    glm::vec3 getPositionAtPixel(int x, int y) const;
+    glm::vec3 getPositionAtPixel(int x, int y) const; // orthographic camera, only
 
 private:
 
