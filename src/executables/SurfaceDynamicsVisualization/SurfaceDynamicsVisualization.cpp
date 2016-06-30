@@ -7,7 +7,6 @@
 #include "imgui/imgui.h"
 #include "imgui/examples/opengl3_example/imgui_impl_glfw_gl3.h"
 #include <glm/gtx/component_wise.hpp>
-#include <iostream>
 #include <sstream>
 #include <iomanip>
 
@@ -1058,9 +1057,6 @@ int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
     glfwGetCursorPos(mpWindow, &cursorX, &cursorY);
     glm::vec3 linePoint = mupCamera->getPositionAtPixel(cursorX, cursorY);
     glm::vec3 lineDir = mupCamera->getDirection();
-
-    // TODO: TESTING
-    // std::cout << "(" << linePoint.x << ", " << linePoint.y << ", " << linePoint.z << ")" << std::endl;
 
     // Go over display atoms
     auto indices = mGPUSurfaces.at(mFrame - mComputedStartFrame)->getInputIndices(mLayer);

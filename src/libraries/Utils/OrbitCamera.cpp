@@ -1,5 +1,6 @@
 #include "OrbitCamera.h"
 #include <glm/gtc/matrix_transform.hpp>
+#include <iostream>
 
 const GLfloat CAMERA_BETA_BIAS = 0.0001f;
 
@@ -156,22 +157,37 @@ glm::vec3 OrbitCamera::getPositionAtPixel(int x, int y) const
     // Direction is needed
     glm::vec3 direction = getDirection();
 
+    std::cout << "Direction = (" << direction.x << ", " << direction.y << ", " << direction.z << ")" << std::endl;
+
     // Calculate normalized vectors which span the view
     glm::vec3 a = glm::cross(glm::vec3(0,1,0), direction); // use up vector for cross product
     glm::vec3 b = glm::cross(direction, a);
-    a = glm::normalize(a);
-    b = glm::normalize(b);
+    a = -glm::normalize(a);
+    b = -glm::normalize(b);
+
+    std::cout << "a = (" << a.x << ", " << a.y << ", " << a.z << ")" << std::endl;
+    std::cout << "b = (" << b.x << ", " << b.y << ", " << b.z << ")" << std::endl;
 
     // Calculate how far to go [-0.5,0.5]
     GLfloat relativeX = ((GLfloat)x / (GLfloat)mViewportWidth) - 0.5f;
     GLfloat relativeY = ((GLfloat)y / (GLfloat)mViewportHeight) - 0.5f;
 
-    // Half size of orthographic projection
-    GLfloat halfWidth = mOrthoZoom * ((GLfloat) mViewportWidth) * mOrthoScale;
-    GLfloat halfHeight = mOrthoZoom * ((GLfloat) mViewportHeight) * mOrthoScale;
+    std::cout << "relativeX = " << relativeX << std::endl;
+    std::cout << "relativeY = " << relativeY << std::endl;
+
+    GLfloat multiplierA = mOrthoZoom * relativeX * mOrthoScale;
+    GLfloat multiplierB = mOrthoZoom * relativeY * mOrthoScale;
+
+    std::cout << "halfWidth = " << halfWidth << std::endl;
+    std::cout << "halfHeight = " << halfHeight << std::endl;
 
     // Calculate position on pixel
-    return mPosition + (a * (relativeX / halfWidth)) + (b * (relativeY / halfHeight));
+    glm::vec3 positionOnPixel = mPosition + (a *  multiplierA) + (b * multiplierB);
+
+    std::cout << "PositionOnPixel = (" << positionOnPixel.x << ", " << positionOnPixel.y << ", " << positionOnPixel.z << ")" << std::endl;
+
+    // Return result
+    return positionOnPixel;
 }
 
 void OrbitCamera::clampValues()
