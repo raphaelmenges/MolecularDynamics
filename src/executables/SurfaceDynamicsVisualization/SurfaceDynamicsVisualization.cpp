@@ -233,6 +233,16 @@ void SurfaceDynamicsVisualization::renderLoop()
     // Call render function of Rendering.h with lambda function
     render(mpWindow, [&] (float deltaTime)
     {
+        // Clear buffers
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // ImGui new frame
+        ImGui_ImplGlfwGL3_NewFrame();
+
+        // Viewport size
+        glm::vec2 resolution = getResolution(mpWindow);
+        glViewport(0, 0, resolution.x, resolution.y);
+
         // If playing, decide whether to switch to next frame of animation
         if(mPlayAnimation)
         {
@@ -257,16 +267,6 @@ void SurfaceDynamicsVisualization::renderLoop()
                 }
             }
         }
-
-        // Clear buffers
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // ImGui new frame
-        ImGui_ImplGlfwGL3_NewFrame();
-
-        // Viewport size
-        glm::vec2 resolution = getResolution(mpWindow);
-        glViewport(0, 0, resolution.x, resolution.y);
 
         // Bind SSBO with atoms (TODO: only at frame change)
         mGPUProteins.at(mFrame)->bind(0);
@@ -883,7 +883,7 @@ void SurfaceDynamicsVisualization::updateGUI()
 void SurfaceDynamicsVisualization::setFrame(int frame)
 {
     // Check whether frame is in valid interval
-    glm::clamp(frame, mComputedStartFrame, mComputedEndFrame);
+    frame = glm::clamp(frame, mComputedStartFrame, mComputedEndFrame);
 
     // Check whether there are enough layers to display
     int layerCount = mGPUSurfaces.at(frame - mComputedStartFrame)->getLayerCount();
