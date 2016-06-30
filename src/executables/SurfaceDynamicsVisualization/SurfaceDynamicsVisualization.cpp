@@ -655,15 +655,17 @@ void SurfaceDynamicsVisualization::updateGUI()
 
     ImGui::PopStyleColor(); // menu bar background
     ImGui::PopStyleColor(); // window background
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.2f, 0.2f, 0.2f, 0.75f)); // window background
-    ImGui::PushStyleColor(ImGuiCol_TitleBg, ImVec4(0.2f, 0.2f, 0.2f, 0.75f)); // window title
+    ImGui::PushStyleColor(ImGuiCol_TitleBg, ImVec4(0.5f, 0.5f, 0.5f, 0.5f)); // window title
+    ImGui::PushStyleColor(ImGuiCol_TitleBgCollapsed, ImVec4(0.5f, 0.5f, 0.5f, 0.5f)); // window title collapsed
+    ImGui::PushStyleColor(ImGuiCol_TitleBgActive, ImVec4(0.1f, 0.1f, 0.1f, 0.75f)); // window title active
     ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, ImVec4(0.0f, 0.0f, 0.0f, 0.5f)); // scrollbar grab
     ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // scrollbar background
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.5f)); // button
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.5f, 0.5f, 0.5f)); // button
 
     // Extraction window
     if(mShowSurfaceExtractionWindow)
     {
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.0f, 0.0f, 0.75f)); // window background
         ImGui::Begin("Surface Computation", NULL, 0);
         ImGui::SliderFloat("Probe Radius", &mProbeRadius, 0.f, 2.f, "%.1f");
         ImGui::SliderInt("Start Frame", &mComputationStartFrame, 0, mComputationEndFrame);
@@ -674,11 +676,13 @@ void SurfaceDynamicsVisualization::updateGUI()
         if(ImGui::Button("Run CPU")) { computeLayers(mComputationStartFrame, mComputationEndFrame, false); }
         ImGui::Text(mComputeInformation.c_str());
         ImGui::End();
+        ImGui::PopStyleColor(); // window background
     }
 
     // Camera window
     if(mShowCameraWindow)
     {
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.5f, 0.75f)); // window background
         ImGui::Begin("Camera", NULL, 0);
         ImGui::SliderFloat("Clipping Plane Offset", &mClippingPlane, mClippingPlaneMin, mClippingPlaneMax, "%.1f");
         if(ImGui::Button("+0.1"))
@@ -716,11 +720,13 @@ void SurfaceDynamicsVisualization::updateGUI()
             mupCamera->setBeta(mCameraDefaultBeta);
         }
         ImGui::End();
+        ImGui::PopStyleColor(); // window background
     }
 
     // Visualization window
     if(mShowVisualizationWindow)
     {
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.5f, 0.0f, 0.75f)); // window background
         ImGui::Begin("Visualization", NULL, 0);
 
         // Animation
@@ -783,20 +789,24 @@ void SurfaceDynamicsVisualization::updateGUI()
         }
 
         ImGui::End();
+        ImGui::PopStyleColor(); // window background
     }
 
     // Debugging window
     if(mShowDebuggingWindow)
     {
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.5f, 0.0f, 0.75f)); // window background
         ImGui::Begin("Debugging", NULL, 0);
         ImGui::Text(std::string("Selected Atom: " + std::to_string(mSelectedAtom)).c_str());
         ImGui::Text(std::string("Atom Count: " + std::to_string(mGPUProteins.at(mFrame)->getAtomCount())).c_str());
         ImGui::End();
+        ImGui::PopStyleColor(); // window background
     }
 
     // Validation window
     if(mShowValidationWindow)
     {
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.5f, 0.5f, 0.75f)); // window background
         ImGui::Begin("Validation", NULL, 0);
 
         // Do validation
@@ -850,13 +860,15 @@ void SurfaceDynamicsVisualization::updateGUI()
         }
 
         ImGui::End();
+        ImGui::PopStyleColor(); // window background
     }
 
     ImGui::PopStyleColor(); // button
     ImGui::PopStyleColor(); // scrollbar background
     ImGui::PopStyleColor(); // scrollbar grab
+    ImGui::PopStyleColor(); // window title active
+    ImGui::PopStyleColor(); // window title collapsed
     ImGui::PopStyleColor(); // window title
-    ImGui::PopStyleColor(); // window background
 
     ImGui::Render();
 }
