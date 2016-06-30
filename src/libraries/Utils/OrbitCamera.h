@@ -46,7 +46,8 @@ public:
     GLfloat getAlpha() const;
     GLfloat getBeta() const;
     GLfloat getRadius() const;
-    glm::vec3 getDirection() const;
+    glm::vec3 getDirection() const; // normalized
+    glm::vec3 getPositionAtPixel(int x, int y) const;
 
 private:
 
@@ -68,6 +69,8 @@ private:
     glm::vec3 mPosition;
     glm::mat4 mViewMatrix;
     glm::mat4 mProjectionMatrix;
+    int mViewportWidth;
+    int mViewportHeight;
 };
 
 #endif // ORBIT_CAMERA_H

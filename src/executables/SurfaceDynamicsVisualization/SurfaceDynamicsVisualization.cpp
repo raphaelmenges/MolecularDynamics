@@ -1045,7 +1045,79 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
 
 int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
 {
-    return 0;
+    // Variables to collect results
+    int foundIndex = 0;
+    float foundDistance = std::numeric_limits<float>::max();
+
+    // Preallocation
+    glm::vec3 sphereCenter;
+    float sphereRadius;
+
+    // Generate ray
+    double cursorX, cursorY;
+    glfwGetCursorPos(mpWindow, &cursorX, &cursorY);
+    glm::vec3 linePoint = mupCamera->getPositionAtPixel(cursorX, cursorY);
+    glm::vec3 lineDir = mupCamera->getDirection();
+
+    // Go over display atoms
+    auto indices = mGPUSurfaces.at(mFrame - mComputedStartFrame)->getInputIndices(mLayer);
+    auto atoms = mGPUProteins.at(mFrame)->getAtoms();
+    for(const auto& rIndex : indices)
+    {
+        // Get information about atom
+        sphereCenter = atoms.at(rIndex).center;
+        sphereRadius = atoms.at(rIndex).radius;
+        if(mRenderWithProbeRadius) { sphereRadius += mProbeRadius; }
+
+        // INTERSECT
+
+        // Right part of equation beneath square root
+        float underSQRT1 = glm::dot(lineDir, (linePoint - sphereCenter));
+        underSQRT1 = underSQRT1 * underSQRT1;
+        float underSQRT2 = glm::length(linePoint - sphereCenter);
+        underSQRT2 = underSQRT2 * underSQRT2;
+        float underSQRT = (underSQRT1 - underSQRT2 + (sphereRadius * sphereRadius));
+
+        // Left part of equation
+        float left = -(glm::dot(lineDir, (linePoint - sphereCenter)));
+
+        if(underSQRT > 0)
+        {
+            // Right part of equation
+            float right = glm::sqrt(underSQRT);
+
+            // First point
+            float d = left + right;
+            float length = glm::length(linePoint + (d * lineDir));
+            if(length < foundDistance)
+            {
+                foundIndex = rIndex;
+                foundDistance = length;
+            }
+
+            // Second point
+            d = left - right;
+            length = glm::length(linePoint + (d * lineDir));
+            if(length < foundDistance)
+            {
+                foundIndex = rIndex;
+                foundDistance = length;
+            }
+        }
+        else if(underSQRT == 0)
+        {
+            // Single point
+            float d = left;
+            float length = glm::length(linePoint + (d * lineDir));
+            if(length < foundDistance)
+            {
+                foundIndex = rIndex;
+                foundDistance = length;
+            }
+        }
+    }
+
+    return foundIndex;
 }
 
 // ### Main function ###
