@@ -43,10 +43,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     {
         // Check whether ImGui is handling this
         ImGuiIO& io = ImGui::GetIO();
-        if(io.WantCaptureKeyboard)
-        {
-            return;
-        }
+        if(io.WantCaptureKeyboard) { return; }
         this->keyCallback(k, s, a, m);
     };
     setKeyCallback(mpWindow, kC);
@@ -56,10 +53,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     {
         // Check whether ImGui is handling this
         ImGuiIO& io = ImGui::GetIO();
-        if(io.WantCaptureMouse)
-        {
-            return;
-        }
+        if(io.WantCaptureMouse) { return; }
         this->mouseButtonCallback(b, a, m);
     };
     setMouseButtonCallback(mpWindow, kB);
@@ -69,10 +63,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     {
         // Check whether ImGui is handling this
         ImGuiIO& io = ImGui::GetIO();
-        if(io.WantCaptureMouse)
-        {
-            return;
-        }
+        if(io.WantCaptureMouse) { return; }
         this->scrollCallback(x,y);
     };
     setScrollCallback(mpWindow, kS);
