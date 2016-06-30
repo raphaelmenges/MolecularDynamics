@@ -56,7 +56,7 @@ private:
     // Compute layers
     void computeLayers(int startFrame, int endFrame, bool useGPU);
 
-    // Get atom beneath cursor
+    // Get atom beneath cursor. Returns -1 when fails
     int getAtomBeneathCursor() const;
 
     // Setup

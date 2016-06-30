@@ -505,7 +505,8 @@ void SurfaceDynamicsVisualization::mouseButtonCallback(int button, int action, i
     }
     else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
-        mSelectedAtom = getAtomBeneathCursor();
+        int atomIndex = getAtomBeneathCursor();
+        mSelectedAtom = atomIndex >= 0 ? atomIndex : mSelectedAtom;
     }
 }
 
@@ -1051,7 +1052,7 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
 int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
 {
     // Variables to collect results
-    int foundIndex = 0;
+    int foundIndex = -1;
     float foundDistance = std::numeric_limits<float>::max();
 
     // Preallocation
