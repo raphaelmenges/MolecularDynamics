@@ -79,6 +79,11 @@ std::vector<Atom*> Atom::getBondPartners()
     return bonds_;
 }
 
+int Atom::getCountOfFrames() const
+{
+    return positions_.size();
+}
+
 void Atom::setX(float x)
 {
     positions_.at(0).x = x;

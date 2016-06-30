@@ -54,7 +54,7 @@ private:
     void setFrame(int frame);
 
     // Compute layers
-    void computeLayers(bool useGPU);
+    void computeLayers(int startFrame, int endFrame, bool useGPU);
 
     // Setup
     const bool mInitiallyUseGLSLImplementation = true;
@@ -99,6 +99,8 @@ private:
     bool mShowValidationWindow = true;
     bool mShowInternalSamples = true;
     bool mShowSurfaceSamples = true;
+    int mComputationStartFrame = 0;
+    int mComputationEndFrame = 0;
 
     // Debugging output
     std::string mComputeInformation = "No computation info available";
@@ -119,6 +121,8 @@ private:
     int mFrame = 0; // do not set it directly, let it be done by setFrame() method!
     int mLayer = 0;
     float mFramePlayTime = 0; // time of displaying a molecule state at playing the animation
+    int mComputedStartFrame = 0;
+    int mComputedEndFrame = 0;
 
     // Surface validation
     std::unique_ptr<SurfaceValidation> mupSurfaceValidation;

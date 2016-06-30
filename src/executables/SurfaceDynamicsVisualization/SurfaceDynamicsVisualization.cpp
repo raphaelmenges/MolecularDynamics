@@ -160,7 +160,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     paths.push_back("/home/raphael/Temp/XTC/MD_GIIIA_No_Water.pdb");
     paths.push_back("/home/raphael/Temp/XTC/MD_GIIIA_No_Water.xtc");
     std::unique_ptr<Protein> upProtein = std::move(mdwrap.load(paths));
-    for(int i = 0; i < 100; i++)
+    for(int i = 0; i < upProtein->getAtomAt(0)->getCountOfFrames(); i++)
     {
         mGPUProteins.push_back(std::move(std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get(), i))));
     }
@@ -185,10 +185,13 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
             0.05f));
 
     // # Run implementation to extract surface atoms
-    computeLayers(mInitiallyUseGLSLImplementation);
+    computeLayers(0, 0, mInitiallyUseGLSLImplementation);
 
     // Prepare validation of the surface
     mupSurfaceValidation = std::unique_ptr<SurfaceValidation>(new SurfaceValidation());
+
+    // Set endframe in GUI to maximum number
+    mComputationEndFrame = mGPUProteins.size() - 1;
 }
 
 SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
@@ -338,17 +341,17 @@ void SurfaceDynamicsVisualization::renderLoop()
             // viewport depth which means internal are always in front of surface)
             if(mShowInternal)
             {
-                mGPUSurfaces.at(mFrame)->bindInternalIndicesForDrawing(mLayer, 1);
+                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndicesForDrawing(mLayer, 1);
                 impostorProgram.update("color", mInternalAtomColor);
-                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame)->getCountOfInternalAtoms(mLayer));
+                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
             }
 
             // Draw surface
             if(mShowSurface)
             {
-                mGPUSurfaces.at(mFrame)->bindSurfaceIndicesForDrawing(mLayer, 1);
+                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndicesForDrawing(mLayer, 1);
                 impostorProgram.update("color", mSurfaceAtomColor);
-                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame)->getCountOfSurfaceAtoms(mLayer));
+                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
             }
         }
         else
@@ -366,17 +369,17 @@ void SurfaceDynamicsVisualization::renderLoop()
             // Draw internal
             if(mShowInternal)
             {
-                mGPUSurfaces.at(mFrame)->bindInternalIndicesForDrawing(mLayer, 1);
+                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndicesForDrawing(mLayer, 1);
                 pointProgram.update("color", mInternalAtomColor);
-                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame)->getCountOfInternalAtoms(mLayer));
+                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
             }
 
             // Draw surface
             if(mShowSurface)
             {
-                mGPUSurfaces.at(mFrame)->bindSurfaceIndicesForDrawing(mLayer, 1);
+                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndicesForDrawing(mLayer, 1);
                 pointProgram.update("color", mSurfaceAtomColor);
-                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame)->getCountOfSurfaceAtoms(mLayer));
+                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
             }
         }
 
@@ -486,7 +489,9 @@ void SurfaceDynamicsVisualization::updateComputationInformation(std::string devi
         device << " used" << "\n"
         << "Probe radius: " + std::to_string(mProbeRadius) << "\n"
         << "Time: " << computationTime << "ms" << "\n"
-        << "Extracted layers: " << (extractedLayers ? "yes" : "no");
+        << "Extracted layers: " << (extractedLayers ? "yes" : "no") << "\n"
+        << "Start frame: " << mComputedStartFrame << " End frame: " << mComputedEndFrame << "\n"
+        << "Count of frames: " << (mComputedEndFrame - mComputedStartFrame + 1);
     mComputeInformation = stream.str();
 }
 
@@ -660,11 +665,13 @@ void SurfaceDynamicsVisualization::updateGUI()
     if(mShowSurfaceExtractionWindow)
     {
         ImGui::Begin("Surface Computation", NULL, 0);
-        ImGui::SliderFloat("Probe radius", &mProbeRadius, 0.f, 2.f, "%.1f");
+        ImGui::SliderFloat("Probe Radius", &mProbeRadius, 0.f, 2.f, "%.1f");
+        ImGui::SliderInt("Start Frame", &mComputationStartFrame, 0, mComputationEndFrame);
+        ImGui::SliderInt("End Frame", &mComputationEndFrame, mComputationStartFrame, mGPUProteins.size() - 1);
         ImGui::SliderInt("CPU Cores", &mCPUThreads, 1, 24);
-        if(ImGui::Button("Run GPGPU")) { computeLayers(true); }
+        if(ImGui::Button("Run GPGPU")) { computeLayers(mComputationStartFrame, mComputationEndFrame, true); }
         ImGui::SameLine();
-        if(ImGui::Button("Run CPU")) { computeLayers(false); }
+        if(ImGui::Button("Run CPU")) { computeLayers(mComputationStartFrame, mComputationEndFrame, false); }
         ImGui::Text(mComputeInformation.c_str());
         ImGui::End();
     }
@@ -733,14 +740,14 @@ void SurfaceDynamicsVisualization::updateGUI()
         }
         ImGui::SliderInt("Rate", &mPlayRate, 0, 100);
         int frame = mFrame;
-        ImGui::SliderInt("Frame", &frame, 0, mGPUSurfaces.size() - 1);
+        ImGui::SliderInt("Frame", &frame, mComputedStartFrame, mComputedEndFrame);
         if(frame != mFrame)
         {
             setFrame(frame);
         }
 
         // Displayed layer
-        ImGui::SliderInt("Layer", &mLayer, 0, mGPUSurfaces.at(mFrame)->getLayerCount() - 1);
+        ImGui::SliderInt("Layer", &mLayer, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getLayerCount() - 1);
 
         // Show / hide internal atoms
         if(mShowInternal)
@@ -799,7 +806,7 @@ void SurfaceDynamicsVisualization::updateGUI()
         {
             mupSurfaceValidation->validate(
                 mGPUProteins.at(mFrame).get(),
-                mGPUSurfaces.at(mFrame).get(),
+                mGPUSurfaces.at(mFrame - mComputedStartFrame).get(),
                 mLayer,
                 mProbeRadius,
                 mSurfaceValidationSeed,
@@ -857,13 +864,10 @@ void SurfaceDynamicsVisualization::updateGUI()
 void SurfaceDynamicsVisualization::setFrame(int frame)
 {
     // Check whether frame is in valid interval
-    if(frame >= mGPUSurfaces.size())
-    {
-        frame = 0;
-    }
+    glm::clamp(frame, mComputedStartFrame, mComputedEndFrame);
 
     // Check whether there are enough layers to display
-    int layerCount = mGPUSurfaces.at(frame)->getLayerCount();
+    int layerCount = mGPUSurfaces.at(frame - mComputedStartFrame)->getLayerCount();
     if(mLayer >= layerCount)
     {
         mLayer = layerCount -1;
@@ -873,32 +877,36 @@ void SurfaceDynamicsVisualization::setFrame(int frame)
     mFrame = frame;
 }
 
-void SurfaceDynamicsVisualization::computeLayers(bool useGPU)
+void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, bool useGPU)
 {
     // Reset surfaces
     mGPUSurfaces.clear();
 
     // Do it for all animation frames
     float computationTime = 0;
-    for(const auto& rupGPUProtein : mGPUProteins)
+    for(int i = startFrame; i <= endFrame; i++)
     {
         if(useGPU)
         {
-            mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(rupGPUProtein.get(), mProbeRadius, true)));
+            mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(mGPUProteins.at(i).get(), mProbeRadius, true)));
         }
         else
         {
-            mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(rupGPUProtein.get(), mProbeRadius, true, true, mCPUThreads)));
+            mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(mGPUProteins.at(i).get(), mProbeRadius, true, true, mCPUThreads)));
         }
         computationTime += mGPUSurfaces.back()->getComputationTime();
     }
+
+    // Remember which frames were computed
+    mComputedStartFrame = startFrame;
+    mComputedEndFrame = endFrame;
 
     // Update compute information
     updateComputationInformation(
         (useGPU ? "GPU" : "CPU with " + std::to_string(mCPUThreads) + " threads"), true, computationTime);
 
     // Set to first animation frame
-    setFrame(0);
+    setFrame(mComputedStartFrame);
 }
 
 // ### Main function ###

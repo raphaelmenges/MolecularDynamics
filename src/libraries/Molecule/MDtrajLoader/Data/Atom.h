@@ -110,6 +110,13 @@ public:
 
     void addBondPartner(Atom*);
 
+    /**
+    @brief returns the count of frames
+    @param [out] int count of positions in animation for this Atom
+    */
+    int getCountOfFrames() const;
+
+
 private:
     int index_;
 
