@@ -688,6 +688,7 @@ void SurfaceDynamicsVisualization::updateGUI()
     ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, ImVec4(0.0f, 0.0f, 0.0f, 0.5f)); // scrollbar grab
     ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // scrollbar background
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.5f, 0.5f, 0.5f)); // button
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.5f, 0.5f, 0.5f, 0.75f)); // button hovered
 
     // Extraction window
     if(mShowSurfaceExtractionWindow)
@@ -975,6 +976,7 @@ void SurfaceDynamicsVisualization::updateGUI()
         ImGui::PopStyleColor(); // window background
     }
 
+    ImGui::PopStyleColor(); // button hovered
     ImGui::PopStyleColor(); // button
     ImGui::PopStyleColor(); // scrollbar background
     ImGui::PopStyleColor(); // scrollbar grab
