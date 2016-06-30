@@ -30,7 +30,7 @@ OrbitCamera::~OrbitCamera()
     // Nothing to do
 }
 
-void OrbitCamera::update(int viewportWidth, int viewportHeight, bool perspective)
+void OrbitCamera::update(GLint viewportWidth, GLint viewportHeight, GLboolean perspective)
 {
     // Save information to member
     mViewportWidth = viewportWidth;
@@ -69,12 +69,12 @@ void OrbitCamera::update(int viewportWidth, int viewportHeight, bool perspective
         // Projection matrix
         GLfloat halfWidth = ((GLfloat) mViewportWidth) * mOrthoScale;
         GLfloat halfHeight = ((GLfloat) mViewportHeight) * mOrthoScale;
-        GLfloat zoom = glm::max(0.0000001f, (mRadius - mMinRadius) / (mMaxRadius - mMinRadius));
+        mOrthoZoom = glm::max(0.0000001f, (mRadius - mMinRadius) / (mMaxRadius - mMinRadius));
         mProjectionMatrix = glm::ortho(
-            zoom * -halfWidth,
-            zoom * halfWidth,
-            zoom * -halfHeight,
-            zoom * halfHeight,
+            mOrthoZoom * -halfWidth,
+            mOrthoZoom * halfWidth,
+            mOrthoZoom * -halfHeight,
+            mOrthoZoom * halfHeight,
             0.1f,
             mMaxRadius * 2.f);
     }
@@ -167,8 +167,8 @@ glm::vec3 OrbitCamera::getPositionAtPixel(int x, int y) const
     GLfloat relativeY = ((GLfloat)y / (GLfloat)mViewportHeight) - 0.5f;
 
     // Half size of orthographic projection
-    GLfloat halfWidth = ((GLfloat) mViewportWidth) * mOrthoScale;
-    GLfloat halfHeight = ((GLfloat) mViewportHeight) * mOrthoScale;
+    GLfloat halfWidth = mOrthoZoom * ((GLfloat) mViewportWidth) * mOrthoScale;
+    GLfloat halfHeight = mOrthoZoom * ((GLfloat) mViewportHeight) * mOrthoScale;
 
     // Calculate position on pixel
     return mPosition + (a * (relativeX / halfWidth)) + (b * (relativeY / halfHeight));

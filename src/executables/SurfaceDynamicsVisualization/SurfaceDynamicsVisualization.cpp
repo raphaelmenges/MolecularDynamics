@@ -1059,6 +1059,9 @@ int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
     glm::vec3 linePoint = mupCamera->getPositionAtPixel(cursorX, cursorY);
     glm::vec3 lineDir = mupCamera->getDirection();
 
+    // TODO: TESTING
+    // std::cout << "(" << linePoint.x << ", " << linePoint.y << ", " << linePoint.z << ")" << std::endl;
+
     // Go over display atoms
     auto indices = mGPUSurfaces.at(mFrame - mComputedStartFrame)->getInputIndices(mLayer);
     auto atoms = mGPUProteins.at(mFrame)->getAtoms();

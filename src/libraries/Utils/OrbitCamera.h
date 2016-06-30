@@ -27,7 +27,7 @@ public:
     virtual ~OrbitCamera();
 
     // Update view and projection matrix (must be called at least once)
-    void update(int viewportWidth, int viewportHeight, bool perspective);
+    void update(GLint viewportWidth, GLint viewportHeight, GLboolean perspective);
 
     // Reset camera
     void reset(glm::vec3 center, GLfloat alpha, GLfloat beta, GLfloat radius);
@@ -69,8 +69,9 @@ private:
     glm::vec3 mPosition;
     glm::mat4 mViewMatrix;
     glm::mat4 mProjectionMatrix;
-    int mViewportWidth;
-    int mViewportHeight;
+    GLint mViewportWidth;
+    GLint mViewportHeight;
+    GLfloat mOrthoZoom;
 };
 
 #endif // ORBIT_CAMERA_H
