@@ -16,8 +16,8 @@
 SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
 {
     // # Setup members
-    mCameraDeltaMovement = glm::vec2(0,0);
-    mCameraSmoothTime = 1.f;
+    mCameraDeltaRotation = glm::vec2(0,0);
+    mCameraRotationSmoothTime = 1.f;
     mLightDirection = glm::normalize(glm::vec3(-0.5, -0.75, -0.3));
 
     // Create window (which initializes OpenGL)
@@ -279,20 +279,28 @@ void SurfaceDynamicsVisualization::renderLoop()
         prevCursorX = cursorX;
         prevCursorY = cursorY;
 
-        // Orbit camera
+        // Rotate camera
         if(mRotateCamera)
         {
-            mCameraDeltaMovement = glm::vec2(cursorDeltaX, cursorDeltaY);
-            mCameraSmoothTime = 1.f;
+            mCameraDeltaRotation = glm::vec2(cursorDeltaX, cursorDeltaY);
+            mCameraRotationSmoothTime = 1.f;
         }
         else
         {
-            mCameraSmoothTime -= deltaTime / mCameraSmoothDuration;
-            mCameraSmoothTime = glm::max(mCameraSmoothTime, 0.f);
+            mCameraRotationSmoothTime -= deltaTime / mCameraSmoothDuration;
+            mCameraRotationSmoothTime = glm::max(mCameraRotationSmoothTime, 0.f);
         }
-        glm::vec2 cameraMovement = glm::lerp(glm::vec2(0), mCameraDeltaMovement, mCameraSmoothTime);
+        glm::vec2 cameraMovement = glm::lerp(glm::vec2(0), mCameraDeltaRotation, mCameraRotationSmoothTime);
         mupCamera->setAlpha(mupCamera->getAlpha() + 0.25f * cameraMovement.x);
         mupCamera->setBeta(mupCamera->getBeta() - 0.25f * cameraMovement.y);
+
+        // Move camera
+        if(mMoveCamera)
+        {
+            mupCamera->setCenter(mupCamera->getCenter() + (deltaTime * glm::vec3((float)cursorDeltaX, (float)cursorDeltaY, 0.f)));
+        }
+
+        // Update camera
         mupCamera->update(resolution.x, resolution.y, mUsePerspectiveCamera);
 
         // Light direction
@@ -457,6 +465,14 @@ void SurfaceDynamicsVisualization::mouseButtonCallback(int button, int action, i
     else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
     {
         mRotateCamera = false;
+    }
+    if (button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_PRESS)
+    {
+        mMoveCamera = true;
+    }
+    else if (button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_RELEASE)
+    {
+        mMoveCamera = false;
     }
     else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {

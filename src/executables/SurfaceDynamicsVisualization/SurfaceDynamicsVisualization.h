@@ -74,6 +74,7 @@ private:
 
     // Controllable parameters
     bool mRotateCamera = false;
+    bool mMoveCamera = false;
     bool mRotateLight = false;
     int mSelectedAtom = 0;
     bool mRenderImpostor = true;
@@ -109,8 +110,8 @@ private:
     // Members
     GLFWwindow* mpWindow;
     std::unique_ptr<OrbitCamera> mupCamera; // camera for visualization
-    glm::vec2 mCameraDeltaMovement;
-    float mCameraSmoothTime;
+    glm::vec2 mCameraDeltaRotation;
+    float mCameraRotationSmoothTime;
     glm::vec3 mLightDirection;
     glm::vec3 mProteinMinExtent;
     glm::vec3 mProteinMaxExtent;
