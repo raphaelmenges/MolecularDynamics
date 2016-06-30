@@ -45,7 +45,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     io.Fonts->AddFontFromFileTTF(fontpath.c_str(), 16, &config, ranges);
 
     // Clear color
-    glClearColor(0.f, 0.f, 0.f, 1.f);
+    glClearColor(0.1f, 0.1f, 0.3f, 1.f);
 
     // # Callbacks after ImGui
 
