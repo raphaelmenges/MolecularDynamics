@@ -45,13 +45,13 @@ private:
     void scrollCallback(double xoffset, double yoffset);
 
     // Update computation information
-    void updateComputationInformation(std::string device, bool extractedLayers, float computationTime);
+    void updateComputationInformation(std::string device, float computationTime);
 
     // Update GUI
     void updateGUI();
 
-    // Set frame
-    void setFrame(int frame);
+    // Set frame. Returns whether frame has been changed
+    bool setFrame(int frame);
 
     // Compute layers
     void computeLayers(int startFrame, int endFrame, bool useGPU);
@@ -96,12 +96,14 @@ private:
     bool mShowAxesGizmo = false;
     bool mShowVisualizationWindow = true;
     bool mPlayAnimation = false;
-    int mPlayRate = 15;
+    int mPlayAnimationRate = 15;
     bool mShowValidationWindow = true;
     bool mShowInternalSamples = true;
     bool mShowSurfaceSamples = true;
     int mComputationStartFrame = 0;
     int mComputationEndFrame = 0;
+    bool mExtractLayers = false;
+    bool mRepeatAnimation = false;
 
     // Debugging output
     std::string mComputeInformation = "No computation info available";

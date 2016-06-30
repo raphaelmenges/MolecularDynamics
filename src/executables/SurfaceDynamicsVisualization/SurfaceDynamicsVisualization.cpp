@@ -31,7 +31,6 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     ImGuiIO& io = ImGui::GetIO();
     std::string fontpath = std::string(IMGUI_FONTS_PATH) + "/DroidSans.ttf";
     io.Fonts->AddFontFromFileTTF(fontpath.c_str(), 16);
-    //io.Fonts->AddFontDefault();
 
     // Clear color
     glClearColor(0.f, 0.f, 0.f, 1.f);
@@ -247,7 +246,7 @@ void SurfaceDynamicsVisualization::renderLoop()
         if(mPlayAnimation)
         {
             // Time each frame of animation should be displayed
-            float duration = 1.f / (float)mPlayRate;
+            float duration = 1.f / (float)mPlayAnimationRate;
 
             // Go as many frames in animation forward as necessary to catch the time
             float dT = deltaTime;
@@ -262,8 +261,20 @@ void SurfaceDynamicsVisualization::renderLoop()
                     // Reset frame play time
                     mFramePlayTime = 0;
 
+                    // Next frame
+                    int nextFrame = mFrame + 1;
+
+                    // Cylce if enabled
+                    if(mRepeatAnimation && nextFrame > mComputedEndFrame)
+                    {
+                        nextFrame = mComputedStartFrame;
+                    }
+
                     // Increment time (checks are done by method)
-                    setFrame(mFrame + 1);
+                    if(!setFrame(nextFrame))
+                    {
+                        mPlayAnimation = false;
+                    }
                 }
             }
         }
@@ -297,7 +308,14 @@ void SurfaceDynamicsVisualization::renderLoop()
         // Move camera
         if(mMoveCamera)
         {
-            mupCamera->setCenter(mupCamera->getCenter() + (deltaTime * glm::vec3((float)cursorDeltaX, (float)cursorDeltaY, 0.f)));
+            glm::vec3 a = glm::cross(glm::vec3(0,1,0), mupCamera->getDirection()); // use up vector for cross product
+            glm::vec3 b = glm::cross(mupCamera->getDirection(), a);
+
+            mupCamera->setCenter(
+                mupCamera->getCenter()
+                + (deltaTime * mupCamera->getRadius()
+                    * (((float)cursorDeltaX * a)
+                        + ((float)cursorDeltaY * b))));
         }
 
         // Update camera
@@ -394,20 +412,20 @@ void SurfaceDynamicsVisualization::renderLoop()
             axisGizmoProgram.update("projection", mupCamera->getProjectionMatrix());
 
             // X axis
-            glm::mat4 axisModelMatrix = glm::translate(glm::mat4(1.f), mupCamera->getCenter());
+            glm::mat4 axisModelMatrix = glm::translate(glm::mat4(1.f), glm::vec3(0,0,0));
             axisGizmoProgram.update("model", axisModelMatrix);
             axisGizmoProgram.update("color", glm::vec3(1.f, 0.f, 0.f));
             glDrawArrays(GL_LINES, 0, axisVertices.size());
 
             // Y axis
-            axisModelMatrix = glm::translate(glm::mat4(1.f), mupCamera->getCenter());
+            axisModelMatrix = glm::translate(glm::mat4(1.f), glm::vec3(0,0,0));
             axisModelMatrix = glm::rotate(axisModelMatrix, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
             axisGizmoProgram.update("model", axisModelMatrix);
             axisGizmoProgram.update("color", glm::vec3(0.f, 1.f, 0.f));
             glDrawArrays(GL_LINES, 0, axisVertices.size());
 
             // Z axis
-            axisModelMatrix = glm::translate(glm::mat4(1.f), mupCamera->getCenter());
+            axisModelMatrix = glm::translate(glm::mat4(1.f), glm::vec3(0,0,0));
             axisModelMatrix = glm::rotate(axisModelMatrix, glm::radians(270.0f), glm::vec3(0.0f, 1.0f, 0.0f));
             axisGizmoProgram.update("model", axisModelMatrix);
             axisGizmoProgram.update("color", glm::vec3(0.f, 0.f, 1.f));
@@ -489,16 +507,16 @@ void SurfaceDynamicsVisualization::scrollCallback(double xoffset, double yoffset
     mupCamera->setRadius(mupCamera->getRadius() - 0.5f * (float)yoffset);
 }
 
-void SurfaceDynamicsVisualization::updateComputationInformation(std::string device, bool extractedLayers, float computationTime)
+void SurfaceDynamicsVisualization::updateComputationInformation(std::string device, float computationTime)
 {
     std::stringstream stream;
     stream <<
         device << " used" << "\n"
         << "Probe radius: " + std::to_string(mProbeRadius) << "\n"
-        << "Time: " << computationTime << "ms" << "\n"
-        << "Extracted layers: " << (extractedLayers ? "yes" : "no") << "\n"
+        << "Extracted layers: " << (mExtractLayers ? "yes" : "no") << "\n"
         << "Start frame: " << mComputedStartFrame << " End frame: " << mComputedEndFrame << "\n"
-        << "Count of frames: " << (mComputedEndFrame - mComputedStartFrame + 1);
+        << "Count of frames: " << (mComputedEndFrame - mComputedStartFrame + 1) << "\n"
+        << "Time: " << computationTime << "ms";
     mComputeInformation = stream.str();
 }
 
@@ -675,6 +693,7 @@ void SurfaceDynamicsVisualization::updateGUI()
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.0f, 0.0f, 0.75f)); // window background
         ImGui::Begin("Surface Computation", NULL, 0);
         ImGui::SliderFloat("Probe Radius", &mProbeRadius, 0.f, 2.f, "%.1f");
+        ImGui::Checkbox("Extract Layers", &mExtractLayers);
         ImGui::SliderInt("Start Frame", &mComputationStartFrame, 0, mComputationEndFrame);
         ImGui::SliderInt("End Frame", &mComputationEndFrame, mComputationStartFrame, mGPUProteins.size() - 1);
         ImGui::SliderInt("CPU Cores", &mCPUThreads, 1, 24);
@@ -691,7 +710,51 @@ void SurfaceDynamicsVisualization::updateGUI()
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.5f, 0.75f)); // window background
         ImGui::Begin("Camera", NULL, 0);
-        ImGui::SliderFloat("Clipping Plane Offset", &mClippingPlane, mClippingPlaneMin, mClippingPlaneMax, "%.1f");
+
+        // Set to fixed positions
+        if(ImGui::Button("Align to X"))
+        {
+            mupCamera->setAlpha(0);
+            mupCamera->setBeta(90);
+        }
+        ImGui::SameLine();
+        if(ImGui::Button("Align to Y"))
+        {
+            // Internal, this is not possible. There is some epsilon on beta inside the camera object
+            mupCamera->setAlpha(0);
+            mupCamera->setBeta(0);
+        }
+        ImGui::SameLine();
+        if(ImGui::Button("Align to Z"))
+        {
+            mupCamera->setAlpha(90.f);
+            mupCamera->setBeta(90.f);
+        }
+
+        // Rotation
+        float alpha = mupCamera->getAlpha();
+        ImGui::DragFloat("Horizontal", &alpha);
+        mupCamera->setAlpha(alpha);
+
+        float beta = mupCamera->getBeta();
+        ImGui::DragFloat("Vertical", &beta);
+        mupCamera->setBeta(beta);
+
+        // Movement
+        glm::vec3 center = mupCamera->getCenter();
+        ImGui::DragFloat3("Position", glm::value_ptr(center));
+        mupCamera->setCenter(center);
+
+        // Reset
+        if(ImGui::Button("Reset Camera"))
+        {
+            mupCamera->setAlpha(mCameraDefaultAlpha);
+            mupCamera->setBeta(mCameraDefaultBeta);
+            mupCamera->setCenter(glm::vec3(0));
+        }
+
+        // Clipping
+        ImGui::Text("Clipping Plane");
         if(ImGui::Button("+0.1"))
         {
             mClippingPlane += 0.1f;
@@ -703,29 +766,9 @@ void SurfaceDynamicsVisualization::updateGUI()
             mClippingPlane -= 0.1f;
             mClippingPlane = glm::clamp(mClippingPlane, mClippingPlaneMin, mClippingPlaneMax);
         }
-        if(ImGui::Button("X-Axis"))
-        {
-            mupCamera->setAlpha(0);
-            mupCamera->setBeta(90);
-        }
         ImGui::SameLine();
-        if(ImGui::Button("Y-Axis"))
-        {
-            // Internal, this is not possible. There is some epsilon on beta inside the camera object
-            mupCamera->setAlpha(0);
-            mupCamera->setBeta(0);
-        }
-        ImGui::SameLine();
-        if(ImGui::Button("Z-Axis"))
-        {
-            mupCamera->setAlpha(90.f);
-            mupCamera->setBeta(90.f);
-        }
-        if(ImGui::Button("Reset Camera"))
-        {
-            mupCamera->setAlpha(mCameraDefaultAlpha);
-            mupCamera->setBeta(mCameraDefaultBeta);
-        }
+        ImGui::SliderFloat("", &mClippingPlane, mClippingPlaneMin, mClippingPlaneMax, "%.1f");
+
         ImGui::End();
         ImGui::PopStyleColor(); // window background
     }
@@ -751,7 +794,11 @@ void SurfaceDynamicsVisualization::updateGUI()
                 mPlayAnimation = true;
             }
         }
-        ImGui::SliderInt("Rate", &mPlayRate, 0, 100);
+        ImGui::SameLine();
+
+        ImGui::Checkbox("Repeat", &mRepeatAnimation);
+
+        ImGui::SliderInt("Rate", &mPlayAnimationRate, 0, 100);
         int frame = mFrame;
         ImGui::SliderInt("Frame", &frame, mComputedStartFrame, mComputedEndFrame);
         if(frame != mFrame)
@@ -804,8 +851,27 @@ void SurfaceDynamicsVisualization::updateGUI()
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.5f, 0.0f, 0.75f)); // window background
         ImGui::Begin("Debugging", NULL, 0);
+
+        // General infos
         ImGui::Text(std::string("Selected Atom: " + std::to_string(mSelectedAtom)).c_str());
         ImGui::Text(std::string("Atom Count: " + std::to_string(mGPUProteins.at(mFrame)->getAtomCount())).c_str());
+
+        // Show / hide axes gizmo
+        if(mShowAxesGizmo)
+        {
+            if(ImGui::Button("Hide Axes Gizmo", ImVec2(120, 22)))
+            {
+                mShowAxesGizmo = false;
+            }
+        }
+        else
+        {
+            if(ImGui::Button("Show Axes Gizmo", ImVec2(120, 22)))
+            {
+                mShowAxesGizmo = true;
+            }
+        }
+
         ImGui::End();
         ImGui::PopStyleColor(); // window background
     }
@@ -880,9 +946,9 @@ void SurfaceDynamicsVisualization::updateGUI()
     ImGui::Render();
 }
 
-void SurfaceDynamicsVisualization::setFrame(int frame)
+bool SurfaceDynamicsVisualization::setFrame(int frame)
 {
-    // Check whether frame is in valid interval
+    // Bring frame into valid interval
     frame = glm::clamp(frame, mComputedStartFrame, mComputedEndFrame);
 
     // Check whether there are enough layers to display
@@ -893,7 +959,15 @@ void SurfaceDynamicsVisualization::setFrame(int frame)
     }
 
     // Write it to variable
-    mFrame = frame;
+    if(mFrame == frame)
+    {
+        return false;
+    }
+    else
+    {
+        mFrame = frame;
+        return true;
+    }
 }
 
 void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, bool useGPU)
@@ -907,11 +981,11 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
     {
         if(useGPU)
         {
-            mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(mGPUProteins.at(i).get(), mProbeRadius, true)));
+            mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(mGPUProteins.at(i).get(), mProbeRadius, mExtractLayers)));
         }
         else
         {
-            mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(mGPUProteins.at(i).get(), mProbeRadius, true, true, mCPUThreads)));
+            mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(mGPUProteins.at(i).get(), mProbeRadius, mExtractLayers, true, mCPUThreads)));
         }
         computationTime += mGPUSurfaces.back()->getComputationTime();
     }
@@ -922,7 +996,7 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
 
     // Update compute information
     updateComputationInformation(
-        (useGPU ? "GPU" : "CPU with " + std::to_string(mCPUThreads) + " threads"), true, computationTime);
+        (useGPU ? "GPU" : "CPU with " + std::to_string(mCPUThreads) + " threads"), computationTime);
 
     // Set to first animation frame
     setFrame(mComputedStartFrame);

@@ -1,7 +1,6 @@
 #include "SurfaceValidation.h"
 #include "SurfaceExtraction/GPUProtein.h"
 #include "SurfaceExtraction/GPUSurface.h"
-#include <stdlib.h>
 
 SurfaceValidation::SurfaceValidation()
 {
@@ -78,9 +77,6 @@ void SurfaceValidation::validate(
     // Go over atoms (using indices from input indices buffer)
     for(unsigned int i : inputIndices) // using results from algorithm here. Not so good for independend test but necessary for layers
     {
-        // Just to see, that something is going on
-        std::cout << "Validating Atom: " << i << std::endl;
-
         // Check, whether atom is internal or surface (would be faster to iterate over those structures, but this way the test is more testier)
         bool found = false;
         bool internalAtom = false;

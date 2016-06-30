@@ -46,6 +46,7 @@ public:
     GLfloat getAlpha() const;
     GLfloat getBeta() const;
     GLfloat getRadius() const;
+    glm::vec3 getDirection() const;
 
 private:
 

@@ -142,6 +142,11 @@ GLfloat OrbitCamera::getRadius() const
     return mRadius;
 }
 
+glm::vec3 OrbitCamera::getDirection() const
+{
+    return glm::normalize(mCenter - mPosition);
+}
+
 void OrbitCamera::clampValues()
 {
     // Horizontal rotation
