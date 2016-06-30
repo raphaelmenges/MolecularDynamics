@@ -321,12 +321,6 @@ void SurfaceDynamicsVisualization::renderLoop()
         // Update camera
         mupCamera->update(resolution.x, resolution.y, mUsePerspectiveCamera);
 
-        // Light direction
-        if(mRotateLight)
-        {
-            mLightDirection = - glm::normalize(mupCamera->getPosition() - mupCamera->getCenter());
-        }
-
         // Drawing of surface validation before everything else, so sample points at same z coordinate as impostor are in front
         if(mShowValidationSamples)
         {
@@ -494,11 +488,11 @@ void SurfaceDynamicsVisualization::mouseButtonCallback(int button, int action, i
     }
     else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
-        mRotateLight = true;
+        // TODO: selection
     }
     else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE)
     {
-        mRotateLight = false;
+        // TODO: selection
     }
 }
 
@@ -711,6 +705,9 @@ void SurfaceDynamicsVisualization::updateGUI()
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.5f, 0.75f)); // window background
         ImGui::Begin("Camera", NULL, 0);
 
+        // Camera
+        ImGui::Text("Orthographic Camera");
+
         // Set to fixed positions
         if(ImGui::Button("Align to X"))
         {
@@ -752,6 +749,7 @@ void SurfaceDynamicsVisualization::updateGUI()
             mupCamera->setBeta(mCameraDefaultBeta);
             mupCamera->setCenter(glm::vec3(0));
         }
+        ImGui::Separator();
 
         // Clipping
         ImGui::Text("Clipping Plane");
@@ -780,6 +778,7 @@ void SurfaceDynamicsVisualization::updateGUI()
         ImGui::Begin("Visualization", NULL, 0);
 
         // Animation
+        ImGui::Text("Animation");
         if(mPlayAnimation)
         {
             if(ImGui::Button("Pause", ImVec2(90, 22)))
@@ -805,11 +804,15 @@ void SurfaceDynamicsVisualization::updateGUI()
         {
             setFrame(frame);
         }
+        ImGui::Separator();
 
         // Displayed layer
+        ImGui::Text("Layer");
         ImGui::SliderInt("Layer", &mLayer, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getLayerCount() - 1);
+        ImGui::Separator();
 
         // Show / hide internal atoms
+        ImGui::Text("Rendering");
         if(mShowInternal)
         {
             if(ImGui::Button("Hide Internal", ImVec2(90, 22)))
@@ -841,6 +844,14 @@ void SurfaceDynamicsVisualization::updateGUI()
                 mShowSurface = true;
             }
         }
+        ImGui::Separator();
+
+        // Light direction
+        ImGui::Text("Lighting");
+        if(ImGui::Button("Spot Light"))
+        {
+            mLightDirection = -glm::normalize(mupCamera->getPosition() - mupCamera->getCenter());
+        }
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background
@@ -855,6 +866,13 @@ void SurfaceDynamicsVisualization::updateGUI()
         // General infos
         ImGui::Text(std::string("Selected Atom: " + std::to_string(mSelectedAtom)).c_str());
         ImGui::Text(std::string("Atom Count: " + std::to_string(mGPUProteins.at(mFrame)->getAtomCount())).c_str());
+
+        // Show available GPU memory
+        int availableMemory;
+        glGetIntegerv(0x9049, &availableMemory); // Nvidia only
+        availableMemory = availableMemory / 1000;
+        ImGui::Text(std::string("Available VRAM: " + std::to_string(availableMemory) + "MB").c_str());
+        // TODO: one may want to clean up glGetError if query failed and show backup message (f.e. on Intel or AMD)
 
         // Show / hide axes gizmo
         if(mShowAxesGizmo)
@@ -871,13 +889,6 @@ void SurfaceDynamicsVisualization::updateGUI()
                 mShowAxesGizmo = true;
             }
         }
-
-        // Show available GPU memory
-        int availableMemory;
-        glGetIntegerv(0x9049, &availableMemory); // Nvidia only
-        availableMemory = availableMemory / 1000;
-        ImGui::Text(std::string("Available VRAM: " + std::to_string(availableMemory) + "MB").c_str());
-        // TODO: one may want to clean up glGetError if query failed and show backup message (f.e. on Intel or AMD)
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background

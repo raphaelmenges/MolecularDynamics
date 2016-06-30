@@ -75,7 +75,6 @@ private:
     // Controllable parameters
     bool mRotateCamera = false;
     bool mMoveCamera = false;
-    bool mRotateLight = false;
     int mSelectedAtom = 0;
     bool mRenderImpostor = true;
     bool mRenderWithProbeRadius = false;
