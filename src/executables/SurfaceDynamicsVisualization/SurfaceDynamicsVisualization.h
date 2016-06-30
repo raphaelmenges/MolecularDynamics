@@ -56,6 +56,9 @@ private:
     // Compute layers
     void computeLayers(int startFrame, int endFrame, bool useGPU);
 
+    // Get atom beneath cursor
+    int getAtomBeneathCursor() const;
+
     // Setup
     const bool mInitiallyUseGLSLImplementation = true;
     const float mCameraSmoothDuration = 1.5f;

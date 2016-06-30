@@ -26,11 +26,23 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     // Construct GPUSurfaceExtraction object after OpenGL has been initialized
     mupGPUSurfaceExtraction = std::unique_ptr<GPUSurfaceExtraction>(new GPUSurfaceExtraction);
 
-    // Init ImGui
+    // Init ImGui and load font
     ImGui_ImplGlfwGL3_Init(mpWindow, true);
     ImGuiIO& io = ImGui::GetIO();
-    std::string fontpath = std::string(IMGUI_FONTS_PATH) + "/DroidSans.ttf";
-    io.Fonts->AddFontFromFileTTF(fontpath.c_str(), 16);
+    std::string fontpath = std::string(RESOURCES_PATH) + "/fonts/dejavu-fonts-ttf-2.35/ttf/DejaVuSans.ttf";
+    io.Fonts->AddFontFromFileTTF(fontpath.c_str(), 14);
+
+    // Add icons to font atlas
+    ImFontConfig config;
+    config.MergeMode = true;
+    static const ImWchar ranges[] =
+    {
+        0x25B8, 0x25B8, // play
+        0x5f0, 0x5f0, // pause
+        0x2794, 0x2794, // right arrow
+        0
+    }; // has to be static to be available during run
+    io.Fonts->AddFontFromFileTTF(fontpath.c_str(), 16, &config, ranges);
 
     // Clear color
     glClearColor(0.f, 0.f, 0.f, 1.f);
@@ -488,11 +500,7 @@ void SurfaceDynamicsVisualization::mouseButtonCallback(int button, int action, i
     }
     else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
-        // TODO: selection
-    }
-    else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE)
-    {
-        // TODO: selection
+        mSelectedAtom = getAtomBeneathCursor();
     }
 }
 
@@ -685,16 +693,24 @@ void SurfaceDynamicsVisualization::updateGUI()
     if(mShowSurfaceExtractionWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.0f, 0.0f, 0.75f)); // window background
-        ImGui::Begin("Surface Computation", NULL, 0);
+        ImGui::Begin("Computation", NULL, 0);
+
+        // Computatiom
+        ImGui::Text("Computation");
         ImGui::SliderFloat("Probe Radius", &mProbeRadius, 0.f, 2.f, "%.1f");
         ImGui::Checkbox("Extract Layers", &mExtractLayers);
         ImGui::SliderInt("Start Frame", &mComputationStartFrame, 0, mComputationEndFrame);
         ImGui::SliderInt("End Frame", &mComputationEndFrame, mComputationStartFrame, mGPUProteins.size() - 1);
         ImGui::SliderInt("CPU Cores", &mCPUThreads, 1, 24);
-        if(ImGui::Button("Run GPGPU")) { computeLayers(mComputationStartFrame, mComputationEndFrame, true); }
+        if(ImGui::Button("\u2794 GPGPU")) { computeLayers(mComputationStartFrame, mComputationEndFrame, true); }
         ImGui::SameLine();
-        if(ImGui::Button("Run CPU")) { computeLayers(mComputationStartFrame, mComputationEndFrame, false); }
+        if(ImGui::Button("\u2794 CPU")) { computeLayers(mComputationStartFrame, mComputationEndFrame, false); }
+        ImGui::Separator();
+
+        // Report
+        ImGui::Text("Report");
         ImGui::Text(mComputeInformation.c_str());
+
         ImGui::End();
         ImGui::PopStyleColor(); // window background
     }
@@ -781,14 +797,14 @@ void SurfaceDynamicsVisualization::updateGUI()
         ImGui::Text("Animation");
         if(mPlayAnimation)
         {
-            if(ImGui::Button("Pause", ImVec2(90, 22)))
+            if(ImGui::Button("\u05f0 Pause", ImVec2(90, 22)))
             {
                 mPlayAnimation = false;
             }
         }
         else
         {
-            if(ImGui::Button("Play", ImVec2(90, 22)))
+            if(ImGui::Button("\u25B8 Play", ImVec2(90, 22)))
             {
                 mPlayAnimation = true;
             }
@@ -806,7 +822,7 @@ void SurfaceDynamicsVisualization::updateGUI()
         }
         ImGui::Separator();
 
-        // Displayed layer
+        // Layer
         ImGui::Text("Layer");
         ImGui::SliderInt("Layer", &mLayer, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getLayerCount() - 1);
         ImGui::Separator();
@@ -815,14 +831,14 @@ void SurfaceDynamicsVisualization::updateGUI()
         ImGui::Text("Rendering");
         if(mShowInternal)
         {
-            if(ImGui::Button("Hide Internal", ImVec2(90, 22)))
+            if(ImGui::Button("Hide Internal", ImVec2(100, 22)))
             {
                 mShowInternal = false;
             }
         }
         else
         {
-            if(ImGui::Button("Show Internal", ImVec2(90, 22)))
+            if(ImGui::Button("Show Internal", ImVec2(100, 22)))
             {
                 mShowInternal = true;
             }
@@ -832,14 +848,14 @@ void SurfaceDynamicsVisualization::updateGUI()
         // Show / hide surface atoms
         if(mShowSurface)
         {
-            if(ImGui::Button("Hide Surface", ImVec2(90, 22)))
+            if(ImGui::Button("Hide Surface", ImVec2(100, 22)))
             {
                 mShowSurface = false;
             }
         }
         else
         {
-            if(ImGui::Button("Show Surface", ImVec2(90, 22)))
+            if(ImGui::Button("Show Surface", ImVec2(100, 22)))
             {
                 mShowSurface = true;
             }
@@ -872,19 +888,19 @@ void SurfaceDynamicsVisualization::updateGUI()
         glGetIntegerv(0x9049, &availableMemory); // Nvidia only
         availableMemory = availableMemory / 1000;
         ImGui::Text(std::string("Available VRAM: " + std::to_string(availableMemory) + "MB").c_str());
-        // TODO: one may want to clean up glGetError if query failed and show backup message (f.e. on Intel or AMD)
+        // TODO: one may want to clean up glGetError if query failed and show failure message on GUI (for example on Intel or AMD)
 
         // Show / hide axes gizmo
         if(mShowAxesGizmo)
         {
-            if(ImGui::Button("Hide Axes Gizmo", ImVec2(120, 22)))
+            if(ImGui::Button("Hide Axes Gizmo", ImVec2(140, 22)))
             {
                 mShowAxesGizmo = false;
             }
         }
         else
         {
-            if(ImGui::Button("Show Axes Gizmo", ImVec2(120, 22)))
+            if(ImGui::Button("Show Axes Gizmo", ImVec2(140, 22)))
             {
                 mShowAxesGizmo = true;
             }
@@ -901,6 +917,7 @@ void SurfaceDynamicsVisualization::updateGUI()
         ImGui::Begin("Validation", NULL, 0);
 
         // Do validation
+        ImGui::Text("Validation");
         ImGui::SliderInt("Samples", &mSurfaceValidationAtomSampleCount, 1, 10000);
         ImGui::SliderInt("Seed", &mSurfaceValidationSeed, 0, 1337);
         if(ImGui::Button("Validate Surface"))
@@ -915,19 +932,18 @@ void SurfaceDynamicsVisualization::updateGUI()
                 mValidationInformation,
                 std::vector<GLuint>());
         }
-        ImGui::Text(mValidationInformation.c_str());
 
         // Show / hide internal samples
         if(mShowInternalSamples)
         {
-            if(ImGui::Button("Hide Internal", ImVec2(90, 22)))
+            if(ImGui::Button("Hide Internal", ImVec2(100, 22)))
             {
                 mShowInternalSamples = false;
             }
         }
         else
         {
-            if(ImGui::Button("Show Internal", ImVec2(90, 22)))
+            if(ImGui::Button("Show Internal", ImVec2(100, 22)))
             {
                 mShowInternalSamples = true;
             }
@@ -937,18 +953,23 @@ void SurfaceDynamicsVisualization::updateGUI()
         // Show / hide surface samples
         if(mShowSurfaceSamples)
         {
-            if(ImGui::Button("Hide Surface", ImVec2(90, 22)))
+            if(ImGui::Button("Hide Surface", ImVec2(100, 22)))
             {
                 mShowSurfaceSamples = false;
             }
         }
         else
         {
-            if(ImGui::Button("Show Surface", ImVec2(90, 22)))
+            if(ImGui::Button("Show Surface", ImVec2(100, 22)))
             {
                 mShowSurfaceSamples = true;
             }
         }
+        ImGui::Separator();
+
+        // Report
+        ImGui::Text("Report");
+        ImGui::Text(mValidationInformation.c_str());
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background
@@ -1018,6 +1039,11 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
 
     // Set to first animation frame
     setFrame(mComputedStartFrame);
+}
+
+int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
+{
+    return 0;
 }
 
 // ### Main function ###
