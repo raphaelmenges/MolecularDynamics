@@ -12,7 +12,7 @@ class OrbitCamera
 public:
 
     // Constructor (Degrees!)
-    // Orthographic projection takes max radius as position for cmaera
+    // Orthographic projection takes max radius as position for camera
     OrbitCamera(
         glm::vec3 center,
         GLfloat alpha,

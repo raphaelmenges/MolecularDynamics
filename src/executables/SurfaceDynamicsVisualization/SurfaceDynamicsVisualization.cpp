@@ -183,7 +183,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
             cameraRadius / 2.f,
             5.f * cameraRadius,
             45.f,
-            0.05f));
+            0.1f));
 
     // # Run implementation to extract surface atoms
     computeLayers(0, 0, mInitiallyUseGLSLImplementation);
@@ -319,8 +319,14 @@ void SurfaceDynamicsVisualization::renderLoop()
         // Move camera
         if(mMoveCamera)
         {
-            glm::vec3 a = glm::cross(glm::vec3(0,1,0), mupCamera->getDirection()); // use up vector for cross product
-            glm::vec3 b = glm::cross(mupCamera->getDirection(), a);
+            glm::vec3 a = glm::normalize(
+                glm::cross(
+                    glm::vec3(0,1,0),
+                    mupCamera->getDirection())); // use up vector for cross product
+            glm::vec3 b = glm::normalize(
+                glm::cross(
+                    mupCamera->getDirection(),
+                    a));
 
             mupCamera->setCenter(
                 mupCamera->getCenter()
@@ -1066,9 +1072,9 @@ int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
         // Get information about atom
         sphereCenter = atoms.at(rIndex).center;
         sphereRadius = atoms.at(rIndex).radius;
-        if(mRenderWithProbeRadius) { sphereRadius += mProbeRadius; }
+        if(mRenderWithProbeRadius) { sphereRadius = sphereRadius + mProbeRadius; }
 
-        // INTERSECT
+        // Line - Sphere intersection
 
         // Right part of equation beneath square root
         float underSQRT1 = glm::dot(lineDir, (linePoint - sphereCenter));
