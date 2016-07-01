@@ -462,25 +462,6 @@ void SurfaceDynamicsVisualization::keyCallback(int key, int scancode, int action
         switch (key)
         {
             case GLFW_KEY_ESCAPE: { glfwSetWindowShouldClose(mpWindow, GL_TRUE); break; }
-            case GLFW_KEY_P: { mRenderImpostor = !mRenderImpostor; break; }
-            case GLFW_KEY_R: { mRenderWithProbeRadius = !mRenderWithProbeRadius; break; }
-            case GLFW_KEY_RIGHT:
-            {
-                mSelectedAtom++;
-                if(mSelectedAtom >= mGPUProteins.at(mFrame)->getAtomCount()) { mSelectedAtom = 0; }
-                break;
-            }
-            case GLFW_KEY_LEFT:
-            {
-                mSelectedAtom--;
-                if(mSelectedAtom < 0) { mSelectedAtom = mGPUProteins.at(mFrame)->getAtomCount() - 1; }
-                break;
-            }
-            // case GLFW_KEY_C: { mUsePerspectiveCamera = !mUsePerspectiveCamera; break; }
-            case GLFW_KEY_I: { mShowInternal = !mShowInternal; break; }
-            case GLFW_KEY_S: { mShowSurface = !mShowSurface; break; }
-            case GLFW_KEY_T: { mShowValidationSamples = !mShowValidationSamples; break; }
-            case GLFW_KEY_A: { mShowAxesGizmo = !mShowAxesGizmo; break; }
         }
     }
 }
@@ -547,83 +528,6 @@ void SurfaceDynamicsVisualization::updateGUI()
             ImGui::EndMenu();
         }
 
-        // Rendering menu
-        if (ImGui::BeginMenu("Rendering"))
-        {
-            // Impostors
-            if(mRenderImpostor)
-            {
-                if(ImGui::MenuItem("Show Atom Points", "P", false, true)) { mRenderImpostor = false; }
-            }
-            else
-            {
-                if(ImGui::MenuItem("Show Atom Impostor", "P", false, true)) { mRenderImpostor = true; }
-            }
-
-            // Camera
-            /*
-            if(mUsePerspectiveCamera)
-            {
-                if(ImGui::MenuItem("Orthographic Projection", "C", false, true)) { mUsePerspectiveCamera = false; }
-            }
-            else
-            {
-                if(ImGui::MenuItem("Perspective Projection", "C", false, true)) { mUsePerspectiveCamera = true; }
-            }
-            */
-
-            // Internal atoms
-            if(mShowInternal)
-            {
-                if(ImGui::MenuItem("Hide Internal Atoms", "I", false, true)) { mShowInternal = false; }
-            }
-            else
-            {
-                if(ImGui::MenuItem("Show Internal Atoms", "I", false, true)) { mShowInternal = true; }
-            }
-
-            // Surface atoms
-            if(mShowSurface)
-            {
-                if(ImGui::MenuItem("Hide Surface Atoms", "S", false, true)) { mShowSurface = false; }
-            }
-            else
-            {
-                if(ImGui::MenuItem("Show Surface Atoms", "S", false, true)) { mShowSurface = true; }
-            }
-
-            // Add probe radius
-            if(mRenderWithProbeRadius)
-            {
-                if(ImGui::MenuItem("No Probe Radius", "R", false, true)) { mRenderWithProbeRadius = false; }
-            }
-            else
-            {
-                if(ImGui::MenuItem("Add Probe Radius", "R", false, true)) { mRenderWithProbeRadius = true; }
-            }
-
-            // Sample point of surface test
-            if(mShowValidationSamples)
-            {
-                if(ImGui::MenuItem("Hide Validation Samples", "T", false, true)) { mShowValidationSamples = false; }
-            }
-            else
-            {
-                if(ImGui::MenuItem("Show Validation Samples", "T", false, true)) { mShowValidationSamples = true; }
-            }
-
-            // Axes gizmo
-            if(mShowAxesGizmo)
-            {
-                if(ImGui::MenuItem("Hide Axes Gizmo", "A", false, true)) { mShowAxesGizmo = false; }
-            }
-            else
-            {
-                if(ImGui::MenuItem("Show Axes Gizmo", "A", false, true)) { mShowAxesGizmo = true; }
-            }
-            ImGui::EndMenu();
-        }
-
         // Window menu
         if (ImGui::BeginMenu("Window"))
         {
@@ -677,6 +581,24 @@ void SurfaceDynamicsVisualization::updateGUI()
                 if(ImGui::MenuItem("Show Validation", "", false, true)) { mShowValidationWindow = true; }
             }
             ImGui::EndMenu();
+        }
+
+        // Help menu
+        if (ImGui::BeginMenu("Help"))
+        {
+            ImGui::BeginPopup("Help");
+            ImGui::Text("LMB: Rotate camera");
+            ImGui::Text("MMB: Move camera");
+            ImGui::Text("RMB: Select atom");
+            ImGui::EndPopup();
+        }
+
+        // About menu
+        if (ImGui::BeginMenu("About"))
+        {
+            ImGui::BeginPopup("About");
+            ImGui::Text("Author: Raphael Menges");
+            ImGui::EndPopup();
         }
 
         // Frametime
@@ -843,8 +765,41 @@ void SurfaceDynamicsVisualization::updateGUI()
         ImGui::SliderInt("Layer", &mLayer, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getLayerCount() - 1);
         ImGui::Separator();
 
-        // Show / hide internal atoms
+        // Render points / spheres
         ImGui::Text("Rendering");
+        if(mRenderImpostor)
+        {
+            if(ImGui::Button("Points", ImVec2(75, 22)))
+            {
+                mRenderImpostor = false;
+            }
+        }
+        else
+        {
+            if(ImGui::Button("Spheres", ImVec2(75, 22)))
+            {
+                mRenderImpostor = true;
+            }
+        }
+        ImGui::SameLine();
+
+        // Render / not render with probe radius
+        if(mRenderWithProbeRadius)
+        {
+            if(ImGui::Button("No Probe Radius", ImVec2(125, 22)))
+            {
+                mRenderWithProbeRadius = false;
+            }
+        }
+        else
+        {
+            if(ImGui::Button("Add Probe Radius", ImVec2(125, 22)))
+            {
+                mRenderWithProbeRadius = true;
+            }
+        }
+
+        // Show / hide internal atoms
         if(mShowInternal)
         {
             if(ImGui::Button("Hide Internal", ImVec2(100, 22)))
