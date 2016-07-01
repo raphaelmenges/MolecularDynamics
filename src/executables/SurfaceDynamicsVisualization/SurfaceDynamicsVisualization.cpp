@@ -699,6 +699,9 @@ void SurfaceDynamicsVisualization::updateGUI()
     ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // scrollbar background
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.5f, 0.5f, 0.5f)); // button
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.5f, 0.5f, 0.5f, 0.75f)); // button hovered
+    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.5f, 0.5f, 0.5f, 0.5f)); // header
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.5f, 0.5f, 0.5f, 0.75f)); // header hovered
+    ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.1f, 0.1f, 0.1f, 0.75f)); // header active
 
     // Extraction window
     if(mShowSurfaceExtractionWindow)
@@ -719,8 +722,10 @@ void SurfaceDynamicsVisualization::updateGUI()
         ImGui::Separator();
 
         // Report
-        ImGui::Text("Report");
-        ImGui::Text(mComputeInformation.c_str());
+        if (ImGui::CollapsingHeader("Report"))
+        {
+            ImGui::Text(mComputeInformation.c_str());
+        }
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background
@@ -979,13 +984,18 @@ void SurfaceDynamicsVisualization::updateGUI()
         ImGui::Separator();
 
         // Report
-        ImGui::Text("Report");
-        ImGui::Text(mValidationInformation.c_str());
+        if (ImGui::CollapsingHeader("Report"))
+        {
+            ImGui::Text(mValidationInformation.c_str());
+        }
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background
     }
 
+    ImGui::PopStyleColor(); // header active
+    ImGui::PopStyleColor(); // header hovered
+    ImGui::PopStyleColor(); // header
     ImGui::PopStyleColor(); // button hovered
     ImGui::PopStyleColor(); // button
     ImGui::PopStyleColor(); // scrollbar background
