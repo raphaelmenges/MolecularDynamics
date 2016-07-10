@@ -20,7 +20,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     mLightDirection = glm::normalize(glm::vec3(-0.5, -0.75, -0.3));
 
     // Create window (which initializes OpenGL)
-    mpWindow = generateWindow("Surface Dynamics Visualization");
+    mpWindow = generateWindow(mWindowTitle);
 
     // Construct GPUSurfaceExtraction object after OpenGL has been initialized
     mupGPUSurfaceExtraction = std::unique_ptr<GPUSurfaceExtraction>(new GPUSurfaceExtraction);
@@ -462,6 +462,20 @@ void SurfaceDynamicsVisualization::renderLoop()
     // Delete OpenGL structures
     glDeleteVertexArrays(1, &axisGizmoVAO);
     glDeleteBuffers(1, &axisGizmoVBO);
+}
+
+void SurfaceDynamicsVisualization::setWindowTitle(float progress)
+{
+    if(progress != 1.f)
+    {
+        int intProgress = (int)(progress * 100);
+        std::string stringProgress = intProgress < 10 ? "0" + std::to_string(intProgress) : std::to_string(intProgress);
+        glfwSetWindowTitle(mpWindow, std::string(mWindowTitle + " [" + stringProgress + "%]").c_str());
+    }
+    else
+    {
+        glfwSetWindowTitle(mpWindow, mWindowTitle.c_str());
+    }
 }
 
 void SurfaceDynamicsVisualization::keyCallback(int key, int scancode, int action, int mods)
@@ -1018,6 +1032,7 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
     float computationTime = 0;
     for(int i = startFrame; i <= endFrame; i++)
     {
+        // Process one frame
         if(useGPU)
         {
             mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(mupGPUProtein.get(), i, mProbeRadius, mExtractLayers)));
@@ -1027,6 +1042,10 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
             mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(mupGPUProtein.get(), i, mProbeRadius, mExtractLayers, true, mCPUThreads)));
         }
         computationTime += mGPUSurfaces.back()->getComputationTime();
+
+        // Show progress
+        float progress = (float)(i- startFrame + 1) / (float)(endFrame - startFrame + 1);
+        setWindowTitle(progress);
     }
 
     // Remember which frames were computed

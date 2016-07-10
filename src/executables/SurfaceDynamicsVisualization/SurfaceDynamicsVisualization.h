@@ -33,6 +33,9 @@ public:
     // Render
     void renderLoop();
 
+    // Set window title (hides processing part when progress is one)
+    void setWindowTitle(float progress = 1.0f);
+
 private:
 
     // Keyboard callback for GLFW
@@ -74,6 +77,7 @@ private:
     const glm::vec3 mSurfaceSamplePointColor = glm::vec3(0.f, 1.0f, 0.2f);
     const float mClippingPlaneMin = 0.f;
     const float mClippingPlaneMax = 200.f;
+    const std::string mWindowTitle = "Surface Dynamics Visualization";
 
     // Controllable parameters
     bool mRotateCamera = false;
