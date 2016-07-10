@@ -466,9 +466,9 @@ void SurfaceDynamicsVisualization::renderLoop()
 
 void SurfaceDynamicsVisualization::keyCallback(int key, int scancode, int action, int mods)
 {
-    if (action == GLFW_PRESS)
+    if(action == GLFW_PRESS)
     {
-        switch (key)
+        switch(key)
         {
             case GLFW_KEY_ESCAPE: { glfwSetWindowShouldClose(mpWindow, GL_TRUE); break; }
         }
@@ -477,27 +477,27 @@ void SurfaceDynamicsVisualization::keyCallback(int key, int scancode, int action
 
 void SurfaceDynamicsVisualization::mouseButtonCallback(int button, int action, int mods)
 {
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
     {
         glfwSetInputMode(mpWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
         mRotateCamera = true;
     }
-    else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+    else if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
     {
         glfwSetInputMode(mpWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         mRotateCamera = false;
     }
-    if (button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_PRESS)
+    if(button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_PRESS)
     {
         glfwSetInputMode(mpWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
         mMoveCamera = true;
     }
-    else if (button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_RELEASE)
+    else if(button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_RELEASE)
     {
         glfwSetInputMode(mpWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         mMoveCamera = false;
     }
-    else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+    else if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
         int atomIndex = getAtomBeneathCursor();
         mSelectedAtom = atomIndex >= 0 ? atomIndex : mSelectedAtom;
@@ -890,6 +890,14 @@ void SurfaceDynamicsVisualization::updateGUI()
                 mShowAxesGizmo = true;
             }
         }
+        ImGui::Separator();
+
+        // Testing
+        ImGui::Text("Testing");
+        std::vector<float> curve;
+        curve.push_back(0.5f);
+        curve.push_back(0.6f);
+        ImGui::PlotLines("Curve", curve.data(), curve.size());
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background
