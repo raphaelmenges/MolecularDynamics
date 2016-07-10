@@ -4,9 +4,14 @@
 out vec3 vertColor;
 
 // Trajectory
+struct Position
+{
+    float x,y,z;
+};
+
 layout(std430, binding = 1) restrict readonly buffer TrajectoryBuffer
 {
-   vec3 trajectory[];
+   Position trajectory[];
 };
 
 // Indices of surface atoms
@@ -22,11 +27,12 @@ uniform int atomCount;
 void main()
 {
     // Extract center
-    int index = int(imageLoad(Indices, int(gl_VertexID)).x);
-    gl_Position = vec4(trajectory[(frame*atomCount) + index], 1);
+    int atomIndex = int(imageLoad(Indices, int(gl_VertexID)).x);
+    Position position = trajectory[(frame*atomCount) + atomIndex];
+    gl_Position = vec4(position.x, position.y, position.z, 1);
 
     // Set color
-    if(index == selectedIndex)
+    if(atomIndex == selectedIndex)
     {
         vertColor = vec3(0,1,0);
     }

@@ -31,13 +31,21 @@ GPUProtein::GPUProtein(Protein * const pProtein)
         }
     }
 
+    // For copying it to OpenGL, store it linear
+    std::vector<glm::vec3> linearTrajectory;
+    linearTrajectory.reserve(frameCount * atomCount);
+    for(int i = 0; i < frameCount; i++)
+    {
+        linearTrajectory.insert(linearTrajectory.end(), mspTrajectory->at(i).begin(), mspTrajectory->at(i).end());
+    }
+
     // Create structures on GPU
     glGenBuffers(1, &mRadiiSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, mRadiiSSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * atomCount, mspRadii->data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * mspRadii->size(), mspRadii->data(), GL_STATIC_DRAW);
     glGenBuffers(1, &mTrajectorySSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, mTrajectorySSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec3) * frameCount * atomCount, mspTrajectory->data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec3) * linearTrajectory.size(), linearTrajectory.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
