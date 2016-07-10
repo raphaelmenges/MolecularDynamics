@@ -74,14 +74,12 @@ void GPUProtein::bind(GLuint radiiSlot, GLuint trajectorySlot) const
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, trajectorySlot, mTrajectorySSBO);
 }
 
-std::shared_ptr<std::vector<float> > GPUProtein::getRadii() const
+std::shared_ptr<const std::vector<float> > GPUProtein::getRadii() const
 {
     return mspRadii;
 }
 
-std::shared_ptr<
-    std::vector<
-        std::vector<glm::vec3> > > GPUProtein::getTrajectory() const
+std::shared_ptr<const std::vector<std::vector<glm::vec3> > > GPUProtein::getTrajectory() const
 {
     return mspTrajectory;
 }

@@ -33,12 +33,10 @@ public:
     int getFrameCount() const { return mspTrajectory->size(); }
 
     // Get shared pointer to atom radii
-    std::shared_ptr<std::vector<float> > getRadii() const;
+    std::shared_ptr<const std::vector<float> > getRadii() const;
 
     // Get shared pointer to trajectory (position per atom per frame)
-    std::shared_ptr<
-        std::vector<
-            std::vector<glm::vec3> > > getTrajectory() const;
+    std::shared_ptr<const std::vector<std::vector<glm::vec3> > > getTrajectory() const;
 
 private:
 
