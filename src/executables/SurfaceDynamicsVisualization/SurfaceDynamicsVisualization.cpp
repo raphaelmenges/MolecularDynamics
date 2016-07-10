@@ -368,6 +368,8 @@ void SurfaceDynamicsVisualization::renderLoop()
             impostorProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
             impostorProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
             impostorProgram.update("frameCount", mupGPUProtein->getFrameCount());
+            impostorProgram.update("depthDarkeningStart", mDepthDarkeningStart);
+            impostorProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
 
             // Draw internal (first, because at clipping plane are all set to same
             // viewport depth which means internal are always in front of surface)
@@ -862,12 +864,15 @@ void SurfaceDynamicsVisualization::updateGUI()
         ImGui::SliderFloat("Smooth Max Deviation", &mSmoothAnimationMaxDeviation, 0, 100, "%.1f");
         ImGui::Separator();
 
-        // Light direction
-        ImGui::Text("Lighting");
+        // Effects
+        ImGui::Text("Effects");
         if(ImGui::Button("Spot Light"))
         {
             mLightDirection = -glm::normalize(mupCamera->getPosition() - mupCamera->getCenter());
         }
+
+        ImGui::SliderFloat("Depth Darkening Start", &mDepthDarkeningStart, 0, mDepthDarkeningEnd, "%.1f");
+        ImGui::SliderFloat("Depth Darkening End", &mDepthDarkeningEnd, mDepthDarkeningStart, mDepthDarkeningMaxEnd, "%.1f");
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background

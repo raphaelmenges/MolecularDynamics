@@ -78,6 +78,7 @@ private:
     const float mClippingPlaneMin = 0.f;
     const float mClippingPlaneMax = 200.f;
     const std::string mWindowTitle = "Surface Dynamics Visualization";
+    const float mDepthDarkeningMaxEnd = 1000.f;
 
     // Controllable parameters
     bool mRotateCamera = false;
@@ -112,6 +113,8 @@ private:
     bool mRepeatAnimation = false;
     int mSmoothAnimationRadius = 0;
     float mSmoothAnimationMaxDeviation = 5;
+    float mDepthDarkeningStart = 50.f;
+    float mDepthDarkeningEnd = 100.f;
 
     // Debugging output
     std::string mComputeInformation = "No computation info available";

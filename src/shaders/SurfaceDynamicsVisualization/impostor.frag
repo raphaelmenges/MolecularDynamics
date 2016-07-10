@@ -12,6 +12,8 @@ uniform mat4 projection;
 uniform vec3 cameraWorldPos;
 uniform vec3 lightDir;
 uniform float clippingPlane;
+uniform float depthDarkeningStart;
+uniform float depthDarkeningEnd;
 
 void main()
 {
@@ -72,6 +74,10 @@ void main()
         gl_FragDepth = (projDepth + 1.0) * 0.5; // gl_FragCoord.z is from 0..1. So go from clip space to viewport space
     }
 
+    // Depth darkening
+    float depthDarkening = (-viewPos.z - depthDarkeningStart) / (depthDarkeningEnd - depthDarkeningStart);
+    depthDarkening = 1.0 - clamp(depthDarkening, 0, 1);
+
     // Diffuse lighting (hacked together, not correct)
     vec4 nrmLightDirection = normalize(vec4(lightDir, 0));
     float lighting = max(0,dot(normal, (view * -nrmLightDirection).xyz)); // Do it in view space (therefore is normal here ok)
@@ -91,7 +97,7 @@ void main()
     }
 
     // Some "ambient" lighting combined with specular
-    vec3 finalColor = mix(color * mix(vec3(0.4, 0.45, 0.5), vec3(1.0, 1.0, 1.0), lighting), vec3(1,1,1), specular);
+    vec3 finalColor = depthDarkening * mix(color * mix(vec3(0.4, 0.45, 0.5), vec3(1.0, 1.0, 1.0), lighting), vec3(1,1,1), specular);
 
     // Output color
     outColor = vec4(finalColor, 1);
