@@ -16,8 +16,9 @@ class GPUProtein
 {
 public:
 
-    // Constructor
+    // Constructors
     GPUProtein(Protein * const pProtein);
+    GPUProtein(const std::vector<glm::vec4>& rAtoms); // vec3 center + float radius
 
     // Destructor
     virtual ~GPUProtein();
@@ -40,6 +41,9 @@ public:
             std::vector<glm::vec3> > > getTrajectory() const;
 
 private:
+
+    // Initialize SSBOs
+    void initSSBOs(int atomCount, int frameCount);
 
     // Vector of radii
     std::shared_ptr<std::vector<float> > mspRadii;

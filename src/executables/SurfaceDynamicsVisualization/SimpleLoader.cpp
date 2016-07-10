@@ -5,14 +5,13 @@
 #include <sstream>
 #include <map>
 
-/*
 // Lookup table for radii
 std::map<std::string, float> radiiLookup =
 {
 {"H", 1.2f}, {"N", 1.55f}, {"C", 1.7f}, {"O", 1.52f}, {"S", 1.8f}, {"P", 1.8f}
 };
 
-std::vector<GPUAtom> parseSimplePDB(std::string filepath, glm::vec3& rMinExtent, glm::vec3& rMaxExtent)
+std::unique_ptr<GPUProtein> parseSimplePDB(std::string filepath, glm::vec3& rMinExtent, glm::vec3& rMaxExtent)
 {
     // Initialize min / max extent values
     rMinExtent.x = std::numeric_limits<float>::max();
@@ -25,8 +24,8 @@ std::vector<GPUAtom> parseSimplePDB(std::string filepath, glm::vec3& rMinExtent,
     // Read file
     std::ifstream in(filepath);
 
-    // Create vector
-    std::vector<GPUAtom> atoms;
+    // Create vector to save values
+    std::vector<glm::vec4> atoms;
 
     // Check whether file was found
     if (!in)
@@ -102,12 +101,11 @@ std::vector<GPUAtom> parseSimplePDB(std::string filepath, glm::vec3& rMinExtent,
             // Radius
             float radius = radiiLookup.at(line);
 
-            // Add found atom to vector
-            atoms.push_back(GPUAtom(center, radius));
+            // Add found atom to vectors
+            atoms.push_back(glm::vec4(center, radius));
         }
     }
 
     // Return protein
-    return atoms;
+    return std::move(std::unique_ptr<GPUProtein>(new GPUProtein(atoms)));
 }
-*/

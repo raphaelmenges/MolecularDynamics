@@ -31,22 +31,35 @@ GPUProtein::GPUProtein(Protein * const pProtein)
         }
     }
 
-    // For copying it to OpenGL, store it linear
-    std::vector<glm::vec3> linearTrajectory;
-    linearTrajectory.reserve(frameCount * atomCount);
-    for(int i = 0; i < frameCount; i++)
+    // Init SSBOs
+    initSSBOs(atomCount, frameCount);
+}
+
+GPUProtein::GPUProtein(const std::vector<glm::vec4>& rAtoms)
+{
+    // Create structures for CPU
+    int atomCount  = rAtoms.size();
+    mspRadii = std::shared_ptr<std::vector<float> >(new std::vector<float>);
+    mspRadii->resize(atomCount);
+    mspTrajectory = std::shared_ptr<
+            std::vector<
+                std::vector<glm::vec3> > >(
+                    new std::vector<std::vector<glm::vec3> >);
+    mspTrajectory->resize(1);
+    mspTrajectory->at(0).resize(atomCount);
+
+    // Fill structures for CPU
+    for(int i = 0; i < atomCount; i++)
     {
-        linearTrajectory.insert(linearTrajectory.end(), mspTrajectory->at(i).begin(), mspTrajectory->at(i).end());
+        // Collect radius
+        mspRadii->at(i) = rAtoms.at(i).w;
+
+        // Collect trajectory
+        mspTrajectory->at(0).at(i) = glm::vec3(rAtoms.at(i).x, rAtoms.at(i).y, rAtoms.at(i).z);
     }
 
-    // Create structures on GPU
-    glGenBuffers(1, &mRadiiSSBO);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mRadiiSSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * mspRadii->size(), mspRadii->data(), GL_STATIC_DRAW);
-    glGenBuffers(1, &mTrajectorySSBO);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mTrajectorySSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec3) * linearTrajectory.size(), linearTrajectory.data(), GL_STATIC_DRAW);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    // Init SSBOs
+    initSSBOs(atomCount, 0);
 }
 
 GPUProtein::~GPUProtein()
@@ -72,3 +85,24 @@ std::shared_ptr<
 {
     return mspTrajectory;
 }
+
+void GPUProtein::initSSBOs(int atomCount, int frameCount)
+{
+    // For copying it to OpenGL, store it linear
+    std::vector<glm::vec3> linearTrajectory;
+    linearTrajectory.reserve(frameCount * atomCount);
+    for(int i = 0; i < frameCount; i++)
+    {
+        linearTrajectory.insert(linearTrajectory.end(), mspTrajectory->at(i).begin(), mspTrajectory->at(i).end());
+    }
+
+    // Create structures on GPU
+    glGenBuffers(1, &mRadiiSSBO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mRadiiSSBO);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * mspRadii->size(), mspRadii->data(), GL_STATIC_DRAW);
+    glGenBuffers(1, &mTrajectorySSBO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mTrajectorySSBO);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec3) * linearTrajectory.size(), linearTrajectory.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+

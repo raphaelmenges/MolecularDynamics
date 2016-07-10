@@ -185,6 +185,8 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     // # Run implementation to extract surface atoms
     computeLayers(0, 0, mInitiallyUseGLSLImplementation);
 
+    // # Other
+
     // Prepare validation of the surface
     mupSurfaceValidation = std::unique_ptr<SurfaceValidation>(new SurfaceValidation());
 
