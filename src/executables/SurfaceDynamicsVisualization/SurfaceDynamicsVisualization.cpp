@@ -161,10 +161,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     paths.push_back("/home/raphael/Temp/XTC/MD_GIIIA_No_Water.pdb");
     paths.push_back("/home/raphael/Temp/XTC/MD_GIIIA_No_Water.xtc");
     std::unique_ptr<Protein> upProtein = std::move(mdwrap.load(paths));
-    for(int i = 0; i < upProtein->getAtomAt(0)->getCountOfFrames(); i++)
-    {
-        mGPUProteins.push_back(std::move(std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get(), i))));
-    }
+    mupGPUProtein = std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()));
 
     // Get min/max extent of protein
     upProtein->minMax(); // first, one has to calculate min and max value of protein
@@ -192,7 +189,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     mupSurfaceValidation = std::unique_ptr<SurfaceValidation>(new SurfaceValidation());
 
     // Set endframe in GUI to maximum number
-    mComputationEndFrame = mGPUProteins.size() - 1;
+    mComputationEndFrame = mupGPUProtein->getFrameCount() - 1;
 }
 
 SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
@@ -239,6 +236,9 @@ void SurfaceDynamicsVisualization::renderLoop()
     // # Prepare shader programs for rendering the protein
     ShaderProgram pointProgram("/SurfaceDynamicsVisualization/point.vert", "/SurfaceDynamicsVisualization/point.geom", "/SurfaceDynamicsVisualization/point.frag");
     ShaderProgram impostorProgram("/SurfaceDynamicsVisualization/impostor.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
+
+    // Bind SSBOs
+    mupGPUProtein->bind(0, 1);
 
     // Call render function of Rendering.h with lambda function
     render(mpWindow, [&] (float deltaTime)
@@ -289,9 +289,6 @@ void SurfaceDynamicsVisualization::renderLoop()
                 }
             }
         }
-
-        // Bind SSBO with atoms (TODO: only at frame change)
-        mGPUProteins.at(mFrame)->bind(0);
 
         // Calculate cursor movement
         double cursorX, cursorY;
@@ -364,12 +361,14 @@ void SurfaceDynamicsVisualization::renderLoop()
             impostorProgram.update("lightDir", mLightDirection);
             impostorProgram.update("selectedIndex", mSelectedAtom);
             impostorProgram.update("clippingPlane", mClippingPlane);
+            impostorProgram.update("frame", mFrame);
+            impostorProgram.update("atomCount", mupGPUProtein->getAtomCount());
 
             // Draw internal (first, because at clipping plane are all set to same
             // viewport depth which means internal are always in front of surface)
             if(mShowInternal)
             {
-                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndicesForDrawing(mLayer, 1);
+                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndicesForDrawing(mLayer, 2);
                 impostorProgram.update("color", mInternalAtomColor);
                 glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
             }
@@ -377,7 +376,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             // Draw surface
             if(mShowSurface)
             {
-                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndicesForDrawing(mLayer, 1);
+                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndicesForDrawing(mLayer, 2);
                 impostorProgram.update("color", mSurfaceAtomColor);
                 glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
             }
@@ -396,11 +395,13 @@ void SurfaceDynamicsVisualization::renderLoop()
             //pointProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
             //pointProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
             //pointProgram.update("frameCount", TODO);
+            pointProgram.update("frame", mFrame);
+            pointProgram.update("atomCount", mupGPUProtein->getAtomCount());
 
             // Draw internal
             if(mShowInternal)
             {
-                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndicesForDrawing(mLayer, 1);
+                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndicesForDrawing(mLayer, 2);
                 pointProgram.update("color", mInternalAtomColor);
                 glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
             }
@@ -408,7 +409,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             // Draw surface
             if(mShowSurface)
             {
-                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndicesForDrawing(mLayer, 1);
+                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndicesForDrawing(mLayer, 2);
                 pointProgram.update("color", mSurfaceAtomColor);
                 glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
             }
@@ -639,7 +640,7 @@ void SurfaceDynamicsVisualization::updateGUI()
         ImGui::SliderFloat("Probe Radius", &mProbeRadius, 0.f, 2.f, "%.1f");
         ImGui::Checkbox("Extract Layers", &mExtractLayers);
         ImGui::SliderInt("Start Frame", &mComputationStartFrame, 0, mComputationEndFrame);
-        ImGui::SliderInt("End Frame", &mComputationEndFrame, mComputationStartFrame, mGPUProteins.size() - 1);
+        ImGui::SliderInt("End Frame", &mComputationEndFrame, mComputationStartFrame, mupGPUProtein->getFrameCount() - 1);
         ImGui::SliderInt("CPU Cores", &mCPUThreads, 1, 24);
         if(ImGui::Button("\u2794 GPGPU")) { computeLayers(mComputationStartFrame, mComputationEndFrame, true); }
         ImGui::SameLine();
@@ -861,7 +862,6 @@ void SurfaceDynamicsVisualization::updateGUI()
 
         // General infos
         ImGui::Text(std::string("Selected Atom: " + std::to_string(mSelectedAtom)).c_str());
-        ImGui::Text(std::string("Atom Count: " + std::to_string(mGPUProteins.at(mFrame)->getAtomCount())).c_str());
 
         // Show available GPU memory
         int availableMemory;
@@ -903,8 +903,9 @@ void SurfaceDynamicsVisualization::updateGUI()
         if(ImGui::Button("Validate Surface"))
         {
             mupSurfaceValidation->validate(
-                mGPUProteins.at(mFrame).get(),
+                mupGPUProtein.get(),
                 mGPUSurfaces.at(mFrame - mComputedStartFrame).get(),
+                mFrame,
                 mLayer,
                 mProbeRadius,
                 mSurfaceValidationSeed,
@@ -1006,11 +1007,11 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
     {
         if(useGPU)
         {
-            mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(mGPUProteins.at(i).get(), mProbeRadius, mExtractLayers)));
+            mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(mupGPUProtein.get(), i, mProbeRadius, mExtractLayers)));
         }
         else
         {
-            mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(mGPUProteins.at(i).get(), mProbeRadius, mExtractLayers, true, mCPUThreads)));
+            mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(mupGPUProtein.get(), i, mProbeRadius, mExtractLayers, true, mCPUThreads)));
         }
         computationTime += mGPUSurfaces.back()->getComputationTime();
     }
@@ -1045,12 +1046,13 @@ int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
 
     // Go over display atoms and use Line - Sphere intersection
     auto indices = mGPUSurfaces.at(mFrame - mComputedStartFrame)->getInputIndices(mLayer);
-    auto atoms = mGPUProteins.at(mFrame)->getAtoms();
+    auto spRadii = mupGPUProtein->getRadii();
+    auto spTrajectory = mupGPUProtein->getTrajectory();
     for(const auto& rIndex : indices)
     {
         // Get information about atom
-        sphereCenter = atoms.at(rIndex).center;
-        sphereRadius = atoms.at(rIndex).radius;
+        sphereCenter = spTrajectory->at(mFrame).at(rIndex);
+        sphereRadius = spRadii->at(rIndex);
         if(mRenderWithProbeRadius) { sphereRadius += mProbeRadius; }
 
         // Right part of equation beneath square root

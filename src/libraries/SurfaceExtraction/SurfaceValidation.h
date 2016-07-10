@@ -27,6 +27,7 @@ public:
     void validate(
         GPUProtein const * pGPUProtein,
         GPUSurface const * pGPUSurface,
+        int frame,
         int layer,
         float probeRadius,
         unsigned int sampleSeed,

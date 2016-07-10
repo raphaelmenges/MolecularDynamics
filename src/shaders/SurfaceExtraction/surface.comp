@@ -21,30 +21,33 @@ int cuttingFaceIndices[neighborsMaxCount]; // Indices of cutting faces which are
 // ## Uniforms
 uniform int inputCount;
 uniform float probeRadius;
+uniform int frame;
+uniform int atomCount;
 
-// ## Struct of atom
-struct AtomStruct
+// ## SSBOs
+
+// Radii
+layout(std430, binding = 0) restrict readonly buffer RadiiBuffer
 {
-    vec3 center;
-    float radius;
+   float radii[];
 };
 
-// ## SSBO with atoms
-layout(std430, binding = 0) readonly restrict buffer AtomBuffer
+// Trajectory
+layout(std430, binding = 1) restrict readonly buffer TrajectoryBuffer
 {
-    AtomStruct atoms[];
+   vec3 trajectory[];
 };
 
 // ## Atomic counter for indices in image buffers
-layout(binding = 1) uniform atomic_uint InternalCount;
-layout(binding = 2) uniform atomic_uint SurfaceCount;
+layout(binding = 2) uniform atomic_uint InternalCount;
+layout(binding = 3) uniform atomic_uint SurfaceCount;
 
 // ## Image buffer with input indices
-layout(binding = 3, r32ui) restrict readonly uniform uimageBuffer InputIndices;
+layout(binding = 4, r32ui) restrict readonly uniform uimageBuffer InputIndices;
 
 // ## Image buffers with output indices of internal and surface atoms
-layout(binding = 4, r32ui) restrict writeonly uniform uimageBuffer InternalIndices;
-layout(binding = 5, r32ui) restrict writeonly uniform uimageBuffer SurfaceIndices;
+layout(binding = 5, r32ui) restrict writeonly uniform uimageBuffer InternalIndices;
+layout(binding = 6, r32ui) restrict writeonly uniform uimageBuffer SurfaceIndices;
 
 // ## Save as internal
 void saveAsInternal(int atomIndex)
@@ -166,11 +169,11 @@ void main()
 
     // ### OWN VALUES ###
 
-    // Own extended radius
-    float atomExtRadius = atoms[atomIndex].radius + probeRadius;
-
     // Own center
-    vec3 atomCenter = atoms[atomIndex].center;
+    vec3 atomCenter = trajectory[(frame*atomCount) + atomIndex];
+
+    // Own extended radius
+    float atomExtRadius = radii[atomIndex] + probeRadius;
 
     // ### BUILD UP OF CUTTING FACE LIST ###
 
@@ -186,8 +189,8 @@ void main()
         // ### OTHER'S VALUES ###
 
         // Get values from other atom
-        vec3 otherAtomCenter = atoms[otherAtomIndex].center;
-        float otherAtomExtRadius = atoms[otherAtomIndex].radius + probeRadius;
+        vec3 otherAtomCenter = trajectory[(frame*atomCount) + otherAtomIndex];
+        float otherAtomExtRadius = radii[otherAtomIndex] + probeRadius;
 
         // ### INTERSECTION TEST ###
 

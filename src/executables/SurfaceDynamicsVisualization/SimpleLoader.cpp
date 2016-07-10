@@ -5,6 +5,7 @@
 #include <sstream>
 #include <map>
 
+/*
 // Lookup table for radii
 std::map<std::string, float> radiiLookup =
 {
@@ -109,3 +110,4 @@ std::vector<GPUAtom> parseSimplePDB(std::string filepath, glm::vec3& rMinExtent,
     // Return protein
     return atoms;
 }
+*/

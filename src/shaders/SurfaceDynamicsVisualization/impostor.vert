@@ -4,37 +4,38 @@
 out vec3 vertColor;
 out float vertRadius;
 
-// Struct for atom
-struct AtomStruct
+// Radii
+layout(std430, binding = 0) restrict readonly buffer RadiiBuffer
 {
-    vec3 center;
-    float radius;
+   float radii[];
 };
 
-// SSBOs
-layout(std430, binding = 0) restrict readonly buffer AtomBuffer
+// Trajectory
+layout(std430, binding = 1) restrict readonly buffer TrajectoryBuffer
 {
-   AtomStruct atoms[];
+   vec3 trajectory[];
 };
 
 // Indices of surface atoms
-layout(binding = 1, r32ui) readonly restrict uniform uimageBuffer Indices;
+layout(binding = 2, r32ui) readonly restrict uniform uimageBuffer Indices;
 
 // Uniforms
 uniform vec3 cameraWorldPos;
 uniform float probeRadius;
 uniform int selectedIndex;
 uniform vec3 color;
+uniform int frame;
+uniform int atomCount;
 
 // Main function
 void main()
 {
     // Extract center
     int index = int(imageLoad(Indices, int(gl_VertexID)).x);
-    gl_Position = vec4(atoms[index].center, 1);
+    gl_Position = vec4(trajectory[(frame*atomCount) + index], 1);
 
     // Extract radius
-    vertRadius = atoms[index].radius + probeRadius;
+    vertRadius = radii[index] + probeRadius;
 
     // Set color
     if(index == selectedIndex)

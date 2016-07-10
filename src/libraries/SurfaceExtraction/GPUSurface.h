@@ -1,5 +1,5 @@
 // Author: Raphael Menges
-// Surface and internal atoms of protein on GPU.
+// Surface and internal atoms of protein on GPU for a single frame.
 
 #ifndef GPU_SURFACE_H
 #define GPU_SURFACE_H

@@ -44,6 +44,7 @@ SurfaceValidation::~SurfaceValidation()
 void SurfaceValidation::validate(
     GPUProtein const * pGPUProtein,
     GPUSurface const * pGPUSurface,
+    int frame,
     int layer,
     float probeRadius,
     unsigned int sampleSeed,
@@ -71,11 +72,12 @@ void SurfaceValidation::validate(
     int internalSampleFailures = 0;
     int surfaceAtomsFailures = 0;
 
-    // Copy atoms of protein to stack
-    auto atoms = pGPUProtein->getAtoms();
+    // Get shared pointer to radii and trajectory
+    auto spRadii = pGPUProtein->getRadii();
+    auto spTrajectory = pGPUProtein->getTrajectory();
 
     // Go over atoms (using indices from input indices buffer)
-    for(unsigned int i : inputIndices) // using results from algorithm here. Not so good for independend test but necessary for layers
+    for(unsigned int i : inputIndices) // using results from algorithm here. Not so good for independent test but necessary for validating layers
     {
         // Check, whether atom is internal or surface (would be faster to iterate over those structures, but this way the test is more testier)
         bool found = false;
@@ -110,9 +112,9 @@ void SurfaceValidation::validate(
             return;
         }
 
-        // Get position and radius
-        glm::vec3 atomCenter = atoms[i].center;
-        float atomExtRadius = atoms[i].radius + probeRadius;
+        // Get position and radius for that atom
+        glm::vec3 atomCenter = spTrajectory->at(frame).at(i);
+        float atomExtRadius = spRadii->at(i) + probeRadius;
 
         // Count samples which are classified as internal for that atom
         int atomInternalSampleCount = 0;
@@ -141,7 +143,9 @@ void SurfaceValidation::validate(
                 if(k == i) { continue; };
 
                 // Actual test
-                if(glm::distance(samplePosition, atoms[k].center) < (atoms[k].radius + probeRadius))
+                glm::vec3 otherAtomCenter = spTrajectory->at(frame).at(k);
+                float otherAtomRadius = spRadii->at(k) + probeRadius;
+                if(glm::distance(samplePosition, otherAtomCenter) <= (otherAtomRadius))
                 {
                     inside = true;
                     break;

@@ -60,7 +60,7 @@ private:
     int getAtomBeneathCursor() const;
 
     // Setup
-    const bool mInitiallyUseGLSLImplementation = true;
+    const bool mInitiallyUseGLSLImplementation = false;
     const float mCameraSmoothDuration = 1.5f;
     const float mAtomPointSize = 15.f;
     const float mSamplePointSize = 2.f;
@@ -121,7 +121,7 @@ private:
     glm::vec3 mLightDirection;
     glm::vec3 mProteinMinExtent;
     glm::vec3 mProteinMaxExtent;
-    std::vector<std::unique_ptr<GPUProtein> > mGPUProteins; // proteins on GPU
+    std::unique_ptr<GPUProtein> mupGPUProtein; // protein on GPU
     std::unique_ptr<GPUSurfaceExtraction> mupGPUSurfaceExtraction;  // factory for GPUSurfaces
                                                                     // (unique pointer because has to be constructed after OpenGL initialization)
     std::vector<std::unique_ptr<GPUSurface> > mGPUSurfaces; // vector with surfaces

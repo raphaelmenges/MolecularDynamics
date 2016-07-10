@@ -24,6 +24,7 @@ public:
     // Factory for GPUSurface objects
     std::unique_ptr<GPUSurface> calculateSurface(
         GPUProtein const * pGPUProtein,
+        int frame,
         float probeRadius,
         bool extractLayers,
         bool useCPU = false,
@@ -38,10 +39,11 @@ private:
     public:
 
         void execute(
+            GPUProtein const * pGPUProtein,
+            int frame,
             int executionIndex,
             int inputCount,
             float probeRadius,
-            const std::vector<GPUAtom>& rAtoms,
             const std::vector<unsigned int>& rInputIndices,
             std::vector<unsigned int>& rInternalIndices,
             std::vector<unsigned int>& rSurfaceIndices);

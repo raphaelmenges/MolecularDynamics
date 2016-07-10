@@ -7,56 +7,51 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <vector>
+#include <memory>
 
 // Forward declaration
 class Protein;
-
-// Struct which holds necessary information about single atom
-struct GPUAtom
-{
-    // Constructor
-    GPUAtom(
-        glm::vec3 center,
-        float radius)
-    {
-        this->center = center;
-        this->radius = radius;
-    }
-
-    // Fields
-    glm::vec3 center;
-    float radius;
-};
 
 class GPUProtein
 {
 public:
 
     // Constructor
-    GPUProtein(Protein * const pProtein, int frame);
+    GPUProtein(Protein * const pProtein);
 
     // Destructor
     virtual ~GPUProtein();
 
-    // Bind SSBO with atoms (readonly)
-    void bind(GLuint slot) const;
+    // Bind SSBOs (readonly)
+    void bind(GLuint radiiSlot, GLuint trajectorySlot) const;
 
     // Get count of atoms in protein
-    int getAtomCount() const { return mAtomCount; }
+    int getAtomCount() const { return mspRadii->size(); }
 
-    // Get copy of GPUAtoms
-    std::vector<GPUAtom> getAtoms() const { return mAtoms; }
+    // Get count of frames available in trajectory
+    int getFrameCount() const { return mspTrajectory->size(); }
+
+    // Get shared pointer to atom radii
+    std::shared_ptr<std::vector<float> > getRadii() const;
+
+    // Get shared pointer to trajectory (position per atom per frame)
+    std::shared_ptr<
+        std::vector<
+            std::vector<glm::vec3> > > getTrajectory() const;
 
 private:
 
-    // Vector of atoms
-    std::vector<GPUAtom> mAtoms;
+    // Vector of radii
+    std::shared_ptr<std::vector<float> > mspRadii;
 
-    // SSBO with atoms
-    GLuint mSSBO;
+    // Vector of trajectory (outer is for frames, inner for atoms in each frame)
+    std::shared_ptr<std::vector<std::vector<glm::vec3> > > mspTrajectory;
 
-    // Count of atoms in SSBO
-    int mAtomCount;
+    // SSBO of radii
+    GLuint mRadiiSSBO;
+
+    // SSBO of trajectory
+    GLuint mTrajectorySSBO;
 
 };
 
