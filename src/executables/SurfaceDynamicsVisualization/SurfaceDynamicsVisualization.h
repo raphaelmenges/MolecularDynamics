@@ -106,6 +106,8 @@ private:
     int mComputationEndFrame = 0;
     bool mExtractLayers = false;
     bool mRepeatAnimation = false;
+    int mSmoothAnimationRadius = 0;
+    float mSmoothAnimationMaxDeviation = 5;
 
     // Debugging output
     std::string mComputeInformation = "No computation info available";

@@ -393,6 +393,9 @@ void SurfaceDynamicsVisualization::renderLoop()
             pointProgram.update("projection", mupCamera->getProjectionMatrix());
             pointProgram.update("selectedIndex", mSelectedAtom);
             pointProgram.update("clippingPlane", mClippingPlane);
+            //pointProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+            //pointProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+            //pointProgram.update("frameCount", TODO);
 
             // Draw internal
             if(mShowInternal)
@@ -831,6 +834,12 @@ void SurfaceDynamicsVisualization::updateGUI()
                 mShowSurface = true;
             }
         }
+        ImGui::Separator();
+
+        // Animation smoothing
+        ImGui::Text("Animation Smoothing");
+        ImGui::SliderInt("Smooth Radius", &mSmoothAnimationRadius, 0, 10);
+        ImGui::SliderFloat("Smooth Max Deviation", &mSmoothAnimationMaxDeviation, 0, 10, "%.1f");
         ImGui::Separator();
 
         // Light direction
