@@ -365,6 +365,9 @@ void SurfaceDynamicsVisualization::renderLoop()
             impostorProgram.update("clippingPlane", mClippingPlane);
             impostorProgram.update("frame", mFrame);
             impostorProgram.update("atomCount", mupGPUProtein->getAtomCount());
+            impostorProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+            impostorProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+            impostorProgram.update("frameCount", mupGPUProtein->getFrameCount());
 
             // Draw internal (first, because at clipping plane are all set to same
             // viewport depth which means internal are always in front of surface)
@@ -394,11 +397,11 @@ void SurfaceDynamicsVisualization::renderLoop()
             pointProgram.update("projection", mupCamera->getProjectionMatrix());
             pointProgram.update("selectedIndex", mSelectedAtom);
             pointProgram.update("clippingPlane", mClippingPlane);
-            //pointProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
-            //pointProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
-            //pointProgram.update("frameCount", TODO);
             pointProgram.update("frame", mFrame);
             pointProgram.update("atomCount", mupGPUProtein->getAtomCount());
+            pointProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+            pointProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+            pointProgram.update("frameCount", mupGPUProtein->getFrameCount());
 
             // Draw internal
             if(mShowInternal)
@@ -842,7 +845,7 @@ void SurfaceDynamicsVisualization::updateGUI()
         // Animation smoothing
         ImGui::Text("Animation Smoothing");
         ImGui::SliderInt("Smooth Radius", &mSmoothAnimationRadius, 0, 10);
-        ImGui::SliderFloat("Smooth Max Deviation", &mSmoothAnimationMaxDeviation, 0, 10, "%.1f");
+        ImGui::SliderFloat("Smooth Max Deviation", &mSmoothAnimationMaxDeviation, 0, 100, "%.1f");
         ImGui::Separator();
 
         // Light direction
