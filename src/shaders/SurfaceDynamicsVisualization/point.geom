@@ -5,7 +5,9 @@ layout(points) in;
 layout(points, max_vertices = 1) out;
 
 in vec3 vertColor[1];
+in int vertIndex[1];
 flat out vec3 color;
+flat out int index;
 
 uniform mat4 projection;
 uniform mat4 view;
@@ -20,6 +22,9 @@ void main()
     {
         // Color
         color = vertColor[0];
+
+        // Index of atom
+        index = vertIndex[0];
 
         // Combine matrices
         mat4 M = projection * view;

@@ -144,7 +144,7 @@ private:
     int mComputedEndFrame = 0;
     GLuint mCompositeFramebuffer; // renders to CompositeTexture and AtomIdTexture
     GLuint mCompositeTexture;
-    GLuint mAtomIdTexture;
+    GLuint mPickIndexTexture; // at the moment used for atoms, only
     GLuint mCompositeDepthStencil;
     bool mFramebufferExist = false;
     int mWindowWidth;

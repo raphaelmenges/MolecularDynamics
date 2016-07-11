@@ -3,6 +3,9 @@
 // Color of rendered point
 out vec3 vertColor;
 
+// Index of atom
+out int vertIndex;
+
 // Trajectory
 struct Position
 {
@@ -88,4 +91,7 @@ void main()
     {
         vertColor = color;
     }
+
+    // Set index
+    vertIndex = atomIndex + 1; // plus one to distinguish from nothing!
 }

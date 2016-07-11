@@ -1,8 +1,11 @@
 #version 430
 
-// Color of impostor
+// Color and radius of impostor
 out vec3 vertColor;
 out float vertRadius;
+
+// Index of atom
+out int vertIndex;
 
 // Radii
 layout(std430, binding = 0) restrict readonly buffer RadiiBuffer
@@ -100,4 +103,7 @@ void main()
     {
         vertColor = color;
     }
+
+    // Set index
+    vertIndex = atomIndex + 1; // plus one to distinguish from nothing!
 }

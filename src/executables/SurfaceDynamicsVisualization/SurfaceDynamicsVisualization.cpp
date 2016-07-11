@@ -204,7 +204,7 @@ SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
     // Delete Framebuffers
     glDeleteFramebuffers(1, &mCompositeFramebuffer);
     glDeleteTextures(1, &mCompositeTexture);
-    glDeleteTextures(1, &mAtomIdTexture);
+    glDeleteTextures(1, &mPickIndexTexture);
     glDeleteRenderbuffers(1, &mCompositeDepthStencil);
 }
 
@@ -485,8 +485,7 @@ void SurfaceDynamicsVisualization::renderLoop()
 
         // Bind composite framebuffer texture
         glActiveTexture(GL_TEXTURE0);
-        //glBindTexture(GL_TEXTURE_2D, mCompositeTexture);
-        glBindTexture(GL_TEXTURE_2D, mAtomIdTexture);
+        glBindTexture(GL_TEXTURE_2D, mCompositeTexture);
 
         // Draw screenfilling quad
         screenFillingProgram.use();
@@ -1107,6 +1106,36 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
 
 int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
 {
+    // Bind correct framebuffer and point to attachment with pick indices
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, mCompositeFramebuffer);
+    glReadBuffer(GL_COLOR_ATTACHMENT1);
+
+    // Get position of cursor
+    double cursorX, cursorY;
+    glfwGetCursorPos(mpWindow, &cursorX, &cursorY);
+
+    // Get pick index
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    unsigned char data[4];
+    glReadPixels((int)cursorX, mWindowHeight - (int)cursorY, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, data);
+    int index =
+        data[0] +
+        data[1] * 256 +
+        data[2] * 256*256;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // Index of zero means, that nothing was there
+    if(index <= 0)
+    {
+        return -1;
+    }
+    else
+    {
+        return (index - 1); // starts at one but should start at zero
+    }
+
+    /*
+
     // Variables to collect results
     int foundIndex = -1;
     float foundDistance = std::numeric_limits<float>::max();
@@ -1176,6 +1205,8 @@ int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
     }
 
     return foundIndex;
+
+    */
 }
 
 void SurfaceDynamicsVisualization::createFramebuffers()
@@ -1186,7 +1217,7 @@ void SurfaceDynamicsVisualization::createFramebuffers()
         // Generate OpenGL objects for framebuffers
         glGenFramebuffers(1, &mCompositeFramebuffer);
         glGenTextures(1, &mCompositeTexture);
-        glGenTextures(1, &mAtomIdTexture);
+        glGenTextures(1, &mPickIndexTexture);
         glGenRenderbuffers(1, &mCompositeDepthStencil);
 
         // Bind framebuffer
@@ -1205,7 +1236,7 @@ void SurfaceDynamicsVisualization::createFramebuffers()
             GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mCompositeTexture, 0);
 
          // Setup atom id texture
-        glBindTexture(GL_TEXTURE_2D, mAtomIdTexture);
+        glBindTexture(GL_TEXTURE_2D, mPickIndexTexture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -1214,7 +1245,7 @@ void SurfaceDynamicsVisualization::createFramebuffers()
 
         // Bind atom id texture
         glFramebufferTexture2D(
-            GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, mAtomIdTexture, 0);
+            GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, mPickIndexTexture, 0);
 
         // Tell which attachments to draw
         GLuint attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
@@ -1237,7 +1268,7 @@ void SurfaceDynamicsVisualization::createFramebuffers()
     glBindTexture(GL_TEXTURE_2D, 0);
 
     // Create atom id texture
-    glBindTexture(GL_TEXTURE_2D, mAtomIdTexture);
+    glBindTexture(GL_TEXTURE_2D, mPickIndexTexture);
     glTexImage2D(
         GL_TEXTURE_2D, 0, GL_RGB8, mWindowWidth, mWindowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glBindTexture(GL_TEXTURE_2D, 0);
