@@ -625,14 +625,14 @@ void SurfaceDynamicsVisualization::renderGUI()
                 if(ImGui::MenuItem("Show Visualization", "", false, true)) { mShowVisualizationWindow = true; }
             }
 
-            // Debugging window
-            if(mShowDebuggingWindow)
+            // Information window
+            if(mShowInformationWindow)
             {
-                if(ImGui::MenuItem("Hide Debugging", "", false, true)) { mShowDebuggingWindow = false; }
+                if(ImGui::MenuItem("Hide Information", "", false, true)) { mShowInformationWindow = false; }
             }
             else
             {
-                if(ImGui::MenuItem("Show Debugging", "", false, true)) { mShowDebuggingWindow = true; }
+                if(ImGui::MenuItem("Show Information", "", false, true)) { mShowInformationWindow = true; }
             }
 
             // Validation window
@@ -688,6 +688,7 @@ void SurfaceDynamicsVisualization::renderGUI()
     ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.5f, 0.5f, 0.5f, 0.5f)); // header
     ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.5f, 0.5f, 0.5f, 0.75f)); // header hovered
     ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.1f, 0.1f, 0.1f, 0.75f)); // header active
+    ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(0.1f, 0.1f, 0.1f, 0.75f)); // slider grab active
 
     // Extraction window
     if(mShowSurfaceExtractionWindow)
@@ -895,6 +896,22 @@ void SurfaceDynamicsVisualization::renderGUI()
                 mShowSurface = true;
             }
         }
+
+         // Show / hide axes gizmo
+        if(mShowAxesGizmo)
+        {
+            if(ImGui::Button("Hide Axes Gizmo", ImVec2(208, 22)))
+            {
+                mShowAxesGizmo = false;
+            }
+        }
+        else
+        {
+            if(ImGui::Button("Show Axes Gizmo", ImVec2(208, 22)))
+            {
+                mShowAxesGizmo = true;
+            }
+        }
         ImGui::Separator();
 
         // Animation smoothing
@@ -917,13 +934,14 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::PopStyleColor(); // window background
     }
 
-    // Debugging window
-    if(mShowDebuggingWindow)
+    // Information window
+    if(mShowInformationWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.5f, 0.0f, 0.75f)); // window background
-        ImGui::Begin("Debugging", NULL, 0);
+        ImGui::Begin("Information", NULL, 0);
 
         // General infos
+        ImGui::Text(std::string("Atom Count: " + std::to_string(mupGPUProtein->getAtomCount())).c_str());
         ImGui::Text(std::string("Selected Atom: " + std::to_string(mSelectedAtom)).c_str());
 
         // Show available GPU memory
@@ -932,22 +950,6 @@ void SurfaceDynamicsVisualization::renderGUI()
         availableMemory = availableMemory / 1000;
         ImGui::Text(std::string("Available VRAM: " + std::to_string(availableMemory) + "MB").c_str());
         // TODO: one may want to clean up glGetError if query failed and show failure message on GUI (for example on Intel or AMD)
-
-        // Show / hide axes gizmo
-        if(mShowAxesGizmo)
-        {
-            if(ImGui::Button("Hide Axes Gizmo", ImVec2(140, 22)))
-            {
-                mShowAxesGizmo = false;
-            }
-        }
-        else
-        {
-            if(ImGui::Button("Show Axes Gizmo", ImVec2(140, 22)))
-            {
-                mShowAxesGizmo = true;
-            }
-        }
         ImGui::Separator();
 
         // Testing
@@ -1029,6 +1031,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::PopStyleColor(); // window background
     }
 
+    ImGui::PopStyleColor(); // slider grab active
     ImGui::PopStyleColor(); // header active
     ImGui::PopStyleColor(); // header hovered
     ImGui::PopStyleColor(); // header

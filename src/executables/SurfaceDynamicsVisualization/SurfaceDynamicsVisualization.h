@@ -98,7 +98,7 @@ private:
     bool mShowSurface = true;
     bool mShowSurfaceExtractionWindow = true;
     bool mShowCameraWindow = true;
-    bool mShowDebuggingWindow = true;
+    bool mShowInformationWindow = true;
     float mProbeRadius = 1.4f;
     int mCPUThreads = 8;
     int mSurfaceValidationAtomSampleCount = 20;
@@ -121,7 +121,7 @@ private:
     float mDepthDarkeningStart = 50.f;
     float mDepthDarkeningEnd = 100.f;
 
-    // Debugging output
+    // Report output
     std::string mComputeInformation = "No computation info available";
     std::string mValidationInformation = "No validation info available";
 
