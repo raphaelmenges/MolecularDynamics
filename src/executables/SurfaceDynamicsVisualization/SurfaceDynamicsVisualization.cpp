@@ -45,8 +45,8 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     }; // has to be static to be available during run
     io.Fonts->AddFontFromFileTTF(fontpath.c_str(), 16, &config, ranges);
 
-    // Clear color
-    glClearColor(0.1f, 0.1f, 0.3f, 1.f);
+    // Clear color (has to be zero for sake of framebuffers)
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
     // # Callbacks after ImGui
 
@@ -204,6 +204,7 @@ SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
     // Delete Framebuffers
     glDeleteFramebuffers(1, &mCompositeFramebuffer);
     glDeleteTextures(1, &mCompositeTexture);
+    glDeleteTextures(1, &mAtomIdTexture);
     glDeleteRenderbuffers(1, &mCompositeDepthStencil);
 }
 
@@ -484,7 +485,8 @@ void SurfaceDynamicsVisualization::renderLoop()
 
         // Bind composite framebuffer texture
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, mCompositeTexture);
+        //glBindTexture(GL_TEXTURE_2D, mCompositeTexture);
+        glBindTexture(GL_TEXTURE_2D, mAtomIdTexture);
 
         // Draw screenfilling quad
         screenFillingProgram.use();
@@ -1184,12 +1186,13 @@ void SurfaceDynamicsVisualization::createFramebuffers()
         // Generate OpenGL objects for framebuffers
         glGenFramebuffers(1, &mCompositeFramebuffer);
         glGenTextures(1, &mCompositeTexture);
+        glGenTextures(1, &mAtomIdTexture);
         glGenRenderbuffers(1, &mCompositeDepthStencil);
 
         // Bind framebuffer
         glBindFramebuffer(GL_FRAMEBUFFER, mCompositeFramebuffer);
 
-        // Setup texture
+        // Setup composite texture
         glBindTexture(GL_TEXTURE_2D, mCompositeTexture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -1197,9 +1200,25 @@ void SurfaceDynamicsVisualization::createFramebuffers()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
         glBindTexture(GL_TEXTURE_2D, 0);
 
-        // Bind texture
+        // Bind composite texture
         glFramebufferTexture2D(
             GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mCompositeTexture, 0);
+
+         // Setup atom id texture
+        glBindTexture(GL_TEXTURE_2D, mAtomIdTexture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        // Bind atom id texture
+        glFramebufferTexture2D(
+            GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, mAtomIdTexture, 0);
+
+        // Tell which attachments to draw
+        GLuint attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+        glDrawBuffers(2,  attachments);
 
         // Unbind framebuffer
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -1211,8 +1230,14 @@ void SurfaceDynamicsVisualization::createFramebuffers()
     // Bind framebuffer (seems to be necessary for renderbuffer)
     glBindFramebuffer(GL_FRAMEBUFFER, mCompositeFramebuffer);
 
-    // Create texture
+    // Create composite texture
     glBindTexture(GL_TEXTURE_2D, mCompositeTexture);
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, GL_RGB8, mWindowWidth, mWindowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Create atom id texture
+    glBindTexture(GL_TEXTURE_2D, mAtomIdTexture);
     glTexImage2D(
         GL_TEXTURE_2D, 0, GL_RGB8, mWindowWidth, mWindowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glBindTexture(GL_TEXTURE_2D, 0);

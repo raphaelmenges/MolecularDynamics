@@ -4,7 +4,7 @@ in vec2 uv;
 flat in float radius;
 flat in vec3 center;
 flat in vec3 color;
-out vec4 outColor;
+layout(location = 0) out vec3 fragColor;
 layout (depth_less) out float gl_FragDepth; // Makes optimizations possible
 
 uniform mat4 view;
@@ -100,5 +100,5 @@ void main()
     vec3 finalColor = depthDarkening * mix(color * mix(vec3(0.4, 0.45, 0.5), vec3(1.0, 1.0, 1.0), lighting), vec3(1,1,1), specular);
 
     // Output color
-    outColor = vec4(finalColor, 1);
+    fragColor = finalColor;
 }

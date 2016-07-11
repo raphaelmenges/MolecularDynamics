@@ -142,8 +142,9 @@ private:
     float mFramePlayTime = 0; // time of displaying a molecule state at playing the animation
     int mComputedStartFrame = 0;
     int mComputedEndFrame = 0;
-    GLuint mCompositeFramebuffer;
+    GLuint mCompositeFramebuffer; // renders to CompositeTexture and AtomIdTexture
     GLuint mCompositeTexture;
+    GLuint mAtomIdTexture;
     GLuint mCompositeDepthStencil;
     bool mFramebufferExist = false;
     int mWindowWidth;
