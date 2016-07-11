@@ -10,6 +10,10 @@
 #include <sstream>
 #include <iomanip>
 
+// stb_image wants those defines
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb/stb_image.h"
+
 // ### Class implementation ###
 
 SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
@@ -190,6 +194,53 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     // # Run implementation to extract surface atoms
     computeLayers(0, 0, mInitiallyUseGLSLImplementation);
 
+    // # Load cubemap textures
+    std::vector<std::string> cubemapFullpaths;
+    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posx.jpg"));
+    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negx.jpg"));
+    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posy.jpg"));
+    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negy.jpg"));
+    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posz.jpg"));
+    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negz.jpg"));
+
+    // Setup stb_image
+    // stbi_set_flip_vertically_on_load(true);
+    int width, height, channelCount;
+
+     // Create texture
+    glGenTextures(1, &mCubemapTexture);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, mCubemapTexture);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    // Load all directions
+    for(int i = 0; i < cubemapFullpaths.size(); i++)
+    {
+        // Try to load image
+        unsigned char* pData = stbi_load(cubemapFullpaths.at(i).c_str(), &width, &height, &channelCount, 0);
+
+        // Check whether file was found and parsed
+        if (pData == NULL)
+        {
+            std::cout << "Image file not found or error at parsing: " << cubemapFullpaths.at(i) << std::endl;
+            continue;
+        }
+
+        // Set texture
+        glTexImage2D(
+            GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+            0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, pData); // TODO: use channel count given by stb_image?
+
+        // Delete raw image data
+        stbi_image_free(pData);
+    }
+
+    // Unbind texture
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
     // # Other
 
     // Prepare validation of the surface
@@ -206,6 +257,7 @@ SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
     glDeleteTextures(1, &mCompositeTexture);
     glDeleteTextures(1, &mPickIndexTexture);
     glDeleteRenderbuffers(1, &mCompositeDepthStencil);
+    glDeleteTextures(1, &mCubemapTexture);
 }
 
 void SurfaceDynamicsVisualization::renderLoop()
@@ -250,6 +302,9 @@ void SurfaceDynamicsVisualization::renderLoop()
 
     // # Shader program for screenfilling quad rendering
     ShaderProgram screenFillingProgram("/SurfaceDynamicsVisualization/screenfilling.vert", "/SurfaceDynamicsVisualization/screenfilling.geom", "/SurfaceDynamicsVisualization/screenfilling.frag");
+
+    // # Shader program for cubemap rendering
+    ShaderProgram cubemapProgram("/SurfaceDynamicsVisualization/cubemap.vert", "/SurfaceDynamicsVisualization/cubemap.geom", "/SurfaceDynamicsVisualization/cubemap.frag");
 
     // Bind SSBOs
     mupGPUProtein->bind(0, 1);
@@ -354,6 +409,17 @@ void SurfaceDynamicsVisualization::renderLoop()
 
         // Update camera
         mupCamera->update(resolution.x, resolution.y, mUsePerspectiveCamera);
+
+        // Render cubemap
+        glDisable(GL_DEPTH_TEST);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, mCubemapTexture);
+        cubemapProgram.use();
+        cubemapProgram.update("cubemap", 0); // tell shader which slot to use
+        cubemapProgram.update("view", mupCamera->getViewMatrix());
+        cubemapProgram.update("projection", mupCamera->getProjectionMatrix());
+        glDrawArrays(GL_POINTS, 0, 1);
+        glEnable(GL_DEPTH_TEST);
 
         // Drawing of surface validation before everything else, so sample points at same z coordinate as impostor are in front
         if(mShowValidationSamples)
@@ -489,7 +555,7 @@ void SurfaceDynamicsVisualization::renderLoop()
 
         // Draw screenfilling quad
         screenFillingProgram.use();
-        screenFillingProgram.update("tex", 0);
+        screenFillingProgram.update("tex", 0); // tell shader which slot to use
         glDrawArrays(GL_POINTS, 0, 1);
 
         // Enable depth test
@@ -1238,7 +1304,7 @@ void SurfaceDynamicsVisualization::createFramebuffers()
         glFramebufferTexture2D(
             GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mCompositeTexture, 0);
 
-         // Setup atom id texture
+        // Setup pick index texture
         glBindTexture(GL_TEXTURE_2D, mPickIndexTexture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -1246,13 +1312,13 @@ void SurfaceDynamicsVisualization::createFramebuffers()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
         glBindTexture(GL_TEXTURE_2D, 0);
 
-        // Bind atom id texture
+        // Bind pick index texture
         glFramebufferTexture2D(
             GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, mPickIndexTexture, 0);
 
         // Tell which attachments to draw
         GLuint attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
-        glDrawBuffers(2,  attachments);
+        glDrawBuffers(2, attachments);
 
         // Unbind framebuffer
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -1270,7 +1336,7 @@ void SurfaceDynamicsVisualization::createFramebuffers()
         GL_TEXTURE_2D, 0, GL_RGB8, mWindowWidth, mWindowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    // Create atom id texture
+    // Create pick index texture
     glBindTexture(GL_TEXTURE_2D, mPickIndexTexture);
     glTexImage2D(
         GL_TEXTURE_2D, 0, GL_RGB8, mWindowWidth, mWindowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);

@@ -149,6 +149,7 @@ private:
     bool mFramebufferExist = false;
     int mWindowWidth;
     int mWindowHeight;
+    GLuint mCubemapTexture;
 
     // Surface validation
     std::unique_ptr<SurfaceValidation> mupSurfaceValidation;
