@@ -50,8 +50,8 @@ private:
     // Update computation information
     void updateComputationInformation(std::string device, float computationTime);
 
-    // Update GUI
-    void updateGUI();
+    // Render GUI
+    void renderGUI();
 
     // Set frame. Returns whether frame has been changed
     bool setFrame(int frame);
@@ -61,6 +61,9 @@ private:
 
     // Get atom beneath cursor. Returns -1 when fails
     int getAtomBeneathCursor() const;
+
+    // (Re)Create framebuffers
+    void createFramebuffers();
 
     // Setup
     const bool mInitiallyUseGLSLImplementation = false;
@@ -79,6 +82,8 @@ private:
     const float mClippingPlaneMax = 200.f;
     const std::string mWindowTitle = "Surface Dynamics Visualization";
     const float mDepthDarkeningMaxEnd = 1000.f;
+    const int mInitialWindowWidth = 1280;
+    const int mInitialWindowHeight = 720;
 
     // Controllable parameters
     bool mRotateCamera = false;
@@ -137,6 +142,12 @@ private:
     float mFramePlayTime = 0; // time of displaying a molecule state at playing the animation
     int mComputedStartFrame = 0;
     int mComputedEndFrame = 0;
+    GLuint mCompositeFramebuffer;
+    GLuint mCompositeTexture;
+    GLuint mCompositeDepthStencil;
+    bool mFramebufferExist = false;
+    int mWindowWidth;
+    int mWindowHeight;
 
     // Surface validation
     std::unique_ptr<SurfaceValidation> mupSurfaceValidation;

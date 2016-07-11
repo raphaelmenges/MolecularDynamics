@@ -18,9 +18,11 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     mCameraDeltaRotation = glm::vec2(0,0);
     mCameraRotationSmoothTime = 1.f;
     mLightDirection = glm::normalize(glm::vec3(-0.5, -0.75, -0.3));
+    mWindowWidth = mInitialWindowWidth;
+    mWindowHeight = mInitialWindowHeight;
 
     // Create window (which initializes OpenGL)
-    mpWindow = generateWindow(mWindowTitle);
+    mpWindow = generateWindow(mWindowTitle, mWindowWidth, mWindowHeight);
 
     // Construct GPUSurfaceExtraction object after OpenGL has been initialized
     mupGPUSurfaceExtraction = std::unique_ptr<GPUSurfaceExtraction>(new GPUSurfaceExtraction);
@@ -77,6 +79,9 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
         this->scrollCallback(x,y);
     };
     setScrollCallback(mpWindow, kS);
+
+    // # Prepare framebuffers for rendering
+    createFramebuffers();
 
     // # Load protein
 
@@ -196,7 +201,10 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
 
 SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
 {
-    // Nothing to do here
+    // Delete Framebuffers
+    glDeleteFramebuffers(1, &mCompositeFramebuffer);
+    glDeleteTextures(1, &mCompositeTexture);
+    glDeleteRenderbuffers(1, &mCompositeDepthStencil);
 }
 
 void SurfaceDynamicsVisualization::renderLoop()
@@ -239,21 +247,30 @@ void SurfaceDynamicsVisualization::renderLoop()
     ShaderProgram pointProgram("/SurfaceDynamicsVisualization/point.vert", "/SurfaceDynamicsVisualization/point.geom", "/SurfaceDynamicsVisualization/point.frag");
     ShaderProgram impostorProgram("/SurfaceDynamicsVisualization/impostor.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
 
+    // # Shader program for screenfilling quad rendering
+    ShaderProgram screenFillingProgram("/SurfaceDynamicsVisualization/screenfilling.vert", "/SurfaceDynamicsVisualization/screenfilling.geom", "/SurfaceDynamicsVisualization/screenfilling.frag");
+
     // Bind SSBOs
     mupGPUProtein->bind(0, 1);
 
     // Call render function of Rendering.h with lambda function
     render(mpWindow, [&] (float deltaTime)
     {
-        // Clear buffers
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // ImGui new frame
-        ImGui_ImplGlfwGL3_NewFrame();
-
         // Viewport size
         glm::vec2 resolution = getResolution(mpWindow);
+
+        // Check for change of resolution
+        if(resolution.x != mWindowWidth || resolution.y != mWindowHeight)
+        {
+            mWindowWidth = resolution.x;
+            mWindowHeight = resolution.y;
+            createFramebuffers();
+        }
+
+        // # Fill composite framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, mCompositeFramebuffer);
         glViewport(0, 0, resolution.x, resolution.y);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // If playing, decide whether to switch to next frame of animation
         if(mPlayAnimation)
@@ -457,8 +474,29 @@ void SurfaceDynamicsVisualization::renderLoop()
             glEnable(GL_DEPTH_TEST);
         }
 
-        // GUI updating
-        updateGUI();
+        // # Fill standard framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glViewport(0, 0, resolution.x, resolution.y);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Disable depth test
+        glDisable(GL_DEPTH_TEST);
+
+        // Bind composite framebuffer texture
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, mCompositeTexture);
+
+        // Draw screenfilling quad
+        screenFillingProgram.use();
+        screenFillingProgram.update("tex", 0);
+        glDrawArrays(GL_POINTS, 0, 1);
+
+        // Enable depth test
+        glEnable(GL_DEPTH_TEST);
+
+        // Render GUI
+        ImGui_ImplGlfwGL3_NewFrame();
+        renderGUI();
     });
 
     // Delete OpenGL structures
@@ -538,7 +576,7 @@ void SurfaceDynamicsVisualization::updateComputationInformation(std::string devi
     mComputeInformation = stream.str();
 }
 
-void SurfaceDynamicsVisualization::updateGUI()
+void SurfaceDynamicsVisualization::renderGUI()
 {
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.75f)); // window background
     ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4(0.2f, 0.2f, 0.2f, 0.25f)); // menu bar background
@@ -1136,6 +1174,60 @@ int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
     }
 
     return foundIndex;
+}
+
+void SurfaceDynamicsVisualization::createFramebuffers()
+{
+    // Generate OpenGL objects if necessary
+    if(!mFramebufferExist)
+    {
+        // Generate OpenGL objects for framebuffers
+        glGenFramebuffers(1, &mCompositeFramebuffer);
+        glGenTextures(1, &mCompositeTexture);
+        glGenRenderbuffers(1, &mCompositeDepthStencil);
+
+        // Bind framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, mCompositeFramebuffer);
+
+        // Setup texture
+        glBindTexture(GL_TEXTURE_2D, mCompositeTexture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        // Bind texture
+        glFramebufferTexture2D(
+            GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mCompositeTexture, 0);
+
+        // Unbind framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        // Remember creation
+        mFramebufferExist = true;
+    }
+
+    // Bind framebuffer (seems to be necessary for renderbuffer)
+    glBindFramebuffer(GL_FRAMEBUFFER, mCompositeFramebuffer);
+
+    // Create texture
+    glBindTexture(GL_TEXTURE_2D, mCompositeTexture);
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, GL_RGB8, mWindowWidth, mWindowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Create renderbuffer
+    glBindRenderbuffer(GL_RENDERBUFFER, mCompositeDepthStencil);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, mWindowWidth, mWindowHeight);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    // (Re)Bind depth and stencil
+    glFramebufferRenderbuffer(
+        GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mCompositeDepthStencil);
+
+    // Unbind framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 // ### Main function ###
