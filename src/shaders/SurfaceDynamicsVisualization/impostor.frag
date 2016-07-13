@@ -1,5 +1,6 @@
 #version 430
 
+// In / out
 in vec2 uv;
 flat in float radius;
 flat in vec3 center;
@@ -9,6 +10,7 @@ layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec3 pickIndex;
 layout (depth_less) out float gl_FragDepth; // Makes optimizations possible
 
+// Uniforms
 uniform mat4 view;
 uniform mat4 projection;
 uniform vec3 cameraWorldPos;
@@ -17,6 +19,7 @@ uniform float clippingPlane;
 uniform float depthDarkeningStart;
 uniform float depthDarkeningEnd;
 
+// Main function
 void main()
 {
     // Radius in UV space is 1 (therefore the scaling with 2 in geometry shader)

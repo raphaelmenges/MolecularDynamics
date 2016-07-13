@@ -28,6 +28,17 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     // Create window (which initializes OpenGL)
     mpWindow = generateWindow(mWindowTitle, mWindowWidth, mWindowHeight);
 
+    // Create empty outline atoms indices after OpenGL initialization
+    // mupOutlineAtomIndices = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(0)); // create empty outline atom indices buffer
+    std::vector<GLuint> outlineIndices;
+    outlineIndices.push_back(10);
+    outlineIndices.push_back(11);
+    outlineIndices.push_back(12);
+    outlineIndices.push_back(13);
+    outlineIndices.push_back(14);
+    outlineIndices.push_back(15);
+    mupOutlineAtomIndices = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(outlineIndices));
+
     // Construct GPUSurfaceExtraction object after OpenGL has been initialized
     mupGPUSurfaceExtraction = std::unique_ptr<GPUSurfaceExtraction>(new GPUSurfaceExtraction);
 
@@ -260,11 +271,18 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
 
 SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
 {
-    // Delete Framebuffers
+    // Delete composite framebuffers
     glDeleteFramebuffers(1, &mCompositeFramebuffer);
     glDeleteTextures(1, &mCompositeTexture);
     glDeleteTextures(1, &mPickIndexTexture);
     glDeleteRenderbuffers(1, &mCompositeDepthStencil);
+
+    // Delete outline framebuffer
+    glDeleteFramebuffers(1, &mOutlineFramebuffer);
+    glDeleteTextures(1, &mOutlineTexture);
+    glDeleteRenderbuffers(1, &mOutlineDepthStencil);
+
+    // Delete cubemap
     glDeleteTextures(1, &mCubemapTexture);
 }
 
@@ -304,15 +322,20 @@ void SurfaceDynamicsVisualization::renderLoop()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-    // # Prepare shader programs for rendering the protein
+    // # Prepare shader programs
+
+    // Shader programs for rendering the protein
     ShaderProgram pointProgram("/SurfaceDynamicsVisualization/point.vert", "/SurfaceDynamicsVisualization/point.geom", "/SurfaceDynamicsVisualization/point.frag");
     ShaderProgram impostorProgram("/SurfaceDynamicsVisualization/impostor.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
 
-    // # Shader program for screenfilling quad rendering
+    // Shader program for screenfilling quad rendering
     ShaderProgram screenFillingProgram("/SurfaceDynamicsVisualization/screenfilling.vert", "/SurfaceDynamicsVisualization/screenfilling.geom", "/SurfaceDynamicsVisualization/screenfilling.frag");
 
-    // # Shader program for cubemap rendering
+    // Shader program for cubemap
     ShaderProgram cubemapProgram("/SurfaceDynamicsVisualization/cubemap.vert", "/SurfaceDynamicsVisualization/cubemap.geom", "/SurfaceDynamicsVisualization/cubemap.frag");
+
+    // Shader program for outline rendering
+    ShaderProgram outlineProgram("/SurfaceDynamicsVisualization/impostor.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/outline.frag");
 
     // Bind SSBOs
     mupGPUProtein->bind(0, 1);
@@ -330,11 +353,6 @@ void SurfaceDynamicsVisualization::renderLoop()
             mWindowHeight = resolution.y;
             createFramebuffers();
         }
-
-        // # Fill composite framebuffer
-        glBindFramebuffer(GL_FRAMEBUFFER, mCompositeFramebuffer);
-        glViewport(0, 0, resolution.x, resolution.y);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // If playing, decide whether to switch to next frame of animation
         if(mPlayAnimation)
@@ -417,6 +435,62 @@ void SurfaceDynamicsVisualization::renderLoop()
 
         // Update camera
         mupCamera->update(resolution.x, resolution.y, mUsePerspectiveCamera);
+
+        // # Fill outline framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, mOutlineFramebuffer);
+        glViewport(0, 0, resolution.x, resolution.y);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Get count of atoms which will get a outline (size of buffer can be used here because all elements are valid)
+        int outlineAtomCount = mupOutlineAtomIndices->getSize();
+        if(outlineAtomCount > 0)
+        {
+            // Bind texture buffer with input atoms
+            mupOutlineAtomIndices->bindAsImage(2, GPUTextureBuffer::GPUAccess::READ_ONLY);
+
+            // Probe radius
+            float probeRadius = mRenderWithProbeRadius ? mProbeRadius : 0.f;
+
+            // Enable stencil test
+            glEnable(GL_STENCIL_TEST);
+
+            // Set up shader for outline drawing
+            outlineProgram.use();
+            outlineProgram.update("view", mupCamera->getViewMatrix());
+            outlineProgram.update("projection", mupCamera->getProjectionMatrix());
+            outlineProgram.update("frame", mFrame);
+            outlineProgram.update("atomCount", mupGPUProtein->getAtomCount());
+            outlineProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+            outlineProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+            outlineProgram.update("frameCount", mupGPUProtein->getFrameCount());
+            outlineProgram.update("outlineColor", mOutlineColor);
+
+            // Create stencil
+            glStencilFunc(GL_ALWAYS, 1, 0xFF); // set reference value for new stencil values
+            glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE); // use reference when stencil and depth test successful
+            glStencilMask(0xFF); // write to stencil buffer
+            glClear(GL_STENCIL_BUFFER_BIT); // clear stencil buffer (0 by default)
+            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // disable to write color
+            glDepthMask(GL_FALSE); // disable to write depth
+            outlineProgram.update("probeRadius", probeRadius);
+            glDrawArrays(GL_POINTS, 0, outlineAtomCount);
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); // enable to write color
+            glDepthMask(GL_TRUE); // enable to write depth
+
+            // Draw outline
+            glStencilFunc(GL_NOTEQUAL, 1, 0xFF); // pass test if stencil at that pixel is not eqaul one
+            glStencilMask(0x00); // do not write to stencil buffer
+            outlineProgram.update("probeRadius", probeRadius + mOutlineWidth); // just add outline radius to probe radius
+            glDrawArrays(GL_POINTS, 0, outlineAtomCount);
+
+            // Disable stencil test
+            glDisable(GL_STENCIL_TEST);
+        }
+
+        // # Fill composite framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, mCompositeFramebuffer);
+        glViewport(0, 0, resolution.x, resolution.y);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Render cubemap
         glDisable(GL_DEPTH_TEST);
@@ -561,9 +635,14 @@ void SurfaceDynamicsVisualization::renderLoop()
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, mCompositeTexture);
 
+        // Bind outline framebuffer texture
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, mOutlineTexture);
+
         // Draw screenfilling quad
         screenFillingProgram.use();
-        screenFillingProgram.update("tex", 0); // tell shader which slot to use
+        screenFillingProgram.update("composite", 0); // tell shader which slot to use
+        screenFillingProgram.update("outline", 1); // tell shader which slot to use
         glDrawArrays(GL_POINTS, 0, 1);
 
         // Enable depth test
@@ -1289,8 +1368,10 @@ int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
 void SurfaceDynamicsVisualization::createFramebuffers()
 {
     // Generate OpenGL objects if necessary
-    if(!mFramebufferExist)
+    if(!mFramebuffersExist)
     {
+        // # Composite framebuffer
+
         // Generate OpenGL objects for framebuffers
         glGenFramebuffers(1, &mCompositeFramebuffer);
         glGenTextures(1, &mCompositeTexture);
@@ -1325,15 +1406,46 @@ void SurfaceDynamicsVisualization::createFramebuffers()
             GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, mPickIndexTexture, 0);
 
         // Tell which attachments to draw
-        GLuint attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
-        glDrawBuffers(2, attachments);
+        GLuint compositeAttachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+        glDrawBuffers(2, compositeAttachments);
+
+        // Unbind framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        // # Outline framebuffer
+
+        // Generate OpenGL objects for framebuffers
+        glGenFramebuffers(1, &mOutlineFramebuffer);
+        glGenTextures(1, &mOutlineTexture);
+        glGenRenderbuffers(1, &mOutlineDepthStencil);
+
+        // Bind framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, mOutlineFramebuffer);
+
+        // Setup outline texture
+        glBindTexture(GL_TEXTURE_2D, mOutlineTexture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        // Bind outline texture
+        glFramebufferTexture2D(
+            GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mOutlineTexture, 0);
+
+        // Tell which attachments to draw
+        GLuint outlineAttachments[1] = {GL_COLOR_ATTACHMENT0};
+        glDrawBuffers(1, outlineAttachments);
 
         // Unbind framebuffer
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         // Remember creation
-        mFramebufferExist = true;
+        mFramebuffersExist = true;
     }
+
+    // # Composite framebuffer
 
     // Bind framebuffer (seems to be necessary for renderbuffer)
     glBindFramebuffer(GL_FRAMEBUFFER, mCompositeFramebuffer);
@@ -1358,6 +1470,29 @@ void SurfaceDynamicsVisualization::createFramebuffers()
     // (Re)Bind depth and stencil
     glFramebufferRenderbuffer(
         GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mCompositeDepthStencil);
+
+    // Unbind framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // # Outline framebuffer
+
+    // Bind framebuffer (seems to be necessary for renderbuffer)
+    glBindFramebuffer(GL_FRAMEBUFFER, mOutlineFramebuffer);
+
+    // Create outline texture (with alpha!)
+    glBindTexture(GL_TEXTURE_2D, mOutlineTexture);
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, GL_RGBA8, mWindowWidth, mWindowHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Create renderbuffer
+    glBindRenderbuffer(GL_RENDERBUFFER, mOutlineDepthStencil);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, mWindowWidth, mWindowHeight);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    // (Re)Bind depth and stencil
+    glFramebufferRenderbuffer(
+        GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mOutlineDepthStencil);
 
     // Unbind framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);

@@ -17,7 +17,7 @@ layout(std430, binding = 1) restrict readonly buffer TrajectoryBuffer
    Position trajectory[];
 };
 
-// Indices of surface atoms
+// Indices of atoms
 layout(binding = 2, r32ui) readonly restrict uniform uimageBuffer Indices;
 
 // Uniforms

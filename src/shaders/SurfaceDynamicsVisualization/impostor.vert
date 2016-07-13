@@ -24,13 +24,12 @@ layout(std430, binding = 1) restrict readonly buffer TrajectoryBuffer
    Position trajectory[];
 };
 
-// Indices of surface atoms
+// Indices of atoms
 layout(binding = 2, r32ui) readonly restrict uniform uimageBuffer Indices;
 
 // Uniforms
-uniform vec3 cameraWorldPos;
 uniform float probeRadius;
-uniform int selectedIndex;
+uniform int selectedIndex = 0;
 uniform vec3 color;
 uniform int frame;
 uniform int atomCount;

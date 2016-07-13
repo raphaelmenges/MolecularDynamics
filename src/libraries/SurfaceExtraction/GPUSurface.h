@@ -4,6 +4,7 @@
 #ifndef GPU_SURFACE_H
 #define GPU_SURFACE_H
 
+#include "GPUTextureBuffer.h"
 #include <GL/glew.h>
 #include <vector>
 #include <memory>
@@ -47,54 +48,6 @@ public:
     int getCountOfSurfaceAtoms(int layer) const { return mSurfaceCounts.at(layer); }
 
 private:
-
-    // GPUTextureBuffer class
-    class GPUTextureBuffer
-    {
-    public:
-
-        // Accessibility in shader
-        enum GPUAccess
-        {
-            WRITE_ONLY, READ_ONLY
-        };
-
-        // Constructor
-        GPUTextureBuffer(int size);
-        GPUTextureBuffer(std::vector<GLuint> data);
-
-        // Destructor
-        virtual ~GPUTextureBuffer();
-
-        // Bind as image
-        void bindAsImage(GLuint slot, GPUAccess access) const;
-
-        // Get size of buffer
-        GLuint getSize() const { return mSize; }
-
-        // Get texture handle
-        GLuint getTexture() const { return mTexture; }
-
-        // Get buffer handle
-        GLuint getBuffer() const { return mBuffer; }
-
-        // Read values from texture buffer
-        std::vector<GLuint> read(int size) const;
-
-        // Fill buffer
-        void fillBuffer(const std::vector<GLuint>& rData) const;
-
-    private:
-
-        // Handle for texture which is defined by buffer
-        GLuint mTexture;
-
-        // Handle for buffer which holds the data
-        GLuint mBuffer;
-
-        // Size of data in buffer
-        GLuint mSize;
-    };
 
     // Internal indices
     std::vector<std::unique_ptr<GPUTextureBuffer> > mInternalIndices;

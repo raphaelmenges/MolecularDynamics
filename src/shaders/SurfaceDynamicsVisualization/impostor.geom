@@ -1,5 +1,6 @@
 #version 430
 
+// In / out
 layout(points) in;
 
 layout(triangle_strip, max_vertices = 4) out;
@@ -13,9 +14,11 @@ flat out vec3 center;
 flat out vec3 color;
 flat out int index;
 
+// Uniforms
 uniform mat4 projection;
 uniform mat4 view;
 
+// Main function
 void main()
 {
     // Get center
