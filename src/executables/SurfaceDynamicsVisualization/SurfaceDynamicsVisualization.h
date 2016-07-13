@@ -10,6 +10,7 @@
 #include "SurfaceExtraction/GPUProtein.h"
 #include "SurfaceExtraction/GPUSurfaceExtraction.h"
 #include "SurfaceExtraction/SurfaceValidation.h"
+#include "Framebuffer.h"
 
 // Notes:
 // - Calculations done in angstrom
@@ -61,9 +62,6 @@ private:
 
     // Get atom beneath cursor. Returns -1 when fails
     int getAtomBeneathCursor() const;
-
-    // (Re)Create framebuffers
-    void createFramebuffers();
 
     // Setup
     const bool mInitiallyUseGLSLImplementation = false;
@@ -148,18 +146,10 @@ private:
     int mWindowWidth;
     int mWindowHeight;
     GLuint mCubemapTexture;
-
-    // Composite Framebuffer
-    GLuint mCompositeFramebuffer; // renders to CompositeTexture and AtomIdTexture
-    GLuint mCompositeTexture;
-    GLuint mPickIndexTexture; // at the moment used for atoms, only
-    GLuint mCompositeDepthStencil;
-
-    // Outline Framebuffer
-    GLuint mOutlineFramebuffer;
-    GLuint mOutlineTexture;
-    GLuint mOutlineDepthStencil;
+    std::unique_ptr<Framebuffer> mupCompositeFramebuffer;
+    std::unique_ptr<Framebuffer> mupOutlineFramebuffer;
     std::unique_ptr<GPUTextureBuffer> mupOutlineAtomIndices;
+
 
     // Surface validation
     std::unique_ptr<SurfaceValidation> mupSurfaceValidation;

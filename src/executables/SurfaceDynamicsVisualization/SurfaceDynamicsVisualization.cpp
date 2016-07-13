@@ -96,7 +96,66 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     setScrollCallback(mpWindow, kS);
 
     // # Prepare framebuffers for rendering
-    createFramebuffers();
+    mupCompositeFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight));
+    mupCompositeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGB); // composite
+    mupCompositeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGB); // picking index
+    mupOutlineFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight));
+    mupOutlineFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA);
+
+    // # Prepare cubemap
+    std::vector<std::string> cubemapFullpaths;
+    /*
+    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posx.jpg"));
+    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negx.jpg"));
+    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posy.jpg"));
+    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negy.jpg"));
+    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posz.jpg"));
+    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negz.jpg"));
+    */
+    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/posx.png"));
+    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/negx.png"));
+    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/posy.png"));
+    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/negy.png"));
+    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/posz.png"));
+    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/negz.png"));
+
+    // Setup stb_image
+    // stbi_set_flip_vertically_on_load(true);
+    int width, height, channelCount;
+
+    // Create texture
+    glGenTextures(1, &mCubemapTexture);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, mCubemapTexture);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    // Load all directions
+    for(int i = 0; i < cubemapFullpaths.size(); i++)
+    {
+        // Try to load image
+        unsigned char* pData = stbi_load(cubemapFullpaths.at(i).c_str(), &width, &height, &channelCount, 0);
+
+        // Check whether file was found and parsed
+        if (pData == NULL)
+        {
+            std::cout << "Image file not found or error at parsing: " << cubemapFullpaths.at(i) << std::endl;
+            continue;
+        }
+
+        // Set texture
+        glTexImage2D(
+            GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+            0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, pData); // TODO: use channel count given by stb_image?
+
+        // Delete raw image data
+        stbi_image_free(pData);
+    }
+
+    // Unbind texture
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
     // # Load protein
 
@@ -205,61 +264,6 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     // # Run implementation to extract surface atoms
     computeLayers(0, 0, mInitiallyUseGLSLImplementation);
 
-    // # Load cubemap textures
-    std::vector<std::string> cubemapFullpaths;
-    /*
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posx.jpg"));
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negx.jpg"));
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posy.jpg"));
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negy.jpg"));
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posz.jpg"));
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negz.jpg"));
-    */
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/posx.png"));
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/negx.png"));
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/posy.png"));
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/negy.png"));
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/posz.png"));
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/negz.png"));
-
-    // Setup stb_image
-    // stbi_set_flip_vertically_on_load(true);
-    int width, height, channelCount;
-
-    // Create texture
-    glGenTextures(1, &mCubemapTexture);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, mCubemapTexture);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-    // Load all directions
-    for(int i = 0; i < cubemapFullpaths.size(); i++)
-    {
-        // Try to load image
-        unsigned char* pData = stbi_load(cubemapFullpaths.at(i).c_str(), &width, &height, &channelCount, 0);
-
-        // Check whether file was found and parsed
-        if (pData == NULL)
-        {
-            std::cout << "Image file not found or error at parsing: " << cubemapFullpaths.at(i) << std::endl;
-            continue;
-        }
-
-        // Set texture
-        glTexImage2D(
-            GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-            0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, pData); // TODO: use channel count given by stb_image?
-
-        // Delete raw image data
-        stbi_image_free(pData);
-    }
-
-    // Unbind texture
-    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-
     // # Other
 
     // Prepare validation of the surface
@@ -271,17 +275,6 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
 
 SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
 {
-    // Delete composite framebuffers
-    glDeleteFramebuffers(1, &mCompositeFramebuffer);
-    glDeleteTextures(1, &mCompositeTexture);
-    glDeleteTextures(1, &mPickIndexTexture);
-    glDeleteRenderbuffers(1, &mCompositeDepthStencil);
-
-    // Delete outline framebuffer
-    glDeleteFramebuffers(1, &mOutlineFramebuffer);
-    glDeleteTextures(1, &mOutlineTexture);
-    glDeleteRenderbuffers(1, &mOutlineDepthStencil);
-
     // Delete cubemap
     glDeleteTextures(1, &mCubemapTexture);
 }
@@ -345,14 +338,10 @@ void SurfaceDynamicsVisualization::renderLoop()
     {
         // Viewport size
         glm::vec2 resolution = getResolution(mpWindow);
+        mWindowWidth = resolution.x;
+        mWindowHeight = resolution.y;
 
-        // Check for change of resolution
-        if(resolution.x != mWindowWidth || resolution.y != mWindowHeight)
-        {
-            mWindowWidth = resolution.x;
-            mWindowHeight = resolution.y;
-            createFramebuffers();
-        }
+        // # Update everything before drawing
 
         // If playing, decide whether to switch to next frame of animation
         if(mPlayAnimation)
@@ -434,11 +423,12 @@ void SurfaceDynamicsVisualization::renderLoop()
         }
 
         // Update camera
-        mupCamera->update(resolution.x, resolution.y, mUsePerspectiveCamera);
+        mupCamera->update(mWindowWidth, mWindowHeight, mUsePerspectiveCamera);
 
         // # Fill outline framebuffer
-        glBindFramebuffer(GL_FRAMEBUFFER, mOutlineFramebuffer);
-        glViewport(0, 0, resolution.x, resolution.y);
+        mupOutlineFramebuffer->bind();
+        mupOutlineFramebuffer->resize(mWindowWidth, mWindowHeight);
+        glViewport(0, 0, mWindowWidth, mWindowHeight);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Get count of atoms which will get a outline (size of buffer can be used here because all elements are valid)
@@ -487,9 +477,13 @@ void SurfaceDynamicsVisualization::renderLoop()
             glDisable(GL_STENCIL_TEST);
         }
 
+        // Unbind framebuffer for outlines
+        mupOutlineFramebuffer->unbind();
+
         // # Fill composite framebuffer
-        glBindFramebuffer(GL_FRAMEBUFFER, mCompositeFramebuffer);
-        glViewport(0, 0, resolution.x, resolution.y);
+        mupCompositeFramebuffer->bind();
+        mupCompositeFramebuffer->resize(mWindowWidth, mWindowHeight);
+        glViewport(0, 0, mWindowWidth, mWindowHeight);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Render cubemap
@@ -623,9 +617,11 @@ void SurfaceDynamicsVisualization::renderLoop()
             glEnable(GL_DEPTH_TEST);
         }
 
+        // Unbind composite framebuffer
+        mupCompositeFramebuffer->unbind();
+
         // # Fill standard framebuffer
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glViewport(0, 0, resolution.x, resolution.y);
+        glViewport(0, 0, mWindowWidth, mWindowHeight);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Disable depth test
@@ -633,11 +629,11 @@ void SurfaceDynamicsVisualization::renderLoop()
 
         // Bind composite framebuffer texture
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, mCompositeTexture);
+        glBindTexture(GL_TEXTURE_2D, mupCompositeFramebuffer->getAttachment(0));
 
         // Bind outline framebuffer texture
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, mOutlineTexture);
+        glBindTexture(GL_TEXTURE_2D, mupOutlineFramebuffer->getAttachment(0));
 
         // Draw screenfilling quad
         screenFillingProgram.use();
@@ -1263,7 +1259,7 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
 int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
 {
     // Bind correct framebuffer and point to attachment with pick indices
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, mCompositeFramebuffer);
+    mupCompositeFramebuffer->bind();
     glReadBuffer(GL_COLOR_ATTACHMENT1);
 
     // Get position of cursor
@@ -1272,13 +1268,13 @@ int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
 
     // Get pick index
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    unsigned char data[4];
+    unsigned char data[3];
     glReadPixels((int)cursorX, mWindowHeight - (int)cursorY, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, data);
     int index =
         data[0] +
         data[1] * 256 +
         data[2] * 256*256;
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    mupCompositeFramebuffer->unbind();
 
     // Index of zero means, that nothing was there
     if(index <= 0)
@@ -1289,213 +1285,6 @@ int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
     {
         return (index - 1); // starts at one but should start at zero
     }
-
-    /*
-
-    // Variables to collect results
-    int foundIndex = -1;
-    float foundDistance = std::numeric_limits<float>::max();
-
-    // Preallocation
-    glm::vec3 sphereCenter;
-    float sphereRadius;
-
-    // Generate ray
-    double cursorX, cursorY;
-    glfwGetCursorPos(mpWindow, &cursorX, &cursorY);
-    glm::vec3 linePoint = mupCamera->getPositionAtPixel(cursorX, cursorY);
-    glm::vec3 lineDir = mupCamera->getDirection();
-
-    // Go over display atoms and use Line - Sphere intersection
-    auto indices = mGPUSurfaces.at(mFrame - mComputedStartFrame)->getInputIndices(mLayer);
-    auto spRadii = mupGPUProtein->getRadii();
-    auto spTrajectory = mupGPUProtein->getTrajectory();
-    for(const auto& rIndex : indices)
-    {
-        // Get information about atom
-        sphereCenter = spTrajectory->at(mFrame).at(rIndex);
-        sphereRadius = spRadii->at(rIndex);
-        if(mRenderWithProbeRadius) { sphereRadius += mProbeRadius; }
-
-        // Right part of equation beneath square root
-        float underSQRT1 = glm::dot(lineDir, (linePoint - sphereCenter));
-        underSQRT1 = underSQRT1 * underSQRT1;
-        float underSQRT2 = glm::length(linePoint - sphereCenter);
-        underSQRT2 = underSQRT2 * underSQRT2;
-        float underSQRT = (underSQRT1 - underSQRT2 + (sphereRadius * sphereRadius));
-
-        // Left part of equation
-        float left = -(glm::dot(lineDir, (linePoint - sphereCenter)));
-
-        if(underSQRT > 0)
-        {
-            // Right part of equation
-            float right = glm::sqrt(underSQRT);
-
-            // First point
-            float d = left + right; // d can be directly used as length of line
-            if(d < foundDistance)
-            {
-                foundIndex = rIndex;
-                foundDistance = d;
-            }
-
-            // Second point
-            d = left - right;
-            if(d < foundDistance)
-            {
-                foundIndex = rIndex;
-                foundDistance = d;
-            }
-        }
-        else if(underSQRT == 0)
-        {
-            // Single point
-            float d = left;
-            if(d < foundDistance)
-            {
-                foundIndex = rIndex;
-                foundDistance = d;
-            }
-        }
-    }
-
-    return foundIndex;
-
-    */
-}
-
-void SurfaceDynamicsVisualization::createFramebuffers()
-{
-    // Generate OpenGL objects if necessary
-    if(!mFramebuffersExist)
-    {
-        // # Composite framebuffer
-
-        // Generate OpenGL objects for framebuffers
-        glGenFramebuffers(1, &mCompositeFramebuffer);
-        glGenTextures(1, &mCompositeTexture);
-        glGenTextures(1, &mPickIndexTexture);
-        glGenRenderbuffers(1, &mCompositeDepthStencil);
-
-        // Bind framebuffer
-        glBindFramebuffer(GL_FRAMEBUFFER, mCompositeFramebuffer);
-
-        // Setup composite texture
-        glBindTexture(GL_TEXTURE_2D, mCompositeTexture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-        glBindTexture(GL_TEXTURE_2D, 0);
-
-        // Bind composite texture
-        glFramebufferTexture2D(
-            GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mCompositeTexture, 0);
-
-        // Setup pick index texture
-        glBindTexture(GL_TEXTURE_2D, mPickIndexTexture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-        glBindTexture(GL_TEXTURE_2D, 0);
-
-        // Bind pick index texture
-        glFramebufferTexture2D(
-            GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, mPickIndexTexture, 0);
-
-        // Tell which attachments to draw
-        GLuint compositeAttachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
-        glDrawBuffers(2, compositeAttachments);
-
-        // Unbind framebuffer
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        // # Outline framebuffer
-
-        // Generate OpenGL objects for framebuffers
-        glGenFramebuffers(1, &mOutlineFramebuffer);
-        glGenTextures(1, &mOutlineTexture);
-        glGenRenderbuffers(1, &mOutlineDepthStencil);
-
-        // Bind framebuffer
-        glBindFramebuffer(GL_FRAMEBUFFER, mOutlineFramebuffer);
-
-        // Setup outline texture
-        glBindTexture(GL_TEXTURE_2D, mOutlineTexture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-        glBindTexture(GL_TEXTURE_2D, 0);
-
-        // Bind outline texture
-        glFramebufferTexture2D(
-            GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mOutlineTexture, 0);
-
-        // Tell which attachments to draw
-        GLuint outlineAttachments[1] = {GL_COLOR_ATTACHMENT0};
-        glDrawBuffers(1, outlineAttachments);
-
-        // Unbind framebuffer
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        // Remember creation
-        mFramebuffersExist = true;
-    }
-
-    // # Composite framebuffer
-
-    // Bind framebuffer (seems to be necessary for renderbuffer)
-    glBindFramebuffer(GL_FRAMEBUFFER, mCompositeFramebuffer);
-
-    // Create composite texture
-    glBindTexture(GL_TEXTURE_2D, mCompositeTexture);
-    glTexImage2D(
-        GL_TEXTURE_2D, 0, GL_RGB8, mWindowWidth, mWindowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    // Create pick index texture
-    glBindTexture(GL_TEXTURE_2D, mPickIndexTexture);
-    glTexImage2D(
-        GL_TEXTURE_2D, 0, GL_RGB8, mWindowWidth, mWindowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    // Create renderbuffer
-    glBindRenderbuffer(GL_RENDERBUFFER, mCompositeDepthStencil);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, mWindowWidth, mWindowHeight);
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-    // (Re)Bind depth and stencil
-    glFramebufferRenderbuffer(
-        GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mCompositeDepthStencil);
-
-    // Unbind framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    // # Outline framebuffer
-
-    // Bind framebuffer (seems to be necessary for renderbuffer)
-    glBindFramebuffer(GL_FRAMEBUFFER, mOutlineFramebuffer);
-
-    // Create outline texture (with alpha!)
-    glBindTexture(GL_TEXTURE_2D, mOutlineTexture);
-    glTexImage2D(
-        GL_TEXTURE_2D, 0, GL_RGBA8, mWindowWidth, mWindowHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    // Create renderbuffer
-    glBindRenderbuffer(GL_RENDERBUFFER, mOutlineDepthStencil);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, mWindowWidth, mWindowHeight);
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-    // (Re)Bind depth and stencil
-    glFramebufferRenderbuffer(
-        GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mOutlineDepthStencil);
-
-    // Unbind framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 // ### Main function ###
