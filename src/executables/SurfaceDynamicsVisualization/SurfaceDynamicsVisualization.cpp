@@ -29,15 +29,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     mpWindow = generateWindow(mWindowTitle, mWindowWidth, mWindowHeight);
 
     // Create empty outline atoms indices after OpenGL initialization
-    // mupOutlineAtomIndices = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(0)); // create empty outline atom indices buffer
-    std::vector<GLuint> outlineIndices;
-    outlineIndices.push_back(10);
-    outlineIndices.push_back(11);
-    outlineIndices.push_back(12);
-    outlineIndices.push_back(13);
-    outlineIndices.push_back(14);
-    outlineIndices.push_back(15);
-    mupOutlineAtomIndices = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(outlineIndices));
+    mupOutlineAtomIndices = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(0)); // create empty outline atom indices buffer
 
     // Construct GPUSurfaceExtraction object after OpenGL has been initialized
     mupGPUSurfaceExtraction = std::unique_ptr<GPUSurfaceExtraction>(new GPUSurfaceExtraction);
@@ -56,6 +48,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
         0x25B8, 0x25B8, // play
         0x5f0, 0x5f0, // pause
         0x2794, 0x2794, // right arrow
+        0x25cb, 0x25cb, // circle
         0
     }; // has to be static to be available during run
     io.Fonts->AddFontFromFileTTF(fontpath.c_str(), 16, &config, ranges);
@@ -707,6 +700,7 @@ void SurfaceDynamicsVisualization::mouseButtonCallback(int button, int action, i
     {
         int atomIndex = getAtomBeneathCursor();
         mSelectedAtom = atomIndex >= 0 ? atomIndex : mSelectedAtom;
+        mNextAnalyseAtomIndex = mSelectedAtom;
     }
 }
 
@@ -1199,7 +1193,65 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.0f, 0.5f, 0.75f)); // window background
         ImGui::Begin("Analysis", NULL, 0);
 
+        if (ImGui::CollapsingHeader("Atoms"))
+        {
+            ImGui::BeginChild(
+                "AnalyseAtoms",
+                ImVec2(ImGui::GetWindowContentRegionWidth() * 1.0f, 100),
+                false,
+                ImGuiWindowFlags_HorizontalScrollbar);
 
+            // Useful variables
+            std::vector<int> toBeRemoved;
+            bool recreateOutlineAtomsIndices = false;
+
+            // Go over analyse atoms and list them
+            for (int atomIndex : mAnalyseAtoms)
+            {
+                // Information about atom
+                ImGui::Text("%05d", atomIndex);
+                ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 60);
+
+                // Select that atom (use ## to add number for an unique button id)
+                if(ImGui::Button(std::string("\u25cb##" + std::to_string(atomIndex)).c_str()))
+                {
+                    mSelectedAtom = atomIndex;
+                }
+                if(ImGui::IsItemHovered()) { ImGui::SetTooltip("Select Atom"); } // tooltip
+                ImGui::SameLine();
+
+                // Remove that atom from analysis atoms (use ## to add number for an unique button id)
+                if(ImGui::Button(std::string("\u00D7##" + std::to_string(atomIndex)).c_str()))
+                {
+                    toBeRemoved.push_back(atomIndex);
+                    recreateOutlineAtomsIndices = true;
+                }
+                if(ImGui::IsItemHovered()) { ImGui::SetTooltip("Remove Atom"); } // tooltip
+            }
+
+            // Remove atoms
+            for(int atomIndex : toBeRemoved) { mAnalyseAtoms.erase(atomIndex); }
+            ImGui::EndChild();
+
+            // Add new atoms to analyse
+            ImGui::InputInt("", &mNextAnalyseAtomIndex);
+            mNextAnalyseAtomIndex = glm::clamp(mNextAnalyseAtomIndex, 0, mupGPUProtein->getAtomCount());
+            ImGui::SameLine();
+            if(ImGui::Button("Add Atom"))
+            {
+                // Add atom to list of analyse atoms
+                mAnalyseAtoms.insert((GLuint)mNextAnalyseAtomIndex);
+                recreateOutlineAtomsIndices = true;
+            }
+
+            // Recreate outline atom indices if necessary
+            if(recreateOutlineAtomsIndices)
+            {
+                std::vector<GLuint> analyseAtomVector;
+                std::copy(mAnalyseAtoms.begin(), mAnalyseAtoms.end(), std::back_inserter(analyseAtomVector));
+                mupOutlineAtomIndices = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(analyseAtomVector));
+            }
+        }
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background

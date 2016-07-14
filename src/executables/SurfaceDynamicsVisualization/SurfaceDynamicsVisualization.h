@@ -5,6 +5,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <set>
 
 #include "ShaderTools/ShaderProgram.h"
 #include "SurfaceExtraction/GPUProtein.h"
@@ -150,7 +151,8 @@ private:
     std::unique_ptr<Framebuffer> mupCompositeFramebuffer;
     std::unique_ptr<Framebuffer> mupOutlineFramebuffer;
     std::unique_ptr<GPUTextureBuffer> mupOutlineAtomIndices;
-
+    std::set<GLuint> mAnalyseAtoms;
+    int mNextAnalyseAtomIndex = 0;
 
     // Surface validation
     std::unique_ptr<SurfaceValidation> mupSurfaceValidation;
