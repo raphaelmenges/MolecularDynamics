@@ -380,14 +380,14 @@ void SurfaceDynamicsVisualization::renderLoop()
         glfwGetCursorPos(mpWindow, &cursorX, &cursorY);
         GLfloat cursorDeltaX = (float)cursorX - prevCursorX;
         GLfloat cursorDeltaY = (float)cursorY - prevCursorY;
-        prevCursorX = cursorX;
-        prevCursorY = cursorY;
+        bool lockCursorPosition = false;
 
         // Rotate camera
         if(mRotateCamera)
         {
             mCameraDeltaRotation = glm::vec2(cursorDeltaX, cursorDeltaY);
             mCameraRotationSmoothTime = 1.f;
+            lockCursorPosition = true;
         }
         else
         {
@@ -415,10 +415,23 @@ void SurfaceDynamicsVisualization::renderLoop()
                 + (deltaTime * mupCamera->getRadius()
                     * (((float)cursorDeltaX * a)
                         + ((float)cursorDeltaY * b))));
+
+            lockCursorPosition = true;
         }
 
         // Update camera
         mupCamera->update(mWindowWidth, mWindowHeight, mUsePerspectiveCamera);
+
+        // Remember about cursor position
+        if(lockCursorPosition)
+        {
+            glfwSetCursorPos(mpWindow, prevCursorX, prevCursorY);
+        }
+        else
+        {
+            prevCursorX = cursorX;
+            prevCursorY = cursorY;
+        }
 
         // # Fill outline framebuffer
         mupOutlineFramebuffer->bind();
@@ -858,7 +871,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Checkbox("Extract Layers", &mExtractLayers);
         ImGui::SliderInt("Start Frame", &mComputationStartFrame, 0, mComputationEndFrame);
         ImGui::SliderInt("End Frame", &mComputationEndFrame, mComputationStartFrame, mupGPUProtein->getFrameCount() - 1);
-        ImGui::SliderInt("CPU Cores", &mCPUThreads, 1, 24);
+        ImGui::SliderInt("CPU Threads", &mCPUThreads, 1, 24);
         if(ImGui::Button("\u2794 GPGPU")) { computeLayers(mComputationStartFrame, mComputationEndFrame, true); }
         ImGui::SameLine();
         if(ImGui::Button("\u2794 CPU")) { computeLayers(mComputationStartFrame, mComputationEndFrame, false); }

@@ -83,8 +83,8 @@ private:
     const float mDepthDarkeningMaxEnd = 1000.f;
     const int mInitialWindowWidth = 1280;
     const int mInitialWindowHeight = 720;
-    const float mOutlineWidth = 0.1f;
-    const glm::vec4 mOutlineColor = glm::vec4(1.f, 0.75f, 0.f, 0.75f);
+    const float mOutlineWidth = 0.15f;
+    const glm::vec4 mOutlineColor = glm::vec4(1.f, 1.f, 0.f, 0.9f);
 
     // Controllable parameters
     bool mRotateCamera = false;
