@@ -85,6 +85,8 @@ private:
     const int mInitialWindowHeight = 720;
     const float mOutlineWidth = 0.15f;
     const glm::vec4 mOutlineColor = glm::vec4(1.f, 1.f, 0.f, 0.9f);
+    const glm::vec3 mPastPathColor = glm::vec3(1.f, 0.f, 0.f);
+    const glm::vec3 mFuturePathColor = glm::vec3(0.f, 1.f, 0.f);
 
     // Controllable parameters
     bool mRotateCamera = false;
@@ -122,6 +124,7 @@ private:
     float mDepthDarkeningStart = 100.f;
     float mDepthDarkeningEnd = 500.f;
     bool mShowAnalysisWindow = true;
+    bool mShowPath = true;
 
     // Report output
     std::string mComputeInformation = "No computation info available";
@@ -153,6 +156,10 @@ private:
     std::unique_ptr<GPUTextureBuffer> mupOutlineAtomIndices;
     std::set<GLuint> mAnalyseAtoms;
     int mNextAnalyseAtomIndex = 0;
+    GLuint mPathVBO = 0;
+    GLuint mPathVAO = 0;
+    int mPathLength = 0;
+    std::unique_ptr<ShaderProgram> mupPathProgram;
 
     // Surface validation
     std::unique_ptr<SurfaceValidation> mupSurfaceValidation;

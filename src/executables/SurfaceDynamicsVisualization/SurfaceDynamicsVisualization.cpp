@@ -152,6 +152,28 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     // Unbind texture
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
+    // # Create path
+
+    // Shader
+    mupPathProgram = std::unique_ptr<ShaderProgram>(new ShaderProgram("/SurfaceDynamicsVisualization/path.vert", "/SurfaceDynamicsVisualization/path.frag"));
+
+    // Generate and bind vertex array object
+    glGenVertexArrays(1, &mPathVAO);
+    glBindVertexArray(mPathVAO);
+
+    // Generate vertex buffer but do not fill it
+    glGenBuffers(1, &mPathVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, mPathVBO);
+
+    // Bind it to shader program
+    GLint posAttrib = glGetAttribLocation(mupPathProgram->getProgramHandle(), "position");
+    glEnableVertexAttribArray(posAttrib);
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    // Unbind everything
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
     // # Load protein
 
     /*
@@ -272,6 +294,10 @@ SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
 {
     // Delete cubemap
     glDeleteTextures(1, &mCubemapTexture);
+
+    // Delete path
+    glDeleteVertexArrays(1, &mPathVAO);
+    glDeleteBuffers(1, &mPathVBO);
 }
 
 void SurfaceDynamicsVisualization::renderLoop()
@@ -620,6 +646,25 @@ void SurfaceDynamicsVisualization::renderLoop()
             axisGizmoProgram.update("model", axisModelMatrix);
             axisGizmoProgram.update("color", glm::vec3(0.f, 0.f, 1.f));
             glDrawArrays(GL_LINES, 0, axisVertices.size());
+
+            glBindVertexArray(0);
+            glEnable(GL_DEPTH_TEST);
+        }
+
+        // Drawing of coordinates system axes
+        if(mShowPath && mPathLength > 0)
+        {
+            glDisable(GL_DEPTH_TEST);
+            glBindVertexArray(mPathVAO);
+
+            // General shader setup
+            mupPathProgram->use();
+            mupPathProgram->update("view", mupCamera->getViewMatrix());
+            mupPathProgram->update("projection", mupCamera->getProjectionMatrix());
+            mupPathProgram->update("pastColor", mPastPathColor);
+            mupPathProgram->update("futureColor", mFuturePathColor);
+            mupPathProgram->update("frame", mFrame);
+            glDrawArrays(GL_LINE_STRIP, 0, mPathLength);
 
             glBindVertexArray(0);
             glEnable(GL_DEPTH_TEST);
@@ -1216,7 +1261,7 @@ void SurfaceDynamicsVisualization::renderGUI()
 
             // Useful variables
             std::vector<int> toBeRemoved;
-            bool recreateOutlineAtomsIndices = false;
+            bool analysisAtomsChanged = false;
 
             // Go over analyse atoms and list them
             for (int atomIndex : mAnalyseAtoms)
@@ -1237,7 +1282,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                 if(ImGui::Button(std::string("\u00D7##" + std::to_string(atomIndex)).c_str()))
                 {
                     toBeRemoved.push_back(atomIndex);
-                    recreateOutlineAtomsIndices = true;
+                    analysisAtomsChanged = true;
                 }
                 if(ImGui::IsItemHovered()) { ImGui::SetTooltip("Remove Atom"); } // tooltip
             }
@@ -1254,15 +1299,56 @@ void SurfaceDynamicsVisualization::renderGUI()
             {
                 // Add atom to list of analyse atoms
                 mAnalyseAtoms.insert((GLuint)mNextAnalyseAtomIndex);
-                recreateOutlineAtomsIndices = true;
+                analysisAtomsChanged = true;
             }
 
-            // Recreate outline atom indices if necessary
-            if(recreateOutlineAtomsIndices)
+            // Recreate outline atom indices and path visualization
+            if(analysisAtomsChanged)
             {
+                // Outline
                 std::vector<GLuint> analyseAtomVector;
                 std::copy(mAnalyseAtoms.begin(), mAnalyseAtoms.end(), std::back_inserter(analyseAtomVector));
                 mupOutlineAtomIndices = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(analyseAtomVector));
+
+                // Path
+                auto rTrajectoy = mupGPUProtein->getTrajectory();
+
+                // Go over frames
+                std::vector<glm::vec3> path;
+                for(const auto& frame : *(rTrajectoy.get()))
+                {
+                    // Go over analysed atoms and accumulate position in frame
+                    glm::vec3 acc(0,0,0);
+                    for(int atomIndex : mAnalyseAtoms)
+                    {
+                        acc += frame.at(atomIndex);
+                    }
+
+                    // Calculate average and push to vector
+                    path.push_back(acc / mAnalyseAtoms.size());
+                }
+
+                // Fill it to vertex buffer of path
+                glBindBuffer(GL_ARRAY_BUFFER, mPathVBO);
+                glBufferData(GL_ARRAY_BUFFER, path.size() * sizeof(glm::vec3), path.data(), GL_DYNAMIC_DRAW);
+                glBindBuffer(GL_ARRAY_BUFFER, 0);
+                mPathLength = path.size();
+            }
+        }
+
+        // Show / hide path
+        if(mShowPath)
+        {
+            if(ImGui::Button("Hide Path", ImVec2(75, 22)))
+            {
+                mShowPath = false;
+            }
+        }
+        else
+        {
+            if(ImGui::Button("Show Path", ImVec2(75, 22)))
+            {
+                mShowPath = true;
             }
         }
 
