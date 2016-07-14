@@ -119,8 +119,8 @@ private:
     bool mRepeatAnimation = false;
     int mSmoothAnimationRadius = 0;
     float mSmoothAnimationMaxDeviation = 5;
-    float mDepthDarkeningStart = 50.f;
-    float mDepthDarkeningEnd = 100.f;
+    float mDepthDarkeningStart = 100.f;
+    float mDepthDarkeningEnd = 500.f;
     bool mShowAnalysisWindow = true;
 
     // Report output
