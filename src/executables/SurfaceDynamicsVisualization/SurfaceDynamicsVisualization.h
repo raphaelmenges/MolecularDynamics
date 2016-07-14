@@ -120,6 +120,7 @@ private:
     float mSmoothAnimationMaxDeviation = 5;
     float mDepthDarkeningStart = 50.f;
     float mDepthDarkeningEnd = 100.f;
+    bool mShowAnalysisWindow = true;
 
     // Report output
     std::string mComputeInformation = "No computation info available";

@@ -793,6 +793,17 @@ void SurfaceDynamicsVisualization::renderGUI()
             {
                 if(ImGui::MenuItem("Show Validation", "", false, true)) { mShowValidationWindow = true; }
             }
+
+            // Analysis window
+            if(mShowAnalysisWindow)
+            {
+                if(ImGui::MenuItem("Hide Analysis", "", false, true)) { mShowAnalysisWindow = false; }
+            }
+            else
+            {
+                if(ImGui::MenuItem("Show Analysis", "", false, true)) { mShowAnalysisWindow = true; }
+            }
+
             ImGui::EndMenu();
         }
 
@@ -1175,6 +1186,18 @@ void SurfaceDynamicsVisualization::renderGUI()
         {
             ImGui::Text(mValidationInformation.c_str());
         }
+
+        ImGui::End();
+        ImGui::PopStyleColor(); // window background
+    }
+
+    // Analysis window
+    if(mShowAnalysisWindow)
+    {
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.0f, 0.5f, 0.75f)); // window background
+        ImGui::Begin("Analysis", NULL, 0);
+
+
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background
