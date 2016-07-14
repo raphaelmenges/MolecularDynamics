@@ -25,6 +25,7 @@ void main()
     {
         unprojected = (inverseProjection * vertPositions[i]).xyz;
         eyeDirection = inverseModelview * unprojected;
+        eyeDirection.x = -eyeDirection.x;
         gl_Position = vertPositions[i];
         EmitVertex();
     }

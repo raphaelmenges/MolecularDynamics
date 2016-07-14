@@ -112,12 +112,14 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posz.jpg"));
     cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negz.jpg"));
     */
+    ///*
     cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/posx.png"));
     cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/negx.png"));
     cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/posy.png"));
     cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/negy.png"));
     cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/posz.png"));
     cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/negz.png"));
+    //*/
 
     // Setup stb_image
     // stbi_set_flip_vertically_on_load(true);
