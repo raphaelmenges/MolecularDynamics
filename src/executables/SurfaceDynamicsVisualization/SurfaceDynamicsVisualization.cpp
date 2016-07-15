@@ -166,9 +166,9 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     glBindBuffer(GL_ARRAY_BUFFER, mPathVBO);
 
     // Bind it to shader program
-    GLint posAttrib = glGetAttribLocation(mupPathProgram->getProgramHandle(), "position");
-    glEnableVertexAttribArray(posAttrib);
-    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    mPathPositionAttribute = glGetAttribLocation(mupPathProgram->getProgramHandle(), "position");
+    glEnableVertexAttribArray(mPathPositionAttribute);
+    glVertexAttribPointer(mPathPositionAttribute, 3, GL_FLOAT, GL_FALSE, 0, 0); // called again at path creation
 
     // Unbind everything
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -656,6 +656,15 @@ void SurfaceDynamicsVisualization::renderLoop()
         {
             glDisable(GL_DEPTH_TEST);
             glBindVertexArray(mPathVAO);
+            glBindBuffer(GL_ARRAY_BUFFER, mPathVBO);
+
+            // Point size for rendering
+            glPointSize(mPathPointSize);
+
+            // Decide which path parts are rendered
+            int offset = glm::clamp(mFrame - mPathFrameRadius, 0, mPathLength); // on which frame path starts
+            glVertexAttribPointer(mPathPositionAttribute, 3, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(GLfloat) * 3 * offset));
+            int count = glm::min(((mPathFrameRadius * 2) + 1), mPathLength - offset);
 
             // General shader setup
             mupPathProgram->use();
@@ -664,8 +673,13 @@ void SurfaceDynamicsVisualization::renderLoop()
             mupPathProgram->update("pastColor", mPastPathColor);
             mupPathProgram->update("futureColor", mFuturePathColor);
             mupPathProgram->update("frame", mFrame);
-            glDrawArrays(GL_LINE_STRIP, 0, mPathLength);
+            mupPathProgram->update("offset", offset);
 
+            // Drawing
+            glDrawArrays(GL_LINE_STRIP, 0, count); // path as line
+            glDrawArrays(GL_POINTS, 0, count); // path as points
+
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindVertexArray(0);
             glEnable(GL_DEPTH_TEST);
         }
@@ -1351,6 +1365,9 @@ void SurfaceDynamicsVisualization::renderGUI()
                 mShowPath = true;
             }
         }
+
+        // Radius of frames in path visualization
+        ImGui::SliderInt("Path Radius", &mPathFrameRadius, 1, 100);
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background

@@ -69,6 +69,7 @@ private:
     const float mCameraSmoothDuration = 1.5f;
     const float mAtomPointSize = 15.f;
     const float mSamplePointSize = 2.f;
+    const float mPathPointSize = 3.f;
     const float mMinDrawingExtentOffset = -5.f;
     const float mMaxDrawingExtentOffset = 5.f;
     const float mCameraDefaultAlpha = 90.f;
@@ -125,6 +126,7 @@ private:
     float mDepthDarkeningEnd = 500.f;
     bool mShowAnalysisWindow = true;
     bool mShowPath = true;
+    int mPathFrameRadius = 5; // radius of frames which are visualized
 
     // Report output
     std::string mComputeInformation = "No computation info available";
@@ -158,8 +160,9 @@ private:
     int mNextAnalyseAtomIndex = 0;
     GLuint mPathVBO = 0;
     GLuint mPathVAO = 0;
-    int mPathLength = 0;
+    int mPathLength = 0; // is somehow the same as frame count
     std::unique_ptr<ShaderProgram> mupPathProgram;
+    GLuint mPathPositionAttribute = 0;
 
     // Surface validation
     std::unique_ptr<SurfaceValidation> mupSurfaceValidation;

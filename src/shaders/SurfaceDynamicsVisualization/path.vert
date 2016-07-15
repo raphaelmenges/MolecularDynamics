@@ -10,6 +10,7 @@ uniform mat4 view;
 uniform vec3 pastColor;
 uniform vec3 futureColor;
 uniform int frame;
+uniform int offset;
 
 // Main function
 void main()
@@ -18,7 +19,7 @@ void main()
 
     // TODO: very simple test. In future, maybe start frame is necessary
     // when only part of trajectory is in path and gl_VertexID is relative
-    if(int(gl_VertexID) <= frame)
+    if(int((gl_VertexID) + offset) <= frame)
     {
         color = pastColor;
     }
