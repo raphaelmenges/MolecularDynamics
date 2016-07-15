@@ -93,7 +93,6 @@ private:
     bool mRotateCamera = false;
     bool mMoveCamera = false;
     int mSelectedAtom = 0;
-    bool mRenderImpostor = true;
     bool mRenderWithProbeRadius = false;
     bool mUsePerspectiveCamera = false; // removed from GUI since both spheres
                                         // and cut of spheres is only correct

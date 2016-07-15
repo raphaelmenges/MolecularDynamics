@@ -339,8 +339,7 @@ void SurfaceDynamicsVisualization::renderLoop()
 
     // # Prepare shader programs
 
-    // Shader programs for rendering the protein
-    ShaderProgram pointProgram("/SurfaceDynamicsVisualization/point.vert", "/SurfaceDynamicsVisualization/point.geom", "/SurfaceDynamicsVisualization/point.frag");
+    // Shader program for rendering the protein
     ShaderProgram impostorProgram("/SurfaceDynamicsVisualization/impostor.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
 
     // Shader program for screenfilling quad rendering
@@ -603,75 +602,38 @@ void SurfaceDynamicsVisualization::renderLoop()
         glViewport(0, 0, mWindowWidth, mWindowHeight);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-         // Drawing of molecule
-        if(mRenderImpostor)
+        // Prepare impostor drawing
+        impostorProgram.use();
+        impostorProgram.update("view", mupCamera->getViewMatrix());
+        impostorProgram.update("projection", mupCamera->getProjectionMatrix());
+        impostorProgram.update("cameraWorldPos", mupCamera->getPosition());
+        impostorProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
+        impostorProgram.update("lightDir", mLightDirection);
+        impostorProgram.update("selectedIndex", mSelectedAtom);
+        impostorProgram.update("clippingPlane", mClippingPlane);
+        impostorProgram.update("frame", mFrame);
+        impostorProgram.update("atomCount", mupGPUProtein->getAtomCount());
+        impostorProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+        impostorProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+        impostorProgram.update("frameCount", mupGPUProtein->getFrameCount());
+        impostorProgram.update("depthDarkeningStart", mDepthDarkeningStart);
+        impostorProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
+
+        // Draw internal (first, because at clipping plane are all set to same
+        // viewport depth which means internal are always in front of surface)
+        if(mShowInternal)
         {
-            // Prepare impostor drawing
-            impostorProgram.use();
-            impostorProgram.update("view", mupCamera->getViewMatrix());
-            impostorProgram.update("projection", mupCamera->getProjectionMatrix());
-            impostorProgram.update("cameraWorldPos", mupCamera->getPosition());
-            impostorProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
-            impostorProgram.update("lightDir", mLightDirection);
-            impostorProgram.update("selectedIndex", mSelectedAtom);
-            impostorProgram.update("clippingPlane", mClippingPlane);
-            impostorProgram.update("frame", mFrame);
-            impostorProgram.update("atomCount", mupGPUProtein->getAtomCount());
-            impostorProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
-            impostorProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
-            impostorProgram.update("frameCount", mupGPUProtein->getFrameCount());
-            impostorProgram.update("depthDarkeningStart", mDepthDarkeningStart);
-            impostorProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
-
-            // Draw internal (first, because at clipping plane are all set to same
-            // viewport depth which means internal are always in front of surface)
-            if(mShowInternal)
-            {
-                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndicesForDrawing(mLayer, 2);
-                impostorProgram.update("color", mInternalAtomColor);
-                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
-            }
-
-            // Draw surface
-            if(mShowSurface)
-            {
-                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndicesForDrawing(mLayer, 2);
-                impostorProgram.update("color", mSurfaceAtomColor);
-                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
-            }
+            mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndicesForDrawing(mLayer, 2);
+            impostorProgram.update("color", mInternalAtomColor);
+            glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
         }
-        else
+
+        // Draw surface
+        if(mShowSurface)
         {
-            // Point size for rendering
-            glPointSize(mAtomPointSize);
-
-            // Prepare point drawing
-            pointProgram.use();
-            pointProgram.update("view", mupCamera->getViewMatrix());
-            pointProgram.update("projection", mupCamera->getProjectionMatrix());
-            pointProgram.update("selectedIndex", mSelectedAtom);
-            pointProgram.update("clippingPlane", mClippingPlane);
-            pointProgram.update("frame", mFrame);
-            pointProgram.update("atomCount", mupGPUProtein->getAtomCount());
-            pointProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
-            pointProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
-            pointProgram.update("frameCount", mupGPUProtein->getFrameCount());
-
-            // Draw internal
-            if(mShowInternal)
-            {
-                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndicesForDrawing(mLayer, 2);
-                pointProgram.update("color", mInternalAtomColor);
-                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
-            }
-
-            // Draw surface
-            if(mShowSurface)
-            {
-                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndicesForDrawing(mLayer, 2);
-                pointProgram.update("color", mSurfaceAtomColor);
-                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
-            }
+            mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndicesForDrawing(mLayer, 2);
+            impostorProgram.update("color", mSurfaceAtomColor);
+            glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
         }
 
         // Unbind molecule framebuffer
@@ -1070,33 +1032,18 @@ void SurfaceDynamicsVisualization::renderGUI()
 
         // Render points / spheres
         ImGui::Text("Rendering");
-        if(mRenderImpostor)
-        {
-            if(ImGui::Button("Points", ImVec2(75, 22)))
-            {
-                mRenderImpostor = false;
-            }
-        }
-        else
-        {
-            if(ImGui::Button("Spheres", ImVec2(75, 22)))
-            {
-                mRenderImpostor = true;
-            }
-        }
-        ImGui::SameLine();
 
         // Render / not render with probe radius
         if(mRenderWithProbeRadius)
         {
-            if(ImGui::Button("No Probe Radius", ImVec2(125, 22)))
+            if(ImGui::Button("No Probe Radius", ImVec2(208, 22)))
             {
                 mRenderWithProbeRadius = false;
             }
         }
         else
         {
-            if(ImGui::Button("Add Probe Radius", ImVec2(125, 22)))
+            if(ImGui::Button("Add Probe Radius", ImVec2(208, 22)))
             {
                 mRenderWithProbeRadius = true;
             }
@@ -1135,7 +1082,7 @@ void SurfaceDynamicsVisualization::renderGUI()
             }
         }
 
-         // Show / hide axes gizmo
+        // Show / hide axes gizmo
         if(mShowAxesGizmo)
         {
             if(ImGui::Button("Hide Axes Gizmo", ImVec2(208, 22)))
