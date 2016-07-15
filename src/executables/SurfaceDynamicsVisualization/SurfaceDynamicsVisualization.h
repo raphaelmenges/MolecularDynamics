@@ -153,8 +153,8 @@ private:
     int mWindowWidth;
     int mWindowHeight;
     GLuint mCubemapTexture;
-    std::unique_ptr<Framebuffer> mupCompositeFramebuffer;
-    std::unique_ptr<Framebuffer> mupOutlineFramebuffer;
+    std::unique_ptr<Framebuffer> mupMoleculeFramebuffer;
+    std::unique_ptr<Framebuffer> mupOverlayFramebuffer;
     std::unique_ptr<GPUTextureBuffer> mupOutlineAtomIndices;
     std::set<GLuint> mAnalyseAtoms;
     int mNextAnalyseAtomIndex = 0;

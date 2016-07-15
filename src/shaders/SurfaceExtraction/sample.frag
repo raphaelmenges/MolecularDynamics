@@ -2,11 +2,9 @@
 
 uniform vec3 color;
 
-layout(location = 0) out vec3 fragColor;
-layout(location = 1) out vec3 pickIndex;
+layout(location = 0) out vec4 fragColor;
 
 void main()
 {
-    fragColor = color;
-    pickIndex = vec3(0,0,0);
+    fragColor = vec4(color, 1);
 }

@@ -1,13 +1,11 @@
 #version 430
 
 // In / out
-layout(location = 0) out vec3 fragColor;
-layout(location = 1) out vec3 pickIndex;
+layout(location = 0) out vec4 fragColor;
 in flat vec3 color;
 
 // Main function
 void main()
 {
-    fragColor = color;
-    pickIndex = vec3(0,0,0);
+    fragColor = vec4(color, 1);
 }

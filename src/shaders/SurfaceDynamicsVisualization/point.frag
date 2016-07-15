@@ -2,13 +2,13 @@
 
 flat in vec3 color;
 flat in int index;
-layout(location = 0) out vec3 fragColor;
+layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec3 pickIndex;
 
 void main()
 {
     // Composite
-    fragColor = color;
+    fragColor = vec4(color, 1);
 
     // AtomIndex
     int r = (index & 0x000000FF) >>  0;

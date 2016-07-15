@@ -6,7 +6,7 @@ flat in float radius;
 flat in vec3 center;
 flat in vec3 color;
 flat in int index;
-layout(location = 0) out vec3 fragColor;
+layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec3 pickIndex;
 layout (depth_less) out float gl_FragDepth; // Makes optimizations possible
 
@@ -105,7 +105,7 @@ void main()
     vec3 finalColor = depthDarkening * mix(color * mix(vec3(0.4, 0.45, 0.5), vec3(1.0, 1.0, 1.0), lighting), vec3(1,1,1), specular);
 
     // Output color
-    fragColor = finalColor;
+    fragColor = vec4(finalColor, 1);
 
     // Output pickIndex
     int r = (index & 0x000000FF) >>  0;

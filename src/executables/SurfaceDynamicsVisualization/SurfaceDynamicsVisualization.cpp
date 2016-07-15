@@ -90,11 +90,11 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     setScrollCallback(mpWindow, kS);
 
     // # Prepare framebuffers for rendering
-    mupCompositeFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight));
-    mupCompositeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGB); // composite
-    mupCompositeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGB); // picking index
-    mupOutlineFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight));
-    mupOutlineFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA);
+    mupMoleculeFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight));
+    mupMoleculeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA); // color
+    mupMoleculeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGB); // picking index
+    mupOverlayFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight));
+    mupOverlayFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA);
 
     // # Prepare cubemap
     std::vector<std::string> cubemapFullpaths;
@@ -460,9 +460,9 @@ void SurfaceDynamicsVisualization::renderLoop()
             prevCursorY = cursorY;
         }
 
-        // # Fill outline framebuffer
-        mupOutlineFramebuffer->bind();
-        mupOutlineFramebuffer->resize(mWindowWidth, mWindowHeight);
+        // # Fill overlay framebuffer
+        mupOverlayFramebuffer->bind();
+        mupOverlayFramebuffer->resize(mWindowWidth, mWindowHeight);
         glViewport(0, 0, mWindowWidth, mWindowHeight);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -512,27 +512,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             glDisable(GL_STENCIL_TEST);
         }
 
-        // Unbind framebuffer for outlines
-        mupOutlineFramebuffer->unbind();
-
-        // # Fill composite framebuffer
-        mupCompositeFramebuffer->bind();
-        mupCompositeFramebuffer->resize(mWindowWidth, mWindowHeight);
-        glViewport(0, 0, mWindowWidth, mWindowHeight);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // Render cubemap
-        glDisable(GL_DEPTH_TEST);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, mCubemapTexture);
-        cubemapProgram.use();
-        cubemapProgram.update("cubemap", 0); // tell shader which slot to use
-        cubemapProgram.update("view", mupCamera->getViewMatrix());
-        cubemapProgram.update("projection", mupCamera->getProjectionMatrix());
-        glDrawArrays(GL_POINTS, 0, 1);
-        glEnable(GL_DEPTH_TEST);
-
-        // Drawing of surface validation before everything else, so sample points at same z coordinate as impostor are in front
+        // Drawing of surface validation before molecules, so sample points at same z coordinate as impostor are in front
         if(mShowValidationSamples)
         {
             mupSurfaceValidation->drawSamples(
@@ -546,7 +526,84 @@ void SurfaceDynamicsVisualization::renderLoop()
                 mShowSurfaceSamples);
         }
 
-        // Drawing of molecule
+        // Drawing of coordinates system axes
+        if(mShowAxesGizmo)
+        {
+            glDisable(GL_DEPTH_TEST);
+            glBindVertexArray(axisGizmoVAO);
+
+            // General shader setup
+            axisGizmoProgram.use();
+            axisGizmoProgram.update("view", mupCamera->getViewMatrix());
+            axisGizmoProgram.update("projection", mupCamera->getProjectionMatrix());
+
+            // X axis
+            glm::mat4 axisModelMatrix = glm::translate(glm::mat4(1.f), glm::vec3(0,0,0));
+            axisGizmoProgram.update("model", axisModelMatrix);
+            axisGizmoProgram.update("color", glm::vec3(1.f, 0.f, 0.f));
+            glDrawArrays(GL_LINES, 0, axisVertices.size());
+
+            // Y axis
+            axisModelMatrix = glm::translate(glm::mat4(1.f), glm::vec3(0,0,0));
+            axisModelMatrix = glm::rotate(axisModelMatrix, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            axisGizmoProgram.update("model", axisModelMatrix);
+            axisGizmoProgram.update("color", glm::vec3(0.f, 1.f, 0.f));
+            glDrawArrays(GL_LINES, 0, axisVertices.size());
+
+            // Z axis
+            axisModelMatrix = glm::translate(glm::mat4(1.f), glm::vec3(0,0,0));
+            axisModelMatrix = glm::rotate(axisModelMatrix, glm::radians(270.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            axisGizmoProgram.update("model", axisModelMatrix);
+            axisGizmoProgram.update("color", glm::vec3(0.f, 0.f, 1.f));
+            glDrawArrays(GL_LINES, 0, axisVertices.size());
+
+            glBindVertexArray(0);
+            glEnable(GL_DEPTH_TEST);
+        }
+
+        // Drawing of path
+        if(mShowPath && mPathVertexCount > 0)
+        {
+            glDisable(GL_DEPTH_TEST);
+            glBindVertexArray(mPathVAO);
+            glBindBuffer(GL_ARRAY_BUFFER, mPathVBO);
+
+            // Point size for rendering
+            glPointSize(mPathPointSize);
+
+            // Decide which path parts are rendered
+            int offset = glm::clamp(mFrame - mPathFrameRadius, 0, mPathVertexCount); // on which frame path starts
+            glVertexAttribPointer(mPathPositionAttribute, 3, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(GLfloat) * 3 * offset));
+            int count = glm::min(((mPathFrameRadius * 2) + 1), mPathVertexCount - offset);
+
+            // General shader setup
+            mupPathProgram->use();
+            mupPathProgram->update("view", mupCamera->getViewMatrix());
+            mupPathProgram->update("projection", mupCamera->getProjectionMatrix());
+            mupPathProgram->update("pastColor", mPastPathColor);
+            mupPathProgram->update("futureColor", mFuturePathColor);
+            mupPathProgram->update("frame", mFrame);
+            mupPathProgram->update("offset", offset);
+
+            // Drawing
+            glDrawArrays(GL_LINE_STRIP, 0, count); // path as line
+            glDrawArrays(GL_POINTS, 0, count); // path as points
+
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindVertexArray(0);
+            glEnable(GL_DEPTH_TEST);
+        }
+
+        // Unbind framebuffer for overlay
+        mupOverlayFramebuffer->unbind();
+
+         // # Fill molecule framebuffer
+        mupMoleculeFramebuffer->bind();
+        mupMoleculeFramebuffer->resize(mWindowWidth, mWindowHeight);
+        glViewport(0, 0, mWindowWidth, mWindowHeight);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+         // Drawing of molecule
         if(mRenderImpostor)
         {
             // Prepare impostor drawing
@@ -617,76 +674,8 @@ void SurfaceDynamicsVisualization::renderLoop()
             }
         }
 
-        // Drawing of coordinates system axes
-        if(mShowAxesGizmo)
-        {
-            glDisable(GL_DEPTH_TEST);
-            glBindVertexArray(axisGizmoVAO);
-
-            // General shader setup
-            axisGizmoProgram.use();
-            axisGizmoProgram.update("view", mupCamera->getViewMatrix());
-            axisGizmoProgram.update("projection", mupCamera->getProjectionMatrix());
-
-            // X axis
-            glm::mat4 axisModelMatrix = glm::translate(glm::mat4(1.f), glm::vec3(0,0,0));
-            axisGizmoProgram.update("model", axisModelMatrix);
-            axisGizmoProgram.update("color", glm::vec3(1.f, 0.f, 0.f));
-            glDrawArrays(GL_LINES, 0, axisVertices.size());
-
-            // Y axis
-            axisModelMatrix = glm::translate(glm::mat4(1.f), glm::vec3(0,0,0));
-            axisModelMatrix = glm::rotate(axisModelMatrix, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-            axisGizmoProgram.update("model", axisModelMatrix);
-            axisGizmoProgram.update("color", glm::vec3(0.f, 1.f, 0.f));
-            glDrawArrays(GL_LINES, 0, axisVertices.size());
-
-            // Z axis
-            axisModelMatrix = glm::translate(glm::mat4(1.f), glm::vec3(0,0,0));
-            axisModelMatrix = glm::rotate(axisModelMatrix, glm::radians(270.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-            axisGizmoProgram.update("model", axisModelMatrix);
-            axisGizmoProgram.update("color", glm::vec3(0.f, 0.f, 1.f));
-            glDrawArrays(GL_LINES, 0, axisVertices.size());
-
-            glBindVertexArray(0);
-            glEnable(GL_DEPTH_TEST);
-        }
-
-        // Drawing of coordinates system axes
-        if(mShowPath && mPathVertexCount > 0)
-        {
-            glDisable(GL_DEPTH_TEST);
-            glBindVertexArray(mPathVAO);
-            glBindBuffer(GL_ARRAY_BUFFER, mPathVBO);
-
-            // Point size for rendering
-            glPointSize(mPathPointSize);
-
-            // Decide which path parts are rendered
-            int offset = glm::clamp(mFrame - mPathFrameRadius, 0, mPathVertexCount); // on which frame path starts
-            glVertexAttribPointer(mPathPositionAttribute, 3, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(GLfloat) * 3 * offset));
-            int count = glm::min(((mPathFrameRadius * 2) + 1), mPathVertexCount - offset);
-
-            // General shader setup
-            mupPathProgram->use();
-            mupPathProgram->update("view", mupCamera->getViewMatrix());
-            mupPathProgram->update("projection", mupCamera->getProjectionMatrix());
-            mupPathProgram->update("pastColor", mPastPathColor);
-            mupPathProgram->update("futureColor", mFuturePathColor);
-            mupPathProgram->update("frame", mFrame);
-            mupPathProgram->update("offset", offset);
-
-            // Drawing
-            glDrawArrays(GL_LINE_STRIP, 0, count); // path as line
-            glDrawArrays(GL_POINTS, 0, count); // path as points
-
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-            glBindVertexArray(0);
-            glEnable(GL_DEPTH_TEST);
-        }
-
-        // Unbind composite framebuffer
-        mupCompositeFramebuffer->unbind();
+        // Unbind molecule framebuffer
+        mupMoleculeFramebuffer->unbind();
 
         // # Fill standard framebuffer
         glViewport(0, 0, mWindowWidth, mWindowHeight);
@@ -695,24 +684,44 @@ void SurfaceDynamicsVisualization::renderLoop()
         // Disable depth test
         glDisable(GL_DEPTH_TEST);
 
-        // Bind composite framebuffer texture
+        // Render cubemap
+        glDisable(GL_DEPTH_TEST);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, mupCompositeFramebuffer->getAttachment(0));
+        glBindTexture(GL_TEXTURE_CUBE_MAP, mCubemapTexture);
+        cubemapProgram.use();
+        cubemapProgram.update("cubemap", 0); // tell shader which slot to use
+        cubemapProgram.update("view", mupCamera->getViewMatrix());
+        cubemapProgram.update("projection", mupCamera->getProjectionMatrix());
+        glDrawArrays(GL_POINTS, 0, 1);
+        glEnable(GL_DEPTH_TEST);
 
-        // Bind outline framebuffer texture
+        // Transparent rendering to render framebuffer on top of standard buffer
+        glDepthMask(GL_FALSE);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        // Bind molecule framebuffer texture
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, mupMoleculeFramebuffer->getAttachment(0));
+
+        // Bind overlay framebuffer texture
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, mupOutlineFramebuffer->getAttachment(0));
+        glBindTexture(GL_TEXTURE_2D, mupOverlayFramebuffer->getAttachment(0));
 
         // Draw screenfilling quad
         screenFillingProgram.use();
-        screenFillingProgram.update("composite", 0); // tell shader which slot to use
-        screenFillingProgram.update("outline", 1); // tell shader which slot to use
+        screenFillingProgram.update("molecule", 0); // tell shader which slot to use
+        screenFillingProgram.update("overlay", 1); // tell shader which slot to use
         glDrawArrays(GL_POINTS, 0, 1);
+
+        // Back to opaque rendering
+        glDisable(GL_BLEND);
+        glDepthMask(GL_TRUE);
 
         // Enable depth test
         glEnable(GL_DEPTH_TEST);
 
-        // Render GUI
+        // Render GUI in standard frame buffer on top of everything
         ImGui_ImplGlfwGL3_NewFrame();
         renderGUI();
     });
@@ -1466,7 +1475,7 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
 int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
 {
     // Bind correct framebuffer and point to attachment with pick indices
-    mupCompositeFramebuffer->bind();
+    mupMoleculeFramebuffer->bind();
     glReadBuffer(GL_COLOR_ATTACHMENT1);
 
     // Get position of cursor
@@ -1481,7 +1490,7 @@ int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
         data[0] +
         data[1] * 256 +
         data[2] * 256*256;
-    mupCompositeFramebuffer->unbind();
+    mupMoleculeFramebuffer->unbind();
 
     // Index of zero means, that nothing was there
     if(index <= 0)

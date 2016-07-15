@@ -2,14 +2,13 @@
 
 in vec2 uv;
 layout(location = 0) out vec4 fragColor;
-uniform sampler2D composite;
-uniform sampler2D outline;
+uniform sampler2D molecule;
+uniform sampler2D overlay;
 
 // Main function
 void main()
 {
-    vec3 compositeColor = texture(composite, uv).rgb;
-    vec4 outlineColor = texture(outline, uv);
-    vec3 color = mix(compositeColor, outlineColor.rgb, outlineColor.a);
-    fragColor = vec4(color, 1);
+    vec4 moleculeColor = texture(molecule, uv);
+    vec4 overlayColor = texture(overlay, uv);
+    fragColor = mix(moleculeColor, overlayColor, overlayColor.a);
 }
