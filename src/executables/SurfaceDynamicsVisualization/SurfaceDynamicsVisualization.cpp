@@ -49,6 +49,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
         0x5f0, 0x5f0, // pause
         0x2794, 0x2794, // right arrow
         0x25cb, 0x25cb, // circle
+        0x212b, 0x212b, // angstrom
         0
     }; // has to be static to be available during run
     io.Fonts->AddFontFromFileTTF(fontpath.c_str(), 16, &config, ranges);
@@ -652,7 +653,7 @@ void SurfaceDynamicsVisualization::renderLoop()
         }
 
         // Drawing of coordinates system axes
-        if(mShowPath && mPathLength > 0)
+        if(mShowPath && mPathVertexCount > 0)
         {
             glDisable(GL_DEPTH_TEST);
             glBindVertexArray(mPathVAO);
@@ -662,9 +663,9 @@ void SurfaceDynamicsVisualization::renderLoop()
             glPointSize(mPathPointSize);
 
             // Decide which path parts are rendered
-            int offset = glm::clamp(mFrame - mPathFrameRadius, 0, mPathLength); // on which frame path starts
+            int offset = glm::clamp(mFrame - mPathFrameRadius, 0, mPathVertexCount); // on which frame path starts
             glVertexAttribPointer(mPathPositionAttribute, 3, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(GLfloat) * 3 * offset));
-            int count = glm::min(((mPathFrameRadius * 2) + 1), mPathLength - offset);
+            int count = glm::min(((mPathFrameRadius * 2) + 1), mPathVertexCount - offset);
 
             // General shader setup
             mupPathProgram->use();
@@ -1265,89 +1266,96 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.0f, 0.5f, 0.75f)); // window background
         ImGui::Begin("Analysis", NULL, 0);
 
-        if (ImGui::CollapsingHeader("Atoms"))
+        ImGui::BeginChild(
+            "AnalyseAtoms",
+            ImVec2(ImGui::GetWindowContentRegionWidth() * 1.0f, 100),
+            false,
+            ImGuiWindowFlags_HorizontalScrollbar);
+
+        // Useful variables
+        std::vector<int> toBeRemoved;
+        bool analysisAtomsChanged = false;
+
+        // Go over analyse atoms and list them
+        for (int atomIndex : mAnalyseAtoms)
         {
-            ImGui::BeginChild(
-                "AnalyseAtoms",
-                ImVec2(ImGui::GetWindowContentRegionWidth() * 1.0f, 100),
-                false,
-                ImGuiWindowFlags_HorizontalScrollbar);
+            // Information about atom
+            ImGui::Text("%05d", atomIndex);
+            ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 60);
 
-            // Useful variables
-            std::vector<int> toBeRemoved;
-            bool analysisAtomsChanged = false;
-
-            // Go over analyse atoms and list them
-            for (int atomIndex : mAnalyseAtoms)
+            // Select that atom (use ## to add number for an unique button id)
+            if(ImGui::Button(std::string("\u25cb##" + std::to_string(atomIndex)).c_str()))
             {
-                // Information about atom
-                ImGui::Text("%05d", atomIndex);
-                ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 60);
-
-                // Select that atom (use ## to add number for an unique button id)
-                if(ImGui::Button(std::string("\u25cb##" + std::to_string(atomIndex)).c_str()))
-                {
-                    mSelectedAtom = atomIndex;
-                }
-                if(ImGui::IsItemHovered()) { ImGui::SetTooltip("Select Atom"); } // tooltip
-                ImGui::SameLine();
-
-                // Remove that atom from analysis atoms (use ## to add number for an unique button id)
-                if(ImGui::Button(std::string("\u00D7##" + std::to_string(atomIndex)).c_str()))
-                {
-                    toBeRemoved.push_back(atomIndex);
-                    analysisAtomsChanged = true;
-                }
-                if(ImGui::IsItemHovered()) { ImGui::SetTooltip("Remove Atom"); } // tooltip
+                mSelectedAtom = atomIndex;
             }
-
-            // Remove atoms
-            for(int atomIndex : toBeRemoved) { mAnalyseAtoms.erase(atomIndex); }
-            ImGui::EndChild();
-
-            // Add new atoms to analyse
-            ImGui::InputInt("", &mNextAnalyseAtomIndex);
-            mNextAnalyseAtomIndex = glm::clamp(mNextAnalyseAtomIndex, 0, mupGPUProtein->getAtomCount());
+            if(ImGui::IsItemHovered()) { ImGui::SetTooltip("Select Atom"); } // tooltip
             ImGui::SameLine();
-            if(ImGui::Button("Add Atom"))
+
+            // Remove that atom from analysis atoms (use ## to add number for an unique button id)
+            if(ImGui::Button(std::string("\u00D7##" + std::to_string(atomIndex)).c_str()))
             {
-                // Add atom to list of analyse atoms
-                mAnalyseAtoms.insert((GLuint)mNextAnalyseAtomIndex);
+                toBeRemoved.push_back(atomIndex);
                 analysisAtomsChanged = true;
             }
+            if(ImGui::IsItemHovered()) { ImGui::SetTooltip("Remove Atom"); } // tooltip
+        }
 
-            // Recreate outline atom indices and path visualization
-            if(analysisAtomsChanged)
+        // Remove atoms
+        for(int atomIndex : toBeRemoved) { mAnalyseAtoms.erase(atomIndex); }
+        ImGui::EndChild();
+
+        // Add new atoms to analyse
+        ImGui::InputInt("", &mNextAnalyseAtomIndex);
+        mNextAnalyseAtomIndex = glm::clamp(mNextAnalyseAtomIndex, 0, mupGPUProtein->getAtomCount());
+        ImGui::SameLine();
+        if(ImGui::Button("Add Atom"))
+        {
+            // Add atom to list of analyse atoms
+            mAnalyseAtoms.insert((GLuint)mNextAnalyseAtomIndex);
+            analysisAtomsChanged = true;
+        }
+
+        // Recreate outline atom indices and path visualization
+        if(analysisAtomsChanged)
+        {
+            // Outline
+            std::vector<GLuint> analyseAtomVector;
+            std::copy(mAnalyseAtoms.begin(), mAnalyseAtoms.end(), std::back_inserter(analyseAtomVector));
+            mupOutlineAtomIndices = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(analyseAtomVector));
+
+            // Path
+            auto rTrajectoy = mupGPUProtein->getTrajectory();
+
+            // Go over frames
+            std::vector<glm::vec3> path;
+            mPathLength = 0;
+            for(const auto& frame : *(rTrajectoy.get()))
             {
-                // Outline
-                std::vector<GLuint> analyseAtomVector;
-                std::copy(mAnalyseAtoms.begin(), mAnalyseAtoms.end(), std::back_inserter(analyseAtomVector));
-                mupOutlineAtomIndices = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(analyseAtomVector));
-
-                // Path
-                auto rTrajectoy = mupGPUProtein->getTrajectory();
-
-                // Go over frames
-                std::vector<glm::vec3> path;
-                for(const auto& frame : *(rTrajectoy.get()))
+                // Go over analysed atoms and accumulate position in frame
+                glm::vec3 accPosition(0,0,0);
+                for(int atomIndex : mAnalyseAtoms)
                 {
-                    // Go over analysed atoms and accumulate position in frame
-                    glm::vec3 acc(0,0,0);
-                    for(int atomIndex : mAnalyseAtoms)
-                    {
-                        acc += frame.at(atomIndex);
-                    }
-
-                    // Calculate average and push to vector
-                    path.push_back(acc / mAnalyseAtoms.size());
+                    accPosition += frame.at(atomIndex);
                 }
 
-                // Fill it to vertex buffer of path
-                glBindBuffer(GL_ARRAY_BUFFER, mPathVBO);
-                glBufferData(GL_ARRAY_BUFFER, path.size() * sizeof(glm::vec3), path.data(), GL_DYNAMIC_DRAW);
-                glBindBuffer(GL_ARRAY_BUFFER, 0);
-                mPathLength = path.size();
+                // Calculate average
+                glm::vec3 avgPosition = accPosition / mAnalyseAtoms.size();
+
+                // Caluclate and accumulate distance
+                if(!path.empty())
+                {
+                    mPathLength += glm::distance(avgPosition, path.back());
+                }
+
+                // Push new average position value to vector after calculating distance
+                path.push_back(avgPosition);
             }
+
+            // Fill it to vertex buffer of path
+            glBindBuffer(GL_ARRAY_BUFFER, mPathVBO);
+            glBufferData(GL_ARRAY_BUFFER, path.size() * sizeof(glm::vec3), path.data(), GL_DYNAMIC_DRAW);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            mPathVertexCount = path.size();
         }
 
         // Show / hide path
@@ -1365,6 +1373,12 @@ void SurfaceDynamicsVisualization::renderGUI()
                 mShowPath = true;
             }
         }
+        ImGui::SameLine();
+
+        // Display length of path
+        std::ostringstream stringPathLength;
+        stringPathLength << std::fixed << std::setprecision(2) << mPathLength;
+        ImGui::Text(std::string("Path Length: " + stringPathLength.str() + " \u212b").c_str());
 
         // Radius of frames in path visualization
         ImGui::SliderInt("Path Radius", &mPathFrameRadius, 1, 100);

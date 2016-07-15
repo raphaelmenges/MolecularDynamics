@@ -160,9 +160,10 @@ private:
     int mNextAnalyseAtomIndex = 0;
     GLuint mPathVBO = 0;
     GLuint mPathVAO = 0;
-    int mPathLength = 0; // is somehow the same as frame count
+    int mPathVertexCount = 0; // is somehow the same as frame count
     std::unique_ptr<ShaderProgram> mupPathProgram;
     GLuint mPathPositionAttribute = 0;
+    float mPathLength = 0; // euclidic leng
 
     // Surface validation
     std::unique_ptr<SurfaceValidation> mupSurfaceValidation;
