@@ -93,6 +93,8 @@ private:
     const glm::vec4 mOutlineColor = glm::vec4(1.f, 1.f, 0.f, 0.9f);
     const glm::vec3 mPastPathColor = glm::vec3(1.f, 0.f, 0.f);
     const glm::vec3 mFuturePathColor = glm::vec3(0.f, 1.f, 0.f);
+    const glm::vec3 mAscensionHotColor = glm::vec3(1.f, 0.f, 0.f);
+    const glm::vec3 mAscensionColdColor = glm::vec3(0.f, 0.f, 1.f);
 
     // Controllable parameters
     bool mRotateCamera = false;
@@ -169,6 +171,7 @@ private:
     std::unique_ptr<ShaderProgram> mupPathProgram;
     GLuint mPathPositionAttribute = 0;
     float mPathLength = 0; // euclidic leng
+    std::unique_ptr<GPUTextureBuffer> mupAscension;
 
     // Surface validation
     std::unique_ptr<SurfaceValidation> mupSurfaceValidation;

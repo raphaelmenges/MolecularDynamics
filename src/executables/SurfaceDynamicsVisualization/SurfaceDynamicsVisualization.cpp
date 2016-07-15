@@ -96,6 +96,9 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     mupOverlayFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight));
     mupOverlayFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA);
 
+    // # Ascension rendering
+    mupAscension = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(0));
+
     // # Prepare cubemap
     std::vector<std::string> cubemapFullpaths;
     /*
@@ -340,7 +343,8 @@ void SurfaceDynamicsVisualization::renderLoop()
     // # Prepare shader programs
 
     // Shader program for rendering the protein
-    ShaderProgram hullProgram("/SurfaceDynamicsVisualization/impostor.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
+    ShaderProgram hullProgram("/SurfaceDynamicsVisualization/hull.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
+    ShaderProgram ascensionProgram("/SurfaceDynamicsVisualization/ascension.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
 
     // Shader program for screenfilling quad rendering
     ShaderProgram screenFillingProgram("/SurfaceDynamicsVisualization/screenfilling.vert", "/SurfaceDynamicsVisualization/screenfilling.geom", "/SurfaceDynamicsVisualization/screenfilling.frag");
@@ -349,7 +353,7 @@ void SurfaceDynamicsVisualization::renderLoop()
     ShaderProgram cubemapProgram("/SurfaceDynamicsVisualization/cubemap.vert", "/SurfaceDynamicsVisualization/cubemap.geom", "/SurfaceDynamicsVisualization/cubemap.frag");
 
     // Shader program for outline rendering
-    ShaderProgram outlineProgram("/SurfaceDynamicsVisualization/impostor.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/outline.frag");
+    ShaderProgram outlineProgram("/SurfaceDynamicsVisualization/hull.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/outline.frag");
 
     // Bind SSBOs
     mupGPUProtein->bind(0, 1);
@@ -644,7 +648,30 @@ void SurfaceDynamicsVisualization::renderLoop()
             break;
 
         case SurfaceRendering::ASCENSION:
-            // TODO
+
+            // Bind texture buffer with ascension information as image
+            mupAscension->bindAsImage(2, GPUTextureBuffer::GPUAccess::READ_ONLY);
+
+            // Prepare shader program
+            ascensionProgram.use();
+            ascensionProgram.update("view", mupCamera->getViewMatrix());
+            ascensionProgram.update("projection", mupCamera->getProjectionMatrix());
+            ascensionProgram.update("cameraWorldPos", mupCamera->getPosition());
+            ascensionProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
+            ascensionProgram.update("lightDir", mLightDirection);
+            ascensionProgram.update("selectedIndex", mSelectedAtom);
+            ascensionProgram.update("clippingPlane", mClippingPlane);
+            ascensionProgram.update("frame", mFrame);
+            ascensionProgram.update("atomCount", mupGPUProtein->getAtomCount());
+            ascensionProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+            ascensionProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+            ascensionProgram.update("frameCount", mupGPUProtein->getFrameCount());
+            ascensionProgram.update("depthDarkeningStart", mDepthDarkeningStart);
+            ascensionProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
+            ascensionProgram.update("hotColor", mAscensionHotColor);
+            ascensionProgram.update("coldColor", mAscensionColdColor);
+            glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
+
             break;
         }
 
@@ -1432,6 +1459,10 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
 
     // Set to first animation frame
     setFrame(mComputedStartFrame);
+
+    // Calculate ascension for visualization
+    // TODO: fill with computation of mupAscension
+
 }
 
 int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
