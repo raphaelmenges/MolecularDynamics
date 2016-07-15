@@ -40,6 +40,12 @@ public:
 
 private:
 
+    // Enumeration for surface rendering
+    enum SurfaceRendering
+    {
+        HULL, ASCENSION
+    };
+
     // Keyboard callback for GLFW
     void keyCallback(int key, int scancode, int action, int mods);
 
@@ -67,7 +73,6 @@ private:
     // Setup
     const bool mInitiallyUseGLSLImplementation = false;
     const float mCameraSmoothDuration = 1.5f;
-    const float mAtomPointSize = 15.f;
     const float mSamplePointSize = 2.f;
     const float mPathPointSize = 3.f;
     const float mMinDrawingExtentOffset = -5.f;
@@ -126,6 +131,7 @@ private:
     bool mShowAnalysisWindow = true;
     bool mShowPath = true;
     int mPathFrameRadius = 5; // radius of frames which are visualized
+    SurfaceRendering mSurfaceRendering = HULL;
 
     // Report output
     std::string mComputeInformation = "No computation info available";

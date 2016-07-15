@@ -340,7 +340,7 @@ void SurfaceDynamicsVisualization::renderLoop()
     // # Prepare shader programs
 
     // Shader program for rendering the protein
-    ShaderProgram impostorProgram("/SurfaceDynamicsVisualization/impostor.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
+    ShaderProgram hullProgram("/SurfaceDynamicsVisualization/impostor.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
 
     // Shader program for screenfilling quad rendering
     ShaderProgram screenFillingProgram("/SurfaceDynamicsVisualization/screenfilling.vert", "/SurfaceDynamicsVisualization/screenfilling.geom", "/SurfaceDynamicsVisualization/screenfilling.frag");
@@ -602,38 +602,50 @@ void SurfaceDynamicsVisualization::renderLoop()
         glViewport(0, 0, mWindowWidth, mWindowHeight);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Prepare impostor drawing
-        impostorProgram.use();
-        impostorProgram.update("view", mupCamera->getViewMatrix());
-        impostorProgram.update("projection", mupCamera->getProjectionMatrix());
-        impostorProgram.update("cameraWorldPos", mupCamera->getPosition());
-        impostorProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
-        impostorProgram.update("lightDir", mLightDirection);
-        impostorProgram.update("selectedIndex", mSelectedAtom);
-        impostorProgram.update("clippingPlane", mClippingPlane);
-        impostorProgram.update("frame", mFrame);
-        impostorProgram.update("atomCount", mupGPUProtein->getAtomCount());
-        impostorProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
-        impostorProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
-        impostorProgram.update("frameCount", mupGPUProtein->getFrameCount());
-        impostorProgram.update("depthDarkeningStart", mDepthDarkeningStart);
-        impostorProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
-
-        // Draw internal (first, because at clipping plane are all set to same
-        // viewport depth which means internal are always in front of surface)
-        if(mShowInternal)
+        // Decide about surface rendering
+        switch(mSurfaceRendering)
         {
-            mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndicesForDrawing(mLayer, 2);
-            impostorProgram.update("color", mInternalAtomColor);
-            glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
-        }
+        case SurfaceRendering::HULL:
 
-        // Draw surface
-        if(mShowSurface)
-        {
-            mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndicesForDrawing(mLayer, 2);
-            impostorProgram.update("color", mSurfaceAtomColor);
-            glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
+            // Prepare shader program
+            hullProgram.use();
+            hullProgram.update("view", mupCamera->getViewMatrix());
+            hullProgram.update("projection", mupCamera->getProjectionMatrix());
+            hullProgram.update("cameraWorldPos", mupCamera->getPosition());
+            hullProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
+            hullProgram.update("lightDir", mLightDirection);
+            hullProgram.update("selectedIndex", mSelectedAtom);
+            hullProgram.update("clippingPlane", mClippingPlane);
+            hullProgram.update("frame", mFrame);
+            hullProgram.update("atomCount", mupGPUProtein->getAtomCount());
+            hullProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+            hullProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+            hullProgram.update("frameCount", mupGPUProtein->getFrameCount());
+            hullProgram.update("depthDarkeningStart", mDepthDarkeningStart);
+            hullProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
+
+            // Draw internal (first, because at clipping plane are all set to same
+            // viewport depth which means internal are always in front of surface)
+            if(mShowInternal)
+            {
+                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndicesForDrawing(mLayer, 2);
+                hullProgram.update("color", mInternalAtomColor);
+                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
+            }
+
+            // Draw surface
+            if(mShowSurface)
+            {
+                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndicesForDrawing(mLayer, 2);
+                hullProgram.update("color", mSurfaceAtomColor);
+                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
+            }
+
+            break;
+
+        case SurfaceRendering::ASCENSION:
+            // TODO
+            break;
         }
 
         // Unbind molecule framebuffer
@@ -1032,6 +1044,9 @@ void SurfaceDynamicsVisualization::renderGUI()
 
         // Render points / spheres
         ImGui::Text("Rendering");
+
+        // Surface rendering
+        ImGui::Combo("##SurfaceRenderingCombo", (int*)&mSurfaceRendering, "Hull\0Ascension\0");
 
         // Render / not render with probe radius
         if(mRenderWithProbeRadius)
