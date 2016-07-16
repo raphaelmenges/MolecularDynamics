@@ -1093,36 +1093,40 @@ void SurfaceDynamicsVisualization::renderGUI()
             }
         }
 
-        // Show / hide internal atoms
-        if(mShowInternal)
+        // Variables for hull rendering
+        if(mSurfaceRendering == SurfaceRendering::HULL)
         {
-            if(ImGui::Button("Hide Internal", ImVec2(100, 22)))
+            // Show / hide internal atoms
+            if(mShowInternal)
             {
-                mShowInternal = false;
+                if(ImGui::Button("Hide Internal", ImVec2(100, 22)))
+                {
+                    mShowInternal = false;
+                }
             }
-        }
-        else
-        {
-            if(ImGui::Button("Show Internal", ImVec2(100, 22)))
+            else
             {
-                mShowInternal = true;
+                if(ImGui::Button("Show Internal", ImVec2(100, 22)))
+                {
+                    mShowInternal = true;
+                }
             }
-        }
-        ImGui::SameLine();
+            ImGui::SameLine();
 
-        // Show / hide surface atoms
-        if(mShowSurface)
-        {
-            if(ImGui::Button("Hide Surface", ImVec2(100, 22)))
+            // Show / hide surface atoms
+            if(mShowSurface)
             {
-                mShowSurface = false;
+                if(ImGui::Button("Hide Surface", ImVec2(100, 22)))
+                {
+                    mShowSurface = false;
+                }
             }
-        }
-        else
-        {
-            if(ImGui::Button("Show Surface", ImVec2(100, 22)))
+            else
             {
-                mShowSurface = true;
+                if(ImGui::Button("Show Surface", ImVec2(100, 22)))
+                {
+                    mShowSurface = true;
+                }
             }
         }
 
