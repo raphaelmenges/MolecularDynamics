@@ -95,6 +95,9 @@ private:
     const glm::vec3 mFuturePathColor = glm::vec3(0.f, 1.f, 0.f);
     const glm::vec3 mAscensionHotColor = glm::vec3(1.f, 0.f, 0.f);
     const glm::vec3 mAscensionColdColor = glm::vec3(0.f, 0.f, 1.f);
+    const int mAscensionMaxValue = 100;
+    const int mAscenionIncreaseValue = 10;
+    const int mAscensionDecreaseValue = 20;
 
     // Controllable parameters
     bool mRotateCamera = false;

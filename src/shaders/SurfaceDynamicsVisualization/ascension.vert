@@ -25,10 +25,7 @@ layout(std430, binding = 1) restrict readonly buffer TrajectoryBuffer
 };
 
 // Ascension
-layout(std430, binding = 2) restrict readonly buffer AscensionBuffer
-{
-   float ascension[];
-};
+layout(binding = 2, r32ui) readonly restrict uniform uimageBuffer Ascension;
 
 // Uniforms
 uniform float probeRadius;
@@ -40,6 +37,8 @@ uniform int atomCount;
 uniform int smoothAnimationRadius;
 uniform float smoothAnimationMaxDeviation;
 uniform int frameCount;
+uniform int ascensionFrame;
+uniform int ascensionMaxValue;
 
 // Global
 int atomIndex;
@@ -67,12 +66,9 @@ void accumulateCenter(
 // Main function
 void main()
 {
-    // Generate linear index (TODO cannot be used for ascension because not all frames are covered so "frame *" is wrong)
+    // Extract center at frame which is given. Unlike hull shader, here are atom indices directly given by vertex id
     atomIndex = int(gl_VertexID); // write it to global variable
-    int linearIndex = (frame*atomCount) + atomIndex;
-
-    // Extract center at frame which is given
-    Position position = trajectory[linearIndex];
+    Position position = trajectory[(frame*atomCount) + atomIndex];
     centerAtFrame = vec3(position.x, position.y, position.z); // write it to global variable
 
     // Calculate loop bounds for smoothing
@@ -101,13 +97,15 @@ void main()
     vertRadius = radii[atomIndex] + probeRadius;
 
     // Set color
+    int ascensionRawValue = int(imageLoad(Ascension, (ascensionFrame * atomCount) + int(gl_VertexID)).x);
+    float ascension = float(ascensionRawValue) / float(ascensionMaxValue);
     if(atomIndex == selectedIndex)
     {
         vertColor = vec3(0,1,0);
     }
     else
     {
-        vertColor = ascension[linearIndex] * hotColor + (1.0 - ascension[linearIndex]) * coldColor;
+        vertColor = mix(coldColor, hotColor, ascension);
     }
 
     // Set index

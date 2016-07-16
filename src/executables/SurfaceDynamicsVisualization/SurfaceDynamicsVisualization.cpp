@@ -670,6 +670,8 @@ void SurfaceDynamicsVisualization::renderLoop()
             ascensionProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
             ascensionProgram.update("hotColor", mAscensionHotColor);
             ascensionProgram.update("coldColor", mAscensionColdColor);
+            ascensionProgram.update("ascensionFrame", mFrame - mComputedStartFrame); // TODO decide about better structure
+            ascensionProgram.update("ascensionMaxValue", mAscensionMaxValue);
             glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
 
             break;
@@ -1426,6 +1428,8 @@ bool SurfaceDynamicsVisualization::setFrame(int frame)
 
 void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, bool useGPU)
 {
+    // # Surface calculation
+
     // Reset surfaces
     mGPUSurfaces.clear();
 
@@ -1457,11 +1461,67 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
     updateComputationInformation(
         (useGPU ? "GPU" : "CPU with " + std::to_string(mCPUThreads) + " threads"), computationTime);
 
+    // # Frame setting
+
     // Set to first animation frame
     setFrame(mComputedStartFrame);
 
+    // # Ascension calculation
+
     // Calculate ascension for visualization
-    // TODO: fill with computation of mupAscension
+    std::vector<GLuint> ascension; // linear accumulation of ascension for all computed frames and all atoms
+    GLuint i = 0; // ascension frame count
+    int atomCount = mupGPUProtein->getAtomCount();
+
+    // Go over frames for which surface exist
+    for(const auto& rupGPUSurface : mGPUSurfaces)
+    {
+        // Get surface indices of layer zero for that frame
+        std::vector<GLuint> surfaceIndices = rupGPUSurface->getSurfaceIndices(0);
+
+        // Decide how to calculate the ascension value
+        if(i == 0)
+        {
+            // Go over atoms
+            for(int a = 0; a < atomCount; a++)
+            {
+                // Push back value for first frame of ascension
+                ascension.push_back(mAscensionMaxValue / 2);
+            }
+        }
+        else
+        {
+            // Go over atoms
+            for(int a = 0; a < atomCount; a++)
+            {
+                bool surface = false;
+
+                // Go over surface indices
+                for(GLuint s : surfaceIndices)
+                {
+                    // Check whether current atom is on surface
+                    if(a == s)
+                    {
+                        surface = true;
+                        break;
+                    }
+                }
+
+                // Push back value for first frame of ascension
+                GLuint previousValue = ascension.at(((i-1) * atomCount + a));
+                int nextValue = ((int)previousValue);
+                nextValue = surface ? nextValue + mAscenionIncreaseValue : nextValue - mAscensionDecreaseValue;
+                nextValue = glm::clamp(nextValue, 0, mAscensionMaxValue);
+                ascension.push_back((GLuint)nextValue);
+            }
+        }
+
+        // Increment counter
+        i++;
+    }
+
+    // Fill ascension to texture buffer
+    mupAscension = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(ascension));
 
 }
 
