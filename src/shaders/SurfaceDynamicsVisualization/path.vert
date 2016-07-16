@@ -2,7 +2,7 @@
 
 // In / out
 in vec3 position;
-out flat vec3 color;
+out flat vec4 color;
 
 // Uniforms
 uniform mat4 projection;
@@ -11,20 +11,26 @@ uniform vec3 pastColor;
 uniform vec3 futureColor;
 uniform int frame;
 uniform int offset;
+uniform int frameRadius;
 
 // Main function
 void main()
 {
+    // Set position
     gl_Position = projection * view * vec4(position, 1);
 
-    // TODO: very simple test. In future, maybe start frame is necessary
-    // when only part of trajectory is in path and gl_VertexID is relative
-    if(int((gl_VertexID) + offset) <= frame)
+    // Extract frame for that position
+    int thisFrame = int(gl_VertexID) + offset;
+    int frameDelta = abs(frame - thisFrame);
+    float alpha = 1.0 - (0.5 * float(frameDelta) / float(frameRadius));
+
+    // Set color
+    if(thisFrame <= frame)
     {
-        color = pastColor;
+        color = vec4(pastColor, alpha);
     }
     else
     {
-        color = futureColor;
+        color = vec4(futureColor, alpha);
     }
 }

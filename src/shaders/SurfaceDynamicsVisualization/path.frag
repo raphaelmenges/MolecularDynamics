@@ -2,10 +2,10 @@
 
 // In / out
 layout(location = 0) out vec4 fragColor;
-in flat vec3 color;
+in flat vec4 color;
 
 // Main function
 void main()
 {
-    fragColor = vec4(color, 1);
+    fragColor = color;
 }

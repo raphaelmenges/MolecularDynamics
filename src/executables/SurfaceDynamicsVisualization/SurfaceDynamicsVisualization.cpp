@@ -587,6 +587,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             mupPathProgram->update("futureColor", mFuturePathColor);
             mupPathProgram->update("frame", mFrame);
             mupPathProgram->update("offset", offset);
+            mupPathProgram->update("frameRadius", mPathFrameRadius);
 
             // Drawing
             glDrawArrays(GL_LINE_STRIP, 0, count); // path as line
