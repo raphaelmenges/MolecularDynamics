@@ -99,62 +99,22 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     // # Ascension rendering
     mupAscension = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(0));
 
-    // # Prepare cubemap
-    std::vector<std::string> cubemapFullpaths;
-    /*
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posx.jpg"));
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negx.jpg"));
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posy.jpg"));
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negy.jpg"));
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posz.jpg"));
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negz.jpg"));
-    */
-    ///*
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/posx.png"));
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/negx.png"));
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/posy.png"));
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/negy.png"));
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/posz.png"));
-    cubemapFullpaths.push_back(std::string(std::string(RESOURCES_PATH) + "/cubemaps/Simple/negz.png"));
-    //*/
+    // # Prepare background cubemaps
+    mCVCubemapTexture = createCubemap(
+        std::string(RESOURCES_PATH) + "/cubemaps/CV/posx.png",
+        std::string(RESOURCES_PATH) + "/cubemaps/CV/negx.png",
+        std::string(RESOURCES_PATH) + "/cubemaps/CV/posy.png",
+        std::string(RESOURCES_PATH) + "/cubemaps/CV/negy.png",
+        std::string(RESOURCES_PATH) + "/cubemaps/CV/posz.png",
+        std::string(RESOURCES_PATH) + "/cubemaps/CV/negz.png");
 
-    // Setup stb_image
-    // stbi_set_flip_vertically_on_load(true);
-    int width, height, channelCount;
-
-    // Create texture
-    glGenTextures(1, &mCubemapTexture);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, mCubemapTexture);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-    // Load all directions
-    for(int i = 0; i < cubemapFullpaths.size(); i++)
-    {
-        // Try to load image
-        unsigned char* pData = stbi_load(cubemapFullpaths.at(i).c_str(), &width, &height, &channelCount, 0);
-
-        // Check whether file was found and parsed
-        if (pData == NULL)
-        {
-            std::cout << "Image file not found or error at parsing: " << cubemapFullpaths.at(i) << std::endl;
-            continue;
-        }
-
-        // Set texture
-        glTexImage2D(
-            GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-            0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, pData); // TODO: use channel count given by stb_image?
-
-        // Delete raw image data
-        stbi_image_free(pData);
-    }
-
-    // Unbind texture
-    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    mBeachCubemapTexture = createCubemap(
+        std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posx.jpg",
+        std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negx.jpg",
+        std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posy.jpg",
+        std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negy.jpg",
+        std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posz.jpg",
+        std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negz.jpg");
 
     // # Create path
 
@@ -296,8 +256,9 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
 
 SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
 {
-    // Delete cubemap
-    glDeleteTextures(1, &mCubemapTexture);
+    // Delete cubemaps
+    glDeleteTextures(1, &mCVCubemapTexture);
+    glDeleteTextures(1, &mBeachCubemapTexture);
 
     // Delete path
     glDeleteVertexArrays(1, &mPathVAO);
@@ -691,7 +652,17 @@ void SurfaceDynamicsVisualization::renderLoop()
         // Render cubemap
         glDisable(GL_DEPTH_TEST);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, mCubemapTexture);
+
+        switch(mBackground)
+        {
+        case Background::COMPUTERVISUALISTIK:
+            glBindTexture(GL_TEXTURE_CUBE_MAP, mCVCubemapTexture);
+            break;
+        case Background::BEACH:
+            glBindTexture(GL_TEXTURE_CUBE_MAP, mBeachCubemapTexture);
+            break;
+        }
+
         cubemapProgram.use();
         cubemapProgram.update("cubemap", 0); // tell shader which slot to use
         cubemapProgram.update("view", mupCamera->getViewMatrix());
@@ -884,6 +855,16 @@ void SurfaceDynamicsVisualization::renderGUI()
             else
             {
                 if(ImGui::MenuItem("Show Analysis", "", false, true)) { mShowAnalysisWindow = true; }
+            }
+
+            // Rendering window
+            if(mShowRenderingWindow)
+            {
+                if(ImGui::MenuItem("Hide Rendering", "", false, true)) { mShowRenderingWindow = false; }
+            }
+            else
+            {
+                if(ImGui::MenuItem("Show Rendering", "", false, true)) { mShowRenderingWindow = true; }
             }
 
             ImGui::EndMenu();
@@ -1152,17 +1133,6 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Text("Animation Smoothing");
         ImGui::SliderInt("Smooth Radius", &mSmoothAnimationRadius, 0, 10);
         ImGui::SliderFloat("Smooth Max Deviation", &mSmoothAnimationMaxDeviation, 0, 100, "%.1f");
-        ImGui::Separator();
-
-        // Effects
-        ImGui::Text("Effects");
-        if(ImGui::Button("Spot Light"))
-        {
-            mLightDirection = -glm::normalize(mupCamera->getPosition() - mupCamera->getCenter());
-        }
-
-        ImGui::SliderFloat("Depth Darkening Start", &mDepthDarkeningStart, 0, mDepthDarkeningEnd, "%.1f");
-        ImGui::SliderFloat("Depth Darkening End", &mDepthDarkeningEnd, mDepthDarkeningStart, mDepthDarkeningMaxEnd, "%.1f");
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background
@@ -1392,6 +1362,30 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::PopStyleColor(); // window background
     }
 
+    // Rendering window
+    if(mShowRenderingWindow)
+    {
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.75f, 0.75f, 0.75f, 0.75f)); // window background
+        ImGui::Begin("Rendering", NULL, 0);
+
+        // Background
+        ImGui::Combo("Background", (int*)&mBackground, "Computervisualistik\0Beach\0");
+
+        // Lighting
+        if(ImGui::Button("Spot Light"))
+        {
+            mLightDirection = -glm::normalize(mupCamera->getPosition() - mupCamera->getCenter());
+        }
+
+        // Depth darkening
+        ImGui::SliderFloat("Depth Darkening Start", &mDepthDarkeningStart, 0, mDepthDarkeningEnd, "%.1f");
+        ImGui::SliderFloat("Depth Darkening End", &mDepthDarkeningEnd, mDepthDarkeningStart, mDepthDarkeningMaxEnd, "%.1f");
+
+        ImGui::End();
+        ImGui::PopStyleColor(); // window background
+    }
+
+
     ImGui::PopStyleColor(); // slider grab active
     ImGui::PopStyleColor(); // header active
     ImGui::PopStyleColor(); // header hovered
@@ -1559,6 +1553,66 @@ int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
     {
         return (index - 1); // starts at one but should start at zero
     }
+}
+
+GLuint SurfaceDynamicsVisualization::createCubemap(
+        std::string pathPosX,
+        std::string pathNegX,
+        std::string pathPosY,
+        std::string pathNegY,
+        std::string pathPosZ,
+        std::string pathNegZ) const
+{
+    // Prepare stb_image loading
+    // stbi_set_flip_vertically_on_load(true);
+    int width, height, channelCount;
+
+    // Create texture
+    GLuint texture = 0;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    // Push paths to vector
+    std::vector<std::string> cubemapFullpaths;
+    cubemapFullpaths.push_back(pathPosX);
+    cubemapFullpaths.push_back(pathNegX);
+    cubemapFullpaths.push_back(pathPosY);
+    cubemapFullpaths.push_back(pathNegY);
+    cubemapFullpaths.push_back(pathPosZ);
+    cubemapFullpaths.push_back(pathNegZ);
+
+    // Load all directions
+    for(int i = 0; i < cubemapFullpaths.size(); i++)
+    {
+        // Try to load image
+        unsigned char* pData = stbi_load(cubemapFullpaths.at(i).c_str(), &width, &height, &channelCount, 0);
+
+        // Check whether file was found and parsed
+        if (pData == NULL)
+        {
+            std::cout << "Image file not found or error at parsing: " << cubemapFullpaths.at(i) << std::endl;
+            continue;
+        }
+
+        // Set texture
+        glTexImage2D(
+            GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+            0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, pData); // TODO: use channel count given by stb_image?
+
+        // Delete raw image data
+        stbi_image_free(pData);
+    }
+
+    // Unbind texture
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
+    // Return texture handle
+    return texture;
 }
 
 // ### Main function ###

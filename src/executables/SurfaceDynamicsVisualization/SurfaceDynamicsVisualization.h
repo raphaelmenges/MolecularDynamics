@@ -46,6 +46,12 @@ private:
         HULL, ASCENSION
     };
 
+    // Enumeration for background cubemap
+    enum Background
+    {
+        COMPUTERVISUALISTIK, BEACH
+    };
+
     // Keyboard callback for GLFW
     void keyCallback(int key, int scancode, int action, int mods);
 
@@ -69,6 +75,15 @@ private:
 
     // Get atom beneath cursor. Returns -1 when fails
     int getAtomBeneathCursor() const;
+
+    // Load cubemap texture. Returns texture handle
+    GLuint createCubemap(
+        std::string pathPosX,
+        std::string pathNegX,
+        std::string pathPosY,
+        std::string pathNegY,
+        std::string pathPosZ,
+        std::string pathNegZ) const;
 
     // Setup
     const bool mInitiallyUseGLSLImplementation = false;
@@ -137,6 +152,8 @@ private:
     bool mShowPath = true;
     int mPathFrameRadius = 5; // radius of frames which are visualized
     SurfaceRendering mSurfaceRendering = HULL;
+    Background mBackground = COMPUTERVISUALISTIK;
+    bool mShowRenderingWindow = true;
 
     // Report output
     std::string mComputeInformation = "No computation info available";
@@ -162,7 +179,8 @@ private:
     bool mFramebuffersExist = false;
     int mWindowWidth;
     int mWindowHeight;
-    GLuint mCubemapTexture;
+    GLuint mCVCubemapTexture;
+    GLuint mBeachCubemapTexture;
     std::unique_ptr<Framebuffer> mupMoleculeFramebuffer;
     std::unique_ptr<Framebuffer> mupOverlayFramebuffer;
     std::unique_ptr<GPUTextureBuffer> mupOutlineAtomIndices;
