@@ -12,8 +12,5 @@ set(SHADERS_PATH ${CMAKE_SOURCE_DIR}/shaders CACHE PATH "Project specific path. 
 file(GLOB SIDE_PACKAGES_PATH $ENV{HOME}/miniconda3/lib/python3.*/site-packages)
 message("Path to site packages of minicoda3: ${SIDE_PACKAGES_PATH}")
 
-# Find necessary packages
-find_package(PythonLibs REQUIRED)
-
-# Include default project because reasons (Gerrits design :D )
+# Include default project because reasons (Gerrit's design :D )
 include(${CMAKE_MODULE_PATH}/DefaultProject.cmake)

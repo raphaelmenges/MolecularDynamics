@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
-if(CMAKE_VERSION VERSION_GREATER "2.8.11")
-    CMAKE_POLICY(SET CMP0022 OLD)
-endif()
 
+# Extract project name from folder name
 get_filename_component(ProjectId ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 string(REPLACE " " "_" ProjectId ${ProjectId})
 project(${ProjectId})
@@ -19,7 +17,7 @@ include_directories(${IM_GUI_DIR})
 # Pipe path to ImGui fonts
 add_definitions(-DIMGUI_FONTS_PATH="${EXTERNALS_PATH}/imgui/extra_fonts")
 
-# Other libraries
+# Libraries of this framework
 include_directories(
     ${LIBRARIES_PATH}
 )
@@ -31,7 +29,7 @@ file(GLOB_RECURSE HEADER *.h)
 # Create executable
 add_executable(${ProjectId} ${SOURCES} ${HEADER} ${IM_GUI})
 
-# Linking
+# Link with other libraries
 target_link_libraries(
     ${ProjectId}
     ${ALL_LIBRARIES}

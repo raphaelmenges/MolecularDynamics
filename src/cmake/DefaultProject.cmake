@@ -1,3 +1,4 @@
+# No idea what here happens
 string(REPLACE "/" ";" p2list "${CMAKE_SOURCE_DIR}")
 string(REPLACE "\\" ";" p2list "${p2list}")
 list(REVERSE p2list)
@@ -6,53 +7,54 @@ list(GET p2list 1 ProjectId)
 string(REPLACE " " "_" ProjectId ${ProjectId})
 project(${ProjectId})
 
+# Include cmake macros
 include(${CMAKE_MODULE_PATH}/doxygen.cmake)
 include(${CMAKE_MODULE_PATH}/macros.cmake)
 
+# CMake flags
 set(CMAKE_CONFIGURATION_TYPES Debug;Release)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 
+# Link dependencies using CMake modules
 link_dependency(OpenGL3)
 link_dependency(GLEW)
 link_dependency(GLFW3)
 link_dependency(GLM)
 link_dependency(DevIL)
 link_dependency(ASSIMP)
-link_dependency(ZLIB)
+# link_dependency(ZLIB) # Seems to be not necessary
 
 # Include externals folder
 include_directories(${EXTERNALS_PATH})
 
-#set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} $ENV{PythonLibs})
-#find_package(PythonLibs 2.7 REQUIRED)  # cant use macro due to version parameter
-#include(${CMAKE_MODULE_PATH}/LinkPythonLibs27.cmake)
+# Python from miniconda TODO: be more version independend
+set(PYTHON_INCLUDE_DIRS "$ENV{HOME}/miniconda3/include/python3.5m")
+set(PYTHON_LIBRARIES "$ENV{HOME}/miniconda3/lib/libpython3.5m.so")
+set(PYTHON_EXECUTABLE "$ENV{HOME}/miniconda3/bin")
+set(PYTHON_PACKAGES_PATH "$ENV{HOME}/miniconda3/lib/python3.*/site-packages")
 
-if (NOT PYTHON_INCLUDE_DIRS)
-    find_package(PythonLibs 3 REQUIRED)
-endif()
-
-#link_dependency(NumPy)
-#find_package(NumPy REQUIRED)
-
+# Include directories
 include_directories(
-    ${CORE_PATH}
-${PYTHON_INCLUDE_DIRS}
-#${NUMPY_INCLUDE_DIRS}
+    ${PYTHON_INCLUDE_DIRS}
 )
+
+# Link against python
 link_libraries(
-        ${PYTHON_LIBRARIES}
+     ${PYTHON_LIBRARIES}
 )
 
-
+# Link against XOrg libraries on Linux
 if("${CMAKE_SYSTEM}" MATCHES "Linux")
-	find_package(X11)
-	set(ALL_LIBRARIES ${ALL_LIBRARIES} ${X11_LIBRARIES} Xcursor Xinerama Xrandr Xxf86vm Xi pthread)
+    find_package(X11)
+    set(ALL_LIBRARIES ${ALL_LIBRARIES} ${X11_LIBRARIES} Xcursor Xinerama Xrandr Xxf86vm Xi pthread)
 endif()
 
+# Tell application about some paths
 add_definitions(-DSHADERS_PATH="${SHADERS_PATH}")
 add_definitions(-DRESOURCES_PATH="${RESOURCES_PATH}")
 add_definitions(-DMDTRAJ_PATH="${SIDE_PACKAGES_PATH}") # TODO: rename variable on C++ side
 
+# Compiler settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   # using Clang
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
@@ -63,14 +65,18 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   add_definitions(/W2)
 endif()
 
+# Set output paths for libraries
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 GENERATE_SUBDIRS(ALL_LIBRARIES ${LIBRARIES_PATH} ${PROJECT_BINARY_DIR}/libraries)
 
+# Set output paths for exetuables
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 GENERATE_SUBDIRS(ALL_EXECUTABLES ${EXECUTABLES_PATH} ${PROJECT_BINARY_DIR}/executables)
 
+# Add shader path as subdirectory to have it available in project tree
 if(EXISTS ${SHADERS_PATH})
         add_subdirectory(${SHADERS_PATH})
 endif()
 
+# Printing of Python values
 file (COPY "${CMAKE_MODULE_PATH}/gdb_prettyprinter.py" DESTINATION ${PROJECT_BINARY_DIR})

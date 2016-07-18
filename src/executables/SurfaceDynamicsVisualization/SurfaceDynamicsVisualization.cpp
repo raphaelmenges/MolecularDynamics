@@ -1365,7 +1365,7 @@ void SurfaceDynamicsVisualization::renderGUI()
     // Rendering window
     if(mShowRenderingWindow)
     {
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.75f, 0.75f, 0.75f, 0.75f)); // window background
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.25f, 0.25f, 0.25f, 0.75f)); // window background
         ImGui::Begin("Rendering", NULL, 0);
 
         // Background
