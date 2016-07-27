@@ -13,7 +13,7 @@ Framebuffer::Framebuffer(int width, int height)
     resize(width, height);
 
     // Unbind framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 Framebuffer::~Framebuffer()
