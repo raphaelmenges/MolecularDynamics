@@ -76,6 +76,9 @@ private:
     // Get atom beneath cursor. Returns -1 when fails
     int getAtomBeneathCursor() const;
 
+    // Update path. Path is updated over complete length of available animation data
+    void updatePath();
+
     // Load cubemap texture. Returns texture handle
     GLuint createCubemap(
         std::string pathPosX,
@@ -151,6 +154,7 @@ private:
     bool mShowAnalysisWindow = true;
     bool mShowPath = true;
     int mPathFrameRadius = 5; // radius of frames which are visualized
+    int mPathSmoothRadius = 0; // radius of frames which are used for smoothing the path
     SurfaceRendering mSurfaceRendering = HULL;
     Background mBackground = COMPUTERVISUALISTIK;
     bool mShowRenderingWindow = true;

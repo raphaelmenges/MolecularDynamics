@@ -1238,6 +1238,9 @@ void SurfaceDynamicsVisualization::renderGUI()
     // Analysis window
     if(mShowAnalysisWindow)
     {
+        // Some variables for this window
+        bool doUpdatePath = false;
+
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.0f, 0.5f, 0.75f)); // window background
         ImGui::Begin("Analysis", NULL, 0);
 
@@ -1299,38 +1302,7 @@ void SurfaceDynamicsVisualization::renderGUI()
             mupOutlineAtomIndices = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(analyseAtomVector));
 
             // Path
-            auto rTrajectoy = mupGPUProtein->getTrajectory();
-
-            // Go over frames
-            std::vector<glm::vec3> path;
-            mPathLength = 0;
-            for(const auto& frame : *(rTrajectoy.get()))
-            {
-                // Go over analysed atoms and accumulate position in frame
-                glm::vec3 accPosition(0,0,0);
-                for(int atomIndex : mAnalyseAtoms)
-                {
-                    accPosition += frame.at(atomIndex);
-                }
-
-                // Calculate average
-                glm::vec3 avgPosition = accPosition / mAnalyseAtoms.size();
-
-                // Caluclate and accumulate distance
-                if(!path.empty())
-                {
-                    mPathLength += glm::distance(avgPosition, path.back());
-                }
-
-                // Push new average position value to vector after calculating distance
-                path.push_back(avgPosition);
-            }
-
-            // Fill it to vertex buffer of path
-            glBindBuffer(GL_ARRAY_BUFFER, mPathVBO);
-            glBufferData(GL_ARRAY_BUFFER, path.size() * sizeof(glm::vec3), path.data(), GL_DYNAMIC_DRAW);
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-            mPathVertexCount = path.size();
+            doUpdatePath = true;
         }
 
         // Show / hide path
@@ -1355,11 +1327,26 @@ void SurfaceDynamicsVisualization::renderGUI()
         stringPathLength << std::fixed << std::setprecision(2) << mPathLength;
         ImGui::Text(std::string("Path Length: " + stringPathLength.str() + " \u212b").c_str());
 
+        // Radius of frames which are taken into account for path smoothing
+        int radius = mPathSmoothRadius;
+        ImGui::SliderInt("Path Smooth Radius", &radius, 0, 10);
+        if(radius != mPathSmoothRadius)
+        {
+            mPathSmoothRadius = radius; // save new radius
+            doUpdatePath = true; // remember to update display path
+        }
+
         // Radius of frames in path visualization
         ImGui::SliderInt("Path Radius", &mPathFrameRadius, 1, 100);
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background
+
+        // Update path if necessary
+        if(doUpdatePath)
+        {
+            updatePath();
+        }
     }
 
     // Rendering window
@@ -1553,6 +1540,82 @@ int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
     {
         return (index - 1); // starts at one but should start at zero
     }
+}
+
+void SurfaceDynamicsVisualization::updatePath()
+{
+    // Path
+    auto rTrajectoy = mupGPUProtein->getTrajectory();
+
+    // Go over frames and calculate average position of all used atoms
+    std::vector<glm::vec3> path;
+    path.reserve(mupGPUProtein->getFrameCount());
+    mPathLength = 0;
+    for(const auto& frame : *(rTrajectoy.get()))
+    {
+        // Go over analysed atoms and accumulate position in frame
+        glm::vec3 accPosition(0,0,0);
+        for(int atomIndex : mAnalyseAtoms)
+        {
+            accPosition += frame.at(atomIndex);
+        }
+
+        // Calculate average
+        glm::vec3 avgPosition = accPosition / mAnalyseAtoms.size();
+
+        // Caluclate and accumulate distance
+        if(!path.empty())
+        {
+            mPathLength += glm::distance(avgPosition, path.back());
+        }
+
+        // Push new average position value to vector after calculating distance
+        path.push_back(avgPosition);
+    }
+
+    // Create VBO which is filled within next if clause
+    glBindBuffer(GL_ARRAY_BUFFER, mPathVBO);
+
+    // If necessary, smooth those calculated positions over time
+    if(mPathSmoothRadius > 0)
+    {
+        // Create vector for smoothed path
+        std::vector<glm::vec3> smoothedPath;
+        smoothedPath.reserve(mupGPUProtein->getFrameCount());
+
+        // Go over all positions
+        int pathVertexCount = path.size();
+        for(int i = 0; i < pathVertexCount; i++)
+        {
+            // Do accumulation for each frame
+            glm::vec3 accPosition(0,0,0);
+
+            // Get all position within radius
+            int startFrame = glm::max(0, i - mPathSmoothRadius);
+            int endFrame = glm::min(pathVertexCount-1, i + mPathSmoothRadius);
+            for(int j = startFrame; j <= endFrame; j++)
+            {
+                accPosition += path.at(j);
+            }
+            accPosition /= ((endFrame - startFrame) + 1);
+
+            // Push it back to smoothed path vector
+            smoothedPath.push_back(accPosition);
+        }
+
+        // Fill smoothed path to vertex buffer
+        glBufferData(GL_ARRAY_BUFFER, smoothedPath.size() * sizeof(glm::vec3), smoothedPath.data(), GL_DYNAMIC_DRAW);
+        mPathVertexCount = smoothedPath.size(); // should be the same as path.size(), but ok...
+    }
+    else
+    {
+        // Fill unsmoothed path to vertex buffer
+        glBufferData(GL_ARRAY_BUFFER, path.size() * sizeof(glm::vec3), path.data(), GL_DYNAMIC_DRAW);
+        mPathVertexCount = path.size();
+    }
+
+    // Unbind buffer
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 GLuint SurfaceDynamicsVisualization::createCubemap(
