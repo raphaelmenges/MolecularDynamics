@@ -12,6 +12,7 @@
 #include "SurfaceExtraction/GPUSurfaceExtraction.h"
 #include "SurfaceExtraction/SurfaceValidation.h"
 #include "Framebuffer.h"
+#include "Path.h"
 
 // Notes:
 // - Calculations done in angstrom
@@ -76,17 +77,14 @@ private:
     // Get atom beneath cursor. Returns -1 when fails
     int getAtomBeneathCursor() const;
 
-    // Update path. Path is updated over complete length of available animation data
-    void updatePath();
-
     // Load cubemap texture. Returns texture handle
     GLuint createCubemap(
-        std::string pathPosX,
-        std::string pathNegX,
-        std::string pathPosY,
-        std::string pathNegY,
-        std::string pathPosZ,
-        std::string pathNegZ) const;
+        std::string filepathPosX,
+        std::string filepathNegX,
+        std::string filepathPosY,
+        std::string filepathNegY,
+        std::string filepathPosZ,
+        std::string filepathNegZ) const;
 
     // Setup
     const bool mInitiallyUseGLSLImplementation = false;
@@ -190,13 +188,8 @@ private:
     std::unique_ptr<GPUTextureBuffer> mupOutlineAtomIndices;
     std::set<GLuint> mAnalyseAtoms;
     int mNextAnalyseAtomIndex = 0;
-    GLuint mPathVBO = 0;
-    GLuint mPathVAO = 0;
-    int mPathVertexCount = 0; // is somehow the same as frame count
-    std::unique_ptr<ShaderProgram> mupPathProgram;
-    GLuint mPathPositionAttribute = 0;
-    float mPathLength = 0; // euclidic leng
     std::unique_ptr<GPUTextureBuffer> mupAscension;
+    std::unique_ptr<Path> mupPath;
 
     // Surface validation
     std::unique_ptr<SurfaceValidation> mupSurfaceValidation;

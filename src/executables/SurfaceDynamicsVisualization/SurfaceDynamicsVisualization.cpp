@@ -121,26 +121,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
         std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negz.jpg");
 
     // # Create path
-
-    // Shader
-    mupPathProgram = std::unique_ptr<ShaderProgram>(new ShaderProgram("/SurfaceDynamicsVisualization/path.vert", "/SurfaceDynamicsVisualization/path.frag"));
-
-    // Generate and bind vertex array object
-    glGenVertexArrays(1, &mPathVAO);
-    glBindVertexArray(mPathVAO);
-
-    // Generate vertex buffer but do not fill it
-    glGenBuffers(1, &mPathVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, mPathVBO);
-
-    // Bind it to shader program
-    mPathPositionAttribute = glGetAttribLocation(mupPathProgram->getProgramHandle(), "position");
-    glEnableVertexAttribArray(mPathPositionAttribute);
-    glVertexAttribPointer(mPathPositionAttribute, 3, GL_FLOAT, GL_FALSE, 0, 0); // called again at path creation
-
-    // Unbind everything
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    mupPath = std::unique_ptr<Path>(new Path());
 
     // # Load protein
 
@@ -263,10 +244,6 @@ SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
     // Delete cubemaps
     glDeleteTextures(1, &mCVCubemapTexture);
     glDeleteTextures(1, &mBeachCubemapTexture);
-
-    // Delete path
-    glDeleteVertexArrays(1, &mPathVAO);
-    glDeleteBuffers(1, &mPathVBO);
 }
 
 void SurfaceDynamicsVisualization::renderLoop()
@@ -530,37 +507,16 @@ void SurfaceDynamicsVisualization::renderLoop()
         }
 
         // Drawing of path
-        if(mShowPath && mPathVertexCount > 0)
+        if(mShowPath)
         {
-            glDisable(GL_DEPTH_TEST);
-            glBindVertexArray(mPathVAO);
-            glBindBuffer(GL_ARRAY_BUFFER, mPathVBO);
-
-            // Point size for rendering
-            glPointSize(mPathPointSize);
-
-            // Decide which path parts are rendered
-            int offset = glm::clamp(mFrame - mPathFrameRadius, 0, mPathVertexCount); // on which frame path starts
-            glVertexAttribPointer(mPathPositionAttribute, 3, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(GLfloat) * 3 * offset));
-            int count = glm::min(((mPathFrameRadius * 2) + 1), mPathVertexCount - offset);
-
-            // General shader setup
-            mupPathProgram->use();
-            mupPathProgram->update("view", mupCamera->getViewMatrix());
-            mupPathProgram->update("projection", mupCamera->getProjectionMatrix());
-            mupPathProgram->update("pastColor", mPastPathColor);
-            mupPathProgram->update("futureColor", mFuturePathColor);
-            mupPathProgram->update("frame", mFrame);
-            mupPathProgram->update("offset", offset);
-            mupPathProgram->update("frameRadius", mPathFrameRadius);
-
-            // Drawing
-            glDrawArrays(GL_LINE_STRIP, 0, count); // path as line
-            glDrawArrays(GL_POINTS, 0, count); // path as points
-
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-            glBindVertexArray(0);
-            glEnable(GL_DEPTH_TEST);
+            mupPath->draw(
+                mFrame,
+                mPathFrameRadius,
+                mupCamera->getViewMatrix(),
+                mupCamera->getProjectionMatrix(),
+                mPastPathColor,
+                mFuturePathColor,
+                mPathPointSize);
         }
 
         // Unbind framebuffer for overlay
@@ -1328,7 +1284,7 @@ void SurfaceDynamicsVisualization::renderGUI()
 
         // Display length of path
         std::ostringstream stringPathLength;
-        stringPathLength << std::fixed << std::setprecision(2) << mPathLength;
+        stringPathLength << std::fixed << std::setprecision(2) << mupPath->getLength();
         ImGui::Text(std::string("Path Length: " + stringPathLength.str() + " \u212b").c_str());
 
         // Radius of frames which are taken into account for path smoothing
@@ -1349,7 +1305,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         // Update path if necessary
         if(doUpdatePath)
         {
-            updatePath();
+            mupPath->update(mupGPUProtein.get(), mAnalyseAtoms, mPathSmoothRadius);
         }
     }
 
@@ -1546,89 +1502,13 @@ int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
     }
 }
 
-void SurfaceDynamicsVisualization::updatePath()
-{
-    // Path
-    auto rTrajectoy = mupGPUProtein->getTrajectory();
-
-    // Go over frames and calculate average position of all used atoms
-    std::vector<glm::vec3> path;
-    path.reserve(mupGPUProtein->getFrameCount());
-    mPathLength = 0;
-    for(const auto& frame : *(rTrajectoy.get()))
-    {
-        // Go over analysed atoms and accumulate position in frame
-        glm::vec3 accPosition(0,0,0);
-        for(int atomIndex : mAnalyseAtoms)
-        {
-            accPosition += frame.at(atomIndex);
-        }
-
-        // Calculate average
-        glm::vec3 avgPosition = accPosition / mAnalyseAtoms.size();
-
-        // Caluclate and accumulate distance
-        if(!path.empty())
-        {
-            mPathLength += glm::distance(avgPosition, path.back());
-        }
-
-        // Push new average position value to vector after calculating distance
-        path.push_back(avgPosition);
-    }
-
-    // Create VBO which is filled within next if clause
-    glBindBuffer(GL_ARRAY_BUFFER, mPathVBO);
-
-    // If necessary, smooth those calculated positions over time
-    if(mPathSmoothRadius > 0)
-    {
-        // Create vector for smoothed path
-        std::vector<glm::vec3> smoothedPath;
-        smoothedPath.reserve(mupGPUProtein->getFrameCount());
-
-        // Go over all positions
-        int pathVertexCount = path.size();
-        for(int i = 0; i < pathVertexCount; i++)
-        {
-            // Do accumulation for each frame
-            glm::vec3 accPosition(0,0,0);
-
-            // Get all position within radius
-            int startFrame = glm::max(0, i - mPathSmoothRadius);
-            int endFrame = glm::min(pathVertexCount-1, i + mPathSmoothRadius);
-            for(int j = startFrame; j <= endFrame; j++)
-            {
-                accPosition += path.at(j);
-            }
-            accPosition /= ((endFrame - startFrame) + 1);
-
-            // Push it back to smoothed path vector
-            smoothedPath.push_back(accPosition);
-        }
-
-        // Fill smoothed path to vertex buffer
-        glBufferData(GL_ARRAY_BUFFER, smoothedPath.size() * sizeof(glm::vec3), smoothedPath.data(), GL_DYNAMIC_DRAW);
-        mPathVertexCount = smoothedPath.size(); // should be the same as path.size(), but ok...
-    }
-    else
-    {
-        // Fill unsmoothed path to vertex buffer
-        glBufferData(GL_ARRAY_BUFFER, path.size() * sizeof(glm::vec3), path.data(), GL_DYNAMIC_DRAW);
-        mPathVertexCount = path.size();
-    }
-
-    // Unbind buffer
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
 GLuint SurfaceDynamicsVisualization::createCubemap(
-        std::string pathPosX,
-        std::string pathNegX,
-        std::string pathPosY,
-        std::string pathNegY,
-        std::string pathPosZ,
-        std::string pathNegZ) const
+        std::string filepathPosX,
+        std::string filepathNegX,
+        std::string filepathPosY,
+        std::string filepathNegY,
+        std::string filepathPosZ,
+        std::string filepathNegZ) const
 {
     // Prepare stb_image loading
     // stbi_set_flip_vertically_on_load(true);
@@ -1646,12 +1526,12 @@ GLuint SurfaceDynamicsVisualization::createCubemap(
 
     // Push paths to vector
     std::vector<std::string> cubemapFullpaths;
-    cubemapFullpaths.push_back(pathPosX);
-    cubemapFullpaths.push_back(pathNegX);
-    cubemapFullpaths.push_back(pathPosY);
-    cubemapFullpaths.push_back(pathNegY);
-    cubemapFullpaths.push_back(pathPosZ);
-    cubemapFullpaths.push_back(pathNegZ);
+    cubemapFullpaths.push_back(filepathPosX);
+    cubemapFullpaths.push_back(filepathNegX);
+    cubemapFullpaths.push_back(filepathPosY);
+    cubemapFullpaths.push_back(filepathNegY);
+    cubemapFullpaths.push_back(filepathPosZ);
+    cubemapFullpaths.push_back(filepathNegZ);
 
     // Load all directions
     for(int i = 0; i < cubemapFullpaths.size(); i++)
