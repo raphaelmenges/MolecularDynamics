@@ -167,10 +167,10 @@ float Path::getCompleteLength() const
 {
     if(mAccLengths.empty())
     {
-        return 0;
+        return 0.f;
     }
     else
     {
-        mAccLengths.back();
+        return mAccLengths.back();
     }
 }

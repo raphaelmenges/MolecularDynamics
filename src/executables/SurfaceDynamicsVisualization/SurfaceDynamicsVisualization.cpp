@@ -1282,8 +1282,10 @@ void SurfaceDynamicsVisualization::renderGUI()
         }
         ImGui::SameLine();
 
-        // Display length of path (TODO: something is wrong here)
-        ImGui::Text(std::string("Path Length: " + std::to_string((int)mupPath->getCompleteLength()) + " \u212b").c_str());
+        // Display length of path
+        std::ostringstream stringPathLength;
+        stringPathLength << std::fixed << std::setprecision(2) << mupPath->getCompleteLength();
+        ImGui::Text(std::string("Path Length: " + stringPathLength.str() + " \u212b").c_str());
 
         // Radius of frames which are taken into account for path smoothing
         int radius = mPathSmoothRadius;
