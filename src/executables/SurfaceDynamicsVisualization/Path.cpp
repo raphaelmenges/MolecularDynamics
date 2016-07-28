@@ -174,3 +174,22 @@ float Path::getCompleteLength() const
         return mAccLengths.back();
     }
 }
+
+float Path::getLength(int start, int end) const
+{
+    if(mAccLengths.empty())
+    {
+        return 0.f;
+    }
+    else
+    {
+        if(start > 0)
+        {
+            return (mAccLengths.at(end) - mAccLengths.at(start-1));
+        }
+        else
+        {
+            return mAccLengths.at(end);
+        }
+    }
+}

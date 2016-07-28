@@ -40,7 +40,11 @@ public:
     // Get length of complete path
     float getCompleteLength() const;
 
-    //
+    // Get length of subpath
+    float getLength(int start, int end) const;
+
+    // Get count of vertices in path
+    int getVertexCount() const { return mVertexCount; }
 
 private:
 
