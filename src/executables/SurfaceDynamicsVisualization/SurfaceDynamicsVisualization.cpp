@@ -91,10 +91,14 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
 
     // # Prepare framebuffers for rendering
     mupMoleculeFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight));
+    mupMoleculeFramebuffer->bind();
     mupMoleculeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA); // color
     mupMoleculeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGB); // picking index
+    mupMoleculeFramebuffer->unbind();
     mupOverlayFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight));
+    mupOverlayFramebuffer->bind();
     mupOverlayFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA);
+    mupOverlayFramebuffer->unbind();
 
     // # Ascension rendering
     mupAscension = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(0));
