@@ -37,18 +37,21 @@ public:
         glm::vec3 futureColor,
         float pointSize) const;
 
-    // Get path length
-    float getLength() const { return _length; }
+    // Get length of complete path
+    float getCompleteLength() const;
+
+    //
 
 private:
 
     // Members
-    float _length = 0;
-    GLuint _VBO = 0;
-    GLuint _VAO = 0;
-    int _vertexCount;
+    float mlength = 0;
+    GLuint mVBO = 0;
+    GLuint mVAO = 0;
+    int mVertexCount;
     std::unique_ptr<ShaderProgram> mupProgram;
-    int _positionAttribue = 0;
+    int mPositionAttribue = 0;
+    std::vector<float> mAccLengths; // saving accumulated lengths for easier computations. Size = mVertexCount - 1
 
 };
 

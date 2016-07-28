@@ -6,17 +6,17 @@ Path::Path()
     mupProgram = std::unique_ptr<ShaderProgram>(new ShaderProgram("/SurfaceDynamicsVisualization/path.vert", "/SurfaceDynamicsVisualization/path.frag"));
 
     // Generate and bind vertex array object
-    glGenVertexArrays(1, &_VAO);
-    glBindVertexArray(_VAO);
+    glGenVertexArrays(1, &mVAO);
+    glBindVertexArray(mVAO);
 
     // Generate vertex buffer but do not fill it
-    glGenBuffers(1, &_VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, _VBO);
+    glGenBuffers(1, &mVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, mVBO);
 
     // Bind it to shader program
-    _positionAttribue = glGetAttribLocation(mupProgram->getProgramHandle(), "position");
-    glEnableVertexAttribArray(_positionAttribue);
-    glVertexAttribPointer(_positionAttribue, 3, GL_FLOAT, GL_FALSE, 0, 0); // called again at path creation
+    mPositionAttribue = glGetAttribLocation(mupProgram->getProgramHandle(), "position");
+    glEnableVertexAttribArray(mPositionAttribue);
+    glVertexAttribPointer(mPositionAttribue, 3, GL_FLOAT, GL_FALSE, 0, 0); // called again at path creation
 
     // Unbind everything
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -25,8 +25,8 @@ Path::Path()
 
 Path::~Path()
 {
-    glDeleteVertexArrays(1, &_VAO);
-    glDeleteBuffers(1, &_VBO);
+    glDeleteVertexArrays(1, &mVAO);
+    glDeleteBuffers(1, &mVBO);
 }
 
 void Path::update(
@@ -34,13 +34,16 @@ void Path::update(
     const std::set<GLuint>& atomIndices,
     int smoothFrameRadius)
 {
+    // Clear accumulated length
+    mAccLengths.clear();
+    mAccLengths.reserve(pGPUProtein->getFrameCount() - 1); // distance between path vertices
+
     // Path
     auto rTrajectoy = pGPUProtein->getTrajectory();
 
     // Go over frames and calculate average position of all used atoms
     std::vector<glm::vec3> path;
     path.reserve(pGPUProtein->getFrameCount());
-    _length = 0;
     for(const auto& frame : *(rTrajectoy.get()))
     {
         // Go over analysed atoms and accumulate position in frame
@@ -56,7 +59,16 @@ void Path::update(
         // Caluclate and accumulate distance
         if(!path.empty())
         {
-            _length += glm::distance(avgPosition, path.back());
+            // Save length
+            float length = glm::distance(avgPosition, path.back());
+            if(mAccLengths.empty())
+            {
+                mAccLengths.push_back(length);
+            }
+            else
+            {
+                mAccLengths.push_back(mAccLengths.back() + length);
+            }
         }
 
         // Push new average position value to vector after calculating distance
@@ -64,7 +76,7 @@ void Path::update(
     }
 
     // Create VBO which is filled within next if clause
-    glBindBuffer(GL_ARRAY_BUFFER, _VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, mVBO);
 
     // If necessary, smooth those calculated positions over time
     if(smoothFrameRadius > 0)
@@ -95,13 +107,13 @@ void Path::update(
 
         // Fill smoothed path to vertex buffer
         glBufferData(GL_ARRAY_BUFFER, smoothedPath.size() * sizeof(glm::vec3), smoothedPath.data(), GL_DYNAMIC_DRAW);
-        _vertexCount = smoothedPath.size(); // should be the same as path.size(), but ok...
+        mVertexCount = smoothedPath.size(); // should be the same as path.size(), but ok...
     }
     else
     {
         // Fill unsmoothed path to vertex buffer
         glBufferData(GL_ARRAY_BUFFER, path.size() * sizeof(glm::vec3), path.data(), GL_DYNAMIC_DRAW);
-        _vertexCount = path.size();
+        mVertexCount = path.size();
     }
 
     // Unbind buffer
@@ -117,19 +129,19 @@ void Path::draw(
     glm::vec3 futureColor,
     float pointSize) const
 {
-    if(_vertexCount > 0)
+    if(mVertexCount > 0)
     {
         glDisable(GL_DEPTH_TEST);
-        glBindVertexArray(_VAO);
-        glBindBuffer(GL_ARRAY_BUFFER, _VBO);
+        glBindVertexArray(mVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, mVBO);
 
         // Point size for rendering
         glPointSize(pointSize);
 
         // Decide which path parts are rendered
-        int offset = glm::clamp(frame - drawFrameRadius, 0, _vertexCount); // on which frame path starts
-        glVertexAttribPointer(_positionAttribue, 3, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(GLfloat) * 3 * offset));
-        int count = glm::min(((drawFrameRadius * 2) + 1), _vertexCount - offset);
+        int offset = glm::clamp(frame - drawFrameRadius, 0, mVertexCount); // on which frame path starts
+        glVertexAttribPointer(mPositionAttribue, 3, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(GLfloat) * 3 * offset));
+        int count = glm::min(((drawFrameRadius * 2) + 1), mVertexCount - offset);
 
         // General shader setup
         mupProgram->use();
@@ -148,5 +160,17 @@ void Path::draw(
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
         glEnable(GL_DEPTH_TEST);
+    }
+}
+
+float Path::getCompleteLength() const
+{
+    if(mAccLengths.empty())
+    {
+        return 0;
+    }
+    else
+    {
+        mAccLengths.back();
     }
 }
