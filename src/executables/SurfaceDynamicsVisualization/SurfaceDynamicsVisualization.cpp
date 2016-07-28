@@ -1280,7 +1280,6 @@ void SurfaceDynamicsVisualization::renderGUI()
                 mShowPath = true;
             }
         }
-        ImGui::SameLine();
 
         // Length of complete path
         std::ostringstream stringPathLength;
