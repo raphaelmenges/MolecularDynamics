@@ -156,6 +156,7 @@ private:
     SurfaceRendering mSurfaceRendering = HULL;
     Background mBackground = COMPUTERVISUALISTIK;
     bool mShowRenderingWindow = true;
+    bool mAutoCenterCamera = false;
 
     // Report output
     std::string mComputeInformation = "No computation info available";

@@ -1,4 +1,4 @@
-#include "GPUProtein.h"
+#include "GPUProtein.h"(
 #include "Molecule/MDtrajLoader/Data/Protein.h"
 
 GPUProtein::GPUProtein(Protein * const pProtein)
@@ -18,17 +18,35 @@ GPUProtein::GPUProtein(Protein * const pProtein)
         mspTrajectory->at(i).resize(atomCount);
     }
 
-    // Fill structures for CPU
-    for(int i = 0; i < atomCount; i++)
+    // Reset centers
+    mCentersOfMass.clear();
+    mCentersOfMass.reserve(frameCount);
+
+    // Fill radii on CPU
+    for(int i = 0; i < atomCount; i++) // go over atoms
     {
         // Collect radius
         mspRadii->at(i) = pProtein->getRadiusAt(i);
+    }
 
-        // Collect trajectory
-        for(int j = 0; j < frameCount; j++)
+    // Fill trajectory on CPU
+    for(int i = 0; i < frameCount; i++) // go over frames
+    {
+        glm::vec3 accPosition(0, 0, 0);
+        for(int j = 0; j < atomCount; j++) // go over atoms
         {
-            mspTrajectory->at(j).at(i) = pProtein->getAtoms()->at(i)->getPositionAtFrame(j);
+            // Position of that atom in that frame
+            glm::vec3 position = pProtein->getAtoms()->at(j)->getPositionAtFrame(i);
+
+            // Collect trajectory
+            mspTrajectory->at(i).at(j) = position;
+
+            // Accumulate position
+            accPosition += position;
         }
+
+        // Save center
+        mCentersOfMass.push_back(accPosition / atomCount);
     }
 
     // Init SSBOs

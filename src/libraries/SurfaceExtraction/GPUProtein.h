@@ -38,6 +38,9 @@ public:
     // Get shared pointer to trajectory (position per atom per frame)
     std::shared_ptr<const std::vector<std::vector<glm::vec3> > > getTrajectory() const;
 
+    // Get center of protein at specific frame
+    glm::vec3 getCenterOfMass(int frame) const { return mCentersOfMass.at(frame); }
+
 private:
 
     // Initialize SSBOs
@@ -54,6 +57,9 @@ private:
 
     // SSBO of trajectory
     GLuint mTrajectorySSBO;
+
+    // Vector which holds the center of mass for each frame (ok, mass is not yet taken into account)
+    std::vector<glm::vec3> mCentersOfMass;
 
 };
 

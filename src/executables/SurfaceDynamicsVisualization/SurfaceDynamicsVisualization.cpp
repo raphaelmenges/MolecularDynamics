@@ -391,6 +391,12 @@ void SurfaceDynamicsVisualization::renderLoop()
             lockCursorPosition = true;
         }
 
+        // Automatic setting of camera center if wished
+        if(mAutoCenterCamera)
+        {
+            mupCamera->setCenter(mupGPUProtein->getCenterOfMass(mFrame));
+        }
+
         // Update camera
         mupCamera->update(mWindowWidth, mWindowHeight, mUsePerspectiveCamera);
 
@@ -943,6 +949,23 @@ void SurfaceDynamicsVisualization::renderGUI()
         glm::vec3 center = mupCamera->getCenter();
         ImGui::DragFloat3("Position", glm::value_ptr(center));
         mupCamera->setCenter(center);
+
+        // Automatic put center of camera in protein's center
+        if(mAutoCenterCamera)
+        {
+            if(ImGui::Button("Manual Center"))
+            {
+                mAutoCenterCamera = false;
+            }
+        }
+        else
+        {
+            if(ImGui::Button("Auto Center"))
+            {
+                mAutoCenterCamera = true;
+            }
+        }
+        ImGui::SameLine();
 
         // Reset
         if(ImGui::Button("Reset Camera"))
