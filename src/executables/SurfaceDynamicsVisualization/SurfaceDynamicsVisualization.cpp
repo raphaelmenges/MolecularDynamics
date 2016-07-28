@@ -380,7 +380,7 @@ void SurfaceDynamicsVisualization::renderLoop()
         // Rotate camera
         if(mRotateCamera)
         {
-            mCameraDeltaRotation = glm::vec2(cursorDeltaX, cursorDeltaY);
+            mCameraDeltaRotation = 0.25f * glm::vec2(cursorDeltaX, cursorDeltaY); // just weighted down a little bit
             mCameraRotationSmoothTime = 1.f;
             lockCursorPosition = true;
         }
