@@ -1136,10 +1136,21 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Begin("Information", NULL, 0);
 
         // General infos
+        ImGui::Text("General");
         ImGui::Text(std::string("Atom Count: " + std::to_string(mupGPUProtein->getAtomCount())).c_str());
-        ImGui::Text(std::string("Selected Atom: " + std::to_string(mSelectedAtom)).c_str());
         ImGui::Text(std::string("Internal Atoms: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer))).c_str());
         ImGui::Text(std::string("Surface Atoms: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer))).c_str());
+        ImGui::Separator();
+
+        // Selection infos
+        ImGui::Text("Selection");
+        ImGui::Text(std::string("Index: " + std::to_string(mSelectedAtom)).c_str());
+        ImGui::Text(std::string("Element: " + mupGPUProtein->getElement(mSelectedAtom)).c_str());
+        ImGui::Text(std::string("Aminoacid: " + mupGPUProtein->getAminoacid(mSelectedAtom)).c_str());
+        ImGui::Separator();
+
+        // Hardware infos
+        ImGui::Text("Hardware");
 
         // Show available GPU memory
         int availableMemory;

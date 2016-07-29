@@ -41,6 +41,12 @@ public:
     // Get center of protein at specific frame
     glm::vec3 getCenterOfMass(int frame) const { return mCentersOfMass.at(frame); }
 
+    // Get element
+    std::string getElement(int atomIndex) const { return mElements.at(atomIndex); }
+
+    // Get aminoacid
+    std::string getAminoacid(int atomIndex) const { return mAminoacids.at(atomIndex); }
+
 private:
 
     // Initialize SSBOs
