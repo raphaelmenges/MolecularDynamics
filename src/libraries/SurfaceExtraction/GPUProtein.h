@@ -23,8 +23,14 @@ public:
     // Destructor
     virtual ~GPUProtein();
 
-    // Bind SSBOs (readonly)
+    // Bind SSBOs with radii and trajectory (readonly)
     void bind(GLuint radiiSlot, GLuint trajectorySlot) const;
+
+    // Bind SSBO with colors according to element (readonly)
+    void bindColorsElement(GLuint slot) const;
+
+    // Bind SSBO with colors according to aminoacid (readonly)
+    void bindColorsAminoacid(GLuint slot) const;
 
     // Get count of atoms in protein
     int getAtomCount() const { return mspRadii->size(); }
@@ -67,12 +73,17 @@ private:
     // Vector which holds the center of mass for each frame (ok, mass is not yet taken into account)
     std::vector<glm::vec3> mCentersOfMass;
 
-    // Strings which hold element type of atoms
+    // Strings which hold element of atoms
     std::vector<std::string> mElements;
 
     // Strings which hold aminoacid of atoms
     std::vector<std::string> mAminoacids;
 
+    // SSBO with colors for atoms according to element
+    GLuint mColorsElementSSBO;
+
+    // SSBO with colors for atoms according to aminoacid
+     GLuint mColorsAminoacidSSBO;
 };
 
 #endif // GPU_PROTEIN_H

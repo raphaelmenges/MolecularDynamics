@@ -1,5 +1,6 @@
 #include "GPUProtein.h"(
 #include "Molecule/MDtrajLoader/Data/Protein.h"
+#include "Molecule/MDtrajLoader/Data/AtomLUT.h"
 
 GPUProtein::GPUProtein(Protein * const pProtein)
 {
@@ -95,12 +96,24 @@ GPUProtein::~GPUProtein()
 {
     glDeleteBuffers(1, &mRadiiSSBO);
     glDeleteBuffers(1, &mTrajectorySSBO);
+    glDeleteBuffers(1, &mColorsElementSSBO);
+    glDeleteBuffers(1, &mColorsAminoacidSSBO);
 }
 
 void GPUProtein::bind(GLuint radiiSlot, GLuint trajectorySlot) const
 {
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, radiiSlot, mRadiiSSBO);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, trajectorySlot, mTrajectorySSBO);
+}
+
+void GPUProtein::bindColorsElement(GLuint slot) const
+{
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, slot, mColorsElementSSBO);
+}
+
+void GPUProtein::bindColorsAminoacid(GLuint slot) const
+{
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, slot, mColorsAminoacidSSBO);
 }
 
 std::shared_ptr<const std::vector<float> > GPUProtein::getRadii() const
@@ -123,13 +136,41 @@ void GPUProtein::initSSBOs(int atomCount, int frameCount)
         linearTrajectory.insert(linearTrajectory.end(), mspTrajectory->at(i).begin(), mspTrajectory->at(i).end());
     }
 
-    // Create structures on GPU
+    // Create structures of radii and trajectory on GPU
     glGenBuffers(1, &mRadiiSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, mRadiiSSBO);
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * mspRadii->size(), mspRadii->data(), GL_STATIC_DRAW);
     glGenBuffers(1, &mTrajectorySSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, mTrajectorySSBO);
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec3) * linearTrajectory.size(), linearTrajectory.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    // Get atom lookup
+    AtomLUT lut;
+
+    // Create structure for coloring according to element on GPU
+    std::vector<glm::vec3> elementColors;
+    elementColors.reserve(atomCount);
+    for(int i = 0; i < atomCount; i++)
+    {
+        auto color = lut.cpk_colorcode[mElements.at(i)];
+        elementColors.push_back(glm::vec3(color.r, color.g, color.b));
+    }
+    glGenBuffers(1, &mColorsElementSSBO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mColorsElementSSBO);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec3) * elementColors.size(), elementColors.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    // Create structure for coloring according to aminoacid on GPU
+    std::vector<glm::vec3> aminoacidColors;
+    aminoacidColors.reserve(atomCount);
+    for(int i = 0; i < atomCount; i++)
+    {
+        aminoacidColors.push_back(glm::vec3(1,0,0)); // TODO
+    }
+    glGenBuffers(1, &mColorsAminoacidSSBO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mColorsAminoacidSSBO);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec3) * aminoacidColors.size(), aminoacidColors.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
