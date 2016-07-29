@@ -61,6 +61,12 @@ private:
     // Vector which holds the center of mass for each frame (ok, mass is not yet taken into account)
     std::vector<glm::vec3> mCentersOfMass;
 
+    // Strings which hold element type of atoms
+    std::vector<std::string> mElements;
+
+    // Strings which hold aminoacid of atoms
+    std::vector<std::string> mAminoacids;
+
 };
 
 #endif // GPU_PROTEIN_H

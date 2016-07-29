@@ -1147,10 +1147,11 @@ void SurfaceDynamicsVisualization::renderGUI()
         availableMemory = availableMemory / 1000;
         ImGui::Text(std::string("Available VRAM: " + std::to_string(availableMemory) + "MB").c_str());
         // TODO: one may want to clean up glGetError if query failed and show failure message on GUI (for example on Intel or AMD)
+
+        /*
         ImGui::Separator();
 
         // Testing
-        /*
         ImGui::Text("Testing");
         std::vector<float> curve;
         curve.push_back(0.5f);

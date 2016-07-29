@@ -7,7 +7,9 @@ GPUProtein::GPUProtein(Protein * const pProtein)
     int atomCount  = pProtein->getAtoms()->size();
     int frameCount = pProtein->getAtomAt(0)->getCountOfFrames(); // TODO: what if no atoms in protein?
     mspRadii = std::shared_ptr<std::vector<float> >(new std::vector<float>);
-    mspRadii->resize(atomCount);
+    mspRadii->reserve(atomCount);
+
+    // Already size trajectory vector
     mspTrajectory = std::shared_ptr<
             std::vector<
                 std::vector<glm::vec3> > >(
@@ -18,15 +20,22 @@ GPUProtein::GPUProtein(Protein * const pProtein)
         mspTrajectory->at(i).resize(atomCount);
     }
 
-    // Reset centers
-    mCentersOfMass.clear();
+    // Reserve space in other vectors (which are all assumed to be empty)
     mCentersOfMass.reserve(frameCount);
+    mElements.reserve(atomCount);
+    mAminoacids.reserve(atomCount);
 
-    // Fill radii on CPU
+    // Fill radii, elements and aminoacids on CPU
     for(int i = 0; i < atomCount; i++) // go over atoms
     {
         // Collect radius
-        mspRadii->at(i) = pProtein->getRadiusAt(i);
+        mspRadii->push_back(pProtein->getRadiusAt(i));
+
+        // Element
+        mElements.push_back(pProtein->getAtomAt(i)->getElement());
+
+        // Aminoacid
+        mAminoacids.push_back(pProtein->getAtomAt(i)->getAmino());
     }
 
     // Fill trajectory on CPU
@@ -38,7 +47,7 @@ GPUProtein::GPUProtein(Protein * const pProtein)
             // Position of that atom in that frame
             glm::vec3 position = pProtein->getAtoms()->at(j)->getPositionAtFrame(i);
 
-            // Collect trajectory
+            // Collect trajectory (already correctly sized)
             mspTrajectory->at(i).at(j) = position;
 
             // Accumulate position
