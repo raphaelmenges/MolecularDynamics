@@ -1145,8 +1145,8 @@ void SurfaceDynamicsVisualization::renderGUI()
             }
         }
 
-        // Variables for hull rendering
-        if(mSurfaceRendering == SurfaceRendering::HULL)
+        // Rendering of internal and surface atoms
+        if(mSurfaceRendering != SurfaceRendering::ASCENSION)
         {
             // Show / hide internal atoms
             if(mShowInternal)
