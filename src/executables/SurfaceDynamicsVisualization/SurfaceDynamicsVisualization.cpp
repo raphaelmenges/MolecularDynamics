@@ -607,6 +607,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             ascensionProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
             ascensionProgram.update("hotColor", mAscensionHotColor);
             ascensionProgram.update("coldColor", mAscensionColdColor);
+            ascensionProgram.update("internalColor", mAscensionInternalColor);
             ascensionProgram.update("ascensionFrame", mFrame - mComputedStartFrame); // TODO decide about better structure
             ascensionProgram.update("ascensionMaxValue", mAscensionMaxValue);
             glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
@@ -1557,44 +1558,61 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
         // Get surface indices of layer zero for that frame
         std::vector<GLuint> surfaceIndices = rupGPUSurface->getSurfaceIndices(0);
 
-        // Decide how to calculate the ascension value
-        if(i == 0)
+        // Go over atoms
+        for(int a = 0; a < atomCount; a++)
         {
-            // Go over atoms
-            for(int a = 0; a < atomCount; a++)
+            bool surface = false;
+
+            // Go over surface indices
+            for(GLuint s : surfaceIndices)
+            {
+                // Check whether current atom is on surface
+                if(a == s)
+                {
+                    surface = true;
+                    break;
+                }
+            }
+
+            if(i == 0)
             {
                 // Push back value for first frame of ascension
-                ascension.push_back(mAscensionMaxValue / 2);
+                ascension.push_back(0.f); // hot
+                ascension.push_back(surface ? mAscensionMaxValue : 0.f); // cold
             }
-        }
-        else
-        {
-            // Go over atoms
-            for(int a = 0; a < atomCount; a++)
+            else
             {
-                bool surface = false;
+                int index = 2 * ((i-1) * atomCount + a);
+                int previousHot = ascension.at(index);
+                int previousCold = ascension.at(index + 1);
 
-                // Go over surface indices
-                for(GLuint s : surfaceIndices)
+                if(surface)
                 {
-                    // Check whether current atom is on surface
-                    if(a == s)
+                    // Either getting hotter or cooling down
+                    if((previousHot >= mAscensionMaxValue) || (previousCold > 0))
                     {
-                        surface = true;
-                        break;
+                        // Increase cold, descrease hot
+                        ascension.push_back((GLuint)glm::max(0, previousHot - mAscensionCoolDownSpeed)); // hot
+                        ascension.push_back((GLuint)glm::min(mAscensionMaxValue, previousCold + mAscensionCoolDownSpeed)); // cold
+                    }
+                    else
+                    {
+                        // Getting hotter
+                        ascension.push_back((GLuint)glm::min(mAscensionMaxValue, previousHot + mAscensionCoolDownSpeed)); // hot
+                        ascension.push_back((GLuint)0); // cold
+
                     }
                 }
-
-                // Push back value for first frame of ascension
-                GLuint previousValue = ascension.at(((i-1) * atomCount + a));
-                int nextValue = ((int)previousValue);
-                nextValue = surface ? nextValue + mAscenionIncreaseValue : nextValue - mAscensionDecreaseValue;
-                nextValue = glm::clamp(nextValue, 0, mAscensionMaxValue);
-                ascension.push_back((GLuint)nextValue);
+                else
+                {
+                    // No more surface, decrease hot and cold
+                    ascension.push_back((GLuint)glm::max(0, previousHot - mAscensionBecomingInternalSpeed)); // hot
+                    ascension.push_back((GLuint)glm::max(0, previousCold - mAscensionBecomingInternalSpeed)); // cold
+                }
             }
         }
 
-        // Increment counter
+        // Increment counter of frames
         i++;
     }
 

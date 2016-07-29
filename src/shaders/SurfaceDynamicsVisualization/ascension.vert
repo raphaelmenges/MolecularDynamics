@@ -24,7 +24,7 @@ layout(std430, binding = 1) restrict readonly buffer TrajectoryBuffer
    Position trajectory[];
 };
 
-// Ascension
+// Ascension (there are always two values: amount of hotness and coldness
 layout(binding = 2, r32ui) readonly restrict uniform uimageBuffer Ascension;
 
 // Uniforms
@@ -32,6 +32,7 @@ uniform float probeRadius;
 uniform int selectedIndex = 0;
 uniform vec3 hotColor;
 uniform vec3 coldColor;
+uniform vec3 internalColor;
 uniform int frame;
 uniform int atomCount;
 uniform int smoothAnimationRadius;
@@ -97,15 +98,21 @@ void main()
     vertRadius = radii[atomIndex] + probeRadius;
 
     // Set color
-    int ascensionRawValue = int(imageLoad(Ascension, (ascensionFrame * atomCount) + int(gl_VertexID)).x);
-    float ascension = float(ascensionRawValue) / float(ascensionMaxValue);
+    int index = 2 * ((ascensionFrame * atomCount) + int(gl_VertexID));
+    int ascensionRawValueA = int(imageLoad(Ascension, index).x); // how much hot is it?
+    int ascensionRawValueB = int(imageLoad(Ascension, index + 1).x); // how much cold is it?
+    float ascensionA = float(ascensionRawValueA) / float(ascensionMaxValue);
+    float ascensionB = float(ascensionRawValueB) / float(ascensionMaxValue);
     if(atomIndex == selectedIndex)
     {
         vertColor = vec3(0,1,0);
     }
     else
     {
-        vertColor = mix(coldColor, hotColor, ascension);
+        vertColor = vec3(0,0,0);
+        vertColor += hotColor * ascensionA;
+        vertColor += coldColor * ascensionB;
+        vertColor += internalColor * max(0, 1.f - (ascensionA + ascensionB)); // assuming that both sum is not over one what may happen at the moment
     }
 
     // Set index

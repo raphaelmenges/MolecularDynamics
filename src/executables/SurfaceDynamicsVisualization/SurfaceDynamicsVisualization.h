@@ -110,10 +110,12 @@ private:
     const glm::vec3 mPastPathColor = glm::vec3(1.f, 0.f, 0.f);
     const glm::vec3 mFuturePathColor = glm::vec3(0.f, 1.f, 0.f);
     const glm::vec3 mAscensionHotColor = glm::vec3(1.f, 0.f, 0.f);
-    const glm::vec3 mAscensionColdColor = glm::vec3(0.f, 0.f, 1.f);
+    const glm::vec3 mAscensionColdColor = glm::vec3(1.f, 1.f, 0.f);
+    const glm::vec3 mAscensionInternalColor = glm::vec3(0.f, 0.f, 1.f);
     const int mAscensionMaxValue = 100;
-    const int mAscenionIncreaseValue = 10;
-    const int mAscensionDecreaseValue = 20;
+    const int mAscensionHotUpSpeed = 5;
+    const int mAscensionCoolDownSpeed = 3;
+    const int mAscensionBecomingInternalSpeed = 25;
     const int mCameraSmoothFrameRadius = 10;
 
     // Controllable parameters
@@ -190,7 +192,7 @@ private:
     std::unique_ptr<GPUTextureBuffer> mupOutlineAtomIndices;
     std::set<GLuint> mAnalyseAtoms;
     int mNextAnalyseAtomIndex = 0;
-    std::unique_ptr<GPUTextureBuffer> mupAscension;
+    std::unique_ptr<GPUTextureBuffer> mupAscension; // per frame and atom there are two values: how hot and how cold (cooling down on surface)
     std::unique_ptr<Path> mupPath;
 
     // Surface validation
