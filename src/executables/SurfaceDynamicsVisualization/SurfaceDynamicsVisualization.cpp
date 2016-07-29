@@ -394,7 +394,15 @@ void SurfaceDynamicsVisualization::renderLoop()
         // Automatic setting of camera center if wished
         if(mAutoCenterCamera)
         {
-            mupCamera->setCenter(mupGPUProtein->getCenterOfMass(mFrame));
+            // Smooth center by taking average of multiple
+            int startFrame = glm::max(0, mFrame - mCameraSmoothFrameRadius);
+            int endFrame = glm::min(mupGPUProtein->getFrameCount() - 1, mFrame + mCameraSmoothFrameRadius);
+            glm::vec3 accCenter(0, 0, 0);
+            for(int i = startFrame; i <= endFrame; i++)
+            {
+                accCenter += mupGPUProtein->getCenterOfMass(mFrame);
+            }
+            mupCamera->setCenter(accCenter / (float)((endFrame - startFrame) + 1.f));
         }
 
         // Update camera
@@ -953,14 +961,14 @@ void SurfaceDynamicsVisualization::renderGUI()
         // Automatic put center of camera in protein's center
         if(mAutoCenterCamera)
         {
-            if(ImGui::Button("Manual Center"))
+            if(ImGui::Button("Manual Center", ImVec2(100, 22)))
             {
                 mAutoCenterCamera = false;
             }
         }
         else
         {
-            if(ImGui::Button("Auto Center"))
+            if(ImGui::Button("Auto Center", ImVec2(100, 22)))
             {
                 mAutoCenterCamera = true;
             }
@@ -968,7 +976,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::SameLine();
 
         // Reset
-        if(ImGui::Button("Reset Camera"))
+        if(ImGui::Button("Reset Camera", ImVec2(100, 22)))
         {
             mupCamera->setAlpha(mCameraDefaultAlpha);
             mupCamera->setBeta(mCameraDefaultBeta);
@@ -1130,6 +1138,8 @@ void SurfaceDynamicsVisualization::renderGUI()
         // General infos
         ImGui::Text(std::string("Atom Count: " + std::to_string(mupGPUProtein->getAtomCount())).c_str());
         ImGui::Text(std::string("Selected Atom: " + std::to_string(mSelectedAtom)).c_str());
+        ImGui::Text(std::string("Internal Atoms: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer))).c_str());
+        ImGui::Text(std::string("Surface Atoms: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer))).c_str());
 
         // Show available GPU memory
         int availableMemory;
@@ -1140,11 +1150,13 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Separator();
 
         // Testing
+        /*
         ImGui::Text("Testing");
         std::vector<float> curve;
         curve.push_back(0.5f);
         curve.push_back(0.6f);
         ImGui::PlotLines("Curve", curve.data(), curve.size());
+        */
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background

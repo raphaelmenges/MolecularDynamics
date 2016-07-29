@@ -114,6 +114,7 @@ private:
     const int mAscensionMaxValue = 100;
     const int mAscenionIncreaseValue = 10;
     const int mAscensionDecreaseValue = 20;
+    const int mCameraSmoothFrameRadius = 10;
 
     // Controllable parameters
     bool mRotateCamera = false;
