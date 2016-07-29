@@ -85,6 +85,8 @@ GPUProtein::GPUProtein(const std::vector<glm::vec4>& rAtoms)
         mspTrajectory->at(0).at(i) = glm::vec3(rAtoms.at(i).x, rAtoms.at(i).y, rAtoms.at(i).z);
     }
 
+    // TODO: Elements and aminoacids are not filled here
+
     // Init SSBOs
     initSSBOs(atomCount, 0);
 }
