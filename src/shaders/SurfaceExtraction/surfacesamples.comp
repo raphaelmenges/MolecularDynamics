@@ -1,0 +1,97 @@
+#version 430 core
+
+// ## Workgroup layout
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+// ## Image buffer with input indices
+layout(binding = 0, r32ui) restrict readonly uniform uimageBuffer InputIndices;
+
+// ## SSBOs
+
+// Radii
+layout(std430, binding = 1) restrict readonly buffer RadiiBuffer
+{
+   float radii[];
+};
+
+// Trajectory
+struct Position
+{
+    float x,y,z;
+};
+
+layout(std430, binding = 2) restrict readonly buffer TrajectoryBuffer
+{
+   Position trajectory[];
+};
+
+layout(std430, binding = 3) restrict readonly buffer RelativePositionBuffer
+{
+   Position relativePosition[];
+};
+
+layout(std430, binding = 4) restrict buffer SurfaceClassificationBuffer // TODO: which qualifiers?
+{
+   unsigned int classification[];
+};
+
+// ## Uniforms
+uniform int atomCount;
+uniform int localFrameCount;
+uniform int sampleCount;
+uniform int integerCountPerSample;
+uniform int frame;
+uniform int inputAtomCount;
+uniform float probeRadius;
+
+// ## Main function
+void main()
+{
+    // Index of execution in x direction used for atom index
+    int inputAtomIndicesIndex = int(gl_GlobalInvocationID.x);
+
+    // Index of execution in y direction used for sample index
+    int sampleIndex = int(gl_GlobalInvocationID.y);
+
+    // Check whether in range of input atoms
+    if(inputAtomIndicesIndex >= inputAtomCount) { return; }
+
+    // Check whether in range of samples
+    if(sampleIndex >= sampleCount) { return; }
+
+    // Extract index of atom in AtomBuffer
+    int atomIndex = int(imageLoad(InputIndices, inputAtomIndicesIndex).x);
+
+    // Read position of sample
+    Position atomPosition = trajectory[(frame*atomCount) + atomIndex];
+    vec3 samplePosition = vec3(
+        atomPosition.x + relativePosition[sampleIndex].x,
+        atomPosition.y + relativePosition[sampleIndex].y,
+        atomPosition.z + relativePosition[sampleIndex].z);
+
+    // Go over all other atoms (not only surface atoms) and test whether sample is included
+    for(int i = 0; i < atomCount; i++)
+    {
+        // Do not cut with itself
+        if(i == atomIndex) { continue; }
+
+        // Distance sample and other atom's center
+        Position otherAtomPosition = trajectory[(frame*atomCount) + i];
+        float dist = distance(vec3(otherAtomPosition.x, otherAtomPosition.y, otherAtomPosition.z), samplePosition);
+
+        // Check, whether distance is smaller than extended radius of other atom
+        if(dist <= (radii[i] + probeRadius))
+        {
+            // Sample is internal, the zero in classification array is ok
+            return;
+        }
+    }
+
+    // When you came to here, set certain bit in classifier to one for indicating that sample is on surface
+    // localFrameCount
+    int globalOffset = integerCountPerSample * sampleCount * atomIndex; // start point in memory of intergers of that atoms samples
+    int localOffset = integerCountPerSample *  sampleIndex; // start point in memory of integers of that sample within atom's samples
+    int sampleOffset = (localFrameCount + sampleIndex) / 32; // use int division to emulate floor operation
+    int bitOffset = (localFrameCount + sampleIndex) - sampleOffset;
+    classification[globalOffset + localOffset + sampleOffset] |= (1 << bitOffset);
+}

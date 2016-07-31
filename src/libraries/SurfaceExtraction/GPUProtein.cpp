@@ -1,4 +1,4 @@
-#include "GPUProtein.h"(
+#include "GPUProtein.h"
 #include "Molecule/MDtrajLoader/Data/Protein.h"
 #include "Molecule/MDtrajLoader/Data/AtomLUT.h"
 
@@ -104,6 +104,11 @@ void GPUProtein::bind(GLuint radiiSlot, GLuint trajectorySlot) const
 {
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, radiiSlot, mRadiiSSBO);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, trajectorySlot, mTrajectorySSBO);
+}
+
+void GPUProtein::bindTrajectory(GLuint slot) const
+{
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, slot, mTrajectorySSBO);
 }
 
 void GPUProtein::bindColorsElement(GLuint slot) const

@@ -23,13 +23,16 @@ public:
     // Destructor
     virtual ~GPUProtein();
 
-    // Bind SSBOs with radii and trajectory (readonly)
+    // Bind SSBOs with radii and trajectory
     void bind(GLuint radiiSlot, GLuint trajectorySlot) const;
 
-    // Bind SSBO with colors according to element (readonly)
+    // Bind trjactory SSBO
+    void bindTrajectory(GLuint slot) const;
+
+    // Bind SSBO with colors according to element
     void bindColorsElement(GLuint slot) const;
 
-    // Bind SSBO with colors according to aminoacid (readonly)
+    // Bind SSBO with colors according to aminoacid
     void bindColorsAminoacid(GLuint slot) const;
 
     // Get count of atoms in protein

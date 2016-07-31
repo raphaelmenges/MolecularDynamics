@@ -15,12 +15,12 @@ GPUSurface::~GPUSurface()
     // Nothing to do here
 }
 
-void GPUSurface::bindInternalIndicesForDrawing(int layer, GLuint slot) const
+void GPUSurface::bindInternalIndices(int layer, GLuint slot) const
 {
     mInternalIndices.at(layer)->bindAsImage(slot, GPUTextureBuffer::GPUAccess::READ_ONLY);
 }
 
-void GPUSurface::bindSurfaceIndicesForDrawing(int layer, GLuint slot) const
+void GPUSurface::bindSurfaceIndices(int layer, GLuint slot) const
 {
     mSurfaceIndices.at(layer)->bindAsImage(slot, GPUTextureBuffer::GPUAccess::READ_ONLY);
 }

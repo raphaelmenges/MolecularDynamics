@@ -227,6 +227,9 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
             45.f,
             0.1f));
 
+    // # Hull samples
+    mupHullSamples = std::unique_ptr<GPUHullSamples>(new GPUHullSamples());
+
     // # Run implementation to extract surface atoms
     computeLayers(0, 0, mInitiallyUseGLSLImplementation);
 
@@ -298,12 +301,12 @@ void SurfaceDynamicsVisualization::renderLoop()
     // Shader program for outline rendering
     ShaderProgram outlineProgram("/SurfaceDynamicsVisualization/hull.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/outline.frag");
 
-    // Bind SSBOs
-    mupGPUProtein->bind(0, 1);
-
     // Call render function of Rendering.h with lambda function
     render(mpWindow, [&] (float deltaTime)
     {
+        // Bind SSBOs of radii and trajectory for rendering
+        mupGPUProtein->bind(0, 1);
+
         // Viewport size
         glm::vec2 resolution = getResolution(mpWindow);
         mWindowWidth = resolution.x;
@@ -569,7 +572,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             // viewport depth which means internal are always in front of surface)
             if(mShowInternal)
             {
-                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndicesForDrawing(mLayer, 2);
+                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndices(mLayer, 2);
                 hullProgram.update("color", mInternalAtomColor);
                 glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
             }
@@ -577,7 +580,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             // Draw surface
             if(mShowSurface)
             {
-                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndicesForDrawing(mLayer, 2);
+                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 2);
                 hullProgram.update("color", mSurfaceAtomColor);
                 glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
             }
@@ -640,14 +643,14 @@ void SurfaceDynamicsVisualization::renderLoop()
             // viewport depth which means internal are always in front of surface)
             if(mShowInternal)
             {
-                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndicesForDrawing(mLayer, 2);
+                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndices(mLayer, 2);
                 glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
             }
 
             // Draw surface
             if(mShowSurface)
             {
-                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndicesForDrawing(mLayer, 2);
+                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 2);
                 glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
             }
 
@@ -679,14 +682,14 @@ void SurfaceDynamicsVisualization::renderLoop()
             // viewport depth which means internal are always in front of surface)
             if(mShowInternal)
             {
-                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndicesForDrawing(mLayer, 2);
+                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndices(mLayer, 2);
                 glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
             }
 
             // Draw surface
             if(mShowSurface)
             {
-                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndicesForDrawing(mLayer, 2);
+                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 2);
                 glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
             }
 
@@ -751,6 +754,7 @@ void SurfaceDynamicsVisualization::renderLoop()
         glEnable(GL_DEPTH_TEST);
 
         // Render GUI in standard frame buffer on top of everything
+        // By the way: Methods called here may change bound buffers. Therefore, please call it after rest of rendering
         ImGui_ImplGlfwGL3_NewFrame();
         renderGUI();
     });
@@ -1619,6 +1623,8 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
     // Fill ascension to texture buffer
     mupAscension = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(ascension));
 
+    // # Hull samples calculation
+    mupHullSamples->compute(mupGPUProtein.get(), &mGPUSurfaces, mComputedStartFrame, mProbeRadius, 0, 10);
 }
 
 int SurfaceDynamicsVisualization::getAtomBeneathCursor() const

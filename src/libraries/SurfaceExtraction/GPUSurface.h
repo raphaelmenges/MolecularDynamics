@@ -27,8 +27,8 @@ public:
     virtual ~GPUSurface();
 
     // Bind as image for drawing, everything read only
-    void bindInternalIndicesForDrawing(int layer, GLuint slot) const;
-    void bindSurfaceIndicesForDrawing(int layer, GLuint slot) const;
+    void bindInternalIndices(int layer, GLuint slot) const;
+    void bindSurfaceIndices(int layer, GLuint slot) const;
 
     // Get duration of computation
     float getComputationTime() const { return mComputationTime; }

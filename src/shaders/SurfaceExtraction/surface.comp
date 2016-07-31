@@ -1,6 +1,6 @@
 #version 430 core
 
-// ## Workgroup layout (just linear of atoms)
+// ## Workgroup layout
 layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 
 // ## Constant values
@@ -154,6 +154,7 @@ bool testEndpoint(vec3 endpoint, int excludeA, int excludeB)
     }
     return true;
 }
+
 // ## Main function
 void main()
 {

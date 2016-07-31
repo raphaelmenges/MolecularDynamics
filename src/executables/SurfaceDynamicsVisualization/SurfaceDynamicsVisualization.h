@@ -13,6 +13,7 @@
 #include "SurfaceExtraction/SurfaceValidation.h"
 #include "Framebuffer.h"
 #include "Path.h"
+#include "SurfaceExtraction/GPUHullSamples.h"
 
 // Notes:
 // - Calculations done in angstrom
@@ -194,6 +195,7 @@ private:
     int mNextAnalyseAtomIndex = 0;
     std::unique_ptr<GPUTextureBuffer> mupAscension; // per frame and atom there are two values: how hot and how cold (cooling down on surface)
     std::unique_ptr<Path> mupPath;
+    std::unique_ptr<GPUHullSamples> mupHullSamples;
 
     // Surface validation
     std::unique_ptr<SurfaceValidation> mupSurfaceValidation;
