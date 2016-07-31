@@ -54,7 +54,7 @@ void main()
         (atomIndex * sampleCount * integerCountPerSample) // offset for current atom's samples
         + (sampleIndex *  integerCountPerSample) // offset for current sample's slot
         + (localFrame / 32); // offset for unsigned int which has to be modified
-    int bitIndex = localFrame - (32 * (localFrame / 32)); // bit index within unsigned integer
+    int bitIndex = localFrame - (32 * int(localFrame / 32)); // bit index within unsigned integer
 
     // Fetch classification
     if(((uint(imageLoad(Classification, uintIndex).x) >> uint(bitIndex)) & 1) > 0)

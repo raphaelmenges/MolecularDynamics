@@ -108,8 +108,8 @@ void GPUHullSamples::compute(
 
         // Dispatch
         glDispatchCompute(
-            (pGPUSurfaces->at(i)->getCountOfSurfaceAtoms(0) / 16) + 1,
-            (mSampleCount / 16) + 1,
+            ((pGPUSurfaces->at(i)->getCountOfSurfaceAtoms(0) * mSampleCount) / 64) + 1,
+            1,
             1);
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
     }

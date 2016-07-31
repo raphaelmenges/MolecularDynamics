@@ -1,7 +1,7 @@
 #version 430 core
 
 // ## Workgroup layout
-layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 
 // ## Image buffer with input indices
 layout(binding = 0, r32ui) restrict readonly uniform uimageBuffer InputIndices;
@@ -45,11 +45,11 @@ uniform int localFrame;
 // ## Main function
 void main()
 {
-    // Index of execution in x direction used for atom index
-    int inputAtomIndicesIndex = int(gl_GlobalInvocationID.x);
+    // Input buffer index extraction
+    int inputAtomIndicesIndex = int(gl_GlobalInvocationID.x) / sampleCount;
 
-    // Index of execution in y direction used for sample index
-    int sampleIndex = int(gl_GlobalInvocationID.y);
+    // Sample index extraction
+    int sampleIndex = int(gl_GlobalInvocationID.x) - (inputAtomIndicesIndex * sampleCount);
 
     // Check whether in range of input atoms
     if(inputAtomIndicesIndex >= inputAtomCount) { return; }
@@ -80,7 +80,7 @@ void main()
         // Check, whether distance is smaller than extended radius of other atom
         if(dist <= (radii[i] + probeRadius))
         {
-            // Sample is internal, the initial zero in classification array is ok
+            // Sample is internal, the initial zero in classification buffer is ok
             return;
         }
     }
@@ -90,16 +90,10 @@ void main()
         (atomIndex * sampleCount * integerCountPerSample) // offset for current atom's samples
         + (sampleIndex *  integerCountPerSample) // offset for current sample's slot
         + (localFrame / 32); // offset for unsigned int which has to be modified
-    int bitIndex = localFrame - (32 * (localFrame / 32)); // bit index within unsigned integer
+    int bitIndex = localFrame - (32 * int(localFrame / 32)); // bit index within unsigned integer
 
-    // Tries to overwrite image value at each iteration. When successful, loop is left before entering
-    uint lastValueU = uint(imageLoad(Classification, uintIndex).x);
-    uint newValueU = lastValueU | (1 << uint(bitIndex)); // value for initial try
-    uint currentValueU;
-    while((currentValueU = imageAtomicCompSwap(Classification, uintIndex, lastValueU, newValueU)) != lastValueU)
-    {
-        // Ok, this time we had no luck. So use the current value from image to create value for next try
-        lastValueU = currentValueU;
-        newValueU = lastValueU | (1 << uint(bitIndex));
-    }
+    // Since compute shader called for each frame, no read / write synchronization necessary
+    // Each unsigned int block belongs to single sample and each execution corresponds to unique sample
+    uint value = uint(imageLoad(Classification, uintIndex).x) | (1 << bitIndex);
+    imageStore(Classification, uintIndex, uvec4(value));
 }
