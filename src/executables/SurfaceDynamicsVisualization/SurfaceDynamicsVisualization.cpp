@@ -537,6 +537,16 @@ void SurfaceDynamicsVisualization::renderLoop()
                 mPathPointSize);
         }
 
+        // TODO: Testing
+        mupHullSamples->drawSamples(
+            mFrame,
+            mSamplePointSize,
+            glm::vec3(1,0,0),
+            glm::vec3(0,1,0),
+            mupCamera->getViewMatrix(),
+            mupCamera->getProjectionMatrix(),
+            mClippingPlane);
+
         // Unbind framebuffer for overlay
         mupOverlayFramebuffer->unbind();
 
@@ -1624,7 +1634,7 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
     mupAscension = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(ascension));
 
     // # Hull samples calculation
-    mupHullSamples->compute(mupGPUProtein.get(), &mGPUSurfaces, mComputedStartFrame, mProbeRadius, 0, 10);
+    mupHullSamples->compute(mupGPUProtein.get(), &mGPUSurfaces, mComputedStartFrame, mProbeRadius, 1, 0);
 }
 
 int SurfaceDynamicsVisualization::getAtomBeneathCursor() const

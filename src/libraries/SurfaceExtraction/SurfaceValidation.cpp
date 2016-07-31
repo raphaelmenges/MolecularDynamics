@@ -11,7 +11,7 @@ SurfaceValidation::SurfaceValidation()
     glGenVertexArrays(1, &mSurfaceVAO);
 
     // Load shader for drawing
-    mupShaderProgram = std::unique_ptr<ShaderProgram>(new ShaderProgram("/SurfaceExtraction/sample.vert", "/SurfaceExtraction/sample.geom", "/SurfaceExtraction/sample.frag"));
+    mupShaderProgram = std::unique_ptr<ShaderProgram>(new ShaderProgram("/SurfaceExtraction/validationsample.vert", "/SurfaceExtraction/sample.geom", "/SurfaceExtraction/sample.frag"));
 
     // Bind buffers to attributes for internal samples
     GLint posAttrib = glGetAttribLocation(mupShaderProgram->getProgramHandle(), "position");

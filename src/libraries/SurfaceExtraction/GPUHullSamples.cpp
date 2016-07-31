@@ -11,6 +11,11 @@ GPUHullSamples::GPUHullSamples()
     // Create compute shader which is used to classify samples
     mupComputeProgram = std::unique_ptr<ShaderProgram>(new ShaderProgram(GL_COMPUTE_SHADER, "/SurfaceExtraction/surfacesamples.comp"));
 
+    // Generate empty vertex buffer array for drawing
+    glGenVertexArrays(1, &mVAO);
+
+    // Load shader for drawing
+    mupShaderProgram = std::unique_ptr<ShaderProgram>(new ShaderProgram("/SurfaceExtraction/sample.vert", "/SurfaceExtraction/sample.geom", "/SurfaceExtraction/sample.frag"));
 }
 
 GPUHullSamples::~GPUHullSamples()
@@ -18,6 +23,9 @@ GPUHullSamples::~GPUHullSamples()
     // Delete SSBOs
     glDeleteBuffers(1, &mSamplesRelativePositionSSBO);
     glDeleteBuffers(1, &mSamplesSurfaceClassificationSSBO);
+
+    // Delete VAO
+    glDeleteVertexArrays(1, &mVAO);
 }
 
 void GPUHullSamples::compute(
@@ -25,8 +33,8 @@ void GPUHullSamples::compute(
     std::vector<std::unique_ptr<GPUSurface> > const * pGPUSurfaces,
     int startFrame,
     float probeRadius,
-    unsigned int sampleSeed,
-    int sampleCountPerAtom)
+    int sampleCountPerAtom,
+    unsigned int sampleSeed)
 {
     // Fill members
     mStartFrame = startFrame;
@@ -50,13 +58,13 @@ void GPUHullSamples::compute(
         float atomExtRadius = pGPUProtein->getRadii()->at(i) + probeRadius;
         for(int j = 0; j < mSampleCount; j++)
         {
-             // Generate samples (http://mathworld.wolfram.com/SpherePointPicking.html)
+            // Generate samples (http://mathworld.wolfram.com/SpherePointPicking.html)
             float u = (float)((double)std::rand() / (double)RAND_MAX);
             float v = (float)((double)std::rand() / (double)RAND_MAX);
             float theta = 2.f * glm::pi<float>() * u;
             float phi = glm::acos(2.f * v - 1);
 
-            // Generate sample position
+            // Generate sample point
             glm::vec3 samplePosition(
                 atomExtRadius * glm::sin(phi) * glm::cos(theta),
                 atomExtRadius * glm::cos(phi),
@@ -126,6 +134,30 @@ void GPUHullSamples::drawSamples(
     const glm::mat4& rProjectionMatrix,
     float clippingPlane) const
 {
-    // TODO
+    // TODO: Problem: Using AtomCount from members but buffer from calling program
 
+    // Setup drawing
+    glPointSize(pointSize);
+
+    // Use shader program
+    mupShaderProgram->use();
+
+    // Radii are expected to be bound at slot 0 and trajectory at 1
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mSamplesRelativePositionSSBO);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mSamplesSurfaceClassificationSSBO);
+
+    // Update uniform values
+    mupShaderProgram->update("view", rViewMatrix);
+    mupShaderProgram->update("projection", rProjectionMatrix);
+    mupShaderProgram->update("clippingPlane", clippingPlane);
+    mupShaderProgram->update("sampleCount", mSampleCount);
+    mupShaderProgram->update("frame", frame),
+    mupShaderProgram->update("atomCount", mAtomCount);
+
+    // Bind vertex array object and draw samples
+    glBindVertexArray(mVAO);
+    glDrawArrays(GL_POINTS, 0, mAtomCount * mSampleCount);
+
+    // Unbind vertex array object
+    glBindVertexArray(0);
 }

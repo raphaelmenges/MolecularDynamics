@@ -1,8 +1,10 @@
 #version 430
 
 layout(points) in;
-
 layout(points, max_vertices = 1) out;
+
+in vec3 vertColor[1];
+flat out vec3 col;
 
 uniform mat4 projection;
 uniform mat4 view;
@@ -20,6 +22,7 @@ void main()
 
         // Single point
         gl_Position = M * gl_in[0].gl_Position;
+        col = vertColor[0];
         EmitVertex();
 
         EndPrimitive();
