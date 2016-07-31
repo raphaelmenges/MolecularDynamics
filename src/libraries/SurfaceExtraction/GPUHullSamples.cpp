@@ -87,7 +87,7 @@ void GPUHullSamples::compute(
     int globalIntergerCount = integerCountPerSample * mAtomCount * mSampleCount; // frames are in integerCountPerSample
 
     // Initialize vector with zeros
-    mSamplesSurfaceClassification = std::vector<GLuint>(globalIntergerCount, 0);
+    mSamplesSurfaceClassification = std::vector<GLuint>(globalIntergerCount, 100);
 
     // Create SSBO with created vector as input (everything zero and therefore marked as internal)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSamplesSurfaceClassificationSSBO);
@@ -97,7 +97,6 @@ void GPUHullSamples::compute(
     // For each GPUSurface take surface atoms and calculate for their samples whether they are at surface or not
     mupComputeProgram->use();
     mupComputeProgram->update("atomCount", mAtomCount);
-    mupComputeProgram->update("localFrameCount", mLocalFrameCount);
     mupComputeProgram->update("sampleCount", mSampleCount);
     mupComputeProgram->update("integerCountPerSample", integerCountPerSample);
     mupComputeProgram->update("probeRadius", probeRadius);
@@ -108,17 +107,20 @@ void GPUHullSamples::compute(
     {
         // Update values
         mupComputeProgram->update("frame", i + mStartFrame); // frame in global terms
+        mupComputeProgram->update("localFrame", i);
         mupComputeProgram->update("inputAtomCount", i + pGPUSurfaces->at(i)->getCountOfSurfaceAtoms(0)); // count of input atoms
 
         // Bind surface indices buffer of that frame
         pGPUSurfaces->at(i)->bindSurfaceIndices(0, 0); // bind indices of surface atoms at that frame
 
         // Dispatch
+        /*
         glDispatchCompute(
             (pGPUSurfaces->at(i)->getCountOfSurfaceAtoms(0) / 16) + 1,
             (mSampleCount / 16) + 1,
             1);
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
+        */
     }
 
     // Read SSBO with classification back to RAM
@@ -153,6 +155,8 @@ void GPUHullSamples::drawSamples(
     mupShaderProgram->update("sampleCount", mSampleCount);
     mupShaderProgram->update("frame", frame),
     mupShaderProgram->update("atomCount", mAtomCount);
+    mupShaderProgram->update("integerCountPerSample", glm::ceil(mLocalFrameCount / 32));
+    mupShaderProgram->update("localFrame", frame - mStartFrame);
 
     // Bind vertex array object and draw samples
     glBindVertexArray(mVAO);

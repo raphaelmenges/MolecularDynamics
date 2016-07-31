@@ -31,6 +31,8 @@ layout(std430, binding = 3) restrict readonly buffer SurfaceClassificationBuffer
 uniform int sampleCount;
 uniform int frame;
 uniform int atomCount;
+uniform int integerCountPerSample;
+uniform int localFrame;
 
 // Main function
 void main()
@@ -50,6 +52,30 @@ void main()
         atomPosition.z + relativeSamplePosition.z,
         1);
 
-    // Color
-    vertColor = vec3(0,0,1);
+    // Get whether at surface or not and color sample point
+    int uintIndex =
+        (atomIndex * sampleCount * integerCountPerSample) // offset for current atom's samples
+        + (sampleIndex *  integerCountPerSample) // offset for current sample's slot
+        + (localFrame / 32); // offset for unsigned int which has to be modified
+    int bitIndex = localFrame - (32 * (localFrame / 32)); // bit index within unsigned integer
+
+    /*
+    if(((classification[uintIndex] >> uint(bitIndex)) & 1) > 0)
+    {
+        vertColor = vec3(1,1,1);
+    }
+    else
+    {
+        vertColor = vec3(0,0,0);
+    }
+    */
+
+    if(classification[0] > 0)
+    {
+        vertColor = vec3(1,1,1);
+    }
+    else
+    {
+        vertColor = vec3(0,0,0);
+    }
 }

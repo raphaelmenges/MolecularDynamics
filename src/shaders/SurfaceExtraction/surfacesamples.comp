@@ -43,6 +43,7 @@ uniform int integerCountPerSample;
 uniform int frame;
 uniform int inputAtomCount;
 uniform float probeRadius;
+uniform int localFrame;
 
 // ## Main function
 void main()
@@ -88,9 +89,10 @@ void main()
     }
 
     // When you came to here, set certain bit in classifier to one for indicating that sample is on surface
-    int globalOffset = integerCountPerSample * sampleCount * atomIndex; // start point in memory of intergers of that atoms samples
-    int localOffset = integerCountPerSample *  sampleIndex; // start point in memory of integers of that sample within atom's samples
-    int sampleOffset = (localFrameCount + sampleIndex) / 32; // use int division to emulate floor operation
-    int bitOffset = (localFrameCount + sampleIndex) - sampleOffset;
-    classification[globalOffset + localOffset + sampleOffset] |= (1 << bitOffset); // TODO: use atomic operations and delete volatile from buffer
+    int uintIndex =
+        (atomIndex * sampleCount * integerCountPerSample) // offset for current atom's samples
+        + (sampleIndex *  integerCountPerSample) // offset for current sample's slot
+        + (localFrame / 32); // offset for unsigned int which has to be modified
+    int bitIndex = localFrame - (32 * (localFrame / 32)); // bit index within unsigned integer
+    classification[uintIndex] |= (1 << uint(bitIndex)); // TODO: use atomic operations and delete volatile from buffer
 }
