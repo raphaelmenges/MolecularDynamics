@@ -30,7 +30,7 @@ layout(std430, binding = 3) restrict readonly buffer RelativePositionBuffer
    Position relativePosition[];
 };
 
-layout(std430, binding = 4) restrict buffer SurfaceClassificationBuffer // TODO: which qualifiers?
+layout(std430, binding = 4) restrict volatile buffer SurfaceClassificationBuffer // TODO: which qualifiers?
 {
    unsigned int classification[];
 };
@@ -93,5 +93,5 @@ void main()
     int localOffset = integerCountPerSample *  sampleIndex; // start point in memory of integers of that sample within atom's samples
     int sampleOffset = (localFrameCount + sampleIndex) / 32; // use int division to emulate floor operation
     int bitOffset = (localFrameCount + sampleIndex) - sampleOffset;
-    classification[globalOffset + localOffset + sampleOffset] |= (1 << bitOffset);
+    classification[globalOffset + localOffset + sampleOffset] |= (1 << bitOffset); // TODO: use atomic operations and delete volatile from buffer
 }
