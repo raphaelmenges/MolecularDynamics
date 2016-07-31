@@ -6,15 +6,13 @@ layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 // ## Image buffer with input indices
 layout(binding = 0, r32ui) restrict readonly uniform uimageBuffer InputIndices;
 
-// ## SSBOs
-
-// Radii
+// ## Radii SSBO
 layout(std430, binding = 1) restrict readonly buffer RadiiBuffer
 {
    float radii[];
 };
 
-// Trajectory
+// ## Trajectory SSBO
 struct Position
 {
     float x,y,z;
@@ -25,15 +23,14 @@ layout(std430, binding = 2) restrict readonly buffer TrajectoryBuffer
    Position trajectory[];
 };
 
+// ## Relative positions of samples SSBO
 layout(std430, binding = 3) restrict readonly buffer RelativePositionBuffer
 {
    Position relativePosition[];
 };
 
-layout(std430, binding = 4) restrict volatile buffer SurfaceClassificationBuffer
-{
-   unsigned int classification[];
-};
+// ## Image buffer with classification
+layout(binding = 4, r32ui) restrict uniform uimageBuffer Classification;
 
 // ## Uniforms
 uniform int atomCount;
@@ -83,7 +80,7 @@ void main()
         // Check, whether distance is smaller than extended radius of other atom
         if(dist <= (radii[i] + probeRadius))
         {
-            // Sample is internal, the zero in classification array is ok
+            // Sample is internal, the initial zero in classification array is ok
             return;
         }
     }
@@ -94,5 +91,15 @@ void main()
         + (sampleIndex *  integerCountPerSample) // offset for current sample's slot
         + (localFrame / 32); // offset for unsigned int which has to be modified
     int bitIndex = localFrame - (32 * (localFrame / 32)); // bit index within unsigned integer
-    classification[uintIndex] |= (1 << uint(bitIndex)); // TODO: use atomic operations and delete volatile from buffer
+
+    // Tries to overwrite image value at each iteration. When successful, loop is left before entering
+    uint lastValueU = uint(imageLoad(Classification, uintIndex).x);
+    uint newValueU = lastValueU | (1 << uint(bitIndex)); // value for initial try
+    uint currentValueU;
+    while((currentValueU = imageAtomicCompSwap(Classification, uintIndex, lastValueU, newValueU)) != lastValueU)
+    {
+        // Ok, this time we had no luck. So use the current value from image to create value for next try
+        lastValueU = currentValueU;
+        newValueU = lastValueU | (1 << uint(bitIndex));
+    }
 }

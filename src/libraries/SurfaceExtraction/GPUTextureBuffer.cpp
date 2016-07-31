@@ -53,13 +53,29 @@ GPUTextureBuffer::~GPUTextureBuffer()
 
 void GPUTextureBuffer::bindAsImage(GLuint slot, GPUAccess access) const
 {
+    // Decide access
+    GLenum glAccess = GL_READ_WRITE;
+    switch(access)
+    {
+        case GPUAccess::READ_ONLY:
+            glAccess = GL_READ_ONLY;
+            break;
+        case GPUAccess::WRITE_ONLY:
+            glAccess = GL_WRITE_ONLY;
+            break;
+        default:
+            glAccess = GL_READ_WRITE;
+            break;
+    }
+
+    // Bind as image
     glBindImageTexture(
         slot,
         mTexture,
         0,
         GL_TRUE,
         0,
-        access == GPUAccess::WRITE_ONLY ? GL_WRITE_ONLY : GL_READ_ONLY,
+        glAccess,
         GL_R32UI);
 }
 

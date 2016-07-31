@@ -4,9 +4,8 @@
 
 GPUHullSamples::GPUHullSamples()
 {
-    // Generate SSBOs
+    // Generate SSBO
     glGenBuffers(1, &mSamplesRelativePositionSSBO);
-    glGenBuffers(1, &mSamplesSurfaceClassificationSSBO);
 
     // Create compute shader which is used to classify samples
     mupComputeProgram = std::unique_ptr<ShaderProgram>(new ShaderProgram(GL_COMPUTE_SHADER, "/SurfaceExtraction/surfacesamples.comp"));
@@ -20,9 +19,8 @@ GPUHullSamples::GPUHullSamples()
 
 GPUHullSamples::~GPUHullSamples()
 {
-    // Delete SSBOs
+    // Delete SSBO
     glDeleteBuffers(1, &mSamplesRelativePositionSSBO);
-    glDeleteBuffers(1, &mSamplesSurfaceClassificationSSBO);
 
     // Delete VAO
     glDeleteVertexArrays(1, &mVAO);
@@ -41,6 +39,7 @@ void GPUHullSamples::compute(
     mAtomCount = pGPUProtein->getAtomCount();
     mLocalFrameCount = pGPUSurfaces->size(); // not over complete animation but calculated surfaces!
     mSampleCount = sampleCountPerAtom;
+    mIntegerCountPerSample = (int)glm::ceil((float)mLocalFrameCount / 32.f); // each unsigned int holds 32 bits
 
     // ### RELATIVE POSITIONS ###
 
@@ -83,44 +82,36 @@ void GPUHullSamples::compute(
     // ### SURFACE CLASSIFICATION ###
 
     // Decide how many unsigned integers are necessary to hold surface information on all frames for one sample of one atom
-    int integerCountPerSample = glm::ceil(mLocalFrameCount / 32); // each unsigned int holds 32 bits
-    int globalIntergerCount = integerCountPerSample * mAtomCount * mSampleCount; // frames are in integerCountPerSample
+    int globalIntergerCount = mIntegerCountPerSample * mAtomCount * mSampleCount; // frames are in integerCountPerSample
 
-    // Initialize vector with zeros
-    mSamplesSurfaceClassification = std::vector<GLuint>(globalIntergerCount, 100);
-
-    // Create SSBO with created vector as input (everything zero and therefore marked as internal)
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSamplesSurfaceClassificationSSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GLuint) * mSamplesSurfaceClassification.size(), mSamplesSurfaceClassification.data(), GL_DYNAMIC_COPY);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    // Initialize classification with zeros
+    mupClassification = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(std::vector<GLuint>(globalIntergerCount, 0)));
 
     // For each GPUSurface take surface atoms and calculate for their samples whether they are at surface or not
     mupComputeProgram->use();
     mupComputeProgram->update("atomCount", mAtomCount);
     mupComputeProgram->update("sampleCount", mSampleCount);
-    mupComputeProgram->update("integerCountPerSample", integerCountPerSample);
+    mupComputeProgram->update("integerCountPerSample", mIntegerCountPerSample);
     mupComputeProgram->update("probeRadius", probeRadius);
     pGPUProtein->bind(1, 2); // bind radii and trajectory buffers
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mSamplesRelativePositionSSBO); // bind relative position of samples
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, mSamplesSurfaceClassificationSSBO); // bind classification of samples which is written to
+    mupClassification->bindAsImage(4, GPUTextureBuffer::GPUAccess::READ_WRITE);
     for(int i = 0; i < pGPUSurfaces->size(); i++)
     {
         // Update values
         mupComputeProgram->update("frame", i + mStartFrame); // frame in global terms
         mupComputeProgram->update("localFrame", i);
-        mupComputeProgram->update("inputAtomCount", i + pGPUSurfaces->at(i)->getCountOfSurfaceAtoms(0)); // count of input atoms
+        mupComputeProgram->update("inputAtomCount", pGPUSurfaces->at(i)->getCountOfSurfaceAtoms(0)); // count of input atoms
 
         // Bind surface indices buffer of that frame
         pGPUSurfaces->at(i)->bindSurfaceIndices(0, 0); // bind indices of surface atoms at that frame
 
         // Dispatch
-        /*
         glDispatchCompute(
             (pGPUSurfaces->at(i)->getCountOfSurfaceAtoms(0) / 16) + 1,
             (mSampleCount / 16) + 1,
             1);
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
-        */
     }
 
     // Read SSBO with classification back to RAM
@@ -146,7 +137,7 @@ void GPUHullSamples::drawSamples(
 
     // Radii are expected to be bound at slot 0 and trajectory at 1
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mSamplesRelativePositionSSBO);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mSamplesSurfaceClassificationSSBO);
+    mupClassification->bindAsImage(3, GPUTextureBuffer::GPUAccess::READ_ONLY);
 
     // Update uniform values
     mupShaderProgram->update("view", rViewMatrix);
@@ -155,7 +146,7 @@ void GPUHullSamples::drawSamples(
     mupShaderProgram->update("sampleCount", mSampleCount);
     mupShaderProgram->update("frame", frame),
     mupShaderProgram->update("atomCount", mAtomCount);
-    mupShaderProgram->update("integerCountPerSample", glm::ceil(mLocalFrameCount / 32));
+    mupShaderProgram->update("integerCountPerSample", mIntegerCountPerSample);
     mupShaderProgram->update("localFrame", frame - mStartFrame);
 
     // Bind vertex array object and draw samples

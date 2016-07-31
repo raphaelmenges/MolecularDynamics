@@ -13,6 +13,7 @@
 // Forward declaration
 class GPUProtein;
 class GPUSurface;
+class GPUTextureBuffer;
 
 class GPUHullSamples
 {
@@ -58,6 +59,9 @@ private:
     // Count of samples
     int mSampleCount;
 
+    // Count of unsigned integers necessary for each sample
+    int mIntegerCountPerSample;
+
     // Shader to compute classification
     std::unique_ptr<ShaderProgram> mupComputeProgram;
 
@@ -68,14 +72,9 @@ private:
     // SSBO with relative positions of samples
     GLuint mSamplesRelativePositionSSBO;
 
-    // Vector with information whether sample is on surface or not
+    // Texture buffer with information whether sample is on surface or not
     // Saved in single bits of unsigned integers in vector
-    std::vector<GLuint> mSamplesSurfaceClassification;
-
-    // SSBO with information whether sample is on surface or not
-    // Saved in unsigned integers where single bits are set to indicate
-    // whether a sample is it at surface or not
-    GLuint mSamplesSurfaceClassificationSSBO;
+    std::unique_ptr<GPUTextureBuffer> mupClassification;
 
     // Drawing shader
     std::unique_ptr<ShaderProgram> mupShaderProgram;

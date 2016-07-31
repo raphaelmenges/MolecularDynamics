@@ -15,7 +15,7 @@ public:
     // Accessibility in shader
     enum GPUAccess
     {
-        WRITE_ONLY, READ_ONLY // no READ_WRITE yet
+        WRITE_ONLY, READ_ONLY, READ_WRITE
     };
 
     // Constructor

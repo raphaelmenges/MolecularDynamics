@@ -4,9 +4,7 @@
 in vec3 position;
 out vec3 vertColor;
 
-// ## SSBOs
-
-// Trajectory
+// ## Trajectory SSBO
 struct Position
 {
     float x,y,z;
@@ -17,15 +15,14 @@ layout(std430, binding = 1) restrict readonly buffer TrajectoryBuffer
    Position trajectory[];
 };
 
+// ## Relative positions of samples SSBO
 layout(std430, binding = 2) restrict readonly buffer RelativePositionBuffer
 {
    Position relativePosition[];
 };
 
-layout(std430, binding = 3) restrict readonly buffer SurfaceClassificationBuffer
-{
-   unsigned int classification[];
-};
+// ## Image buffer with classification
+layout(binding = 3, r32ui) restrict readonly uniform uimageBuffer Classification;
 
 // ## Uniforms
 uniform int sampleCount;
@@ -52,25 +49,15 @@ void main()
         atomPosition.z + relativeSamplePosition.z,
         1);
 
-    // Get whether at surface or not and color sample point
+    // Calculate indices to look up classification
     int uintIndex =
         (atomIndex * sampleCount * integerCountPerSample) // offset for current atom's samples
         + (sampleIndex *  integerCountPerSample) // offset for current sample's slot
         + (localFrame / 32); // offset for unsigned int which has to be modified
     int bitIndex = localFrame - (32 * (localFrame / 32)); // bit index within unsigned integer
 
-    /*
-    if(((classification[uintIndex] >> uint(bitIndex)) & 1) > 0)
-    {
-        vertColor = vec3(1,1,1);
-    }
-    else
-    {
-        vertColor = vec3(0,0,0);
-    }
-    */
-
-    if(classification[0] > 0)
+    // Fetch classification
+    if(((uint(imageLoad(Classification, uintIndex).x) >> uint(bitIndex)) & 1) > 0)
     {
         vertColor = vec3(1,1,1);
     }
