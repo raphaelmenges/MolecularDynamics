@@ -480,8 +480,8 @@ void SurfaceDynamicsVisualization::renderLoop()
         {
             mupSurfaceValidation->drawSamples(
                 mSamplePointSize,
-                mInternalSamplePointColor,
-                mSurfaceSamplePointColor,
+                mInternalValidationSampleColor,
+                mSurfaceValidationSampleColor,
                 mupCamera->getViewMatrix(),
                 mupCamera->getProjectionMatrix(),
                 mClippingPlane,
@@ -537,15 +537,18 @@ void SurfaceDynamicsVisualization::renderLoop()
                 mPathPointSize);
         }
 
-        // TODO: Testing
-        mupHullSamples->drawSamples(
-            mFrame,
-            mSamplePointSize,
-            glm::vec3(1,0,0),
-            glm::vec3(0,1,0),
-            mupCamera->getViewMatrix(),
-            mupCamera->getProjectionMatrix(),
-            mClippingPlane);
+        // Hull samples
+        if(mRenderHullSamples)
+        {
+            mupHullSamples->drawSamples(
+                mFrame,
+                mSamplePointSize,
+                mInternalHullSampleColor,
+                mSurfaceHullSampleColor,
+                mupCamera->getViewMatrix(),
+                mupCamera->getProjectionMatrix(),
+                mClippingPlane);
+        }
 
         // Unbind framebuffer for overlay
         mupOverlayFramebuffer->unbind();
@@ -993,6 +996,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Checkbox("Extract Layers", &mExtractLayers);
         ImGui::SliderInt("Start Frame", &mComputationStartFrame, 0, mComputationEndFrame);
         ImGui::SliderInt("End Frame", &mComputationEndFrame, mComputationStartFrame, mupGPUProtein->getFrameCount() - 1);
+        ImGui::SliderInt("Sample Count", &mHullSampleCount, 0, 1000);
         ImGui::SliderInt("CPU Threads", &mCPUThreads, 1, 24);
         if(ImGui::Button("\u2794 GPGPU")) { computeLayers(mComputationStartFrame, mComputationEndFrame, true); }
         ImGui::SameLine();
@@ -1212,6 +1216,23 @@ void SurfaceDynamicsVisualization::renderGUI()
                 mShowAxesGizmo = true;
             }
         }
+
+        // Show / hide hull samples
+        if(mRenderHullSamples)
+        {
+            if(ImGui::Button("Hide Hull Samples", ImVec2(208, 22)))
+            {
+                mRenderHullSamples = false;
+            }
+        }
+        else
+        {
+            if(ImGui::Button("Show Hull Samples", ImVec2(208, 22)))
+            {
+                mRenderHullSamples = true;
+            }
+        }
+
         ImGui::Separator();
 
         // Animation smoothing
@@ -1639,7 +1660,7 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
         &mGPUSurfaces,
         mComputedStartFrame,
         mProbeRadius,
-        100,
+        mHullSampleCount,
         0,
         [this](float progress) // [0,1]
         {

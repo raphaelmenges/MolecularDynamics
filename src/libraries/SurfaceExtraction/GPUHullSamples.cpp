@@ -148,30 +148,35 @@ void GPUHullSamples::drawSamples(
 {
     // TODO: Problem: Using AtomCount from members but buffer from calling program
 
-    // Setup drawing
-    glPointSize(pointSize);
+    if(mSampleCount > 0 && mAtomCount > 0)
+    {
+        // Setup drawing
+        glPointSize(pointSize);
 
-    // Use shader program
-    mupShaderProgram->use();
+        // Use shader program
+        mupShaderProgram->use();
 
-    // Radii are expected to be bound at slot 0 and trajectory at 1
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mSamplesRelativePositionSSBO);
-    mupClassification->bindAsImage(3, GPUTextureBuffer::GPUAccess::READ_ONLY);
+        // Radii are expected to be bound at slot 0 and trajectory at 1
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mSamplesRelativePositionSSBO);
+        mupClassification->bindAsImage(3, GPUTextureBuffer::GPUAccess::READ_ONLY);
 
-    // Update uniform values
-    mupShaderProgram->update("view", rViewMatrix);
-    mupShaderProgram->update("projection", rProjectionMatrix);
-    mupShaderProgram->update("clippingPlane", clippingPlane);
-    mupShaderProgram->update("sampleCount", mSampleCount);
-    mupShaderProgram->update("frame", frame),
-    mupShaderProgram->update("atomCount", mAtomCount);
-    mupShaderProgram->update("integerCountPerSample", mIntegerCountPerSample);
-    mupShaderProgram->update("localFrame", frame - mStartFrame);
+        // Update uniform values
+        mupShaderProgram->update("view", rViewMatrix);
+        mupShaderProgram->update("projection", rProjectionMatrix);
+        mupShaderProgram->update("clippingPlane", clippingPlane);
+        mupShaderProgram->update("sampleCount", mSampleCount);
+        mupShaderProgram->update("frame", frame),
+        mupShaderProgram->update("atomCount", mAtomCount);
+        mupShaderProgram->update("integerCountPerSample", mIntegerCountPerSample);
+        mupShaderProgram->update("localFrame", frame - mStartFrame);
+        mupShaderProgram->update("internalColor", internalSampleColor);
+        mupShaderProgram->update("surfaceColor", surfaceSampleColor);
 
-    // Bind vertex array object and draw samples
-    glBindVertexArray(mVAO);
-    glDrawArrays(GL_POINTS, 0, mAtomCount * mSampleCount);
+        // Bind vertex array object and draw samples
+        glBindVertexArray(mVAO);
+        glDrawArrays(GL_POINTS, 0, mAtomCount * mSampleCount);
 
-    // Unbind vertex array object
-    glBindVertexArray(0);
+        // Unbind vertex array object
+        glBindVertexArray(0);
+    }
 }

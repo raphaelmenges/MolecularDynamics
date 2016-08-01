@@ -30,6 +30,8 @@ uniform int frame;
 uniform int atomCount;
 uniform int integerCountPerSample;
 uniform int localFrame;
+uniform vec3 internalColor;
+uniform vec3 surfaceColor;
 
 // Main function
 void main()
@@ -53,16 +55,16 @@ void main()
     int uintIndex =
         (atomIndex * sampleCount * integerCountPerSample) // offset for current atom's samples
         + (sampleIndex *  integerCountPerSample) // offset for current sample's slot
-        + (localFrame / 32); // offset for unsigned int which has to be modified
+        + (localFrame / 32); // offset for unsigned int which has to be read
     int bitIndex = localFrame - (32 * int(localFrame / 32)); // bit index within unsigned integer
 
     // Fetch classification
     if(((uint(imageLoad(Classification, uintIndex).x) >> uint(bitIndex)) & 1) > 0)
     {
-        vertColor = vec3(1,1,1);
+        vertColor = surfaceColor;
     }
     else
     {
-        vertColor = vec3(0,0,0);
+        vertColor = internalColor;
     }
 }

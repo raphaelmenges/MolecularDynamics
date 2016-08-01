@@ -98,8 +98,8 @@ private:
     const float mCameraDefaultBeta = 45.f;
     const glm::vec3 mInternalAtomColor = glm::vec3(0.75f, 0.75f, 0.75f);
     const glm::vec3 mSurfaceAtomColor = glm::vec3(1.f, 0.25f, 0.f);
-    const glm::vec3 mInternalSamplePointColor = glm::vec3(1.f, 0.9f, 0.0f);
-    const glm::vec3 mSurfaceSamplePointColor = glm::vec3(0.f, 1.0f, 0.2f);
+    const glm::vec3 mInternalValidationSampleColor = glm::vec3(1.f, 0.9f, 0.0f);
+    const glm::vec3 mSurfaceValidationSampleColor = glm::vec3(0.f, 1.0f, 0.2f);
     const float mClippingPlaneMin = 0.f;
     const float mClippingPlaneMax = 200.f;
     const std::string mWindowTitle = "Surface Dynamics Visualization";
@@ -118,6 +118,8 @@ private:
     const int mAscensionCoolDownSpeed = 3;
     const int mAscensionBecomingInternalSpeed = 25;
     const int mCameraSmoothFrameRadius = 10;
+    const glm::vec3 mInternalHullSampleColor = glm::vec3(0.0f, 0.0f, 0.0f);
+    const glm::vec3 mSurfaceHullSampleColor = glm::vec3(1.0f, 1.0f, 1.0f);
 
     // Controllable parameters
     bool mRotateCamera = false;
@@ -161,6 +163,8 @@ private:
     Background mBackground = COMPUTERVISUALISTIK;
     bool mShowRenderingWindow = true;
     bool mAutoCenterCamera = false;
+    int mHullSampleCount = 100;
+    bool mRenderHullSamples = false;
 
     // Report output
     std::string mComputeInformation = "No computation info available";
