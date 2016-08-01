@@ -78,6 +78,9 @@ private:
     // Get atom beneath cursor. Returns -1 when fails
     int getAtomBeneathCursor() const;
 
+    // Get whether frame was computed (otherwise prohibit doing thing which would go wrong)
+    bool frameComputed() const { return (mFrame >= mComputedStartFrame) && (mFrame <= mComputedEndFrame); }
+
     // Load cubemap texture. Returns texture handle
     GLuint createCubemap(
         std::string filepathPosX,

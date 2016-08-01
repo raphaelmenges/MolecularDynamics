@@ -1839,18 +1839,3 @@ int main()
     detection.renderLoop();
     return 0;
 }
-
-// ### Snippets ###
-
-/*
-    // Read back SSBO
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, atomsSSBO);
-    AtomStruct *ptr;
-    ptr = (AtomStruct *) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-    for(int i = 0; i < atomCount; i++)
-    {
-        std::cout << i << ". " << ptr[i].radius << std::endl;
-    }
-    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-*/

@@ -132,8 +132,8 @@ void GPUHullSamples::compute(
         }
     }
 
-    // Read SSBO with classification back to RAM
-    // TODO
+    // Read image with classification back to member
+    mClassification = mupClassification->read(mupClassification->getSize());
 
     // Finih progress
     if(progressCallback != NULL)

@@ -93,6 +93,9 @@ private:
 
     // Vector for count of surface samples
     std::vector<GLuint> mSurfaceSampleCount;
+
+    // Copy of classification results
+    std::vector<GLuint> mClassification;
 };
 
 #endif // GPU_HULL_SAMPLES_H

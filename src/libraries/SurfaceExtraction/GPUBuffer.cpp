@@ -12,10 +12,11 @@ GPUBuffer::~GPUBuffer()
 
 void GPUBuffer::fill(const std::vector<float>& rData, GLenum access)
 {
+    mSize = rData.size();
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, mBuffer);
     if(!rData.empty())
     {
-        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(rData.at(0)) * rData.size(), rData.data(), access);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(rData.at(0)) * mSize, rData.data(), access);
     }
     else
     {
@@ -26,10 +27,11 @@ void GPUBuffer::fill(const std::vector<float>& rData, GLenum access)
 
 void GPUBuffer::fill(const std::vector<glm::vec3>& rData, GLenum access)
 {
+    mSize = rData.size();
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, mBuffer);
     if(!rData.empty())
     {
-        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(rData.at(0)) * rData.size(), rData.data(), access);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(rData.at(0)) * mSize, rData.data(), access);
     }
     else
     {
@@ -41,4 +43,18 @@ void GPUBuffer::fill(const std::vector<glm::vec3>& rData, GLenum access)
 void GPUBuffer::bind(GLuint slot) const
 {
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, slot, mBuffer);
+}
+
+std::vector<GLuint> GPUBuffer::read() const
+{
+    std::vector<GLuint> result;
+    result.reserve(mSize);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mBuffer);
+    GLuint *ptr;
+    ptr = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    for(int i = 0; i < mSize; i++)
+    {
+        result.push_back(ptr[i]); // direct copy of complete data would be faster
+    }
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 }

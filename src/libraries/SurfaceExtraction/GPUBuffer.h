@@ -1,5 +1,6 @@
 // Author: Raphael Menges
 // Buffer on GPU which can be bound as image.
+// TODO: make template with different datatypes
 
 #ifndef GPU_BUFFER_H
 #define GPU_BUFFER_H
@@ -26,10 +27,16 @@ public:
     // Bind
     void bind(GLuint slot) const;
 
+    // Read values (at the moment, only uint supported. Templates should fix that)
+    std::vector<GLuint> read() const;
+
 private:
 
     // Handle for buffer which holds the data
     GLuint mBuffer;
+
+    // Size of buffer
+    int mSize;
 };
 
 #endif // GPU_BUFFER_H
