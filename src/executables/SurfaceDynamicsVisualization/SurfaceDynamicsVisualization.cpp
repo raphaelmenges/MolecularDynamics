@@ -806,13 +806,13 @@ void SurfaceDynamicsVisualization::renderLoop()
     glDeleteBuffers(1, &axisGizmoVBO);
 }
 
-void SurfaceDynamicsVisualization::setWindowTitle(float progress)
+void SurfaceDynamicsVisualization::setProgressDispaly(std::string task, float progress)
 {
     if(progress != 1.f)
     {
         int intProgress = (int)(progress * 100);
         std::string stringProgress = intProgress < 10 ? "0" + std::to_string(intProgress) : std::to_string(intProgress);
-        glfwSetWindowTitle(mpWindow, std::string(mWindowTitle + " [" + stringProgress + "%]").c_str());
+        glfwSetWindowTitle(mpWindow, std::string(mWindowTitle + ": " + task + " [" + stringProgress + "%]").c_str());
     }
     else
     {
@@ -1636,7 +1636,7 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
 
         // Show progress
         float progress = (float)(i- startFrame + 1) / (float)(endFrame - startFrame + 1);
-        setWindowTitle(progress);
+        setProgressDispaly("Surface Extraction", progress);
     }
 
     // Remember which frames were computed
@@ -1736,7 +1736,7 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
         0,
         [this](float progress) // [0,1]
         {
-            this->setWindowTitle(progress);
+            this->setProgressDispaly("Sample Creation", progress);
         });
 }
 

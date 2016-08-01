@@ -37,8 +37,8 @@ public:
     // Render
     void renderLoop();
 
-    // Set window title (hides processing part when progress is one)
-    void setWindowTitle(float progress = 1.0f);
+    // Set window title displaying progressm(hides processing part when progress is one)
+    void setProgressDispaly(std::string task, float progress = 1.0f);
 
 private:
 
