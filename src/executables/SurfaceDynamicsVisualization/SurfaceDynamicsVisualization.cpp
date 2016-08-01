@@ -846,7 +846,7 @@ void SurfaceDynamicsVisualization::updateComputationInformation(std::string devi
         << "Extracted layers: " << (mExtractLayers ? "yes" : "no") << "\n"
         << "Start frame: " << mComputedStartFrame << " End frame: " << mComputedEndFrame << "\n"
         << "Count of frames: " << (mComputedEndFrame - mComputedStartFrame + 1) << "\n"
-        << "Time: " << computationTime << "ms";
+        << "Extraction time: " << computationTime << "ms";
     mComputeInformation = stream.str();
 }
 
