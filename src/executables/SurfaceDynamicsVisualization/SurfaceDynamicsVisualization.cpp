@@ -1366,6 +1366,25 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.0f, 0.5f, 0.75f)); // window background
         ImGui::Begin("Analysis", NULL, 0);
 
+        // Analysis of global
+        ImGui::Text("Global");
+
+        // Graph about relation of surface and internal samples (in relative frames)
+        float globalSampleCount = (float)mupHullSamples->getGlobalSampleCount();
+        auto sampleCount = mupHullSamples->getSurfaceSampleCount();
+        std::vector<float> floatSampleAmount;
+        floatSampleAmount.reserve(sampleCount.size());
+        for(int i = 0; i < sampleCount.size(); i++)
+        {
+            floatSampleAmount.push_back((float)sampleCount.at(i) / globalSampleCount);
+        }
+        ImGui::PlotLines("Surface Samples", floatSampleAmount.data(), floatSampleAmount.size());
+        ImGui::Text(std::string("Surface Amount: " + std::to_string(floatSampleAmount.at(mFrame - mComputedStartFrame))).c_str());
+
+        ImGui::Separator();
+
+        // Analysis of group
+        ImGui::Text("Group");
         ImGui::BeginChild(
             "AnalyseAtoms",
             ImVec2(ImGui::GetWindowContentRegionWidth() * 1.0f, 100),

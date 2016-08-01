@@ -1,6 +1,7 @@
 #include "GPUHullSamples.h"
 #include "GPUProtein.h"
 #include "GPUSurface.h"
+#include "Utils/AtomicCounter.h"
 
 GPUHullSamples::GPUHullSamples()
 {
@@ -86,6 +87,10 @@ void GPUHullSamples::compute(
     // Initialize classification with zeros
     mupClassification = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(std::vector<GLuint>(globalIntergerCount, 0)));
 
+    // Count surface samples
+    mSurfaceSampleCount.clear();
+    AtomicCounter surfaceSampleCounter;
+
     // For each GPUSurface take surface atoms and calculate for their samples whether they are at surface or not
     mupComputeProgram->use();
     mupComputeProgram->update("atomCount", mAtomCount);
@@ -95,8 +100,12 @@ void GPUHullSamples::compute(
     pGPUProtein->bind(1, 2); // bind radii and trajectory buffers
     mSamplesRelativePositionBuffer.bind(3); // bind relative position of samples
     mupClassification->bindAsImage(4, GPUTextureBuffer::GPUAccess::READ_WRITE);
+    surfaceSampleCounter.bind(5);
     for(int i = 0; i < pGPUSurfaces->size(); i++)
     {
+        // Reset counter of surface samples
+        surfaceSampleCounter.reset();
+
         // Update values
         mupComputeProgram->update("frame", i + mStartFrame); // frame in global terms
         mupComputeProgram->update("localFrame", i);
@@ -111,6 +120,10 @@ void GPUHullSamples::compute(
             1,
             1);
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
+        glFinish(); // memory barrier does not do the job
+
+        // Push back count of surface atoms
+        mSurfaceSampleCount.push_back(surfaceSampleCounter.read());
 
         // Update progress
         if(progressCallback != NULL)

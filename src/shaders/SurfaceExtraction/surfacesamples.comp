@@ -32,6 +32,9 @@ layout(std430, binding = 3) restrict readonly buffer RelativePositionBuffer
 // ## Image buffer with classification
 layout(binding = 4, r32ui) restrict uniform uimageBuffer Classification;
 
+// ## Atomic counter for surface samples
+layout(binding = 5) uniform atomic_uint SurfaceSampleCount;
+
 // ## Uniforms
 uniform int atomCount;
 uniform int localFrameCount;
@@ -97,4 +100,7 @@ void main()
     // Each unsigned int block belongs to single sample and each execution corresponds to unique sample
     uint value = uint(imageLoad(Classification, uintIndex).x) | (1 << bitIndex);
     imageStore(Classification, uintIndex, uvec4(value));
+
+    // Increment atomic counter
+    atomicCounterIncrement(SurfaceSampleCount);
 }

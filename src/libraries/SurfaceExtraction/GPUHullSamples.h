@@ -39,7 +39,7 @@ public:
 
     // Draw the computed samples
     // Radii must be bound to slot 0 and trajectory to slot 1
-     void drawSamples(
+    void drawSamples(
         int frame, // absolute frame
         float pointSize,
         glm::vec3 internalSampleColor,
@@ -47,6 +47,12 @@ public:
         const glm::mat4& rViewMatrix,
         const glm::mat4& rProjectionMatrix,
         float clippingPlane) const;
+
+    // Get count of surface samples
+    std::vector<GLuint> getSurfaceSampleCount() const { return mSurfaceSampleCount; }
+
+    // Get count of samples in one frame (atom count x sample count)
+    int getGlobalSampleCount() const { return mAtomCount * mSampleCount; }
 
 private:
 
@@ -84,6 +90,9 @@ private:
 
     // Vertex array object for drawing
     GLuint mVAO;
+
+    // Vector for count of surface samples
+    std::vector<GLuint> mSurfaceSampleCount;
 };
 
 #endif // GPU_HULL_SAMPLES_H

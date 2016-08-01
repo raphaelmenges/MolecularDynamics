@@ -195,6 +195,7 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(
             // Dispatch
             glDispatchCompute((inputCount / 64) + 1, 1, 1);
             glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glFinish(); // memory barrier does not do the job
 
             // Save count of internal as next count of input atoms
             inputCount = (int)internalCounter.read();
