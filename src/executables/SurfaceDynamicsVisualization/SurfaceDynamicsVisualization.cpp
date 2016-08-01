@@ -293,6 +293,7 @@ void SurfaceDynamicsVisualization::renderLoop()
     ShaderProgram hullProgram("/SurfaceDynamicsVisualization/hull.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
     ShaderProgram ascensionProgram("/SurfaceDynamicsVisualization/ascension.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
     ShaderProgram coloringProgram("/SurfaceDynamicsVisualization/coloring.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
+    ShaderProgram analysisProgram("/SurfaceDynamicsVisualization/analysis.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
 
     // Shader program for screenfilling quad rendering
     ShaderProgram screenFillingProgram("/SurfaceDynamicsVisualization/screenfilling.vert", "/SurfaceDynamicsVisualization/screenfilling.geom", "/SurfaceDynamicsVisualization/screenfilling.frag");
@@ -707,6 +708,32 @@ void SurfaceDynamicsVisualization::renderLoop()
                 mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 2);
                 glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
             }
+
+            break;
+
+        case SurfaceRendering::ANALYSIS:
+
+            // Bind indices of analysis atoms
+            mupOutlineAtomIndices->bindAsImage(2, GPUTextureBuffer::GPUAccess::READ_ONLY);
+
+            // Prepare shader program
+            analysisProgram.use();
+            analysisProgram.update("view", mupCamera->getViewMatrix());
+            analysisProgram.update("projection", mupCamera->getProjectionMatrix());
+            analysisProgram.update("cameraWorldPos", mupCamera->getPosition());
+            analysisProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
+            analysisProgram.update("lightDir", mLightDirection);
+            analysisProgram.update("selectedIndex", mSelectedAtom);
+            analysisProgram.update("clippingPlane", mClippingPlane);
+            analysisProgram.update("frame", mFrame);
+            analysisProgram.update("atomCount", mupGPUProtein->getAtomCount());
+            analysisProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+            analysisProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+            analysisProgram.update("frameCount", mupGPUProtein->getFrameCount());
+            analysisProgram.update("depthDarkeningStart", mDepthDarkeningStart);
+            analysisProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
+            analysisProgram.update("groupAtomCount", (int)mupOutlineAtomIndices->getSize());
+            glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
 
             break;
         }
@@ -1148,7 +1175,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Text("[Rendering]");
 
         // Surface rendering
-        ImGui::Combo("##SurfaceRenderingCombo", (int*)&mSurfaceRendering, "Hull\0Ascension\0Elements\0Aminoacids\0");
+        ImGui::Combo("##SurfaceRenderingCombo", (int*)&mSurfaceRendering, "Hull\0Ascension\0Elements\0Aminoacids\0Analysis\0");
 
         // Render / not render with probe radius
         if(mRenderWithProbeRadius)

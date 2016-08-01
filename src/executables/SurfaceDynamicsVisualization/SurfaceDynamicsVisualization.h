@@ -45,7 +45,7 @@ private:
     // Enumeration for surface rendering
     enum SurfaceRendering
     {
-        HULL, ASCENSION, ELEMENTS, AMINOACIDS
+        HULL, ASCENSION, ELEMENTS, AMINOACIDS, ANALYSIS
     };
 
     // Enumeration for background cubemap
