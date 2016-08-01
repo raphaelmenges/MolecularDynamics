@@ -94,31 +94,28 @@ GPUProtein::GPUProtein(const std::vector<glm::vec4>& rAtoms)
 
 GPUProtein::~GPUProtein()
 {
-    glDeleteBuffers(1, &mRadiiSSBO);
-    glDeleteBuffers(1, &mTrajectorySSBO);
-    glDeleteBuffers(1, &mColorsElementSSBO);
-    glDeleteBuffers(1, &mColorsAminoacidSSBO);
+    // Nothing to do
 }
 
 void GPUProtein::bind(GLuint radiiSlot, GLuint trajectorySlot) const
 {
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, radiiSlot, mRadiiSSBO);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, trajectorySlot, mTrajectorySSBO);
+    mRadiiBuffer.bind(radiiSlot);
+    mTrajectoryBuffer.bind(trajectorySlot);
 }
 
 void GPUProtein::bindTrajectory(GLuint slot) const
 {
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, slot, mTrajectorySSBO);
+    mTrajectoryBuffer.bind(slot);
 }
 
 void GPUProtein::bindColorsElement(GLuint slot) const
 {
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, slot, mColorsElementSSBO);
+    mColorsElementBuffer.bind(slot);
 }
 
 void GPUProtein::bindColorsAminoacid(GLuint slot) const
 {
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, slot, mColorsAminoacidSSBO);
+    mColorsAminoacidBuffer.bind(slot);
 }
 
 std::shared_ptr<const std::vector<float> > GPUProtein::getRadii() const
@@ -142,13 +139,8 @@ void GPUProtein::initSSBOs(int atomCount, int frameCount)
     }
 
     // Create structures of radii and trajectory on GPU
-    glGenBuffers(1, &mRadiiSSBO);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mRadiiSSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * mspRadii->size(), mspRadii->data(), GL_STATIC_DRAW);
-    glGenBuffers(1, &mTrajectorySSBO);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mTrajectorySSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec3) * linearTrajectory.size(), linearTrajectory.data(), GL_STATIC_DRAW);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    mRadiiBuffer.fill(*mspRadii.get(), GL_STATIC_DRAW);
+    mTrajectoryBuffer.fill(linearTrajectory, GL_STATIC_DRAW);
 
     // Get atom lookup
     AtomLUT lut;
@@ -161,10 +153,7 @@ void GPUProtein::initSSBOs(int atomCount, int frameCount)
         auto color = lut.cpk_colorcode[mElements.at(i)];
         elementColors.push_back(glm::vec3(color.r, color.g, color.b));
     }
-    glGenBuffers(1, &mColorsElementSSBO);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mColorsElementSSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec3) * elementColors.size(), elementColors.data(), GL_STATIC_DRAW);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    mColorsElementBuffer.fill(elementColors, GL_STATIC_DRAW);
 
     // Create structure for coloring according to aminoacid on GPU
     std::vector<glm::vec3> aminoacidColors;
@@ -173,9 +162,6 @@ void GPUProtein::initSSBOs(int atomCount, int frameCount)
     {
         aminoacidColors.push_back(glm::vec3(1,0,0)); // TODO
     }
-    glGenBuffers(1, &mColorsAminoacidSSBO);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mColorsAminoacidSSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec3) * aminoacidColors.size(), aminoacidColors.data(), GL_STATIC_DRAW);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    mColorsAminoacidBuffer.fill(aminoacidColors, GL_STATIC_DRAW);
 }
 

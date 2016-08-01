@@ -4,9 +4,6 @@
 
 GPUHullSamples::GPUHullSamples()
 {
-    // Generate SSBO
-    glGenBuffers(1, &mSamplesRelativePositionSSBO);
-
     // Create compute shader which is used to classify samples
     mupComputeProgram = std::unique_ptr<ShaderProgram>(new ShaderProgram(GL_COMPUTE_SHADER, "/SurfaceExtraction/surfacesamples.comp"));
 
@@ -19,9 +16,6 @@ GPUHullSamples::GPUHullSamples()
 
 GPUHullSamples::~GPUHullSamples()
 {
-    // Delete SSBO
-    glDeleteBuffers(1, &mSamplesRelativePositionSSBO);
-
     // Delete VAO
     glDeleteVertexArrays(1, &mVAO);
 }
@@ -82,9 +76,7 @@ void GPUHullSamples::compute(
     }
 
     // Copy information about relative sample position to GPU
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSamplesRelativePositionSSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec3) * mSamplesRelativePosition.size(), mSamplesRelativePosition.data(), GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    mSamplesRelativePositionBuffer.fill(mSamplesRelativePosition, GL_DYNAMIC_READ);
 
     // ### SURFACE CLASSIFICATION ###
 
@@ -101,7 +93,7 @@ void GPUHullSamples::compute(
     mupComputeProgram->update("integerCountPerSample", mIntegerCountPerSample);
     mupComputeProgram->update("probeRadius", probeRadius);
     pGPUProtein->bind(1, 2); // bind radii and trajectory buffers
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mSamplesRelativePositionSSBO); // bind relative position of samples
+    mSamplesRelativePositionBuffer.bind(3); // bind relative position of samples
     mupClassification->bindAsImage(4, GPUTextureBuffer::GPUAccess::READ_WRITE);
     for(int i = 0; i < pGPUSurfaces->size(); i++)
     {
@@ -157,7 +149,7 @@ void GPUHullSamples::drawSamples(
         mupShaderProgram->use();
 
         // Radii are expected to be bound at slot 0 and trajectory at 1
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mSamplesRelativePositionSSBO);
+        mSamplesRelativePositionBuffer.bind(2);
         mupClassification->bindAsImage(3, GPUTextureBuffer::GPUAccess::READ_ONLY);
 
         // Update uniform values

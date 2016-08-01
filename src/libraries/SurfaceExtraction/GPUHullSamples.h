@@ -5,6 +5,7 @@
 #define GPU_HULL_SAMPLES_H
 
 #include "ShaderTools/ShaderProgram.h"
+#include "SurfaceExtraction/GPUBuffer.h"
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <memory>
@@ -72,7 +73,7 @@ private:
     std::vector<glm::vec3> mSamplesRelativePosition;
 
     // SSBO with relative positions of samples
-    GLuint mSamplesRelativePositionSSBO;
+    GPUBuffer mSamplesRelativePositionBuffer;
 
     // Texture buffer with information whether sample is on surface or not
     // Saved in single bits of unsigned integers in vector

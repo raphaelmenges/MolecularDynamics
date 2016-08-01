@@ -4,6 +4,7 @@
 #ifndef GPU_PROTEIN_H
 #define GPU_PROTEIN_H
 
+#include "SurfaceExtraction/GPUBuffer.h"
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <vector>
@@ -68,10 +69,10 @@ private:
     std::shared_ptr<std::vector<std::vector<glm::vec3> > > mspTrajectory;
 
     // SSBO of radii
-    GLuint mRadiiSSBO;
+    GPUBuffer mRadiiBuffer;
 
     // SSBO of trajectory
-    GLuint mTrajectorySSBO;
+    GPUBuffer mTrajectoryBuffer;
 
     // Vector which holds the center of mass for each frame (ok, mass is not yet taken into account)
     std::vector<glm::vec3> mCentersOfMass;
@@ -83,10 +84,10 @@ private:
     std::vector<std::string> mAminoacids;
 
     // SSBO with colors for atoms according to element
-    GLuint mColorsElementSSBO;
+    GPUBuffer mColorsElementBuffer;
 
     // SSBO with colors for atoms according to aminoacid
-     GLuint mColorsAminoacidSSBO;
+    GPUBuffer mColorsAminoacidBuffer;
 };
 
 #endif // GPU_PROTEIN_H
