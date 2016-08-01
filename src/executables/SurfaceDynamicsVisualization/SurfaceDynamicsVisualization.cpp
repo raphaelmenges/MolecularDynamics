@@ -1398,6 +1398,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Text("[Global]");
 
         // Graph about relation of surface and internal samples (in relative frames)
+        // TODO: stupid to calculate it every frame and bad texts
         float globalSampleCount = (float)mupHullSamples->getGlobalSampleCount();
         auto sampleCount = mupHullSamples->getSurfaceSampleCount();
         std::vector<float> floatSampleAmount;
@@ -1538,6 +1539,21 @@ void SurfaceDynamicsVisualization::renderGUI()
 
         // Radius of frames in path visualization
         ImGui::SliderInt("Path Radius", &mPathFrameRadius, 1, 100);
+
+        // Amount of surface covered by analysis group
+        // TODO: very stupid to do every frame and bad texts
+        if(mAnalyseAtoms.size() > 0)
+        {
+            std::vector<float> floatGroupSurfaceSampleAmount;
+            floatGroupSurfaceSampleAmount.reserve(mComputationEndFrame - mComputedStartFrame + 1);
+            for(int i = mComputationStartFrame; i <= mComputedEndFrame; i++)
+            {
+                floatGroupSurfaceSampleAmount.push_back(
+                    (float)mupHullSamples->getCountOfSurfaceSamples(i, mAnalyseAtoms) / (float)mupHullSamples->getCountOfSurfaceSamples(i));
+            }
+            ImGui::PlotLines("Group Samples", floatGroupSurfaceSampleAmount.data(), floatGroupSurfaceSampleAmount.size());
+            ImGui::Text(std::string("Surface Amount: " + std::to_string(floatGroupSurfaceSampleAmount.at(mFrame - mComputedStartFrame) * 100) + " percent").c_str());
+        }
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background

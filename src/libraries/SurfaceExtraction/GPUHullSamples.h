@@ -11,6 +11,7 @@
 #include <memory>
 #include <vector>
 #include <functional>
+#include <set>
 
 // Forward declaration
 class GPUProtein;
@@ -54,8 +55,11 @@ public:
     // Get count of samples in one frame (atom count x sample count)
     int getGlobalSampleCount() const { return mAtomCount * mSampleCount; }
 
+    // Get count of surface samples of a certain atom group
+    int getCountOfSurfaceSamples(int frame, std::set<GLuint> atomIndices) const;
+
     // Get count of surface samples
-    int getCountOfSurfaceSamples(int frame, std::vector<GLuint> atomIndices) const;
+    int getCountOfSurfaceSamples(int frame) const;
 
     // Get count of samples for a given count of atoms
     int getCountOfSamples(int atomCount) const;

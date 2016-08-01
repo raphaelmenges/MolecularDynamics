@@ -186,28 +186,42 @@ void GPUHullSamples::drawSamples(
     }
 }
 
-int GPUHullSamples::getCountOfSurfaceSamples(int frame, std::vector<GLuint> atomIndices) const
+int GPUHullSamples::getCountOfSurfaceSamples(int frame, std::set<GLuint> atomIndices) const
 {
+    // Calculate local frame
     int localFrame = frame - mStartFrame;
 
-    /*
-    // Calculate indices to look up classification
-    int uintIndex =
-        (atomIndex * sampleCount * integerCountPerSample) // offset for current atom's samples
-        + (sampleIndex *  integerCountPerSample) // offset for current sample's slot
-        + (localFrame / 32); // offset for unsigned int which has to be read
-    int bitIndex = localFrame - (32 * int(localFrame / 32)); // bit index within unsigned integer
+    // Result
+    int surfaceSampleCount = 0;
 
-    // Fetch classification
-    if(((uint(imageLoad(Classification, uintIndex).x) >> uint(bitIndex)) & 1) > 0)
+    // Go over atoms where count of surface samples should be got
+    for(GLuint a : atomIndices)
     {
-        vertColor = surfaceColor;
+        // Go over samples of that atom
+        for(int j = 0; j < mSampleCount; j++)
+        {
+            // Calculate indices to look up classification
+            int uintIndex =
+                (a * mSampleCount * mIntegerCountPerSample) // offset for current atom's samples
+                + (j *  mIntegerCountPerSample) // offset for current sample's slot
+                + (localFrame / 32); // offset for unsigned int which has to be read
+            int bitIndex = localFrame - (32 * int(localFrame / 32)); // bit index within unsigned integer
+
+            // Fetch classification
+            if(((mClassification.at(uintIndex) >> bitIndex) & 1) > 0)
+            {
+                // Increment count of found surface samples
+                surfaceSampleCount++;
+            }
+        }
     }
-    else
-    {
-        vertColor = internalColor;
-    }
-    */
+
+    return surfaceSampleCount;
+}
+
+int GPUHullSamples::getCountOfSurfaceSamples(int frame) const
+{
+    return mSurfaceSampleCount.at(frame - mStartFrame);
 }
 
 int GPUHullSamples::getCountOfSamples(int atomCount) const
