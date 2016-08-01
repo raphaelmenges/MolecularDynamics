@@ -9,6 +9,7 @@
 #include <glm/glm.hpp>
 #include <memory>
 #include <vector>
+#include <functional>
 
 // Forward declaration
 class GPUProtein;
@@ -32,7 +33,8 @@ public:
         int startFrame,
         float probeRadius,
         int sampleCountPerAtom,
-        unsigned int sampleSeed);
+        unsigned int sampleSeed,
+        std::function<void(float)> progressCallback = NULL);
 
     // Draw the computed samples
     // Radii must be bound to slot 0 and trajectory to slot 1

@@ -32,7 +32,8 @@ void GPUHullSamples::compute(
     int startFrame,
     float probeRadius,
     int sampleCountPerAtom,
-    unsigned int sampleSeed)
+    unsigned int sampleSeed,
+    std::function<void(float)> progressCallback)
 {
     // Fill members
     mStartFrame = startFrame;
@@ -40,6 +41,12 @@ void GPUHullSamples::compute(
     mLocalFrameCount = pGPUSurfaces->size(); // not over complete animation but calculated surfaces!
     mSampleCount = sampleCountPerAtom;
     mIntegerCountPerSample = (int)glm::ceil((float)mLocalFrameCount / 32.f); // each unsigned int holds 32 bits
+
+    // Initialize progress with zero
+    if(progressCallback != NULL)
+    {
+        progressCallback(0);
+    }
 
     // ### RELATIVE POSITIONS ###
 
@@ -112,10 +119,22 @@ void GPUHullSamples::compute(
             1,
             1);
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+        // Update progress
+        if(progressCallback != NULL)
+        {
+            progressCallback(((float)i) / ((float)pGPUSurfaces->size()));
+        }
     }
 
     // Read SSBO with classification back to RAM
     // TODO
+
+    // Finih progress
+    if(progressCallback != NULL)
+    {
+        progressCallback(1.f);
+    }
 }
 
 void GPUHullSamples::drawSamples(

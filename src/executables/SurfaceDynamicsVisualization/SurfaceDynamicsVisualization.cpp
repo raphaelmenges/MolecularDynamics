@@ -1634,7 +1634,17 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
     mupAscension = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(ascension));
 
     // # Hull samples calculation
-    mupHullSamples->compute(mupGPUProtein.get(), &mGPUSurfaces, mComputedStartFrame, mProbeRadius, 2, 0);
+    mupHullSamples->compute(
+        mupGPUProtein.get(),
+        &mGPUSurfaces,
+        mComputedStartFrame,
+        mProbeRadius,
+        100,
+        0,
+        [this](float progress) // [0,1]
+        {
+            this->setWindowTitle(progress);
+        });
 }
 
 int SurfaceDynamicsVisualization::getAtomBeneathCursor() const

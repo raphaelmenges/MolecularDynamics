@@ -62,10 +62,11 @@ void main()
 
     // Read position of sample
     Position atomPosition = trajectory[(frame*atomCount) + atomIndex];
+    Position relativeSamplePosition = relativePosition[(atomIndex * sampleCount) + sampleIndex];
     vec3 samplePosition = vec3(
-        atomPosition.x + relativePosition[sampleIndex].x,
-        atomPosition.y + relativePosition[sampleIndex].y,
-        atomPosition.z + relativePosition[sampleIndex].z);
+        atomPosition.x + relativeSamplePosition.x,
+        atomPosition.y + relativeSamplePosition.y,
+        atomPosition.z + relativeSamplePosition.z);
 
     // Go over all other atoms (not only surface atoms) and test whether sample is included
     for(int i = 0; i < atomCount; i++)
@@ -89,7 +90,7 @@ void main()
     int uintIndex =
         (atomIndex * sampleCount * integerCountPerSample) // offset for current atom's samples
         + (sampleIndex *  integerCountPerSample) // offset for current sample's slot
-        + (localFrame / 32); // offset for unsigned int which has to be modified
+        + (localFrame / 32); // offset for unsigned int which has to be read
     int bitIndex = localFrame - (32 * int(localFrame / 32)); // bit index within unsigned integer
 
     // Since compute shader called for each frame, no read / write synchronization necessary
