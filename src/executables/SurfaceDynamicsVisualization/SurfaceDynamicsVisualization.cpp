@@ -50,6 +50,8 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
         0x2794, 0x2794, // right arrow
         0x25cb, 0x25cb, // circle
         0x212b, 0x212b, // angstrom
+        0x0025, 0x0025, // percent
+        0x2023, 0x2023, // triangle bullet
         0
     }; // has to be static to be available during run
     io.Fonts->AddFontFromFileTTF(fontpath.c_str(), 16, &config, ranges);
@@ -431,7 +433,7 @@ void SurfaceDynamicsVisualization::renderLoop()
 
         // Get count of atoms which will get a outline (size of buffer can be used here because all elements are valid)
         int outlineAtomCount = mupOutlineAtomIndices->getSize();
-        if(outlineAtomCount > 0)
+        if(mRenderOutline && (outlineAtomCount > 0))
         {
             // Bind texture buffer with input atoms
             mupOutlineAtomIndices->bindAsImage(2, GPUTextureBuffer::GPUAccess::READ_ONLY);
@@ -991,7 +993,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Begin("Computation", NULL, 0);
 
         // Computatiom
-        ImGui::Text("Computation");
+        ImGui::Text("[Computation]");
         ImGui::SliderFloat("Probe Radius", &mProbeRadius, 0.f, 2.f, "%.1f");
         ImGui::Checkbox("Extract Layers", &mExtractLayers);
         ImGui::SliderInt("Start Frame", &mComputationStartFrame, 0, mComputationEndFrame);
@@ -1020,7 +1022,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Begin("Camera", NULL, 0);
 
         // Camera
-        ImGui::Text("Orthographic Camera");
+        ImGui::Text("[Orthographic Camera]");
 
         // Set to fixed positions
         if(ImGui::Button("Align to X"))
@@ -1083,7 +1085,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Separator();
 
         // Clipping
-        ImGui::Text("Clipping Plane");
+        ImGui::Text("[Clipping Plane]");
         if(ImGui::Button("+0.1"))
         {
             mClippingPlane += 0.1f;
@@ -1109,7 +1111,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Begin("Visualization", NULL, 0);
 
         // Animation
-        ImGui::Text("Animation");
+        ImGui::Text("[Animation]");
         if(mPlayAnimation)
         {
             if(ImGui::Button("\u05f0 Pause", ImVec2(90, 22)))
@@ -1138,12 +1140,12 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Separator();
 
         // Layer
-        ImGui::Text("Layer");
+        ImGui::Text("[Layer]");
         ImGui::SliderInt("Layer", &mLayer, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getLayerCount() - 1);
         ImGui::Separator();
 
         // Render points / spheres
-        ImGui::Text("Rendering");
+        ImGui::Text("[Rendering]");
 
         // Surface rendering
         ImGui::Combo("##SurfaceRenderingCombo", (int*)&mSurfaceRendering, "Hull\0Ascension\0Elements\0Aminoacids\0");
@@ -1236,7 +1238,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Separator();
 
         // Animation smoothing
-        ImGui::Text("Animation Smoothing");
+        ImGui::Text("[Animation Smoothing]");
         ImGui::SliderInt("Smooth Radius", &mSmoothAnimationRadius, 0, 10);
         ImGui::SliderFloat("Smooth Max Deviation", &mSmoothAnimationMaxDeviation, 0, 100, "%.1f");
 
@@ -1251,21 +1253,21 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Begin("Information", NULL, 0);
 
         // General infos
-        ImGui::Text("General");
+        ImGui::Text("[General]");
         ImGui::Text(std::string("Atom Count: " + std::to_string(mupGPUProtein->getAtomCount())).c_str());
         ImGui::Text(std::string("Internal Atoms: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer))).c_str());
         ImGui::Text(std::string("Surface Atoms: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer))).c_str());
         ImGui::Separator();
 
         // Selection infos
-        ImGui::Text("Selection");
+        ImGui::Text("[Selection]");
         ImGui::Text(std::string("Index: " + std::to_string(mSelectedAtom)).c_str());
         ImGui::Text(std::string("Element: " + mupGPUProtein->getElement(mSelectedAtom)).c_str());
         ImGui::Text(std::string("Aminoacid: " + mupGPUProtein->getAminoacid(mSelectedAtom)).c_str());
         ImGui::Separator();
 
         // Hardware infos
-        ImGui::Text("Hardware");
+        ImGui::Text("[Hardware]");
 
         // Show available GPU memory
         int availableMemory;
@@ -1296,7 +1298,6 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Begin("Validation", NULL, 0);
 
         // Do validation
-        ImGui::Text("Validation");
         ImGui::SliderInt("Samples", &mSurfaceValidationAtomSampleCount, 1, 10000);
         ImGui::SliderInt("Seed", &mSurfaceValidationSeed, 0, 1337);
         if(ImGui::Button("Validate Surface"))
@@ -1367,7 +1368,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Begin("Analysis", NULL, 0);
 
         // Analysis of global
-        ImGui::Text("Global");
+        ImGui::Text("[Global]");
 
         // Graph about relation of surface and internal samples (in relative frames)
         float globalSampleCount = (float)mupHullSamples->getGlobalSampleCount();
@@ -1379,12 +1380,12 @@ void SurfaceDynamicsVisualization::renderGUI()
             floatSampleAmount.push_back((float)sampleCount.at(i) / globalSampleCount);
         }
         ImGui::PlotLines("Surface Samples", floatSampleAmount.data(), floatSampleAmount.size());
-        ImGui::Text(std::string("Surface Amount: " + std::to_string(floatSampleAmount.at(mFrame - mComputedStartFrame))).c_str());
+        ImGui::Text(std::string("Surface Amount: " + std::to_string(floatSampleAmount.at(mFrame - mComputedStartFrame) * 100) + " percent").c_str());
 
         ImGui::Separator();
 
         // Analysis of group
-        ImGui::Text("Group");
+        ImGui::Text("[Group]");
         ImGui::BeginChild(
             "AnalyseAtoms",
             ImVec2(ImGui::GetWindowContentRegionWidth() * 1.0f, 100),
@@ -1398,8 +1399,16 @@ void SurfaceDynamicsVisualization::renderGUI()
         // Go over analyse atoms and list them
         for (int atomIndex : mAnalyseAtoms)
         {
-            // Information about atom
+            // Index of atom
             ImGui::Text("%05d", atomIndex);
+            ImGui::SameLine();
+
+            // Element of atom
+            ImGui::Text(mupGPUProtein->getElement(atomIndex).c_str());
+            ImGui::SameLine();
+
+            // Aminoacid of atom
+            ImGui::Text(mupGPUProtein->getAminoacid(atomIndex).c_str());
             ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 60);
 
             // Select that atom (use ## to add number for an unique button id)
@@ -1445,6 +1454,23 @@ void SurfaceDynamicsVisualization::renderGUI()
             // Path
             doUpdatePath = true;
         }
+
+        // Show / hide outline
+        if(mRenderOutline)
+        {
+            if(ImGui::Button("Hide Outline", ImVec2(90, 22)))
+            {
+                mRenderOutline = false;
+            }
+        }
+        else
+        {
+            if(ImGui::Button("Show Outline", ImVec2(90, 22)))
+            {
+                mRenderOutline = true;
+            }
+        }
+        ImGui::SameLine();
 
         // Show / hide path
         if(mShowPath)

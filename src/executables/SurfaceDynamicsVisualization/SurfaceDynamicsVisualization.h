@@ -165,6 +165,7 @@ private:
     bool mAutoCenterCamera = false;
     int mHullSampleCount = 100;
     bool mRenderHullSamples = false;
+    bool mRenderOutline = true;
 
     // Report output
     std::string mComputeInformation = "No computation info available";
