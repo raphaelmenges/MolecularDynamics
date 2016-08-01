@@ -54,6 +54,12 @@ public:
     // Get count of samples in one frame (atom count x sample count)
     int getGlobalSampleCount() const { return mAtomCount * mSampleCount; }
 
+    // Get count of surface samples
+    int getCountOfSurfaceSamples(int frame, std::vector<GLuint> atomIndices) const;
+
+    // Get count of samples for a given count of atoms
+    int getCountOfSamples(int atomCount) const;
+
 private:
 
     // Remember start frame of computation

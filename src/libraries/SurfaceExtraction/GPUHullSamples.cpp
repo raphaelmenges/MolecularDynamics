@@ -185,3 +185,32 @@ void GPUHullSamples::drawSamples(
         glBindVertexArray(0);
     }
 }
+
+int GPUHullSamples::getCountOfSurfaceSamples(int frame, std::vector<GLuint> atomIndices) const
+{
+    int localFrame = frame - mStartFrame;
+
+    /*
+    // Calculate indices to look up classification
+    int uintIndex =
+        (atomIndex * sampleCount * integerCountPerSample) // offset for current atom's samples
+        + (sampleIndex *  integerCountPerSample) // offset for current sample's slot
+        + (localFrame / 32); // offset for unsigned int which has to be read
+    int bitIndex = localFrame - (32 * int(localFrame / 32)); // bit index within unsigned integer
+
+    // Fetch classification
+    if(((uint(imageLoad(Classification, uintIndex).x) >> uint(bitIndex)) & 1) > 0)
+    {
+        vertColor = surfaceColor;
+    }
+    else
+    {
+        vertColor = internalColor;
+    }
+    */
+}
+
+int GPUHullSamples::getCountOfSamples(int atomCount) const
+{
+    return mSampleCount * atomCount;
+}
