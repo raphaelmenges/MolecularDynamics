@@ -47,6 +47,30 @@ std::vector<GLuint> GPUSurface::getSurfaceIndices(int layer) const
     return mSurfaceIndices.at(layer)->read(mSurfaceCounts.at(layer));
 }
 
+int GPUSurface::getLayerOfAtom(GLuint index) const
+{
+    // TODO: make it maybe more efficient
+
+    // Go through surface layers
+    for(int i = 0; i < mSurfaceIndices.size(); i++)
+    {
+        // Check whether atom index is inside
+        auto indices = mSurfaceIndices.at(i)->read(mSurfaceCounts.at(i));
+
+        // Go over indices and checked for searched one
+        for(int j = 0; j < indices.size(); j++)
+        {
+            if(index == indices.at(j))
+            {
+                // Return layer
+                return i;
+            }
+        }
+    }
+
+    return -1;
+}
+
 int GPUSurface::addLayer(int reservedSize)
 {
     mInternalIndices.push_back(std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(reservedSize)));

@@ -47,6 +47,9 @@ public:
     // Get count of surface atoms in specific layer
     int getCountOfSurfaceAtoms(int layer) const { return mSurfaceCounts.at(layer); }
 
+    // Get layer of atom. Returns -1 if not found in any computed layer
+    int getLayerOfAtom(GLuint index) const;
+
 private:
 
     // Internal indices
