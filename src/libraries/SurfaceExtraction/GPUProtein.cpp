@@ -160,7 +160,8 @@ void GPUProtein::initSSBOs(int atomCount, int frameCount)
     aminoacidColors.reserve(atomCount);
     for(int i = 0; i < atomCount; i++)
     {
-        aminoacidColors.push_back(glm::vec3(1,0,0)); // TODO
+        auto color = lut.fetchAminoColor(mAminoacids.at(i));
+        aminoacidColors.push_back(glm::vec3(color.r, color.g, color.b));
     }
     mColorsAminoacidBuffer.fill(aminoacidColors, GL_STATIC_DRAW);
 }

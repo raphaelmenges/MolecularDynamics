@@ -5,7 +5,7 @@
 
 /**
  * @brief The AtomLUT class
- * Holds atom radii and standard colors
+ * Holds atom radii and both standard element and aminoacid colors
  */
 class AtomLUT{
 
@@ -21,6 +21,9 @@ public:
     typedef std::map< std::string, color> colorMap;
     static radiiMap vdW_radii_picometer;
     static colorMap cpk_colorcode;
+    static colorMap amino_colorcode;
+
+    static color fetchAminoColor(std::string name);
 };
 
 

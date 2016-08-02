@@ -27,4 +27,31 @@ AtomLUT::colorMap AtomLUT::cpk_colorcode = {
     {"iron", AtomLUT::color{.8,0.4,.1}}, {"other", AtomLUT::color{.9,.5,.9}}
 };
 
+// Taken from here: http://acces.ens-lyon.fr/biotic/rastop/help/colour.htm
+// If color not contained, use (0.745098039, 0.62745098, 0.431372549)
+AtomLUT::colorMap AtomLUT::amino_colorcode = {
+    {"ASP", AtomLUT::color{0.901960784,0.901960784,0.039215686}}, {"GLU", AtomLUT::color{0.901960784,0.901960784,0.039215686}},
+    {"CYS", AtomLUT::color{0.901960784,0.901960784,0}}, {"MET", AtomLUT::color{0.901960784,0.901960784,0}},
+    {"LYS", AtomLUT::color{0.078431373,0.352941176,1}}, {"ARG", AtomLUT::color{0.078431373,0.352941176,1}},
+    {"SER", AtomLUT::color{0.980392157,0.588235294,0}}, {"THR", AtomLUT::color{0.980392157,0.588235294,0}},
+    {"PHE", AtomLUT::color{0.196078431,0.196078431,0.666666667}}, {"TYR", AtomLUT::color{0.196078431,0.196078431,0.666666667}},
+    {"ASN", AtomLUT::color{0,0.862745098,0.862745098}}, {"GLN", AtomLUT::color{0,0.862745098,0.862745098}},
+    {"GLY", AtomLUT::color{0.921568627,0.921568627,0.921568627}}, {"LEU", AtomLUT::color{0.058823529,0.509803922,0.058823529}},
+    {"VAL", AtomLUT::color{0.058823529,0.509803922,0.058823529}}, {"ILE", AtomLUT::color{0.058823529,0.509803922,0.058823529}},
+    {"ALA", AtomLUT::color{0.784313725,0.784313725,0.784313725}}, {"TRP", AtomLUT::color{0.705882353,0.352941176,0.705882353}},
+    {"HIS", AtomLUT::color{0.509803922,0.509803922,0.823529412}}, {"PRO", AtomLUT::color{0.862745098,0.588235294,0.509803922}},
+};
+
+AtomLUT::color AtomLUT::fetchAminoColor(std::string name)
+{
+    AtomLUT::colorMap::iterator it = AtomLUT::amino_colorcode.find(name);
+    if(it != AtomLUT::amino_colorcode.end())
+    {
+       return it->second;
+    }
+    else
+    {
+        return AtomLUT::color{0.745098039, 0.62745098, 0.431372549};
+    }
+}
 
