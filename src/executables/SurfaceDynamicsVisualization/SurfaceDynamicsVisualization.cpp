@@ -1427,6 +1427,13 @@ void SurfaceDynamicsVisualization::renderGUI()
         // Go over analyse atoms and list them
         for (int atomIndex : mAnalyseAtoms)
         {
+            // Mark if currently selected
+            if(atomIndex == mSelectedAtom)
+            {
+                ImGui::TextColored(ImVec4(0,1,0,1), "\u2023");
+                ImGui::SameLine();
+            }
+
             // Index of atom
             ImGui::Text("%05d", atomIndex);
             ImGui::SameLine();
