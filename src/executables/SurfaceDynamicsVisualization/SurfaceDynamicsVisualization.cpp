@@ -1026,6 +1026,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::SliderInt("Start Frame", &mComputationStartFrame, 0, mComputationEndFrame);
         ImGui::SliderInt("End Frame", &mComputationEndFrame, mComputationStartFrame, mupGPUProtein->getFrameCount() - 1);
         ImGui::SliderInt("Sample Count", &mHullSampleCount, 0, 1000);
+        if(ImGui::IsItemHovered()) { ImGui::SetTooltip("Count of samples used for analysis purposes, not surface extraction."); }
         ImGui::SliderInt("CPU Threads", &mCPUThreads, 1, 24);
         if(ImGui::Button("\u2794 GPGPU")) { computeLayers(mComputationStartFrame, mComputationEndFrame, true); }
         ImGui::SameLine();
