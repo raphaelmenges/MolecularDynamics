@@ -39,7 +39,6 @@ public:
         std::function<void(float)> progressCallback = NULL);
 
     // Draw the computed samples
-    // Radii must be bound to slot 0 and trajectory to slot 1
     void drawSamples(
         int frame, // absolute frame
         float pointSize,
@@ -49,26 +48,26 @@ public:
         const glm::mat4& rProjectionMatrix,
         float clippingPlane) const;
 
-    // Get count of surface samples
+    // Get count of samples in one frame (will stay same for all frames)
+    int getProteinSampleCount() const { return mAtomCount * mSampleCount; }
+
+    // Get count of all surface samples over all processed frames
     std::vector<GLuint> getSurfaceSampleCount() const { return mSurfaceSampleCount; }
 
-    // Get count of samples in one frame (atom count x sample count)
-    int getGlobalSampleCount() const { return mAtomCount * mSampleCount; }
-
     // Get count of surface samples of a certain atom group
-    int getCountOfSurfaceSamples(int frame, std::set<GLuint> atomIndices) const;
+    int getSurfaceSampleCount(int frame, std::set<GLuint> atomIndices) const;
 
     // Get count of surface samples of one atom
-    int getCountOfSurfaceSamples(int frame, GLuint atomIndex) const;
+    int getSurfaceSampleCount(int frame, GLuint atomIndex) const;
 
-    // Get count of surface samples
-    int getCountOfSurfaceSamples(int frame) const;
+    // Get count of surface samples in one specific frame
+    int getSurfaceSampleCount(int frame) const;
 
     // Get count of samples for a given count of atoms
-    int getCountOfSamples(int atomCount) const;
+    int getSampleCount(int atomCount) const;
 
-    // Get count of samples for a single atom
-    int getCountOfSamples() const;
+    // Get count of samples for a single atom in the protein
+    int getSampleCount() const;
 
 private:
 
@@ -78,7 +77,7 @@ private:
     // Count of atoms
     int mAtomCount;
 
-    // Count of frames (not complete animation but given calculated surfaces)
+    // Count of frames (defined by count of given calculated surfaces)
     int mLocalFrameCount;
 
     // Count of samples
@@ -112,6 +111,9 @@ private:
 
     // Copy of classification results
     std::vector<GLuint> mClassification;
+
+    // Pointer to GPUProtein used for rendering
+    GPUProtein const * mpGPUProtein;
 };
 
 #endif // GPU_HULL_SAMPLES_H

@@ -1400,7 +1400,7 @@ void SurfaceDynamicsVisualization::renderGUI()
 
         // Graph about relation of surface and internal samples (in relative frames)
         // TODO: stupid to calculate it every frame and bad texts
-        float globalSampleCount = (float)mupHullSamples->getGlobalSampleCount();
+        float globalSampleCount = (float)mupHullSamples->getSampleCount();
         auto sampleCount = mupHullSamples->getSurfaceSampleCount();
         std::vector<float> floatSampleAmount;
         floatSampleAmount.reserve(sampleCount.size());
@@ -1560,7 +1560,8 @@ void SurfaceDynamicsVisualization::renderGUI()
             for(int i = mComputationStartFrame; i <= mComputedEndFrame; i++)
             {
                 floatGroupSurfaceSampleAmount.push_back(
-                    (float)mupHullSamples->getCountOfSurfaceSamples(i, mAnalyseAtoms) / (float)mupHullSamples->getCountOfSurfaceSamples(i));
+                    (float)mupHullSamples->getSurfaceSampleCount(i, mAnalyseAtoms) // sample count for group
+                    / (float)mupHullSamples->getSurfaceSampleCount(i)); // sample count for all atoms
             }
             ImGui::PlotLines("Group Samples", floatGroupSurfaceSampleAmount.data(), floatGroupSurfaceSampleAmount.size());
             ImGui::Text(std::string("Surface Amount: " + std::to_string(floatGroupSurfaceSampleAmount.at(mFrame - mComputedStartFrame) * 100) + " percent").c_str());
@@ -1811,7 +1812,7 @@ float SurfaceDynamicsVisualization::approximateSurfaceArea() const
         // Add surface
         float radius = mupGPUProtein->getRadii()->at(index);
         float atomSurface = 4.f * glm::pi<float>() * radius * radius;
-        surface += atomSurface * ((float)mupHullSamples->getCountOfSurfaceSamples(mFrame, index) / (float)mupHullSamples->getCountOfSamples());
+        surface += atomSurface * ((float)mupHullSamples->getSurfaceSampleCount(mFrame, index) / (float)mupHullSamples->getProteinSampleCount());
     }
 
     return surface;

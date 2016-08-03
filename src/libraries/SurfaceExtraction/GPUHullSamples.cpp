@@ -31,8 +31,9 @@ void GPUHullSamples::compute(
     std::function<void(float)> progressCallback)
 {
     // Fill members
+    mpGPUProtein = pGPUProtein;
     mStartFrame = startFrame;
-    mAtomCount = pGPUProtein->getAtomCount();
+    mAtomCount = mpGPUProtein->getAtomCount();
     mLocalFrameCount = pGPUSurfaces->size(); // not over complete animation but calculated surfaces!
     mSampleCount = sampleCountPerAtom;
     mIntegerCountPerSample = (int)glm::ceil((float)mLocalFrameCount / 32.f); // each unsigned int holds 32 bits
@@ -56,7 +57,7 @@ void GPUHullSamples::compute(
     for(int i = 0; i < mAtomCount; i++)
     {
         // Create as many samples as desired
-        float atomExtRadius = pGPUProtein->getRadii()->at(i) + probeRadius;
+        float atomExtRadius = mpGPUProtein->getRadii()->at(i) + probeRadius;
         for(int j = 0; j < mSampleCount; j++)
         {
             // Generate samples (http://mathworld.wolfram.com/SpherePointPicking.html)
@@ -97,7 +98,7 @@ void GPUHullSamples::compute(
     mupComputeProgram->update("sampleCount", mSampleCount);
     mupComputeProgram->update("integerCountPerSample", mIntegerCountPerSample);
     mupComputeProgram->update("probeRadius", probeRadius);
-    pGPUProtein->bind(1, 2); // bind radii and trajectory buffers
+    mpGPUProtein->bind(1, 2); // bind radii and trajectory buffers
     mSamplesRelativePositionBuffer.bind(3); // bind relative position of samples
     mupClassification->bindAsImage(4, GPUAccess::READ_WRITE);
     surfaceSampleCounter.bind(5);
@@ -151,8 +152,6 @@ void GPUHullSamples::drawSamples(
     const glm::mat4& rProjectionMatrix,
     float clippingPlane) const
 {
-    // TODO: Problem: Using AtomCount from members but buffer from calling program
-
     if(mSampleCount > 0 && mAtomCount > 0)
     {
         // Setup drawing
@@ -161,7 +160,8 @@ void GPUHullSamples::drawSamples(
         // Use shader program
         mupShaderProgram->use();
 
-        // Radii are expected to be bound at slot 0 and trajectory at 1
+        // Bind buffer
+        mpGPUProtein->bind(0, 1);
         mSamplesRelativePositionBuffer.bind(2);
         mupClassification->bindAsImage(3, GPUAccess::READ_ONLY);
 
@@ -186,7 +186,7 @@ void GPUHullSamples::drawSamples(
     }
 }
 
-int GPUHullSamples::getCountOfSurfaceSamples(int frame, std::set<GLuint> atomIndices) const
+int GPUHullSamples::getSurfaceSampleCount(int frame, std::set<GLuint> atomIndices) const
 {
     // Calculate local frame
     int localFrame = frame - mStartFrame;
@@ -219,25 +219,25 @@ int GPUHullSamples::getCountOfSurfaceSamples(int frame, std::set<GLuint> atomInd
     return surfaceSampleCount;
 }
 
-int GPUHullSamples::getCountOfSurfaceSamples(int frame, GLuint atomIndex) const
+int GPUHullSamples::getSurfaceSampleCount(int frame, GLuint atomIndex) const
 {
     // Delegate to other method
     std::set<GLuint> atomSet;
     atomSet.insert(atomIndex);
-    return getCountOfSurfaceSamples(frame, atomSet);
+    return getSurfaceSampleCount(frame, atomSet);
 }
 
-int GPUHullSamples::getCountOfSurfaceSamples(int frame) const
+int GPUHullSamples::getSurfaceSampleCount(int frame) const
 {
     return mSurfaceSampleCount.at(frame - mStartFrame);
 }
 
-int GPUHullSamples::getCountOfSamples(int atomCount) const
+int GPUHullSamples::getSampleCount(int atomCount) const
 {
     return mSampleCount * atomCount;
 }
 
-int GPUHullSamples::getCountOfSamples() const
+int GPUHullSamples::getSampleCount() const
 {
     return mSampleCount;
 }
