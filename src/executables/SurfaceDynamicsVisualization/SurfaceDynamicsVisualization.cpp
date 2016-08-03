@@ -544,9 +544,8 @@ void SurfaceDynamicsVisualization::renderLoop()
                 mupCamera->getViewMatrix(),
                 mupCamera->getProjectionMatrix(),
                 mClippingPlane);
-        }       
+        }
 
-        /*
         // Drawing of path (does not care for depth)
         if(mShowPath)
         {
@@ -559,7 +558,6 @@ void SurfaceDynamicsVisualization::renderLoop()
                 mFuturePathColor,
                 mPathPointSize);
         }
-        */
 
         // Unbind framebuffer for overlay
         mupOverlayFramebuffer->unbind();
@@ -1600,16 +1598,22 @@ void SurfaceDynamicsVisualization::renderGUI()
             // TODO: very stupid to do every frame and bad texts
             if(mAnalyseAtoms.size() > 0)
             {
+                // TODO does not work right now
+                /*
                 std::vector<float> floatGroupSurfaceSampleAmount;
-                floatGroupSurfaceSampleAmount.reserve(mEndFrame - mComputedStartFrame + 1);
-                for(int i = mStartFrame; i <= mComputedEndFrame; i++)
+                int computedFramesCount = mComputedEndFrame - mComputedStartFrame + 1;
+                floatGroupSurfaceSampleAmount.reserve(computedFramesCount);
+                for(int i = 0; i < computedFramesCount; i++)
                 {
+
                     floatGroupSurfaceSampleAmount.push_back(
                         (float)mupHullSamples->getSurfaceSampleCount(i, mAnalyseAtoms) // sample count for group
                         / (float)mupHullSamples->getSurfaceSampleCount(i)); // sample count for all atoms
+
                 }
                 ImGui::PlotLines("Group Samples", floatGroupSurfaceSampleAmount.data(), floatGroupSurfaceSampleAmount.size());
                 ImGui::Text(std::string("Surface Amount: " + std::to_string(floatGroupSurfaceSampleAmount.at(mFrame - mComputedStartFrame) * 100) + " percent").c_str());
+                */
             }
 
             // Update path if necessary
@@ -1718,11 +1722,6 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
     updateComputationInformation(
         (useGPU ? "GPU" : "CPU with " + std::to_string(mCPUThreads) + " threads"), computationTime);
 
-    // # Frame setting
-
-    // Set to first animation frame
-    setFrame(mComputedStartFrame);
-
     // # Ascension calculation
 
     // Calculate ascension for visualization
@@ -1810,9 +1809,14 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
             this->setProgressDispaly("Sample Creation", progress);
         });
 
-    // ## Remember which frames were computed
+    // # Frame setting
+
+    // Remember which frames were computed
     mComputedStartFrame = startFrame;
     mComputedEndFrame = endFrame;
+
+    // Set to first computed frame
+    setFrame(startFrame);
 }
 
 int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
