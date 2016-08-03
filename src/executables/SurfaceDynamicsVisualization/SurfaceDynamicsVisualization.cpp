@@ -307,9 +307,6 @@ void SurfaceDynamicsVisualization::renderLoop()
     // Call render function of Rendering.h with lambda function
     render(mpWindow, [&] (float deltaTime)
     {
-        // Bind SSBOs of radii and trajectory for rendering
-        mupGPUProtein->bind(0, 1);
-
         // Viewport size
         glm::vec2 resolution = getResolution(mpWindow);
         mWindowWidth = resolution.x;
@@ -426,16 +423,21 @@ void SurfaceDynamicsVisualization::renderLoop()
             prevCursorY = cursorY;
         }
 
+        // Prepare for rendering by setting viewport to full window resolution
+        glViewport(0, 0, mWindowWidth, mWindowHeight);
+
         // # Fill overlay framebuffer
         mupOverlayFramebuffer->bind();
         mupOverlayFramebuffer->resize(mWindowWidth, mWindowHeight);
-        glViewport(0, 0, mWindowWidth, mWindowHeight);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Get count of atoms which will get a outline (size of buffer can be used here because all elements are valid)
         int outlineAtomCount = mupOutlineAtomIndices->getSize();
         if(mRenderOutline && (outlineAtomCount > 0))
         {
+            // Bind buffers of radii and trajectory for rendering
+            mupGPUProtein->bind(0, 1);
+
             // Bind texture buffer with input atoms
             mupOutlineAtomIndices->bindAsImage(2, GPUAccess::READ_ONLY);
 
@@ -556,11 +558,13 @@ void SurfaceDynamicsVisualization::renderLoop()
         // Unbind framebuffer for overlay
         mupOverlayFramebuffer->unbind();
 
-         // # Fill molecule framebuffer
+        // # Fill molecule framebuffer
         mupMoleculeFramebuffer->bind();
         mupMoleculeFramebuffer->resize(mWindowWidth, mWindowHeight);
-        glViewport(0, 0, mWindowWidth, mWindowHeight);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Bind buffers of radii and trajectory for rendering
+        mupGPUProtein->bind(0, 1);
 
         // Decide about surface rendering
         switch(mSurfaceRendering)
@@ -742,7 +746,6 @@ void SurfaceDynamicsVisualization::renderLoop()
         mupMoleculeFramebuffer->unbind();
 
         // # Fill standard framebuffer
-        glViewport(0, 0, mWindowWidth, mWindowHeight);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Disable depth test
@@ -977,6 +980,14 @@ void SurfaceDynamicsVisualization::renderGUI()
             ImGui::Text("LMB: Rotate camera");
             ImGui::Text("MMB: Move camera");
             ImGui::Text("RMB: Select atom");
+            if(mShowTooltips)
+            {
+                if(ImGui::MenuItem("Hide Tooltips")) { mShowTooltips = false; }
+            }
+            else
+            {
+                if(ImGui::MenuItem("Show Tooltips")) { mShowTooltips = true; }
+            }
             ImGui::EndPopup();
         }
 
@@ -984,7 +995,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         if (ImGui::BeginMenu("About"))
         {
             ImGui::BeginPopup("About");
-            ImGui::Text("Author: Raphael Menges");
+            ImGui::Text("Developer: Raphael Menges");
             ImGui::EndPopup();
         }
 
@@ -1026,7 +1037,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::SliderInt("Start Frame", &mComputationStartFrame, 0, mComputationEndFrame);
         ImGui::SliderInt("End Frame", &mComputationEndFrame, mComputationStartFrame, mupGPUProtein->getFrameCount() - 1);
         ImGui::SliderInt("Sample Count", &mHullSampleCount, 0, 1000);
-        if(ImGui::IsItemHovered()) { ImGui::SetTooltip("Count of samples used for analysis purposes, not surface extraction."); }
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Count of samples used for analysis purposes, not surface extraction."); }
         ImGui::SliderInt("CPU Threads", &mCPUThreads, 1, 24);
         if(ImGui::Button("\u2794 GPGPU")) { computeLayers(mComputationStartFrame, mComputationEndFrame, true); }
         ImGui::SameLine();
@@ -1455,7 +1466,7 @@ void SurfaceDynamicsVisualization::renderGUI()
             {
                 mSelectedAtom = atomIndex;
             }
-            if(ImGui::IsItemHovered()) { ImGui::SetTooltip("Select Atom"); } // tooltip
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Select Atom"); } // tooltip
             ImGui::SameLine();
 
             // Remove that atom from analysis atoms (use ## to add number for an unique button id)
@@ -1464,7 +1475,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                 toBeRemoved.push_back(atomIndex);
                 analysisAtomsChanged = true;
             }
-            if(ImGui::IsItemHovered()) { ImGui::SetTooltip("Remove Atom"); } // tooltip
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Remove Atom"); } // tooltip
         }
 
         // Remove atoms from analysis

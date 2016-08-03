@@ -172,6 +172,7 @@ private:
     int mHullSampleCount = 100;
     bool mRenderHullSamples = false;
     bool mRenderOutline = true;
+    bool mShowTooltips = true;
 
     // Report output
     std::string mComputeInformation = "No computation info available";
