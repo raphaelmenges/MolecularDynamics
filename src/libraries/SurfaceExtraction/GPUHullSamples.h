@@ -58,11 +58,17 @@ public:
     // Get count of surface samples of a certain atom group
     int getCountOfSurfaceSamples(int frame, std::set<GLuint> atomIndices) const;
 
+    // Get count of surface samples of one atom
+    int getCountOfSurfaceSamples(int frame, GLuint atomIndex) const;
+
     // Get count of surface samples
     int getCountOfSurfaceSamples(int frame) const;
 
     // Get count of samples for a given count of atoms
     int getCountOfSamples(int atomCount) const;
+
+    // Get count of samples for a single atom
+    int getCountOfSamples() const;
 
 private:
 

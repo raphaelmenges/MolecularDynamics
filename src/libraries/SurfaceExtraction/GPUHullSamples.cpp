@@ -219,6 +219,14 @@ int GPUHullSamples::getCountOfSurfaceSamples(int frame, std::set<GLuint> atomInd
     return surfaceSampleCount;
 }
 
+int GPUHullSamples::getCountOfSurfaceSamples(int frame, GLuint atomIndex) const
+{
+    // Delegate to other method
+    std::set<GLuint> atomSet;
+    atomSet.insert(atomIndex);
+    return getCountOfSurfaceSamples(frame, atomSet);
+}
+
 int GPUHullSamples::getCountOfSurfaceSamples(int frame) const
 {
     return mSurfaceSampleCount.at(frame - mStartFrame);
@@ -227,4 +235,9 @@ int GPUHullSamples::getCountOfSurfaceSamples(int frame) const
 int GPUHullSamples::getCountOfSamples(int atomCount) const
 {
     return mSampleCount * atomCount;
+}
+
+int GPUHullSamples::getCountOfSamples() const
+{
+    return mSampleCount;
 }
