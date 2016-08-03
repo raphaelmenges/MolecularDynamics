@@ -95,7 +95,7 @@ private:
     std::vector<glm::vec3> mSamplesRelativePosition;
 
     // SSBO with relative positions of samples
-    GPUBuffer mSamplesRelativePositionBuffer;
+    GPUBuffer<glm::vec3> mSamplesRelativePositionBuffer;
 
     // Texture buffer with information whether sample is on surface or not
     // Saved in single bits of unsigned integers in vector

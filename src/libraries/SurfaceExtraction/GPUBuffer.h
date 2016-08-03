@@ -1,6 +1,5 @@
 // Author: Raphael Menges
-// Buffer on GPU which can be bound as image.
-// TODO: make template with different datatypes
+// Buffer on GPU.
 
 #ifndef GPU_BUFFER_H
 #define GPU_BUFFER_H
@@ -10,25 +9,56 @@
 #include <vector>
 
 // Class for buffer on GPU
+template <class T>
 class GPUBuffer
 {
 public:
 
     // Constructor
-    GPUBuffer();
+    GPUBuffer()
+    {
+        glGenBuffers(1, &mBuffer);
+    }
 
     // Destructor
-    virtual ~GPUBuffer();
+    virtual ~GPUBuffer()
+    {
+        glDeleteBuffers(1, &mBuffer);
+    }
 
     // Fill
-    void fill(const std::vector<float>& rData, GLenum access);
-    void fill(const std::vector<glm::vec3>& rData, GLenum access);
+    void fill(const std::vector<T>& rData, GLenum access)
+    {
+        mSize = rData.size();
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, mBuffer);
+        if(!rData.empty())
+        {
+            glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(rData.at(0)) * mSize, rData.data(), access);
+        }
+        else
+        {
+            glBufferData(GL_SHADER_STORAGE_BUFFER, 0, 0, access);
+        }
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    }
 
     // Bind
-    void bind(GLuint slot) const;
+    void bind(GLuint slot) const
+    {
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, slot, mBuffer);
+    }
 
-    // Read values (at the moment, only uint supported. Templates should fix that)
-    std::vector<GLuint> read() const;
+    // Read values
+    std::vector<T> read() const
+    {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, mBuffer);
+        GLuint *ptr;
+        ptr = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+        std::vector<T> result(ptr, ptr + mSize);
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+        return result;
+    }
 
 private:
 

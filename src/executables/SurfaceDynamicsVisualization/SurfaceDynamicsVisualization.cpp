@@ -437,7 +437,7 @@ void SurfaceDynamicsVisualization::renderLoop()
         if(mRenderOutline && (outlineAtomCount > 0))
         {
             // Bind texture buffer with input atoms
-            mupOutlineAtomIndices->bindAsImage(2, GPUTextureBuffer::GPUAccess::READ_ONLY);
+            mupOutlineAtomIndices->bindAsImage(2, GPUAccess::READ_ONLY);
 
             // Probe radius
             float probeRadius = mRenderWithProbeRadius ? mProbeRadius : 0.f;
@@ -606,7 +606,7 @@ void SurfaceDynamicsVisualization::renderLoop()
         case SurfaceRendering::ASCENSION:
 
             // Bind texture buffer with ascension information as image
-            mupAscension->bindAsImage(2, GPUTextureBuffer::GPUAccess::READ_ONLY);
+            mupAscension->bindAsImage(2, GPUAccess::READ_ONLY);
 
             // Prepare shader program
             ascensionProgram.use();
@@ -714,7 +714,7 @@ void SurfaceDynamicsVisualization::renderLoop()
         case SurfaceRendering::ANALYSIS:
 
             // Bind indices of analysis atoms
-            mupOutlineAtomIndices->bindAsImage(2, GPUTextureBuffer::GPUAccess::READ_ONLY);
+            mupOutlineAtomIndices->bindAsImage(2, GPUAccess::READ_ONLY);
 
             // Prepare shader program
             analysisProgram.use();

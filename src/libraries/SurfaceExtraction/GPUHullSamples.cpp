@@ -99,7 +99,7 @@ void GPUHullSamples::compute(
     mupComputeProgram->update("probeRadius", probeRadius);
     pGPUProtein->bind(1, 2); // bind radii and trajectory buffers
     mSamplesRelativePositionBuffer.bind(3); // bind relative position of samples
-    mupClassification->bindAsImage(4, GPUTextureBuffer::GPUAccess::READ_WRITE);
+    mupClassification->bindAsImage(4, GPUAccess::READ_WRITE);
     surfaceSampleCounter.bind(5);
     for(int i = 0; i < pGPUSurfaces->size(); i++)
     {
@@ -163,7 +163,7 @@ void GPUHullSamples::drawSamples(
 
         // Radii are expected to be bound at slot 0 and trajectory at 1
         mSamplesRelativePositionBuffer.bind(2);
-        mupClassification->bindAsImage(3, GPUTextureBuffer::GPUAccess::READ_ONLY);
+        mupClassification->bindAsImage(3, GPUAccess::READ_ONLY);
 
         // Update uniform values
         mupShaderProgram->update("view", rViewMatrix);

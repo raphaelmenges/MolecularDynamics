@@ -69,10 +69,10 @@ private:
     std::shared_ptr<std::vector<std::vector<glm::vec3> > > mspTrajectory;
 
     // SSBO of radii
-    GPUBuffer mRadiiBuffer;
+    GPUBuffer<float> mRadiiBuffer;
 
     // SSBO of trajectory
-    GPUBuffer mTrajectoryBuffer;
+    GPUBuffer<glm::vec3> mTrajectoryBuffer;
 
     // Vector which holds the center of mass for each frame (ok, mass is not yet taken into account)
     std::vector<glm::vec3> mCentersOfMass;
@@ -84,10 +84,10 @@ private:
     std::vector<std::string> mAminoacids;
 
     // SSBO with colors for atoms according to element
-    GPUBuffer mColorsElementBuffer;
+    GPUBuffer<glm::vec3> mColorsElementBuffer;
 
     // SSBO with colors for atoms according to aminoacid
-    GPUBuffer mColorsAminoacidBuffer;
+    GPUBuffer<glm::vec3> mColorsAminoacidBuffer;
 };
 
 #endif // GPU_PROTEIN_H

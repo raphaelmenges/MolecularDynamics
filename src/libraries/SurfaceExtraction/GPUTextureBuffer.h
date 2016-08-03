@@ -4,6 +4,7 @@
 #ifndef GPU_TEXTURE_BUFFER_H
 #define GPU_TEXTURE_BUFFER_H
 
+#include "SurfaceExtraction/GPUAccess.h"
 #include <GL/glew.h>
 #include <vector>
 
@@ -11,12 +12,6 @@
 class GPUTextureBuffer
 {
 public:
-
-    // Accessibility in shader
-    enum GPUAccess
-    {
-        WRITE_ONLY, READ_ONLY, READ_WRITE
-    };
 
     // Constructor
     GPUTextureBuffer(int size);

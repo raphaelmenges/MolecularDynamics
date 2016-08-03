@@ -17,12 +17,12 @@ GPUSurface::~GPUSurface()
 
 void GPUSurface::bindInternalIndices(int layer, GLuint slot) const
 {
-    mInternalIndices.at(layer)->bindAsImage(slot, GPUTextureBuffer::GPUAccess::READ_ONLY);
+    mInternalIndices.at(layer)->bindAsImage(slot, GPUAccess::READ_ONLY);
 }
 
 void GPUSurface::bindSurfaceIndices(int layer, GLuint slot) const
 {
-    mSurfaceIndices.at(layer)->bindAsImage(slot, GPUTextureBuffer::GPUAccess::READ_ONLY);
+    mSurfaceIndices.at(layer)->bindAsImage(slot, GPUAccess::READ_ONLY);
 }
 
 std::vector<GLuint> GPUSurface::getInputIndices(int layer) const
@@ -86,16 +86,16 @@ void GPUSurface::bindForComputation(int layer, GLuint inputSlot, GLuint internal
     // Bind texture as image where input indices are listed
     if(layer == 0)
     {
-        mupInitialInputIndices->bindAsImage(inputSlot, GPUTextureBuffer::GPUAccess::READ_ONLY);
+        mupInitialInputIndices->bindAsImage(inputSlot, GPUAccess::READ_ONLY);
     }
     else
     {
-        mInternalIndices.at(layer-1)->bindAsImage(inputSlot, GPUTextureBuffer::GPUAccess::READ_ONLY);
+        mInternalIndices.at(layer-1)->bindAsImage(inputSlot, GPUAccess::READ_ONLY);
     }
 
     // Bind textures as images where output indices are written to
-    mInternalIndices.at(layer)->bindAsImage(internalSlot, GPUTextureBuffer::GPUAccess::WRITE_ONLY);
-    mSurfaceIndices.at(layer)->bindAsImage(surfaceSlot, GPUTextureBuffer::GPUAccess::WRITE_ONLY);
+    mInternalIndices.at(layer)->bindAsImage(internalSlot, GPUAccess::WRITE_ONLY);
+    mSurfaceIndices.at(layer)->bindAsImage(surfaceSlot, GPUAccess::WRITE_ONLY);
 }
 
 void GPUSurface::fillInternalBuffer(int layer, const std::vector<GLuint>& rData)
