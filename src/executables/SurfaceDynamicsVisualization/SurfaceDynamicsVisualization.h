@@ -94,7 +94,6 @@ private:
         std::string filepathNegZ) const;
 
     // Setup
-    const bool mInitiallyUseGLSLImplementation = false;
     const float mCameraSmoothDuration = 1.5f;
     const float mSamplePointSize = 2.f;
     const float mPathPointSize = 3.f;
@@ -126,6 +125,7 @@ private:
     const int mCameraSmoothFrameRadius = 10;
     const glm::vec3 mInternalHullSampleColor = glm::vec3(0.0f, 0.0f, 0.0f);
     const glm::vec3 mSurfaceHullSampleColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    const glm::vec3 mFallbackAtomColor = glm::vec3(0.7f, 0.7f, 0.7f);
 
     // Controllable parameters
     bool mRotateCamera = false;
@@ -153,6 +153,8 @@ private:
     bool mShowValidationWindow = true;
     bool mShowInternalSamples = true;
     bool mShowSurfaceSamples = true;
+    int mStartFrame = 0;
+    int mEndFrame = 0;
     int mComputationStartFrame = 0;
     int mComputationEndFrame = 0;
     bool mExtractLayers = false;
@@ -193,8 +195,8 @@ private:
     int mFrame = 0; // do not set it directly, let it be done by setFrame() method!
     int mLayer = 0;
     float mFramePlayTime = 0; // time of displaying a molecule state at playing the animation
-    int mComputedStartFrame = 0;
-    int mComputedEndFrame = 0;
+    int mComputedStartFrame = -1;
+    int mComputedEndFrame = -1;
     bool mFramebuffersExist = false;
     int mWindowWidth;
     int mWindowHeight;

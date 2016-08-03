@@ -237,11 +237,8 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     // Prepare validation of the surface
     mupSurfaceValidation = std::unique_ptr<SurfaceValidation>(new SurfaceValidation());
 
-    // Run implementation to extract surface atoms
-    computeLayers(0, 0, mInitiallyUseGLSLImplementation);
-
     // Set endframe in GUI to maximum number
-    mComputationEndFrame = mupGPUProtein->getFrameCount() - 1;
+    mEndFrame = mupGPUProtein->getFrameCount() - 1;
 }
 
 SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
@@ -294,6 +291,7 @@ void SurfaceDynamicsVisualization::renderLoop()
     ShaderProgram ascensionProgram("/SurfaceDynamicsVisualization/ascension.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
     ShaderProgram coloringProgram("/SurfaceDynamicsVisualization/coloring.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
     ShaderProgram analysisProgram("/SurfaceDynamicsVisualization/analysis.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
+    ShaderProgram fallbackProgram("/SurfaceDynamicsVisualization/fallback.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
 
     // Shader program for screenfilling quad rendering
     ShaderProgram screenFillingProgram("/SurfaceDynamicsVisualization/screenfilling.vert", "/SurfaceDynamicsVisualization/screenfilling.geom", "/SurfaceDynamicsVisualization/screenfilling.frag");
@@ -313,6 +311,8 @@ void SurfaceDynamicsVisualization::renderLoop()
         mWindowHeight = resolution.y;
 
         // # Update everything before drawing
+
+        // ### MOLECULE ANIMATION ##################################################################################
 
         // If playing, decide whether to switch to next frame of animation
         if(mPlayAnimation)
@@ -337,9 +337,9 @@ void SurfaceDynamicsVisualization::renderLoop()
                     int nextFrame = mFrame + 1;
 
                     // Cylce if enabled
-                    if(mRepeatAnimation && nextFrame > mComputedEndFrame)
+                    if(mRepeatAnimation && nextFrame > mEndFrame)
                     {
-                        nextFrame = mComputedStartFrame;
+                        nextFrame = mStartFrame;
                     }
 
                     // Increment time (checks are done by method)
@@ -350,6 +350,8 @@ void SurfaceDynamicsVisualization::renderLoop()
                 }
             }
         }
+
+        // ### CAMERA UPDATE #######################################################################################
 
         // Calculate cursor movement
         double cursorX, cursorY;
@@ -423,6 +425,8 @@ void SurfaceDynamicsVisualization::renderLoop()
             prevCursorY = cursorY;
         }
 
+        // ### OVERLAY RENDERING ###################################################################################
+
         // Prepare for rendering by setting viewport to full window resolution
         glViewport(0, 0, mWindowWidth, mWindowHeight);
 
@@ -433,7 +437,7 @@ void SurfaceDynamicsVisualization::renderLoop()
 
         // Get count of atoms which will get a outline (size of buffer can be used here because all elements are valid)
         int outlineAtomCount = mupOutlineAtomIndices->getSize();
-        if(mRenderOutline && (outlineAtomCount > 0))
+        if(frameComputed() && mRenderOutline && (outlineAtomCount > 0))
         {
             // Bind buffers of radii and trajectory for rendering
             mupGPUProtein->bind(0, 1);
@@ -529,7 +533,21 @@ void SurfaceDynamicsVisualization::renderLoop()
             glEnable(GL_DEPTH_TEST);
         }
 
-        // Drawing of path
+        // Hull samples
+        if(frameComputed() && mRenderHullSamples)
+        {
+            mupHullSamples->drawSamples(
+                mFrame,
+                mSamplePointSize,
+                mInternalHullSampleColor,
+                mSurfaceHullSampleColor,
+                mupCamera->getViewMatrix(),
+                mupCamera->getProjectionMatrix(),
+                mClippingPlane);
+        }       
+
+        /*
+        // Drawing of path (does not care for depth)
         if(mShowPath)
         {
             mupPath->draw(
@@ -541,22 +559,12 @@ void SurfaceDynamicsVisualization::renderLoop()
                 mFuturePathColor,
                 mPathPointSize);
         }
-
-        // Hull samples
-        if(mRenderHullSamples)
-        {
-            mupHullSamples->drawSamples(
-                mFrame,
-                mSamplePointSize,
-                mInternalHullSampleColor,
-                mSurfaceHullSampleColor,
-                mupCamera->getViewMatrix(),
-                mupCamera->getProjectionMatrix(),
-                mClippingPlane);
-        }
+        */
 
         // Unbind framebuffer for overlay
         mupOverlayFramebuffer->unbind();
+
+        // ### MOLECULE RENDERING ##################################################################################
 
         // # Fill molecule framebuffer
         mupMoleculeFramebuffer->bind();
@@ -567,183 +575,210 @@ void SurfaceDynamicsVisualization::renderLoop()
         mupGPUProtein->bind(0, 1);
 
         // Decide about surface rendering
-        switch(mSurfaceRendering)
+        if(frameComputed())
         {
-        case SurfaceRendering::HULL:
-
-            // Prepare shader program
-            hullProgram.use();
-            hullProgram.update("view", mupCamera->getViewMatrix());
-            hullProgram.update("projection", mupCamera->getProjectionMatrix());
-            hullProgram.update("cameraWorldPos", mupCamera->getPosition());
-            hullProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
-            hullProgram.update("lightDir", mLightDirection);
-            hullProgram.update("selectedIndex", mSelectedAtom);
-            hullProgram.update("clippingPlane", mClippingPlane);
-            hullProgram.update("frame", mFrame);
-            hullProgram.update("atomCount", mupGPUProtein->getAtomCount());
-            hullProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
-            hullProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
-            hullProgram.update("frameCount", mupGPUProtein->getFrameCount());
-            hullProgram.update("depthDarkeningStart", mDepthDarkeningStart);
-            hullProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
-
-            // Draw internal (first, because at clipping plane are all set to same
-            // viewport depth which means internal are always in front of surface)
-            if(mShowInternal)
+            // Frame is computed, decide how to render it
+            switch(mSurfaceRendering)
             {
-                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndices(mLayer, 2);
-                hullProgram.update("color", mInternalAtomColor);
-                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
+            case SurfaceRendering::HULL:
+
+                // Prepare shader program
+                hullProgram.use();
+                hullProgram.update("view", mupCamera->getViewMatrix());
+                hullProgram.update("projection", mupCamera->getProjectionMatrix());
+                hullProgram.update("cameraWorldPos", mupCamera->getPosition());
+                hullProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
+                hullProgram.update("lightDir", mLightDirection);
+                hullProgram.update("selectedIndex", mSelectedAtom);
+                hullProgram.update("clippingPlane", mClippingPlane);
+                hullProgram.update("frame", mFrame);
+                hullProgram.update("atomCount", mupGPUProtein->getAtomCount());
+                hullProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+                hullProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+                hullProgram.update("frameCount", mupGPUProtein->getFrameCount());
+                hullProgram.update("depthDarkeningStart", mDepthDarkeningStart);
+                hullProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
+
+                // Draw internal (first, because at clipping plane are all set to same
+                // viewport depth which means internal are always in front of surface)
+                if(mShowInternal)
+                {
+                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndices(mLayer, 2);
+                    hullProgram.update("color", mInternalAtomColor);
+                    glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
+                }
+
+                // Draw surface
+                if(mShowSurface)
+                {
+                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 2);
+                    hullProgram.update("color", mSurfaceAtomColor);
+                    glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
+                }
+
+                break;
+
+            case SurfaceRendering::ASCENSION:
+
+                // Bind texture buffer with ascension information as image
+                mupAscension->bindAsImage(2, GPUAccess::READ_ONLY);
+
+                // Prepare shader program
+                ascensionProgram.use();
+                ascensionProgram.update("view", mupCamera->getViewMatrix());
+                ascensionProgram.update("projection", mupCamera->getProjectionMatrix());
+                ascensionProgram.update("cameraWorldPos", mupCamera->getPosition());
+                ascensionProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
+                ascensionProgram.update("lightDir", mLightDirection);
+                ascensionProgram.update("selectedIndex", mSelectedAtom);
+                ascensionProgram.update("clippingPlane", mClippingPlane);
+                ascensionProgram.update("frame", mFrame);
+                ascensionProgram.update("atomCount", mupGPUProtein->getAtomCount());
+                ascensionProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+                ascensionProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+                ascensionProgram.update("frameCount", mupGPUProtein->getFrameCount());
+                ascensionProgram.update("depthDarkeningStart", mDepthDarkeningStart);
+                ascensionProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
+                ascensionProgram.update("hotColor", mAscensionHotColor);
+                ascensionProgram.update("coldColor", mAscensionColdColor);
+                ascensionProgram.update("internalColor", mAscensionInternalColor);
+                ascensionProgram.update("ascensionFrame", mFrame - mComputedStartFrame); // TODO decide about better structure
+                ascensionProgram.update("ascensionMaxValue", mAscensionMaxValue);
+                glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
+
+                break;
+
+            case SurfaceRendering::ELEMENTS:
+
+                // Bind coloring
+                mupGPUProtein->bindColorsElement(3);
+
+                // Prepare shader program
+                coloringProgram.use();
+                coloringProgram.update("view", mupCamera->getViewMatrix());
+                coloringProgram.update("projection", mupCamera->getProjectionMatrix());
+                coloringProgram.update("cameraWorldPos", mupCamera->getPosition());
+                coloringProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
+                coloringProgram.update("lightDir", mLightDirection);
+                coloringProgram.update("selectedIndex", mSelectedAtom);
+                coloringProgram.update("clippingPlane", mClippingPlane);
+                coloringProgram.update("frame", mFrame);
+                coloringProgram.update("atomCount", mupGPUProtein->getAtomCount());
+                coloringProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+                coloringProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+                coloringProgram.update("frameCount", mupGPUProtein->getFrameCount());
+                coloringProgram.update("depthDarkeningStart", mDepthDarkeningStart);
+                coloringProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
+
+                // Draw internal (first, because at clipping plane are all set to same
+                // viewport depth which means internal are always in front of surface)
+                if(mShowInternal)
+                {
+                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndices(mLayer, 2);
+                    glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
+                }
+
+                // Draw surface
+                if(mShowSurface)
+                {
+                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 2);
+                    glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
+                }
+
+                break;
+
+            case SurfaceRendering::AMINOACIDS:
+
+                // Bind coloring
+                mupGPUProtein->bindColorsAminoacid(3);
+
+                // Prepare shader program
+                coloringProgram.use();
+                coloringProgram.update("view", mupCamera->getViewMatrix());
+                coloringProgram.update("projection", mupCamera->getProjectionMatrix());
+                coloringProgram.update("cameraWorldPos", mupCamera->getPosition());
+                coloringProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
+                coloringProgram.update("lightDir", mLightDirection);
+                coloringProgram.update("selectedIndex", mSelectedAtom);
+                coloringProgram.update("clippingPlane", mClippingPlane);
+                coloringProgram.update("frame", mFrame);
+                coloringProgram.update("atomCount", mupGPUProtein->getAtomCount());
+                coloringProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+                coloringProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+                coloringProgram.update("frameCount", mupGPUProtein->getFrameCount());
+                coloringProgram.update("depthDarkeningStart", mDepthDarkeningStart);
+                coloringProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
+
+                // Draw internal (first, because at clipping plane are all set to same
+                // viewport depth which means internal are always in front of surface)
+                if(mShowInternal)
+                {
+                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndices(mLayer, 2);
+                    glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
+                }
+
+                // Draw surface
+                if(mShowSurface)
+                {
+                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 2);
+                    glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
+                }
+
+                break;
+
+            case SurfaceRendering::ANALYSIS:
+
+                // Bind indices of analysis atoms
+                mupOutlineAtomIndices->bindAsImage(2, GPUAccess::READ_ONLY);
+
+                // Prepare shader program
+                analysisProgram.use();
+                analysisProgram.update("view", mupCamera->getViewMatrix());
+                analysisProgram.update("projection", mupCamera->getProjectionMatrix());
+                analysisProgram.update("cameraWorldPos", mupCamera->getPosition());
+                analysisProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
+                analysisProgram.update("lightDir", mLightDirection);
+                analysisProgram.update("selectedIndex", mSelectedAtom);
+                analysisProgram.update("clippingPlane", mClippingPlane);
+                analysisProgram.update("frame", mFrame);
+                analysisProgram.update("atomCount", mupGPUProtein->getAtomCount());
+                analysisProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+                analysisProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+                analysisProgram.update("frameCount", mupGPUProtein->getFrameCount());
+                analysisProgram.update("depthDarkeningStart", mDepthDarkeningStart);
+                analysisProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
+                analysisProgram.update("groupAtomCount", (int)mupOutlineAtomIndices->getSize());
+                glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
+
+                break;
             }
-
-            // Draw surface
-            if(mShowSurface)
-            {
-                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 2);
-                hullProgram.update("color", mSurfaceAtomColor);
-                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
-            }
-
-            break;
-
-        case SurfaceRendering::ASCENSION:
-
-            // Bind texture buffer with ascension information as image
-            mupAscension->bindAsImage(2, GPUAccess::READ_ONLY);
-
-            // Prepare shader program
-            ascensionProgram.use();
-            ascensionProgram.update("view", mupCamera->getViewMatrix());
-            ascensionProgram.update("projection", mupCamera->getProjectionMatrix());
-            ascensionProgram.update("cameraWorldPos", mupCamera->getPosition());
-            ascensionProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
-            ascensionProgram.update("lightDir", mLightDirection);
-            ascensionProgram.update("selectedIndex", mSelectedAtom);
-            ascensionProgram.update("clippingPlane", mClippingPlane);
-            ascensionProgram.update("frame", mFrame);
-            ascensionProgram.update("atomCount", mupGPUProtein->getAtomCount());
-            ascensionProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
-            ascensionProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
-            ascensionProgram.update("frameCount", mupGPUProtein->getFrameCount());
-            ascensionProgram.update("depthDarkeningStart", mDepthDarkeningStart);
-            ascensionProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
-            ascensionProgram.update("hotColor", mAscensionHotColor);
-            ascensionProgram.update("coldColor", mAscensionColdColor);
-            ascensionProgram.update("internalColor", mAscensionInternalColor);
-            ascensionProgram.update("ascensionFrame", mFrame - mComputedStartFrame); // TODO decide about better structure
-            ascensionProgram.update("ascensionMaxValue", mAscensionMaxValue);
+        }
+        else
+        {
+            // Render it with fallback shader
+            fallbackProgram.use();
+            fallbackProgram.update("view", mupCamera->getViewMatrix());
+            fallbackProgram.update("projection", mupCamera->getProjectionMatrix());
+            fallbackProgram.update("cameraWorldPos", mupCamera->getPosition());
+            fallbackProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
+            fallbackProgram.update("lightDir", mLightDirection);
+            fallbackProgram.update("selectedIndex", mSelectedAtom);
+            fallbackProgram.update("clippingPlane", mClippingPlane);
+            fallbackProgram.update("frame", mFrame);
+            fallbackProgram.update("atomCount", mupGPUProtein->getAtomCount());
+            fallbackProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+            fallbackProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+            fallbackProgram.update("frameCount", mupGPUProtein->getFrameCount());
+            fallbackProgram.update("depthDarkeningStart", mDepthDarkeningStart);
+            fallbackProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
+            fallbackProgram.update("color", mFallbackAtomColor);
             glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
-
-            break;
-
-        case SurfaceRendering::ELEMENTS:
-
-            // Bind coloring
-            mupGPUProtein->bindColorsElement(3);
-
-            // Prepare shader program
-            coloringProgram.use();
-            coloringProgram.update("view", mupCamera->getViewMatrix());
-            coloringProgram.update("projection", mupCamera->getProjectionMatrix());
-            coloringProgram.update("cameraWorldPos", mupCamera->getPosition());
-            coloringProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
-            coloringProgram.update("lightDir", mLightDirection);
-            coloringProgram.update("selectedIndex", mSelectedAtom);
-            coloringProgram.update("clippingPlane", mClippingPlane);
-            coloringProgram.update("frame", mFrame);
-            coloringProgram.update("atomCount", mupGPUProtein->getAtomCount());
-            coloringProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
-            coloringProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
-            coloringProgram.update("frameCount", mupGPUProtein->getFrameCount());
-            coloringProgram.update("depthDarkeningStart", mDepthDarkeningStart);
-            coloringProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
-
-            // Draw internal (first, because at clipping plane are all set to same
-            // viewport depth which means internal are always in front of surface)
-            if(mShowInternal)
-            {
-                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndices(mLayer, 2);
-                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
-            }
-
-            // Draw surface
-            if(mShowSurface)
-            {
-                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 2);
-                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
-            }
-
-            break;
-
-        case SurfaceRendering::AMINOACIDS:
-
-            // Bind coloring
-            mupGPUProtein->bindColorsAminoacid(3);
-
-            // Prepare shader program
-            coloringProgram.use();
-            coloringProgram.update("view", mupCamera->getViewMatrix());
-            coloringProgram.update("projection", mupCamera->getProjectionMatrix());
-            coloringProgram.update("cameraWorldPos", mupCamera->getPosition());
-            coloringProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
-            coloringProgram.update("lightDir", mLightDirection);
-            coloringProgram.update("selectedIndex", mSelectedAtom);
-            coloringProgram.update("clippingPlane", mClippingPlane);
-            coloringProgram.update("frame", mFrame);
-            coloringProgram.update("atomCount", mupGPUProtein->getAtomCount());
-            coloringProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
-            coloringProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
-            coloringProgram.update("frameCount", mupGPUProtein->getFrameCount());
-            coloringProgram.update("depthDarkeningStart", mDepthDarkeningStart);
-            coloringProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
-
-            // Draw internal (first, because at clipping plane are all set to same
-            // viewport depth which means internal are always in front of surface)
-            if(mShowInternal)
-            {
-                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndices(mLayer, 2);
-                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
-            }
-
-            // Draw surface
-            if(mShowSurface)
-            {
-                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 2);
-                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
-            }
-
-            break;
-
-        case SurfaceRendering::ANALYSIS:
-
-            // Bind indices of analysis atoms
-            mupOutlineAtomIndices->bindAsImage(2, GPUAccess::READ_ONLY);
-
-            // Prepare shader program
-            analysisProgram.use();
-            analysisProgram.update("view", mupCamera->getViewMatrix());
-            analysisProgram.update("projection", mupCamera->getProjectionMatrix());
-            analysisProgram.update("cameraWorldPos", mupCamera->getPosition());
-            analysisProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
-            analysisProgram.update("lightDir", mLightDirection);
-            analysisProgram.update("selectedIndex", mSelectedAtom);
-            analysisProgram.update("clippingPlane", mClippingPlane);
-            analysisProgram.update("frame", mFrame);
-            analysisProgram.update("atomCount", mupGPUProtein->getAtomCount());
-            analysisProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
-            analysisProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
-            analysisProgram.update("frameCount", mupGPUProtein->getFrameCount());
-            analysisProgram.update("depthDarkeningStart", mDepthDarkeningStart);
-            analysisProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
-            analysisProgram.update("groupAtomCount", (int)mupOutlineAtomIndices->getSize());
-            glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
-
-            break;
         }
 
         // Unbind molecule framebuffer
         mupMoleculeFramebuffer->unbind();
+
+        // ### COMPOSITING #########################################################################################
 
         // # Fill standard framebuffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -799,7 +834,6 @@ void SurfaceDynamicsVisualization::renderLoop()
         glEnable(GL_DEPTH_TEST);
 
         // Render GUI in standard frame buffer on top of everything
-        // By the way: Methods called here may change bound buffers. Therefore, please call it after rest of rendering
         ImGui_ImplGlfwGL3_NewFrame();
         renderGUI();
     });
@@ -876,8 +910,8 @@ void SurfaceDynamicsVisualization::updateComputationInformation(std::string devi
         device << " used" << "\n"
         << "Probe radius: " + std::to_string(mProbeRadius) << "\n"
         << "Extracted layers: " << (mExtractLayers ? "yes" : "no") << "\n"
-        << "Start frame: " << mComputedStartFrame << " End frame: " << mComputedEndFrame << "\n"
-        << "Count of frames: " << (mComputedEndFrame - mComputedStartFrame + 1) << "\n"
+        << "Start frame: " << mComputationStartFrame << " End frame: " << mComputationEndFrame << "\n"
+        << "Count of frames: " << (mComputationEndFrame - mComputationStartFrame + 1) << "\n"
         << "Extraction time: " << computationTime << "ms";
     mComputeInformation = stream.str();
 }
@@ -1034,8 +1068,8 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Text("[Computation]");
         ImGui::SliderFloat("Probe Radius", &mProbeRadius, 0.f, 2.f, "%.1f");
         ImGui::Checkbox("Extract Layers", &mExtractLayers);
-        ImGui::SliderInt("Start Frame", &mComputationStartFrame, 0, mComputationEndFrame);
-        ImGui::SliderInt("End Frame", &mComputationEndFrame, mComputationStartFrame, mupGPUProtein->getFrameCount() - 1);
+        ImGui::SliderInt("Start Frame", &mComputationStartFrame, mStartFrame, mComputationEndFrame);
+        ImGui::SliderInt("End Frame", &mComputationEndFrame, mComputationStartFrame, mEndFrame);
         ImGui::SliderInt("Sample Count", &mHullSampleCount, 0, 1000);
         if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Count of samples used for analysis purposes, not surface extraction."); }
         ImGui::SliderInt("CPU Threads", &mCPUThreads, 1, 24);
@@ -1171,23 +1205,12 @@ void SurfaceDynamicsVisualization::renderGUI()
 
         ImGui::SliderInt("Rate", &mPlayAnimationRate, 0, 100);
         int frame = mFrame;
-        ImGui::SliderInt("Frame", &frame, mComputedStartFrame, mComputedEndFrame);
+        ImGui::SliderInt("Frame", &frame, mStartFrame, mEndFrame);
         if(frame != mFrame)
         {
             setFrame(frame);
         }
         ImGui::Separator();
-
-        // Layer
-        ImGui::Text("[Layer]");
-        ImGui::SliderInt("Layer", &mLayer, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getLayerCount() - 1);
-        ImGui::Separator();
-
-        // Render points / spheres
-        ImGui::Text("[Rendering]");
-
-        // Surface rendering
-        ImGui::Combo("##SurfaceRenderingCombo", (int*)&mSurfaceRendering, "Hull\0Ascension\0Elements\0Aminoacids\0Analysis\0");
 
         // Render / not render with probe radius
         if(mRenderWithProbeRadius)
@@ -1205,39 +1228,70 @@ void SurfaceDynamicsVisualization::renderGUI()
             }
         }
 
-        // Rendering of internal and surface atoms
-        if(mSurfaceRendering != SurfaceRendering::ASCENSION)
+        // Stuff that is only possible on computed frames
+        if(frameComputed())
         {
-            // Show / hide internal atoms
-            if(mShowInternal)
-            {
-                if(ImGui::Button("Hide Internal", ImVec2(100, 22)))
-                {
-                    mShowInternal = false;
-                }
-            }
-            else
-            {
-                if(ImGui::Button("Show Internal", ImVec2(100, 22)))
-                {
-                    mShowInternal = true;
-                }
-            }
-            ImGui::SameLine();
+            // Layer
+            ImGui::Text("[Layer]");
+            ImGui::SliderInt("Layer", &mLayer, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getLayerCount() - 1);
+            ImGui::Separator();
 
-            // Show / hide surface atoms
-            if(mShowSurface)
+            // Rendering
+            ImGui::Text("[Rendering]");
+
+            // Surface rendering
+            ImGui::Combo("##SurfaceRenderingCombo", (int*)&mSurfaceRendering, "Hull\0Ascension\0Elements\0Aminoacids\0Analysis\0");
+
+            // Rendering of internal and surface atoms
+            if(mSurfaceRendering != SurfaceRendering::ASCENSION)
             {
-                if(ImGui::Button("Hide Surface", ImVec2(100, 22)))
+                // Show / hide internal atoms
+                if(mShowInternal)
                 {
-                    mShowSurface = false;
+                    if(ImGui::Button("Hide Internal", ImVec2(100, 22)))
+                    {
+                        mShowInternal = false;
+                    }
+                }
+                else
+                {
+                    if(ImGui::Button("Show Internal", ImVec2(100, 22)))
+                    {
+                        mShowInternal = true;
+                    }
+                }
+                ImGui::SameLine();
+
+                // Show / hide surface atoms
+                if(mShowSurface)
+                {
+                    if(ImGui::Button("Hide Surface", ImVec2(100, 22)))
+                    {
+                        mShowSurface = false;
+                    }
+                }
+                else
+                {
+                    if(ImGui::Button("Show Surface", ImVec2(100, 22)))
+                    {
+                        mShowSurface = true;
+                    }
+                }
+            }
+
+            // Show / hide hull samples
+            if(mRenderHullSamples)
+            {
+                if(ImGui::Button("Hide Hull Samples", ImVec2(208, 22)))
+                {
+                    mRenderHullSamples = false;
                 }
             }
             else
             {
-                if(ImGui::Button("Show Surface", ImVec2(100, 22)))
+                if(ImGui::Button("Show Hull Samples", ImVec2(208, 22)))
                 {
-                    mShowSurface = true;
+                    mRenderHullSamples = true;
                 }
             }
         }
@@ -1255,22 +1309,6 @@ void SurfaceDynamicsVisualization::renderGUI()
             if(ImGui::Button("Show Axes Gizmo", ImVec2(208, 22)))
             {
                 mShowAxesGizmo = true;
-            }
-        }
-
-        // Show / hide hull samples
-        if(mRenderHullSamples)
-        {
-            if(ImGui::Button("Hide Hull Samples", ImVec2(208, 22)))
-            {
-                mRenderHullSamples = false;
-            }
-        }
-        else
-        {
-            if(ImGui::Button("Show Hull Samples", ImVec2(208, 22)))
-            {
-                mRenderHullSamples = true;
             }
         }
 
@@ -1294,8 +1332,8 @@ void SurfaceDynamicsVisualization::renderGUI()
         // General infos
         ImGui::Text("[General]");
         ImGui::Text(std::string("Atom Count: " + std::to_string(mupGPUProtein->getAtomCount())).c_str());
-        ImGui::Text(std::string("Internal Atoms: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer))).c_str());
-        ImGui::Text(std::string("Surface Atoms: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer))).c_str());
+        // TODO: move to analysis: ImGui::Text(std::string("Internal Atoms: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer))).c_str());
+        // TODO: move to analysis: ImGui::Text(std::string("Surface Atoms: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer))).c_str());
         ImGui::Separator();
 
         // Selection infos
@@ -1315,17 +1353,6 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Text(std::string("Available VRAM: " + std::to_string(availableMemory) + "MB").c_str());
         // TODO: one may want to clean up glGetError if query failed and show failure message on GUI (for example on Intel or AMD)
 
-        /*
-        ImGui::Separator();
-
-        // Testing
-        ImGui::Text("Testing");
-        std::vector<float> curve;
-        curve.push_back(0.5f);
-        curve.push_back(0.6f);
-        ImGui::PlotLines("Curve", curve.data(), curve.size());
-        */
-
         ImGui::End();
         ImGui::PopStyleColor(); // window background
     }
@@ -1339,7 +1366,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         // Do validation
         ImGui::SliderInt("Samples", &mSurfaceValidationAtomSampleCount, 1, 10000);
         ImGui::SliderInt("Seed", &mSurfaceValidationSeed, 0, 1337);
-        if(ImGui::Button("Validate Surface"))
+        if(frameComputed() && ImGui::Button("Validate Surface"))
         {
             mupSurfaceValidation->validate(
                 mupGPUProtein.get(),
@@ -1351,6 +1378,10 @@ void SurfaceDynamicsVisualization::renderGUI()
                 mSurfaceValidationAtomSampleCount,
                 mValidationInformation,
                 std::vector<GLuint>());
+        }
+        else
+        {
+            ImGui::Text("Frame Not Computed");
         }
 
         // Show / hide internal samples
@@ -1400,192 +1431,196 @@ void SurfaceDynamicsVisualization::renderGUI()
     // Analysis window
     if(mShowAnalysisWindow)
     {
-        // Some variables for this window
-        bool doUpdatePath = false;
-
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.0f, 0.5f, 0.75f)); // window background
         ImGui::Begin("Analysis", NULL, 0);
 
-        // Analysis of global
-        ImGui::Text("[Global]");
-
-        // Graph about relation of surface and internal samples (in relative frames)
-        // TODO: stupid to calculate it every frame and bad texts
-        float globalSampleCount = (float)mupHullSamples->getSampleCount();
-        auto sampleCount = mupHullSamples->getSurfaceSampleCount();
-        std::vector<float> floatSampleAmount;
-        floatSampleAmount.reserve(sampleCount.size());
-        for(int i = 0; i < sampleCount.size(); i++)
+        // Only display when frame is computed
+        if(frameComputed())
         {
-            floatSampleAmount.push_back((float)sampleCount.at(i) / globalSampleCount);
-        }
-        ImGui::PlotLines("Surface Samples", floatSampleAmount.data(), floatSampleAmount.size());
-        ImGui::Text(std::string("Surface Amount: " + std::to_string(floatSampleAmount.at(mFrame - mComputedStartFrame) * 100) + " percent").c_str());
+            // Some variables for this window
+            bool doUpdatePath = false;
 
-        // Surface area of molecule
-        ImGui::Text(std::string("Approximate Surface Area: " + std::to_string(approximateSurfaceArea()) + "\u212b²").c_str());
+            // Analysis of global
+            ImGui::Text("[Global]");
 
-        ImGui::Separator();
-
-        // Analysis of group
-        ImGui::Text("[Group]");
-        ImGui::BeginChild(
-            "AnalyseAtoms",
-            ImVec2(ImGui::GetWindowContentRegionWidth() * 1.0f, 100),
-            false,
-            ImGuiWindowFlags_HorizontalScrollbar);
-
-        // Useful variables
-        std::vector<int> toBeRemoved;
-        bool analysisAtomsChanged = false;
-
-        // Go over analyse atoms and list them
-        for (int atomIndex : mAnalyseAtoms)
-        {
-            // Mark if currently selected
-            if(atomIndex == mSelectedAtom)
+            // Graph about relation of surface and internal samples (in relative frames)
+            // TODO: stupid to calculate it every frame and bad texts
+            float globalSampleCount = (float)mupHullSamples->getSampleCount();
+            auto sampleCount = mupHullSamples->getSurfaceSampleCount();
+            std::vector<float> floatSampleAmount;
+            floatSampleAmount.reserve(sampleCount.size());
+            for(int i = 0; i < sampleCount.size(); i++)
             {
-                ImGui::TextColored(ImVec4(0,1,0,1), "\u2023");
+                floatSampleAmount.push_back((float)sampleCount.at(i) / globalSampleCount);
+            }
+            ImGui::PlotLines("Surface Samples", floatSampleAmount.data(), floatSampleAmount.size());
+            ImGui::Text(std::string("Surface Amount: " + std::to_string(floatSampleAmount.at(mFrame - mComputedStartFrame) * 100) + " percent").c_str());
+
+            // Surface area of molecule
+            ImGui::Text(std::string("Approximate Surface Area: " + std::to_string(approximateSurfaceArea()) + "\u212b²").c_str());
+
+            ImGui::Separator();
+
+            // Analysis of group
+            ImGui::Text("[Group]");
+            ImGui::BeginChild(
+                "AnalyseAtoms",
+                ImVec2(ImGui::GetWindowContentRegionWidth() * 1.0f, 100),
+                false,
+                ImGuiWindowFlags_HorizontalScrollbar);
+
+            // Useful variables
+            std::vector<int> toBeRemoved;
+            bool analysisAtomsChanged = false;
+
+            // Go over analyse atoms and list them
+            for (int atomIndex : mAnalyseAtoms)
+            {
+                // Mark if currently selected
+                if(atomIndex == mSelectedAtom)
+                {
+                    ImGui::TextColored(ImVec4(0,1,0,1), "\u2023");
+                    ImGui::SameLine();
+                }
+
+                // Index of atom
+                ImGui::Text("%05d", atomIndex);
                 ImGui::SameLine();
+
+                // Element of atom
+                ImGui::Text(mupGPUProtein->getElement(atomIndex).c_str());
+                ImGui::SameLine();
+
+                // Aminoacid of atom
+                ImGui::Text(mupGPUProtein->getAminoacid(atomIndex).c_str());
+                ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 60);
+
+                // Select that atom (use ## to add number for an unique button id)
+                if(ImGui::Button(std::string("\u25cb##" + std::to_string(atomIndex)).c_str()))
+                {
+                    mSelectedAtom = atomIndex;
+                }
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Select Atom"); } // tooltip
+                ImGui::SameLine();
+
+                // Remove that atom from analysis atoms (use ## to add number for an unique button id)
+                if(ImGui::Button(std::string("\u00D7##" + std::to_string(atomIndex)).c_str()))
+                {
+                    toBeRemoved.push_back(atomIndex);
+                    analysisAtomsChanged = true;
+                }
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Remove Atom"); } // tooltip
             }
 
-            // Index of atom
-            ImGui::Text("%05d", atomIndex);
+            // Remove atoms from analysis
+            for(int atomIndex : toBeRemoved) { mAnalyseAtoms.erase(atomIndex); }
+            ImGui::EndChild();
+
+            // Add new atoms to analyse
+            ImGui::InputInt("", &mNextAnalyseAtomIndex);
+            mNextAnalyseAtomIndex = glm::clamp(mNextAnalyseAtomIndex, 0, mupGPUProtein->getAtomCount());
             ImGui::SameLine();
-
-            // Element of atom
-            ImGui::Text(mupGPUProtein->getElement(atomIndex).c_str());
-            ImGui::SameLine();
-
-            // Aminoacid of atom
-            ImGui::Text(mupGPUProtein->getAminoacid(atomIndex).c_str());
-            ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 60);
-
-            // Select that atom (use ## to add number for an unique button id)
-            if(ImGui::Button(std::string("\u25cb##" + std::to_string(atomIndex)).c_str()))
+            if(ImGui::Button("Add Atom"))
             {
-                mSelectedAtom = atomIndex;
-            }
-            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Select Atom"); } // tooltip
-            ImGui::SameLine();
-
-            // Remove that atom from analysis atoms (use ## to add number for an unique button id)
-            if(ImGui::Button(std::string("\u00D7##" + std::to_string(atomIndex)).c_str()))
-            {
-                toBeRemoved.push_back(atomIndex);
+                // Add atom to list of analyse atoms
+                mAnalyseAtoms.insert((GLuint)mNextAnalyseAtomIndex);
                 analysisAtomsChanged = true;
             }
-            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Remove Atom"); } // tooltip
-        }
 
-        // Remove atoms from analysis
-        for(int atomIndex : toBeRemoved) { mAnalyseAtoms.erase(atomIndex); }
-        ImGui::EndChild();
-
-        // Add new atoms to analyse
-        ImGui::InputInt("", &mNextAnalyseAtomIndex);
-        mNextAnalyseAtomIndex = glm::clamp(mNextAnalyseAtomIndex, 0, mupGPUProtein->getAtomCount());
-        ImGui::SameLine();
-        if(ImGui::Button("Add Atom"))
-        {
-            // Add atom to list of analyse atoms
-            mAnalyseAtoms.insert((GLuint)mNextAnalyseAtomIndex);
-            analysisAtomsChanged = true;
-        }
-
-        // Recreate outline atom indices and path visualization
-        if(analysisAtomsChanged)
-        {
-            // Outline
-            std::vector<GLuint> analyseAtomVector;
-            std::copy(mAnalyseAtoms.begin(), mAnalyseAtoms.end(), std::back_inserter(analyseAtomVector));
-            mupOutlineAtomIndices = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(analyseAtomVector));
-
-            // Path
-            doUpdatePath = true;
-        }
-
-        // Show / hide outline
-        if(mRenderOutline)
-        {
-            if(ImGui::Button("Hide Outline", ImVec2(90, 22)))
+            // Recreate outline atom indices and path visualization
+            if(analysisAtomsChanged)
             {
-                mRenderOutline = false;
+                // Outline
+                std::vector<GLuint> analyseAtomVector;
+                std::copy(mAnalyseAtoms.begin(), mAnalyseAtoms.end(), std::back_inserter(analyseAtomVector));
+                mupOutlineAtomIndices = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(analyseAtomVector));
+
+                // Path
+                doUpdatePath = true;
             }
-        }
-        else
-        {
-            if(ImGui::Button("Show Outline", ImVec2(90, 22)))
+
+            // Show / hide outline
+            if(mRenderOutline)
             {
-                mRenderOutline = true;
+                if(ImGui::Button("Hide Outline", ImVec2(90, 22)))
+                {
+                    mRenderOutline = false;
+                }
             }
-        }
-        ImGui::SameLine();
-
-        // Show / hide path
-        if(mShowPath)
-        {
-            if(ImGui::Button("Hide Path", ImVec2(75, 22)))
+            else
             {
-                mShowPath = false;
+                if(ImGui::Button("Show Outline", ImVec2(90, 22)))
+                {
+                    mRenderOutline = true;
+                }
             }
-        }
-        else
-        {
-            if(ImGui::Button("Show Path", ImVec2(75, 22)))
+            ImGui::SameLine();
+
+            // Show / hide path
+            if(mShowPath)
             {
-                mShowPath = true;
+                if(ImGui::Button("Hide Path", ImVec2(75, 22)))
+                {
+                    mShowPath = false;
+                }
             }
-        }
-
-        // Length of complete path
-        std::ostringstream stringPathLength;
-        stringPathLength << std::fixed << std::setprecision(2) << mupPath->getCompleteLength();
-        ImGui::Text(std::string("Path Complete Length: " + stringPathLength.str() + " \u212b").c_str());
-
-        // Length of displayed path
-        int startFrame = glm::max(0, mFrame - mPathFrameRadius);
-        int endFrame = glm::min(mupPath->getVertexCount()-1, mFrame + mPathFrameRadius);
-        stringPathLength = std::ostringstream();
-        stringPathLength << std::fixed << std::setprecision(2) << mupPath->getLength(startFrame, endFrame);
-        ImGui::Text(std::string("Path Displayed Length: " + stringPathLength.str() + " \u212b").c_str());
-
-        // Radius of frames which are taken into account for path smoothing
-        int radius = mPathSmoothRadius;
-        ImGui::SliderInt("Path Smooth Radius", &radius, 0, 10);
-        if(radius != mPathSmoothRadius)
-        {
-            mPathSmoothRadius = radius; // save new radius
-            doUpdatePath = true; // remember to update display path
-        }
-
-        // Radius of frames in path visualization
-        ImGui::SliderInt("Path Radius", &mPathFrameRadius, 1, 100);
-
-        // Amount of surface covered by analysis group
-        // TODO: very stupid to do every frame and bad texts
-        if(mAnalyseAtoms.size() > 0)
-        {
-            std::vector<float> floatGroupSurfaceSampleAmount;
-            floatGroupSurfaceSampleAmount.reserve(mComputationEndFrame - mComputedStartFrame + 1);
-            for(int i = mComputationStartFrame; i <= mComputedEndFrame; i++)
+            else
             {
-                floatGroupSurfaceSampleAmount.push_back(
-                    (float)mupHullSamples->getSurfaceSampleCount(i, mAnalyseAtoms) // sample count for group
-                    / (float)mupHullSamples->getSurfaceSampleCount(i)); // sample count for all atoms
+                if(ImGui::Button("Show Path", ImVec2(75, 22)))
+                {
+                    mShowPath = true;
+                }
             }
-            ImGui::PlotLines("Group Samples", floatGroupSurfaceSampleAmount.data(), floatGroupSurfaceSampleAmount.size());
-            ImGui::Text(std::string("Surface Amount: " + std::to_string(floatGroupSurfaceSampleAmount.at(mFrame - mComputedStartFrame) * 100) + " percent").c_str());
+
+            // Length of complete path
+            std::ostringstream stringPathLength;
+            stringPathLength << std::fixed << std::setprecision(2) << mupPath->getCompleteLength();
+            ImGui::Text(std::string("Path Complete Length: " + stringPathLength.str() + " \u212b").c_str());
+
+            // Length of displayed path
+            int startFrame = glm::max(0, mFrame - mPathFrameRadius);
+            int endFrame = glm::min(mupPath->getVertexCount()-1, mFrame + mPathFrameRadius);
+            stringPathLength = std::ostringstream();
+            stringPathLength << std::fixed << std::setprecision(2) << mupPath->getLength(startFrame, endFrame);
+            ImGui::Text(std::string("Path Displayed Length: " + stringPathLength.str() + " \u212b").c_str());
+
+            // Radius of frames which are taken into account for path smoothing
+            int radius = mPathSmoothRadius;
+            ImGui::SliderInt("Path Smooth Radius", &radius, 0, 10);
+            if(radius != mPathSmoothRadius)
+            {
+                mPathSmoothRadius = radius; // save new radius
+                doUpdatePath = true; // remember to update display path
+            }
+
+            // Radius of frames in path visualization
+            ImGui::SliderInt("Path Radius", &mPathFrameRadius, 1, 100);
+
+            // Amount of surface covered by analysis group
+            // TODO: very stupid to do every frame and bad texts
+            if(mAnalyseAtoms.size() > 0)
+            {
+                std::vector<float> floatGroupSurfaceSampleAmount;
+                floatGroupSurfaceSampleAmount.reserve(mEndFrame - mComputedStartFrame + 1);
+                for(int i = mStartFrame; i <= mComputedEndFrame; i++)
+                {
+                    floatGroupSurfaceSampleAmount.push_back(
+                        (float)mupHullSamples->getSurfaceSampleCount(i, mAnalyseAtoms) // sample count for group
+                        / (float)mupHullSamples->getSurfaceSampleCount(i)); // sample count for all atoms
+                }
+                ImGui::PlotLines("Group Samples", floatGroupSurfaceSampleAmount.data(), floatGroupSurfaceSampleAmount.size());
+                ImGui::Text(std::string("Surface Amount: " + std::to_string(floatGroupSurfaceSampleAmount.at(mFrame - mComputedStartFrame) * 100) + " percent").c_str());
+            }
+
+            // Update path if necessary
+            if(doUpdatePath)
+            {
+                mupPath->update(mupGPUProtein.get(), mAnalyseAtoms, mPathSmoothRadius);
+            }
         }
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background
-
-        // Update path if necessary
-        if(doUpdatePath)
-        {
-            mupPath->update(mupGPUProtein.get(), mAnalyseAtoms, mPathSmoothRadius);
-        }
     }
 
     // Rendering window
@@ -1611,7 +1646,6 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::PopStyleColor(); // window background
     }
 
-
     ImGui::PopStyleColor(); // slider grab active
     ImGui::PopStyleColor(); // header active
     ImGui::PopStyleColor(); // header hovered
@@ -1629,26 +1663,28 @@ void SurfaceDynamicsVisualization::renderGUI()
 
 bool SurfaceDynamicsVisualization::setFrame(int frame)
 {
-    // Bring frame into valid interval
-    frame = glm::clamp(frame, mComputedStartFrame, mComputedEndFrame);
-
-    // Check whether there are enough layers to display
-    int layerCount = mGPUSurfaces.at(frame - mComputedStartFrame)->getLayerCount();
-    if(mLayer >= layerCount)
-    {
-        mLayer = layerCount -1;
-    }
+    // Clamp frame
+    frame = glm::clamp(frame, mStartFrame, mEndFrame);
 
     // Write it to variable
-    if(mFrame == frame)
-    {
-        return false;
-    }
-    else
+    bool success = false;
+    if(mFrame != frame)
     {
         mFrame = frame;
-        return true;
+        success = true;
     }
+
+    // Check whether there are enough layers to display
+    if(frameComputed()) // set mFrame before calling this
+    {
+        int layerCount = mGPUSurfaces.at(frame - mComputedStartFrame)->getLayerCount();
+        if(mLayer >= layerCount)
+        {
+            mLayer = layerCount -1;
+        }
+    }
+
+    return success;
 }
 
 void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, bool useGPU)
@@ -1677,10 +1713,6 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
         float progress = (float)(i- startFrame + 1) / (float)(endFrame - startFrame + 1);
         setProgressDispaly("Surface Extraction", progress);
     }
-
-    // Remember which frames were computed
-    mComputedStartFrame = startFrame;
-    mComputedEndFrame = endFrame;
 
     // Update compute information
     updateComputationInformation(
@@ -1777,6 +1809,10 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
         {
             this->setProgressDispaly("Sample Creation", progress);
         });
+
+    // ## Remember which frames were computed
+    mComputedStartFrame = startFrame;
+    mComputedEndFrame = endFrame;
 }
 
 int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
