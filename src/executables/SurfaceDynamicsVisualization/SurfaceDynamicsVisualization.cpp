@@ -28,12 +28,6 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     // Create window (which initializes OpenGL)
     mpWindow = generateWindow(mWindowTitle, mWindowWidth, mWindowHeight);
 
-    // Create empty outline atoms indices after OpenGL initialization
-    mupOutlineAtomIndices = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(0)); // create empty outline atom indices buffer
-
-    // Construct GPUSurfaceExtraction object after OpenGL has been initialized
-    mupGPUSurfaceExtraction = std::unique_ptr<GPUSurfaceExtraction>(new GPUSurfaceExtraction);
-
     // Init ImGui and load font
     ImGui_ImplGlfwGL3_Init(mpWindow, true);
     ImGuiIO& io = ImGui::GetIO();
@@ -91,41 +85,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     };
     setScrollCallback(mpWindow, kS);
 
-    // # Prepare framebuffers for rendering
-    mupMoleculeFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight));
-    mupMoleculeFramebuffer->bind();
-    mupMoleculeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA); // color
-    mupMoleculeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGB); // picking index
-    mupMoleculeFramebuffer->unbind();
-    mupOverlayFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight));
-    mupOverlayFramebuffer->bind();
-    mupOverlayFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA);
-    mupOverlayFramebuffer->unbind();
-
-    // # Ascension rendering
-    mupAscension = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(0));
-
-    // # Prepare background cubemaps
-    mCVCubemapTexture = createCubemap(
-        std::string(RESOURCES_PATH) + "/cubemaps/CV/posx.png",
-        std::string(RESOURCES_PATH) + "/cubemaps/CV/negx.png",
-        std::string(RESOURCES_PATH) + "/cubemaps/CV/posy.png",
-        std::string(RESOURCES_PATH) + "/cubemaps/CV/negy.png",
-        std::string(RESOURCES_PATH) + "/cubemaps/CV/posz.png",
-        std::string(RESOURCES_PATH) + "/cubemaps/CV/negz.png");
-
-    mBeachCubemapTexture = createCubemap(
-        std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posx.jpg",
-        std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negx.jpg",
-        std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posy.jpg",
-        std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negy.jpg",
-        std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posz.jpg",
-        std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negz.jpg");
-
-    // # Create path
-    mupPath = std::unique_ptr<Path>(new Path());
-
-    // # Load protein
+    // # Load protein (outcommented must be tested again, may not work)
 
     /*
     // Path to protein molecule
@@ -202,7 +162,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     mGPUProteins.push_back(std::move(std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()))));
     */
 
-    // TODO: testing XTC loading
+    // Loading XTC
     MdTrajWrapper mdwrap;
     std::vector<std::string> paths;
     paths.push_back("/home/raphael/Temp/XTC/MD_GIIIA_No_Water.pdb");
@@ -214,6 +174,34 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     upProtein->minMax(); // first, one has to calculate min and max value of protein
     mProteinMinExtent = upProtein->getMin();
     mProteinMaxExtent = upProtein->getMax();
+
+    // # Prepare framebuffers for rendering
+    mupMoleculeFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight));
+    mupMoleculeFramebuffer->bind();
+    mupMoleculeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA); // color
+    mupMoleculeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGB); // picking index
+    mupMoleculeFramebuffer->unbind();
+    mupOverlayFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight));
+    mupOverlayFramebuffer->bind();
+    mupOverlayFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA);
+    mupOverlayFramebuffer->unbind();
+
+    // # Prepare background cubemaps
+    mCVCubemapTexture = createCubemap(
+        std::string(RESOURCES_PATH) + "/cubemaps/CV/posx.png",
+        std::string(RESOURCES_PATH) + "/cubemaps/CV/negx.png",
+        std::string(RESOURCES_PATH) + "/cubemaps/CV/posy.png",
+        std::string(RESOURCES_PATH) + "/cubemaps/CV/negy.png",
+        std::string(RESOURCES_PATH) + "/cubemaps/CV/posz.png",
+        std::string(RESOURCES_PATH) + "/cubemaps/CV/negz.png");
+
+    mBeachCubemapTexture = createCubemap(
+        std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posx.jpg",
+        std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negx.jpg",
+        std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posy.jpg",
+        std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negy.jpg",
+        std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posz.jpg",
+        std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negz.jpg");    
 
     // # Create camera
     glm::vec3 cameraCenter = (mProteinMinExtent + mProteinMaxExtent) / 2.f;
@@ -229,16 +217,28 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
             45.f,
             0.1f));
 
-    // # Hull samples
+    // # Other
+
+    // Create path for analysis group
+    mupPath = std::unique_ptr<Path>(new Path());
+
+    // Create empty outline atoms indices after OpenGL initialization
+    mupOutlineAtomIndices = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(0)); // create empty outline atom indices buffer
+
+    // Construct GPUSurfaceExtraction object after OpenGL has been initialized
+    mupGPUSurfaceExtraction = std::unique_ptr<GPUSurfaceExtraction>(new GPUSurfaceExtraction);
+
+    // Hull samples
     mupHullSamples = std::unique_ptr<GPUHullSamples>(new GPUHullSamples());
 
-    // # Run implementation to extract surface atoms
-    computeLayers(0, 0, mInitiallyUseGLSLImplementation);
-
-    // # Other
+    // Initialize GPUTextureBuffer for ascension with empty one
+    mupAscension = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(0));
 
     // Prepare validation of the surface
     mupSurfaceValidation = std::unique_ptr<SurfaceValidation>(new SurfaceValidation());
+
+    // Run implementation to extract surface atoms
+    computeLayers(0, 0, mInitiallyUseGLSLImplementation);
 
     // Set endframe in GUI to maximum number
     mComputationEndFrame = mupGPUProtein->getFrameCount() - 1;
