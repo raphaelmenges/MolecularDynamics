@@ -104,6 +104,9 @@ void main()
     // Some "ambient" lighting combined with specular
     vec3 finalColor = depthDarkening * mix(color * mix(vec3(0.4, 0.45, 0.5), vec3(1.0, 1.0, 1.0), lighting), vec3(1,1,1), specular);
 
+    // Rim lighting
+    finalColor += ((0.75 * lighting) + 0.25) * pow(1.0 - dot(normal, vec3(0,0,1)), 3);
+
     // Output color
     fragColor = vec4(finalColor, 1);
 
