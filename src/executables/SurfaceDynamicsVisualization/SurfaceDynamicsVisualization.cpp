@@ -1063,24 +1063,35 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Begin("Computation", NULL, 0);
 
         // Computatiom
-        ImGui::Text("[Computation]");
-        ImGui::SliderFloat("Probe Radius", &mComputationProbeRadius, 0.f, 2.f, "%.1f");
+        ImGui::Text("[Surface]");
+        ImGui::SliderFloat("Probe Radius", &mComputationProbeRadius, 0.f, 3.f, "%.1f");
         ImGui::Checkbox("Extract Layers", &mExtractLayers);
         ImGui::SliderInt("Start Frame", &mComputationStartFrame, mStartFrame, mComputationEndFrame);
         ImGui::SliderInt("End Frame", &mComputationEndFrame, mComputationStartFrame, mEndFrame);
         ImGui::SliderInt("Sample Count", &mHullSampleCount, 0, 1000);
         if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Count of samples used for analysis purposes, not surface extraction."); }
         ImGui::SliderInt("CPU Threads", &mCPUThreads, 1, 24);
-        if(ImGui::Button("\u2794 GPGPU")) { computeLayers(true); }
+        if(ImGui::Button("\u2794 GPGPU#surface")) { computeLayers(true); }
         ImGui::SameLine();
-        if(ImGui::Button("\u2794 CPU")) { computeLayers(false); }
-        ImGui::Separator();
+        if(ImGui::Button("\u2794 CPU##surface")) { computeLayers(false); }
 
         // Report
         if (ImGui::CollapsingHeader("Report"))
         {
             ImGui::Text(mComputeInformation.c_str());
         }
+        ImGui::Separator();
+
+        ImGui::Text("[Ascension]");
+        ImGui::SliderFloat("Hot Up", &mAscensionUpToHotFrameCount, 1.f, 100.f, "%.0f");
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until surface atom gets from cold to hot."); }
+        ImGui::SliderFloat("Hot Down", &mAscensionBackToHotFrameCount, 1.f, 100.f, "%.0f");
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until surface atom falls back to hot while dropping."); }
+        ImGui::SliderFloat("Cool Up", &mAscensionUpToColdFrameCount, 1.f, 100.f, "%.0f");
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until internal atom gets from hot to cold."); }
+        ImGui::SliderFloat("Cool Down", &mAscensionBackToColdFrameCount, 1.f, 100.f, "%.0f");
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until internal atom falls back to cold while rising."); }
+        if(ImGui::Button("\u2794 CPU##ascension")) { computeAscension(); }
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background
@@ -1723,7 +1734,36 @@ void SurfaceDynamicsVisualization::computeLayers(bool useGPU)
         (useGPU ? "GPU" : "CPU with " + std::to_string(mCPUThreads) + " threads"), computationTime);
 
     // # Ascension calculation
+    computeAscension();
 
+    // # Hull samples calculation
+    mupHullSamples->compute(
+        mupGPUProtein.get(),
+        &mGPUSurfaces,
+        mComputationStartFrame,
+        mComputationProbeRadius,
+        mHullSampleCount,
+        0,
+        [this](float progress) // [0,1]
+        {
+            this->setProgressDispaly("Sample Creation", progress);
+        });
+
+    // # Frame setting
+
+    // Remember which frames were computed
+    mComputedStartFrame = mComputationStartFrame;
+    mComputedEndFrame = mComputationEndFrame;
+
+    // Remember which probe radius was used
+    mComputedProbeRadius = mComputationProbeRadius;
+
+    // Set to first computed frame
+    setFrame(mComputedStartFrame);
+}
+
+void SurfaceDynamicsVisualization::computeAscension()
+{
     // Calculate ascension for visualization
     int atomCount = mupGPUProtein->getAtomCount();
     std::vector<float> ascension; // linear accumulation of ascension for all computed frames and all atoms
@@ -1826,31 +1866,6 @@ void SurfaceDynamicsVisualization::computeLayers(bool useGPU)
 
     // Fill ascension to texture buffer
     mupAscension->fill(ascension, GL_DYNAMIC_DRAW);
-
-    // # Hull samples calculation
-    mupHullSamples->compute(
-        mupGPUProtein.get(),
-        &mGPUSurfaces,
-        mComputationStartFrame,
-        mComputationProbeRadius,
-        mHullSampleCount,
-        0,
-        [this](float progress) // [0,1]
-        {
-            this->setProgressDispaly("Sample Creation", progress);
-        });
-
-    // # Frame setting
-
-    // Remember which frames were computed
-    mComputedStartFrame = mComputationStartFrame;
-    mComputedEndFrame = mComputationEndFrame;
-
-    // Remember which probe radius was used
-    mComputedProbeRadius = mComputationProbeRadius;
-
-    // Set to first computed frame
-    setFrame(mComputedStartFrame);
 }
 
 int SurfaceDynamicsVisualization::getAtomBeneathCursor() const

@@ -75,6 +75,9 @@ private:
     // Compute layers
     void computeLayers(bool useGPU);
 
+    // Compute ascension
+    void computeAscension();
+
     // Get atom beneath cursor. Returns -1 when fails
     int getAtomBeneathCursor() const;
 
@@ -119,10 +122,6 @@ private:
     const glm::vec3 mInternalHullSampleColor = glm::vec3(0.0f, 0.0f, 0.0f);
     const glm::vec3 mSurfaceHullSampleColor = glm::vec3(1.0f, 1.0f, 1.0f);
     const glm::vec3 mFallbackAtomColor = glm::vec3(0.7f, 0.7f, 0.7f);
-    const float mAscensionUpToHotFrameCount = 10.f;
-    const float mAscensionBackToHotFrameCount = 10.f;
-    const float mAscensionUpToColdFrameCount = 10.f;
-    const float mAscensionBackToColdFrameCount = 10.f;
     const float mAscensionColorOffsetAngle = 1.25f * glm::pi<float>();
 
     // Controllable parameters
@@ -173,6 +172,10 @@ private:
     bool mRenderHullSamples = false;
     bool mRenderOutline = true;
     bool mShowTooltips = true;
+    float mAscensionUpToHotFrameCount = 10.f;
+    float mAscensionBackToHotFrameCount = 10.f;
+    float mAscensionUpToColdFrameCount = 10.f;
+    float mAscensionBackToColdFrameCount = 10.f;
 
     // Report output
     std::string mComputeInformation = "No computation info available";
