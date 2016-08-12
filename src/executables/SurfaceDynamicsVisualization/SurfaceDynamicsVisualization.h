@@ -123,7 +123,7 @@ private:
     const float mAscensionBackToHotFrameCount = 10.f;
     const float mAscensionUpToColdFrameCount = 10.f;
     const float mAscensionBackToColdFrameCount = 10.f;
-    const float mAscensionColorOffsetAngle = glm::pi<float>();
+    const float mAscensionColorOffsetAngle = 1.25f * glm::pi<float>();
 
     // Controllable parameters
     bool mRotateCamera = false;
