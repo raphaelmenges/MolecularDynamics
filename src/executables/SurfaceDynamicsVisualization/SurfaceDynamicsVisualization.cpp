@@ -1757,15 +1757,18 @@ void SurfaceDynamicsVisualization::computeLayers(bool useGPU)
                 }
             }
 
+            // Value which will be filled and pushed back
+            float value = 0;
+
             if(i == 0)
             {
                 // Push back value for first frame of ascension (either at surface or not)
-                ascension.push_back(surface ? pi : 0.f);
+                value = surface ? pi : 0.f;
             }
             else
             {
                 // Fetch value of previous frame
-                float previousValue = ascension.at(i - 1);
+                float previousValue = ascension.at(((i-1) * atomCount + a));
 
                 // Decide what to happen with ascension value
                 if(surface) // surface
@@ -1774,19 +1777,17 @@ void SurfaceDynamicsVisualization::computeLayers(bool useGPU)
                     if(previousValue == pi)
                     {
                         // Already hot, stay that way
-                        ascension.push_back(pi);
+                        value = pi;
                     }
                     else if(previousValue < pi)
                     {
                         // Getting hotter, coming from cold
-                        ascension.push_back(
-                            glm::min(pi, previousValue + upToHot));
+                        value = glm::min(pi, previousValue + upToHot);
                     }
-                    else if(previousValue > pi)
+                    else
                     {
-                        // Getting hotter again, was already on its way to becoming cold again
-                        ascension.push_back(
-                            glm::max(pi, previousValue - backToHot));
+                        // Getting hotter again, was already on its way to becoming cold
+                        value = glm::max(pi, previousValue - backToHot);
                     }
                 }
                 else // internal
@@ -1795,24 +1796,27 @@ void SurfaceDynamicsVisualization::computeLayers(bool useGPU)
                     if(previousValue == 0)
                     {
                         // Already cold, stay that way
-                        ascension.push_back(0);
+                        value = 0.f;
                     }
                     else if(previousValue < pi)
                     {
                         // On the way of getting hot a throwback
-                        ascension.push_back(
-                            glm::max(0.f, previousValue - backToCold));
+                        value = glm::max(0.f, previousValue - backToCold);
                     }
-                    else if(previousValue > pi)
+                    else
                     {
                         // Was hot and getting cold again
-                        ascension.push_back(
-                            glm::mod(
-                                glm::min(2.f * pi, previousValue + upToCold),
-                                2.f * pi));
+                        value = glm::mod(
+                                    glm::min(
+                                        2.f * pi,
+                                        previousValue + upToCold),
+                                    2.f * pi);
                     }
                 }
             }
+
+            // Push back calculated value for that atom on that frame
+            ascension.push_back(value);
         }
 
         // Increment counter of frames
