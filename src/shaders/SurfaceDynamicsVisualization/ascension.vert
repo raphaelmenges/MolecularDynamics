@@ -115,10 +115,10 @@ void main()
         float v = 1.0;
 
         // Get color from angle
-        float c = v * s;
-        float x = c * (1-abs(mod(h / (60.0 / twoPi), 2.0) - 1.0));
-        float m = v - c;
         float hDegree = (h / twoPi) * 360.0;
+        float c = v * s;
+        float x = c * (1-abs(mod(hDegree / 60.0, 2.0) - 1.0));
+        float m = v - c;
 
         // Set color
         if(0.0 <= hDegree && hDegree < 60.0)

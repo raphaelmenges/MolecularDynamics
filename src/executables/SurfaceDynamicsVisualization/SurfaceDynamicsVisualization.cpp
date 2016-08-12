@@ -1728,12 +1728,12 @@ void SurfaceDynamicsVisualization::computeLayers(bool useGPU)
     int atomCount = mupGPUProtein->getAtomCount();
     std::vector<float> ascension; // linear accumulation of ascension for all computed frames and all atoms
     ascension.reserve(atomCount * (int)mGPUSurfaces.size());
-    GLuint i = 0; // ascension frame count
+    GLuint frame = 0; // ascension frame, incremented in outer for loop
     float pi = glm::pi<float>();
-    float upToHot = (1.f / mAscensionUpToHotFrameCount) * pi;
-    float backToHot = (1.f / mAscensionBackToHotFrameCount) * pi;
-    float upToCold = (1.f / mAscensionUpToColdFrameCount) * pi;
-    float backToCold = (1.f / mAscensionBackToColdFrameCount) * pi;
+    float upToHot = pi / mAscensionUpToHotFrameCount;
+    float backToHot = pi / mAscensionBackToHotFrameCount;
+    float upToCold = pi / mAscensionUpToColdFrameCount;
+    float backToCold = pi / mAscensionBackToColdFrameCount;
 
     // Go over frames for which surface exist
     for(const auto& rupGPUSurface : mGPUSurfaces)
@@ -1760,15 +1760,16 @@ void SurfaceDynamicsVisualization::computeLayers(bool useGPU)
             // Value which will be filled and pushed back
             float value = 0;
 
-            if(i == 0)
+            // Check for first frame
+            if(frame == 0)
             {
                 // Push back value for first frame of ascension (either at surface or not)
                 value = surface ? pi : 0.f;
             }
             else
             {
-                // Fetch value of previous frame
-                float previousValue = ascension.at(((i-1) * atomCount + a));
+                // Fetch value of previous frame for this atom
+                float previousValue = ascension.at(((frame - 1) * atomCount + a));
 
                 // Decide what to happen with ascension value
                 if(surface) // surface
@@ -1800,7 +1801,7 @@ void SurfaceDynamicsVisualization::computeLayers(bool useGPU)
                     }
                     else if(previousValue < pi)
                     {
-                        // On the way of getting hot a throwback
+                        // A throwback on the way of getting hot
                         value = glm::max(0.f, previousValue - backToCold);
                     }
                     else
@@ -1820,7 +1821,7 @@ void SurfaceDynamicsVisualization::computeLayers(bool useGPU)
         }
 
         // Increment counter of frames
-        i++;
+        frame++;
     }
 
     // Fill ascension to texture buffer
