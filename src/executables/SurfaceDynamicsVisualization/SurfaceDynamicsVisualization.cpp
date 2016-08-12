@@ -446,7 +446,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             mupOutlineAtomIndices->bindAsImage(2, GPUAccess::READ_ONLY);
 
             // Probe radius
-            float probeRadius = mRenderWithProbeRadius ? mProbeRadius : 0.f;
+            float probeRadius = mRenderWithProbeRadius ? mComputedProbeRadius : 0.f;
 
             // Enable stencil test
             glEnable(GL_STENCIL_TEST);
@@ -585,7 +585,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 hullProgram.update("view", mupCamera->getViewMatrix());
                 hullProgram.update("projection", mupCamera->getProjectionMatrix());
                 hullProgram.update("cameraWorldPos", mupCamera->getPosition());
-                hullProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
+                hullProgram.update("probeRadius", mRenderWithProbeRadius ? mComputedProbeRadius : 0.f);
                 hullProgram.update("lightDir", mLightDirection);
                 hullProgram.update("selectedIndex", mSelectedAtom);
                 hullProgram.update("clippingPlane", mClippingPlane);
@@ -626,7 +626,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 ascensionProgram.update("view", mupCamera->getViewMatrix());
                 ascensionProgram.update("projection", mupCamera->getProjectionMatrix());
                 ascensionProgram.update("cameraWorldPos", mupCamera->getPosition());
-                ascensionProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
+                ascensionProgram.update("probeRadius", mRenderWithProbeRadius ? mComputedProbeRadius : 0.f);
                 ascensionProgram.update("lightDir", mLightDirection);
                 ascensionProgram.update("selectedIndex", mSelectedAtom);
                 ascensionProgram.update("clippingPlane", mClippingPlane);
@@ -656,7 +656,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 coloringProgram.update("view", mupCamera->getViewMatrix());
                 coloringProgram.update("projection", mupCamera->getProjectionMatrix());
                 coloringProgram.update("cameraWorldPos", mupCamera->getPosition());
-                coloringProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
+                coloringProgram.update("probeRadius", mRenderWithProbeRadius ? mComputedProbeRadius : 0.f);
                 coloringProgram.update("lightDir", mLightDirection);
                 coloringProgram.update("selectedIndex", mSelectedAtom);
                 coloringProgram.update("clippingPlane", mClippingPlane);
@@ -695,7 +695,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 coloringProgram.update("view", mupCamera->getViewMatrix());
                 coloringProgram.update("projection", mupCamera->getProjectionMatrix());
                 coloringProgram.update("cameraWorldPos", mupCamera->getPosition());
-                coloringProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
+                coloringProgram.update("probeRadius", mRenderWithProbeRadius ? mComputedProbeRadius : 0.f);
                 coloringProgram.update("lightDir", mLightDirection);
                 coloringProgram.update("selectedIndex", mSelectedAtom);
                 coloringProgram.update("clippingPlane", mClippingPlane);
@@ -734,7 +734,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 analysisProgram.update("view", mupCamera->getViewMatrix());
                 analysisProgram.update("projection", mupCamera->getProjectionMatrix());
                 analysisProgram.update("cameraWorldPos", mupCamera->getPosition());
-                analysisProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
+                analysisProgram.update("probeRadius", mRenderWithProbeRadius ? mComputedProbeRadius : 0.f);
                 analysisProgram.update("lightDir", mLightDirection);
                 analysisProgram.update("selectedIndex", mSelectedAtom);
                 analysisProgram.update("clippingPlane", mClippingPlane);
@@ -758,7 +758,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             fallbackProgram.update("view", mupCamera->getViewMatrix());
             fallbackProgram.update("projection", mupCamera->getProjectionMatrix());
             fallbackProgram.update("cameraWorldPos", mupCamera->getPosition());
-            fallbackProgram.update("probeRadius", mRenderWithProbeRadius ? mProbeRadius : 0.f);
+            fallbackProgram.update("probeRadius", mRenderWithProbeRadius ? mComputedProbeRadius : 0.f);
             fallbackProgram.update("lightDir", mLightDirection);
             fallbackProgram.update("selectedIndex", mSelectedAtom);
             fallbackProgram.update("clippingPlane", mClippingPlane);
@@ -906,7 +906,7 @@ void SurfaceDynamicsVisualization::updateComputationInformation(std::string devi
     std::stringstream stream;
     stream <<
         device << " used" << "\n"
-        << "Probe radius: " + std::to_string(mProbeRadius) << "\n"
+        << "Probe radius: " + std::to_string(mComputationProbeRadius) << "\n"
         << "Extracted layers: " << (mExtractLayers ? "yes" : "no") << "\n"
         << "Start frame: " << mComputationStartFrame << " End frame: " << mComputationEndFrame << "\n"
         << "Count of frames: " << (mComputationEndFrame - mComputationStartFrame + 1) << "\n"
@@ -1064,16 +1064,16 @@ void SurfaceDynamicsVisualization::renderGUI()
 
         // Computatiom
         ImGui::Text("[Computation]");
-        ImGui::SliderFloat("Probe Radius", &mProbeRadius, 0.f, 2.f, "%.1f");
+        ImGui::SliderFloat("Probe Radius", &mComputationProbeRadius, 0.f, 2.f, "%.1f");
         ImGui::Checkbox("Extract Layers", &mExtractLayers);
         ImGui::SliderInt("Start Frame", &mComputationStartFrame, mStartFrame, mComputationEndFrame);
         ImGui::SliderInt("End Frame", &mComputationEndFrame, mComputationStartFrame, mEndFrame);
         ImGui::SliderInt("Sample Count", &mHullSampleCount, 0, 1000);
         if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Count of samples used for analysis purposes, not surface extraction."); }
         ImGui::SliderInt("CPU Threads", &mCPUThreads, 1, 24);
-        if(ImGui::Button("\u2794 GPGPU")) { computeLayers(mComputationStartFrame, mComputationEndFrame, true); }
+        if(ImGui::Button("\u2794 GPGPU")) { computeLayers(true); }
         ImGui::SameLine();
-        if(ImGui::Button("\u2794 CPU")) { computeLayers(mComputationStartFrame, mComputationEndFrame, false); }
+        if(ImGui::Button("\u2794 CPU")) { computeLayers(false); }
         ImGui::Separator();
 
         // Report
@@ -1371,7 +1371,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                 mGPUSurfaces.at(mFrame - mComputedStartFrame).get(),
                 mFrame,
                 mLayer,
-                mProbeRadius,
+                mComputedProbeRadius,
                 mSurfaceValidationSeed,
                 mSurfaceValidationAtomSampleCount,
                 mValidationInformation,
@@ -1691,7 +1691,7 @@ bool SurfaceDynamicsVisualization::setFrame(int frame)
     return success;
 }
 
-void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, bool useGPU)
+void SurfaceDynamicsVisualization::computeLayers(bool useGPU)
 {
     // # Surface calculation
 
@@ -1700,21 +1700,21 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
 
     // Do it for all animation frames
     float computationTime = 0;
-    for(int i = startFrame; i <= endFrame; i++)
+    for(int i = mComputationStartFrame; i <= mComputationEndFrame; i++)
     {
         // Process one frame
         if(useGPU)
         {
-            mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(mupGPUProtein.get(), i, mProbeRadius, mExtractLayers)));
+            mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(mupGPUProtein.get(), i, mComputationProbeRadius, mExtractLayers)));
         }
         else
         {
-            mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(mupGPUProtein.get(), i, mProbeRadius, mExtractLayers, true, mCPUThreads)));
+            mGPUSurfaces.push_back(std::move(mupGPUSurfaceExtraction->calculateSurface(mupGPUProtein.get(), i, mComputationProbeRadius, mExtractLayers, true, mCPUThreads)));
         }
         computationTime += mGPUSurfaces.back()->getComputationTime();
 
         // Show progress
-        float progress = (float)(i- startFrame + 1) / (float)(endFrame - startFrame + 1);
+        float progress = (float)(i- mComputationStartFrame + 1) / (float)(mComputationEndFrame - mComputationStartFrame + 1);
         setProgressDispaly("Surface Extraction", progress);
     }
 
@@ -1800,8 +1800,8 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
     mupHullSamples->compute(
         mupGPUProtein.get(),
         &mGPUSurfaces,
-        mComputedStartFrame,
-        mProbeRadius,
+        mComputationStartFrame,
+        mComputationProbeRadius,
         mHullSampleCount,
         0,
         [this](float progress) // [0,1]
@@ -1812,11 +1812,14 @@ void SurfaceDynamicsVisualization::computeLayers(int startFrame, int endFrame, b
     // # Frame setting
 
     // Remember which frames were computed
-    mComputedStartFrame = startFrame;
-    mComputedEndFrame = endFrame;
+    mComputedStartFrame = mComputationStartFrame;
+    mComputedEndFrame = mComputationEndFrame;
+
+    // Remember which probe radius was used
+    mComputedProbeRadius = mComputationProbeRadius;
 
     // Set to first computed frame
-    setFrame(startFrame);
+    setFrame(mComputedStartFrame);
 }
 
 int SurfaceDynamicsVisualization::getAtomBeneathCursor() const

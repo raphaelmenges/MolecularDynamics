@@ -73,7 +73,7 @@ private:
     bool setFrame(int frame);
 
     // Compute layers
-    void computeLayers(int startFrame, int endFrame, bool useGPU);
+    void computeLayers(bool useGPU);
 
     // Get atom beneath cursor. Returns -1 when fails
     int getAtomBeneathCursor() const;
@@ -140,7 +140,7 @@ private:
     bool mShowSurfaceExtractionWindow = true;
     bool mShowCameraWindow = true;
     bool mShowInformationWindow = true;
-    float mProbeRadius = 1.4f;
+    float mComputationProbeRadius = 1.4f;
     int mCPUThreads = 8;
     int mSurfaceValidationAtomSampleCount = 20;
     bool mShowValidationSamples = true;
@@ -197,6 +197,7 @@ private:
     float mFramePlayTime = 0; // time of displaying a molecule state at playing the animation
     int mComputedStartFrame = -1;
     int mComputedEndFrame = -1;
+    float mComputedProbeRadius = 0.f;
     bool mFramebuffersExist = false;
     int mWindowWidth;
     int mWindowHeight;
