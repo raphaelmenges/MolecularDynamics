@@ -24,8 +24,8 @@ layout(std430, binding = 1) restrict readonly buffer TrajectoryBuffer
    Position trajectory[];
 };
 
-// Ascension (angle in HSV)
-layout(std430, binding = 2) restrict readonly buffer ColoringBuffer
+// Ascension (angle in of hue)
+layout(std430, binding = 2) restrict readonly buffer AscensionBuffer
 {
    float ascension[];
 };
@@ -104,10 +104,48 @@ void main()
     }
     else
     {
+        // Definition of values
+        const float twoPi = 2.0 * 3.14159265359;
+
+        // Values
         float angle = ascension[(ascensionFrame * atomCount) + int(gl_VertexID)];
         angle += ascensionColorOffsetAngle;
-        angle %= 2 * 3.14159265359;
-        vertColor = vec3(angle,0,0);
+        float h = mod(angle, twoPi);
+        float s = 1.0;
+        float v = 1.0;
+
+        // Get color from angle
+        float c = v * s;
+        float x = c * (1-abs(mod(h / (60.0 / twoPi), 2.0) - 1.0));
+        float m = v - c;
+        float hDegree = (h / twoPi) * 360.0;
+
+        // Set color
+        if(0.0 <= hDegree && hDegree < 60.0)
+        {
+            vertColor = vec3(c, x, 0);
+        }
+        else if(60.0 <= hDegree && hDegree < 120.0)
+        {
+            vertColor = vec3(x, c, 0);
+        }
+        else if(120.0 <= hDegree && hDegree < 180.0)
+        {
+            vertColor = vec3(0, c, x);
+        }
+        else if(180.0 <= hDegree && hDegree < 240.0)
+        {
+            vertColor = vec3(0, x, c);
+        }
+        else if(240.0 <= hDegree && hDegree < 300.0)
+        {
+            vertColor = vec3(x, 0, c);
+        }
+        else if(300.0 <= hDegree && hDegree < 360.0)
+        {
+            vertColor = vec3(c, 0, x);
+        }
+        vertColor += m;
     }
 
     // Set index

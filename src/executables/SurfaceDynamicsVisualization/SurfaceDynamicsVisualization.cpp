@@ -231,6 +231,9 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     // Construct GPUSurfaceExtraction object after OpenGL has been initialized
     mupGPUSurfaceExtraction = std::unique_ptr<GPUSurfaceExtraction>(new GPUSurfaceExtraction);
 
+    // Ascension
+    mupAscension = std::unique_ptr<GPUBuffer<GLfloat> >(new GPUBuffer<GLfloat>);
+
     // Hull samples
     mupHullSamples = std::unique_ptr<GPUHullSamples>(new GPUHullSamples());
 
@@ -619,7 +622,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             case SurfaceRendering::ASCENSION:
 
                 // Bind ascension buffer
-                mAscension.bind(2);
+                mupAscension->bind(2);
 
                 // Prepare shader program
                 ascensionProgram.use();
@@ -1817,7 +1820,7 @@ void SurfaceDynamicsVisualization::computeLayers(bool useGPU)
     }
 
     // Fill ascension to texture buffer
-    mAscension.fill(ascension, GL_DYNAMIC_DRAW);
+    mupAscension->fill(ascension, GL_DYNAMIC_DRAW);
 
     // # Hull samples calculation
     mupHullSamples->compute(

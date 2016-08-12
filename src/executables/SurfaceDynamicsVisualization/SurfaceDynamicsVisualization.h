@@ -206,7 +206,7 @@ private:
     std::unique_ptr<GPUTextureBuffer> mupOutlineAtomIndices;
     std::set<GLuint> mAnalyseAtoms;
     int mNextAnalyseAtomIndex = 0;
-    GPUBuffer<GLfloat> mAscension; // values have range [0..2Pi]
+    std::unique_ptr<GPUBuffer<GLfloat> > mupAscension; // values have range [0..2Pi]
     std::unique_ptr<Path> mupPath;
     std::unique_ptr<GPUHullSamples> mupHullSamples;
 
