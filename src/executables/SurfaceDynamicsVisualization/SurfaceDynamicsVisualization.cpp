@@ -6,6 +6,7 @@
 #include "SimpleLoader.h"
 #include "imgui/imgui.h"
 #include "imgui/examples/opengl3_example/imgui_impl_glfw_gl3.h"
+#include "text-csv/include/text/csv/ostream.hpp"
 #include <glm/gtx/component_wise.hpp>
 #include <sstream>
 #include <iomanip>
@@ -18,6 +19,8 @@
 
 SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
 {
+    // TODO: Test text-csv
+
     // # Setup members
     mCameraDeltaRotation = glm::vec2(0,0);
     mCameraRotationSmoothTime = 1.f;
