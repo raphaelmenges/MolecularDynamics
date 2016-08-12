@@ -296,6 +296,9 @@ void SurfaceDynamicsVisualization::renderLoop()
     ShaderProgram analysisProgram("/SurfaceDynamicsVisualization/analysis.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
     ShaderProgram fallbackProgram("/SurfaceDynamicsVisualization/fallback.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
 
+    // Shader program to mark surface atoms
+    ShaderProgram surfaceMarksProgram("/SurfaceDynamicsVisualization/point.vert", "/SurfaceDynamicsVisualization/point.geom", "/SurfaceDynamicsVisualization/point.frag");
+
     // Shader program for screenfilling quad rendering
     ShaderProgram screenFillingProgram("/SurfaceDynamicsVisualization/screenfilling.vert", "/SurfaceDynamicsVisualization/screenfilling.geom", "/SurfaceDynamicsVisualization/screenfilling.frag");
 
@@ -487,6 +490,56 @@ void SurfaceDynamicsVisualization::renderLoop()
             glDisable(GL_STENCIL_TEST);
         }
 
+        // Render point inside of surface atoms for marking
+        if(frameComputed() && mMarkSurfaceAtoms)
+        {
+            // Bind protein
+            mupGPUProtein->bind(0, 1);
+
+            // Bind surface indices
+            mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 2);
+
+            // Setup shader
+            glPointSize(mSurfaceMarkPointSize);
+            surfaceMarksProgram.use();
+            surfaceMarksProgram.update("view", mupCamera->getViewMatrix());
+            surfaceMarksProgram.update("projection", mupCamera->getProjectionMatrix());
+            surfaceMarksProgram.update("clippingPlane", mClippingPlane);
+            surfaceMarksProgram.update("frame", mFrame);
+            surfaceMarksProgram.update("atomCount", mupGPUProtein->getAtomCount());
+            surfaceMarksProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+            surfaceMarksProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+            surfaceMarksProgram.update("frameCount", mupGPUProtein->getFrameCount());
+            surfaceMarksProgram.update("color", glm::vec4(mSurfaceAtomColor, 1.f));
+            glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
+        }
+
+        // Hull samples
+        if(frameComputed() && mRenderHullSamples)
+        {
+            mupHullSamples->drawSamples(
+                mFrame,
+                mSamplePointSize,
+                mInternalHullSampleColor,
+                mSurfaceHullSampleColor,
+                mupCamera->getViewMatrix(),
+                mupCamera->getProjectionMatrix(),
+                mClippingPlane);
+        }
+
+        // Drawing of path (does not care for depth)
+        if(mShowPath)
+        {
+            mupPath->draw(
+                mFrame,
+                mPathFrameRadius,
+                mupCamera->getViewMatrix(),
+                mupCamera->getProjectionMatrix(),
+                mPastPathColor,
+                mFuturePathColor,
+                mPathPointSize);
+        }
+
         // Drawing of surface validation before molecules, so sample points at same z coordinate as impostor are in front
         if(mShowValidationSamples)
         {
@@ -534,32 +587,6 @@ void SurfaceDynamicsVisualization::renderLoop()
 
             glBindVertexArray(0);
             glEnable(GL_DEPTH_TEST);
-        }
-
-        // Hull samples
-        if(frameComputed() && mRenderHullSamples)
-        {
-            mupHullSamples->drawSamples(
-                mFrame,
-                mSamplePointSize,
-                mInternalHullSampleColor,
-                mSurfaceHullSampleColor,
-                mupCamera->getViewMatrix(),
-                mupCamera->getProjectionMatrix(),
-                mClippingPlane);
-        }
-
-        // Drawing of path (does not care for depth)
-        if(mShowPath)
-        {
-            mupPath->draw(
-                mFrame,
-                mPathFrameRadius,
-                mupCamera->getViewMatrix(),
-                mupCamera->getProjectionMatrix(),
-                mPastPathColor,
-                mFuturePathColor,
-                mPathPointSize);
         }
 
         // Unbind framebuffer for overlay
@@ -1071,7 +1098,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::SliderInt("Sample Count", &mHullSampleCount, 0, 1000);
         if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Count of samples used for analysis purposes, not surface extraction."); }
         ImGui::SliderInt("CPU Threads", &mCPUThreads, 1, 24);
-        if(ImGui::Button("\u2794 GPGPU#surface")) { computeLayers(true); }
+        if(ImGui::Button("\u2794 GPGPU##surface")) { computeLayers(true); }
         ImGui::SameLine();
         if(ImGui::Button("\u2794 CPU##surface")) { computeLayers(false); }
 
@@ -1301,6 +1328,22 @@ void SurfaceDynamicsVisualization::renderGUI()
                 if(ImGui::Button("Show Hull Samples", ImVec2(208, 22)))
                 {
                     mRenderHullSamples = true;
+                }
+            }
+
+            // Show / hide surface atoms' mark
+            if(mMarkSurfaceAtoms)
+            {
+                if(ImGui::Button("Unmark Surface Atoms", ImVec2(208, 22)))
+                {
+                    mMarkSurfaceAtoms = false;
+                }
+            }
+            else
+            {
+                if(ImGui::Button("Mark Surface Atoms", ImVec2(208, 22)))
+                {
+                    mMarkSurfaceAtoms = true;
                 }
             }
         }

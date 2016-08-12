@@ -123,6 +123,7 @@ private:
     const glm::vec3 mSurfaceHullSampleColor = glm::vec3(1.0f, 1.0f, 1.0f);
     const glm::vec3 mFallbackAtomColor = glm::vec3(0.7f, 0.7f, 0.7f);
     const float mAscensionColorOffsetAngle = 1.25f * glm::pi<float>();
+    const float mSurfaceMarkPointSize = 5.f;
 
     // Controllable parameters
     bool mRotateCamera = false;
@@ -176,6 +177,7 @@ private:
     float mAscensionBackToHotFrameCount = 10.f;
     float mAscensionUpToColdFrameCount = 10.f;
     float mAscensionBackToColdFrameCount = 10.f;
+    bool mMarkSurfaceAtoms = false;
 
     // Report output
     std::string mComputeInformation = "No computation info available";
