@@ -115,17 +115,15 @@ private:
     const glm::vec4 mOutlineColor = glm::vec4(1.f, 1.f, 0.f, 0.9f);
     const glm::vec3 mPastPathColor = glm::vec3(1.f, 0.f, 0.f);
     const glm::vec3 mFuturePathColor = glm::vec3(0.f, 1.f, 0.f);
-    const glm::vec3 mAscensionHotColor = glm::vec3(1.f, 0.f, 0.f);
-    const glm::vec3 mAscensionColdColor = glm::vec3(1.f, 1.f, 0.f);
-    const glm::vec3 mAscensionInternalColor = glm::vec3(0.f, 0.f, 1.f);
-    const int mAscensionMaxValue = 100;
-    const int mAscensionHotUpSpeed = 5;
-    const int mAscensionCoolDownSpeed = 3;
-    const int mAscensionBecomingInternalSpeed = 25;
     const int mCameraSmoothFrameRadius = 10;
     const glm::vec3 mInternalHullSampleColor = glm::vec3(0.0f, 0.0f, 0.0f);
     const glm::vec3 mSurfaceHullSampleColor = glm::vec3(1.0f, 1.0f, 1.0f);
     const glm::vec3 mFallbackAtomColor = glm::vec3(0.7f, 0.7f, 0.7f);
+    const float mAscensionUpToHotFrameCount = 10.f;
+    const float mAscensionBackToHotFrameCount = 10.f;
+    const float mAscensionUpToColdFrameCount = 10.f;
+    const float mAscensionBackToColdFrameCount = 10.f;
+    const float mAscensionColorOffsetAngle = glm::pi<float>();
 
     // Controllable parameters
     bool mRotateCamera = false;
@@ -208,7 +206,7 @@ private:
     std::unique_ptr<GPUTextureBuffer> mupOutlineAtomIndices;
     std::set<GLuint> mAnalyseAtoms;
     int mNextAnalyseAtomIndex = 0;
-    std::unique_ptr<GPUTextureBuffer> mupAscension; // per frame and atom there are two values: how hot and how cold (cooling down on surface)
+    GPUBuffer<GLfloat> mAscension; // values have range [0..2Pi]
     std::unique_ptr<Path> mupPath;
     std::unique_ptr<GPUHullSamples> mupHullSamples;
 

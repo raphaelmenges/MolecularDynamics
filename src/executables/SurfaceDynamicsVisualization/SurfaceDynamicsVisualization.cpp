@@ -234,9 +234,6 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     // Hull samples
     mupHullSamples = std::unique_ptr<GPUHullSamples>(new GPUHullSamples());
 
-    // Initialize GPUTextureBuffer for ascension with empty one
-    mupAscension = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(0));
-
     // Prepare validation of the surface
     mupSurfaceValidation = std::unique_ptr<SurfaceValidation>(new SurfaceValidation());
 
@@ -621,8 +618,8 @@ void SurfaceDynamicsVisualization::renderLoop()
 
             case SurfaceRendering::ASCENSION:
 
-                // Bind texture buffer with ascension information as image
-                mupAscension->bindAsImage(2, GPUAccess::READ_ONLY);
+                // Bind ascension buffer
+                mAscension.bind(2);
 
                 // Prepare shader program
                 ascensionProgram.use();
@@ -640,11 +637,8 @@ void SurfaceDynamicsVisualization::renderLoop()
                 ascensionProgram.update("frameCount", mupGPUProtein->getFrameCount());
                 ascensionProgram.update("depthDarkeningStart", mDepthDarkeningStart);
                 ascensionProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
-                ascensionProgram.update("hotColor", mAscensionHotColor);
-                ascensionProgram.update("coldColor", mAscensionColdColor);
-                ascensionProgram.update("internalColor", mAscensionInternalColor);
-                ascensionProgram.update("ascensionFrame", mFrame - mComputedStartFrame); // TODO decide about better structure
-                ascensionProgram.update("ascensionMaxValue", mAscensionMaxValue);
+                ascensionProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
+                ascensionProgram.update("ascensionColorOffsetAngle", mAscensionColorOffsetAngle);
                 glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
 
                 break;
@@ -1728,9 +1722,15 @@ void SurfaceDynamicsVisualization::computeLayers(bool useGPU)
     // # Ascension calculation
 
     // Calculate ascension for visualization
-    std::vector<GLuint> ascension; // linear accumulation of ascension for all computed frames and all atoms
-    GLuint i = 0; // ascension frame count
     int atomCount = mupGPUProtein->getAtomCount();
+    std::vector<float> ascension; // linear accumulation of ascension for all computed frames and all atoms
+    ascension.reserve(atomCount * (int)mGPUSurfaces.size());
+    GLuint i = 0; // ascension frame count
+    float pi = glm::pi<float>();
+    float upToHot = (1.f / mAscensionUpToHotFrameCount) * pi;
+    float backToHot = (1.f / mAscensionBackToHotFrameCount) * pi;
+    float upToCold = (1.f / mAscensionUpToColdFrameCount) * pi;
+    float backToCold = (1.f / mAscensionBackToColdFrameCount) * pi;
 
     // Go over frames for which surface exist
     for(const auto& rupGPUSurface : mGPUSurfaces)
@@ -1756,38 +1756,58 @@ void SurfaceDynamicsVisualization::computeLayers(bool useGPU)
 
             if(i == 0)
             {
-                // Push back value for first frame of ascension
-                ascension.push_back(0.f); // hot
-                ascension.push_back(surface ? mAscensionMaxValue : 0.f); // cold
+                // Push back value for first frame of ascension (either at surface or not)
+                ascension.push_back(surface ? pi : 0.f);
             }
             else
             {
-                int index = 2 * ((i-1) * atomCount + a);
-                int previousHot = ascension.at(index);
-                int previousCold = ascension.at(index + 1);
+                // Fetch value of previous frame
+                float previousValue = ascension.at(i - 1);
 
-                if(surface)
+                // Decide what to happen with ascension value
+                if(surface) // surface
                 {
-                    // Either getting hotter or cooling down
-                    if((previousHot >= mAscensionMaxValue) || (previousCold > 0))
+                    // Decide whether increase or decrease
+                    if(previousValue == pi)
                     {
-                        // Increase cold, descrease hot
-                        ascension.push_back((GLuint)glm::max(0, previousHot - mAscensionCoolDownSpeed)); // hot
-                        ascension.push_back((GLuint)glm::min(mAscensionMaxValue, previousCold + mAscensionCoolDownSpeed)); // cold
+                        // Already hot, stay that way
+                        ascension.push_back(pi);
                     }
-                    else
+                    else if(previousValue < pi)
                     {
-                        // Getting hotter
-                        ascension.push_back((GLuint)glm::min(mAscensionMaxValue, previousHot + mAscensionCoolDownSpeed)); // hot
-                        ascension.push_back((GLuint)0); // cold
-
+                        // Getting hotter, coming from cold
+                        ascension.push_back(
+                            glm::min(pi, previousValue + upToHot));
+                    }
+                    else if(previousValue > pi)
+                    {
+                        // Getting hotter again, was already on its way to becoming cold again
+                        ascension.push_back(
+                            glm::max(pi, previousValue - backToHot));
                     }
                 }
-                else
+                else // internal
                 {
-                    // No more surface, decrease hot and cold
-                    ascension.push_back((GLuint)glm::max(0, previousHot - mAscensionBecomingInternalSpeed)); // hot
-                    ascension.push_back((GLuint)glm::max(0, previousCold - mAscensionBecomingInternalSpeed)); // cold
+                    // Decide whether increase or decrease
+                    if(previousValue == 0)
+                    {
+                        // Already cold, stay that way
+                        ascension.push_back(0);
+                    }
+                    else if(previousValue < pi)
+                    {
+                        // On the way of getting hot a throwback
+                        ascension.push_back(
+                            glm::max(0.f, previousValue - backToCold));
+                    }
+                    else if(previousValue > pi)
+                    {
+                        // Was hot and getting cold again
+                        ascension.push_back(
+                            glm::mod(
+                                glm::min(2.f * pi, previousValue + upToCold),
+                                2.f * pi));
+                    }
                 }
             }
         }
@@ -1797,7 +1817,7 @@ void SurfaceDynamicsVisualization::computeLayers(bool useGPU)
     }
 
     // Fill ascension to texture buffer
-    mupAscension = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(ascension));
+    mAscension.fill(ascension, GL_DYNAMIC_DRAW);
 
     // # Hull samples calculation
     mupHullSamples->compute(
