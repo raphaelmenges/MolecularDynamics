@@ -64,7 +64,7 @@ void main()
     specular *= 0.5 * lighting;
 
     // Some "ambient" lighting combined with specular
-    vec3 ambientColor = vec3(0.4, 0.0, 0.5);
+    vec3 ambientColor = vec3(0.5, 0.5, 0.5);
     vec3 finalColor = mix(color * mix(ambientColor, vec3(1.0, 1.0, 1.0), lighting), vec3(1,1,1), specular);
 
     // Output color

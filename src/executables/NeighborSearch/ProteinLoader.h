@@ -31,7 +31,6 @@ public:
     //             METHODS                 //
     //_____________________________________//
     void loadPDB(std::string filePath, SimpleProtein &protein, glm::vec3 &minPosition, glm::vec3 &maxPosition);
-
 };
 
 

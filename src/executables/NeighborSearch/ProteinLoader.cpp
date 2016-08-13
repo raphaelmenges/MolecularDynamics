@@ -130,7 +130,7 @@ void ProteinLoader::loadPDB(std::string filePath, SimpleProtein &protein, glm::v
             glm::vec3 position = positions.at(i);
             float radius = radii.at(i);
 
-            Logger::instance().print("Atom " + name + " (" + elementName + ") pos: (" + std::to_string(position.x) + ", " + std::to_string(position.y) + ", " + std::to_string(position.z) + ") rad: " + std::to_string(radius));
+            //Logger::instance().print("Atom " + name + " (" + elementName + ") pos: (" + std::to_string(position.x) + ", " + std::to_string(position.y) + ", " + std::to_string(position.z) + ") rad: " + std::to_string(radius));
 
             protein.createAtom(name, position, radius);
         }
