@@ -1509,7 +1509,7 @@ void SurfaceDynamicsVisualization::renderGUI()
             ImGui::Text(std::string("Surface Amount: " + std::to_string(floatSampleAmount.at(mFrame - mComputedStartFrame) * 100) + " percent").c_str());
 
             // Surface area of molecule
-            ImGui::Text(std::string("Approximate Surface Area: " + std::to_string(approximateSurfaceArea()) + "\u212b²").c_str());
+            ImGui::Text(std::string("Approximate Surface Area: " + std::to_string(approximateSurfaceArea()) + " \u212b²").c_str());
 
             ImGui::Separator();
 
@@ -1946,16 +1946,13 @@ float SurfaceDynamicsVisualization::approximateSurfaceArea() const
 {
     // Go over all surface atoms' radii
     float surface = 0;
-    auto atomIndices = mGPUSurfaces.at(mFrame - mComputedStartFrame)->getSurfaceIndices(0);
-    for(int i = 0; i < atomIndices.size(); i++)
+    auto surfaceIndices = mGPUSurfaces.at(mFrame - mComputedStartFrame)->getSurfaceIndices(0);
+    for(int index : surfaceIndices)
     {
-        // Extract atom index
-        int index = atomIndices.at(i);
-
         // Add surface
         float radius = mupGPUProtein->getRadii()->at(index);
         float atomSurface = 4.f * glm::pi<float>() * radius * radius;
-        surface += atomSurface * ((float)mupHullSamples->getSurfaceSampleCount(mFrame, index) / (float)mupHullSamples->getProteinSampleCount());
+        surface += atomSurface * ((float)mupHullSamples->getSurfaceSampleCount(mFrame, index) / (float)mupHullSamples->getSampleCount());
     }
 
     return surface;

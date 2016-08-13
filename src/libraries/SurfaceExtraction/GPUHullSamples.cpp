@@ -236,8 +236,3 @@ int GPUHullSamples::getSampleCount(int atomCount) const
 {
     return mSampleCount * atomCount;
 }
-
-int GPUHullSamples::getSampleCount() const
-{
-    return mSampleCount;
-}

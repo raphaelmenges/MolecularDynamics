@@ -64,10 +64,7 @@ public:
     int getSurfaceSampleCount(int frame) const;
 
     // Get count of samples for a given count of atoms
-    int getSampleCount(int atomCount) const;
-
-    // Get count of samples for a single atom in the protein
-    int getSampleCount() const;
+    int getSampleCount(int atomCount = 1) const;
 
 private:
 
