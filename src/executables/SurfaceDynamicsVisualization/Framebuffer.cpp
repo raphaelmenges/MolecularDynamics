@@ -1,6 +1,6 @@
 #include "Framebuffer.h"
 
-Framebuffer::Framebuffer(int width, int height)
+Framebuffer::Framebuffer(int width, int height, bool superSampling)
 {
     // Generate framebuffer and renderbuffer for depth and stencil tests
     glGenFramebuffers(1, &mFramebuffer);
@@ -10,7 +10,7 @@ Framebuffer::Framebuffer(int width, int height)
     glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
 
     // Create render buffer for depth and stencil and save width and height
-    resize(width, height);
+    resize(width, height, superSampling);
 
     // Unbind framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -29,6 +29,7 @@ Framebuffer::~Framebuffer()
 
 void Framebuffer::bind() const
 {
+    glViewport(0, 0, mWidth, mHeight);
     glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
 }
 
@@ -39,6 +40,14 @@ void Framebuffer::unbind() const
 
 void Framebuffer::resize(int width, int height)
 {
+    // Apply super sampling if indicated
+    if(mSuperSampling)
+    {
+        width *= mSuperSamplingMultiplier;
+        height *= mSuperSamplingMultiplier;
+    }
+
+    // Only continue when changed
     if(width != mWidth || height != mHeight)
     {
         // Save width and height
@@ -71,6 +80,12 @@ void Framebuffer::resize(int width, int height)
                 NULL);
             glBindTexture(GL_TEXTURE_2D, 0);
         }
+}
+
+void Framebuffer::resize(int width, int height, bool superSampling)
+{
+    mSuperSampling = superSampling;
+    resize(width, height);
 }
 
 void Framebuffer::addAttachment(ColorFormat colorFormat)

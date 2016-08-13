@@ -180,7 +180,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     mProteinMaxExtent = upProtein->getMax();
 
     // # Prepare framebuffers for rendering
-    mupMoleculeFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight));
+    mupMoleculeFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight, mSuperSampling));
     mupMoleculeFramebuffer->bind();
     mupMoleculeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA); // color
     mupMoleculeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGB); // picking index
@@ -439,9 +439,6 @@ void SurfaceDynamicsVisualization::renderLoop()
 
         // ### OVERLAY RENDERING ###################################################################################
 
-        // Prepare for rendering by setting viewport to full window resolution
-        glViewport(0, 0, mWindowWidth, mWindowHeight);
-
         // # Fill overlay framebuffer
         mupOverlayFramebuffer->bind();
         mupOverlayFramebuffer->resize(mWindowWidth, mWindowHeight);
@@ -602,7 +599,7 @@ void SurfaceDynamicsVisualization::renderLoop()
 
         // # Fill molecule framebuffer
         mupMoleculeFramebuffer->bind();
-        mupMoleculeFramebuffer->resize(mWindowWidth, mWindowHeight);
+        mupMoleculeFramebuffer->resize(mWindowWidth, mWindowHeight, mSuperSampling);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Bind buffers of radii and trajectory for rendering
@@ -816,6 +813,9 @@ void SurfaceDynamicsVisualization::renderLoop()
         mupMoleculeFramebuffer->unbind();
 
         // ### COMPOSITING #########################################################################################
+
+        // Prepare viewport
+        glViewport(0, 0, mWindowWidth, mWindowHeight);
 
         // # Fill standard framebuffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1755,6 +1755,9 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::SliderFloat("Depth Darkening Start", &mDepthDarkeningStart, 0, mDepthDarkeningEnd, "%.1f");
         ImGui::SliderFloat("Depth Darkening End", &mDepthDarkeningEnd, mDepthDarkeningStart, mDepthDarkeningMaxEnd, "%.1f");
 
+        // SuperSampling
+        ImGui::Checkbox("Use Super Sampling", &mSuperSampling);
+
         ImGui::End();
         ImGui::PopStyleColor(); // window background
     }
@@ -1980,11 +1983,20 @@ int SurfaceDynamicsVisualization::getAtomBeneathCursor() const
     // Get position of cursor
     double cursorX, cursorY;
     glfwGetCursorPos(mpWindow, &cursorX, &cursorY);
+    int windowHeight = mWindowHeight;
+
+    // When super sampling is used, multiply cursor positions
+    if(mupMoleculeFramebuffer->superSampling())
+    {
+        cursorX *= mupMoleculeFramebuffer->getSuperSamplingMultiplier();
+        cursorY *= mupMoleculeFramebuffer->getSuperSamplingMultiplier();
+        windowHeight *= mupMoleculeFramebuffer->getSuperSamplingMultiplier();
+    }
 
     // Get pick index
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     unsigned char data[3];
-    glReadPixels((int)cursorX, mWindowHeight - (int)cursorY, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glReadPixels((int)cursorX, windowHeight - (int)cursorY, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, data);
     int index =
         data[0] +
         data[1] * 256 +

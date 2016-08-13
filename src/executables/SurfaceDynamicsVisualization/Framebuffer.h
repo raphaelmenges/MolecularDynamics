@@ -19,7 +19,7 @@ public:
     };
 
     // Constructor
-    Framebuffer(int width, int height);
+    Framebuffer(int width, int height, bool superSampling = false);
 
     // Destructor
     virtual ~Framebuffer();
@@ -32,12 +32,19 @@ public:
 
     // Resizing (needs bound framebuffer)
     void resize(int width, int height);
+    void resize(int width, int height, bool superSampling);
 
     // Add attachment (needs bound framebuffer)
     void addAttachment(ColorFormat colorFormat);
 
     // Get texture handle of color attachment
     GLuint getAttachment(int number) const { return colorAttachments.at(number).first; }
+
+    // Get whether using super sampling
+    bool superSampling() const { return mSuperSampling; }
+
+    // Get multiplier of super sampling
+    int getSuperSamplingMultiplier() const { return mSuperSamplingMultiplier; }
 
 private:
 
@@ -50,6 +57,8 @@ private:
     GLuint mDepthStencil;
     int mWidth = -1;
     int mHeight = -1;
+    bool mSuperSampling = false;
+    const int mSuperSamplingMultiplier = 4;
 };
 
 #endif // FRAMEBUFFER_H

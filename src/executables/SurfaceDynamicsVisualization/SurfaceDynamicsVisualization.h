@@ -183,6 +183,7 @@ private:
     float mAscensionBackToColdFrameCount = 10.f;
     bool mMarkSurfaceAtoms = false;
     bool mRepeatOnlyComputed = false;
+    bool mSuperSampling = true;
 
     // Report output
     std::string mComputeInformation = "No computation info available";
