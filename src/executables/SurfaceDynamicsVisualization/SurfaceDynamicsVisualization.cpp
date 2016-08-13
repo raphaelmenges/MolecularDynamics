@@ -1111,7 +1111,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.0f, 0.0f, 0.75f)); // window background
         ImGui::Begin("Computation", NULL, 0);
 
-        // Computatiom
+        // Surface
         ImGui::Text("[Surface]");
         ImGui::SliderFloat("Probe Radius", &mComputationProbeRadius, 0.f, 3.f, "%.1f");
         if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Radius of probe used for surface extraction."); }
@@ -1119,15 +1119,13 @@ void SurfaceDynamicsVisualization::renderGUI()
         if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Incremental usage of surface extraction."); }
         ImGui::SliderInt("Start Frame", &mComputationStartFrame, mStartFrame, mComputationEndFrame);
         ImGui::SliderInt("End Frame", &mComputationEndFrame, mComputationStartFrame, mEndFrame);
-        ImGui::SliderInt("Sample Count", &mHullSampleCount, 0, 1000);
-        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Count of samples used for analysis purposes, not surface extraction."); }
         ImGui::SliderInt("CPU Threads", &mCPUThreads, 1, 24);
         if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Count of threads utilized by CPU implementation."); }
         if(ImGui::Button("\u2794 GPGPU##surface")) { computeLayers(true); }
-        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Compute surface with OpenGL implementation."); }
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Compute surface with OpenGL implementation, plus hull samples and ascension."); }
         ImGui::SameLine();
         if(ImGui::Button("\u2794 CPU##surface")) { computeLayers(false); }
-        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Compute surface with C++ implementation."); }
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Compute surface with C++ implementation, plus hull samples and ascension."); }
 
         // Report
         if (ImGui::CollapsingHeader("Report"))
@@ -1136,6 +1134,15 @@ void SurfaceDynamicsVisualization::renderGUI()
         }
         ImGui::Separator();
 
+        // Analysis
+        ImGui::Text("[Anaylsis]");
+        ImGui::SliderInt("Atom Sample Count", &mHullSampleCount, 0, 1000);
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Count of samples per atom used for analysis purposes, not surface extraction."); }
+        if(ImGui::Button("\u2794 GPGPU##analysis")) { computeHullSamples(); }
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Compute hull samples."); }
+        ImGui::Separator();
+
+        // Ascension
         ImGui::Text("[Ascension]");
         ImGui::SliderFloat("Hot Up", &mAscensionUpToHotFrameCount, 1.f, 100.f, "%.0f");
         if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until surface atom gets from cold to hot."); }
@@ -1820,28 +1827,18 @@ void SurfaceDynamicsVisualization::computeLayers(bool useGPU)
 
         // Show progress
         float progress = (float)(i- mComputationStartFrame + 1) / (float)(mComputationEndFrame - mComputationStartFrame + 1);
-        setProgressDispaly("Surface Extraction", progress);
+        setProgressDispaly("Surface", progress);
     }
 
     // Update compute information
     updateComputationInformation(
         (useGPU ? "GPU" : "CPU with " + std::to_string(mCPUThreads) + " threads"), computationTime);
 
-    // # Ascension calculation
-    computeAscension();
+    // Hull sample computation
+    computeHullSamples();
 
-    // # Hull samples calculation
-    mupHullSamples->compute(
-        mupGPUProtein.get(),
-        &mGPUSurfaces,
-        mComputationStartFrame,
-        mComputationProbeRadius,
-        mHullSampleCount,
-        0,
-        [this](float progress) // [0,1]
-        {
-            this->setProgressDispaly("Sample Creation", progress);
-        });
+    // Ascension computation
+    computeAscension();
 
     // # Frame setting
 
@@ -1854,6 +1851,21 @@ void SurfaceDynamicsVisualization::computeLayers(bool useGPU)
 
     // Set to first computed frame
     setFrame(mComputedStartFrame);
+}
+
+void SurfaceDynamicsVisualization::computeHullSamples()
+{
+    mupHullSamples->compute(
+        mupGPUProtein.get(),
+        &mGPUSurfaces,
+        mComputationStartFrame,
+        mComputationProbeRadius,
+        mHullSampleCount,
+        0,
+        [this](float progress) // [0,1]
+        {
+            this->setProgressDispaly("Hull Samples", progress);
+        });
 }
 
 void SurfaceDynamicsVisualization::computeAscension()

@@ -75,6 +75,9 @@ private:
     // Compute layers
     void computeLayers(bool useGPU);
 
+    // Compute hull samples
+    void computeHullSamples();
+
     // Compute ascension
     void computeAscension();
 
@@ -171,7 +174,7 @@ private:
     SurfaceRendering mSurfaceRendering = HULL;
     Background mBackground = COMPUTERVISUALISTIK;
     bool mAutoCenterCamera = false;
-    int mHullSampleCount = 100;
+    int mHullSampleCount = 100; // sample count per atom
     bool mRenderHullSamples = false;
     bool mRenderOutline = true;
     bool mShowTooltips = true;
