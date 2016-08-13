@@ -121,7 +121,7 @@ private:
     const glm::vec4 mOutlineColor = glm::vec4(1.f, 1.f, 0.f, 0.9f);
     const glm::vec3 mPastPathColor = glm::vec3(1.f, 0.f, 0.f);
     const glm::vec3 mFuturePathColor = glm::vec3(0.f, 1.f, 0.f);
-    const int mCameraSmoothFrameRadius = 10;
+    const int mCameraAutoCenterSmoothFrameRadius = 10;
     const glm::vec3 mInternalHullSampleColor = glm::vec3(0.0f, 0.0f, 0.0f);
     const glm::vec3 mSurfaceHullSampleColor = glm::vec3(1.0f, 1.0f, 1.0f);
     const glm::vec3 mFallbackAtomColor = glm::vec3(0.7f, 0.7f, 0.7f);
@@ -173,7 +173,6 @@ private:
     int mPathSmoothRadius = 0; // radius of frames which are used for smoothing the path
     SurfaceRendering mSurfaceRendering = HULL;
     Background mBackground = SCIENTIFIC;
-    bool mAutoCenterCamera = false;
     int mHullSampleCount = 100; // sample count per atom
     bool mRenderHullSamples = false;
     bool mRenderOutline = true;

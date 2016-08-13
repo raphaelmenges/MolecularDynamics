@@ -423,20 +423,6 @@ void SurfaceDynamicsVisualization::renderLoop()
             lockCursorPosition = true;
         }
 
-        // Automatic setting of camera center if wished
-        if(mAutoCenterCamera)
-        {
-            // Smooth center by taking average of multiple
-            int startFrame = glm::max(0, mFrame - mCameraSmoothFrameRadius);
-            int endFrame = glm::min(mupGPUProtein->getFrameCount() - 1, mFrame + mCameraSmoothFrameRadius);
-            glm::vec3 accCenter(0, 0, 0);
-            for(int i = startFrame; i <= endFrame; i++)
-            {
-                accCenter += mupGPUProtein->getCenterOfMass(mFrame);
-            }
-            mupCamera->setCenter(accCenter / (float)((endFrame - startFrame) + 1.f));
-        }
-
         // Update camera
         mupCamera->update(mWindowWidth, mWindowHeight, mUsePerspectiveCamera);
 
@@ -1214,23 +1200,22 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::DragFloat3("Position", glm::value_ptr(center));
         mupCamera->setCenter(center);
 
-        // Automatic put center of camera in protein's center
-        if(mAutoCenterCamera)
+        // Put center of camera in protein's center
+        if(ImGui::Button("Center", ImVec2(100, 22)))
         {
-            if(ImGui::Button("Manual Center", ImVec2(100, 22)))
+            // Smooth center by taking average of multiple centers at different times
+            int startFrame = glm::max(0, mFrame - mCameraAutoCenterSmoothFrameRadius);
+            int endFrame = glm::min(mupGPUProtein->getFrameCount() - 1, mFrame + mCameraAutoCenterSmoothFrameRadius);
+            glm::vec3 accCenter(0, 0, 0);
+            for(int i = startFrame; i <= endFrame; i++)
             {
-                mAutoCenterCamera = false;
+                accCenter += mupGPUProtein->getCenterOfMass(mFrame);
             }
-            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Manual positioning of camera center."); }
+
+            // Applied for next frame
+            mupCamera->setCenter(accCenter / (float)((endFrame - startFrame) + 1.f));
         }
-        else
-        {
-            if(ImGui::Button("Auto Center", ImVec2(100, 22)))
-            {
-                mAutoCenterCamera = true;
-            }
-            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Sets center of camera to center of molecule."); }
-        }
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Sets center of camera to center of molecule."); }
         ImGui::SameLine();
 
         // Reset
