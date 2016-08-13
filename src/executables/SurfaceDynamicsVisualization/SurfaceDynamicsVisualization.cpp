@@ -191,6 +191,14 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     mupOverlayFramebuffer->unbind();
 
     // # Prepare background cubemaps
+    mScientificCubemapTexture = createCubemap(
+        std::string(RESOURCES_PATH) + "/cubemaps/Scientific/posx.png",
+        std::string(RESOURCES_PATH) + "/cubemaps/Scientific/negx.png",
+        std::string(RESOURCES_PATH) + "/cubemaps/Scientific/posy.png",
+        std::string(RESOURCES_PATH) + "/cubemaps/Scientific/negy.png",
+        std::string(RESOURCES_PATH) + "/cubemaps/Scientific/posz.png",
+        std::string(RESOURCES_PATH) + "/cubemaps/Scientific/negz.png");
+
     mCVCubemapTexture = createCubemap(
         std::string(RESOURCES_PATH) + "/cubemaps/CV/posx.png",
         std::string(RESOURCES_PATH) + "/cubemaps/CV/negx.png",
@@ -248,6 +256,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
 SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
 {
     // Delete cubemaps
+    glDeleteTextures(1, &mScientificCubemapTexture);
     glDeleteTextures(1, &mCVCubemapTexture);
     glDeleteTextures(1, &mBeachCubemapTexture);
 }
@@ -834,6 +843,9 @@ void SurfaceDynamicsVisualization::renderLoop()
 
         switch(mBackground)
         {
+        case Background::SCIENTIFIC:
+            glBindTexture(GL_TEXTURE_CUBE_MAP, mScientificCubemapTexture);
+            break;
         case Background::COMPUTERVISUALISTIK:
             glBindTexture(GL_TEXTURE_CUBE_MAP, mCVCubemapTexture);
             break;
@@ -1746,7 +1758,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Begin("Rendering", NULL, 0);
 
         // Background
-        ImGui::Combo("Background", (int*)&mBackground, "Computervisualistik\0Beach\0");
+        ImGui::Combo("Background", (int*)&mBackground, "Scientific\0Computervisualistik\0Beach\0");
 
         // Lighting
         if(ImGui::Button("Spot Light"))

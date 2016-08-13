@@ -48,10 +48,10 @@ private:
         HULL, ASCENSION, ELEMENTS, AMINOACIDS, ANALYSIS
     };
 
-    // Enumeration for background cubemap
+    // Enumeration for background cubemaps
     enum Background
     {
-        COMPUTERVISUALISTIK, BEACH
+        SCIENTIFIC, COMPUTERVISUALISTIK, BEACH
     };
 
     // Keyboard callback for GLFW
@@ -172,7 +172,7 @@ private:
     int mPathFrameRadius = 5; // radius of frames which are visualized
     int mPathSmoothRadius = 0; // radius of frames which are used for smoothing the path
     SurfaceRendering mSurfaceRendering = HULL;
-    Background mBackground = COMPUTERVISUALISTIK;
+    Background mBackground = SCIENTIFIC;
     bool mAutoCenterCamera = false;
     int mHullSampleCount = 100; // sample count per atom
     bool mRenderHullSamples = false;
@@ -210,6 +210,7 @@ private:
     bool mFramebuffersExist = false;
     int mWindowWidth;
     int mWindowHeight;
+    GLuint mScientificCubemapTexture;
     GLuint mCVCubemapTexture;
     GLuint mBeachCubemapTexture;
     std::unique_ptr<Framebuffer> mupMoleculeFramebuffer;
