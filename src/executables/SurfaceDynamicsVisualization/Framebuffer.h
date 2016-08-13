@@ -58,7 +58,7 @@ private:
     int mWidth = -1;
     int mHeight = -1;
     bool mSuperSampling = false;
-    const int mSuperSamplingMultiplier = 4;
+    const int mSuperSamplingMultiplier = 2;
 };
 
 #endif // FRAMEBUFFER_H
