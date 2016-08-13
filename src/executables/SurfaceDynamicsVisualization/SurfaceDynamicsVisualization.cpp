@@ -168,8 +168,9 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     // Loading XTC
     MdTrajWrapper mdwrap;
     std::vector<std::string> paths;
-    paths.push_back("/home/raphael/Temp/XTC/MD_GIIIA_No_Water.pdb");
-    paths.push_back("/home/raphael/Temp/XTC/MD_GIIIA_No_Water.xtc");
+    paths.push_back("/home/raphael/Temp/XTC/MD_PIIIA_Native_10ns_noWater.pdb");
+    paths.push_back("/home/raphael/Temp/XTC/MD_PIIIA_Native_10ns_noPBC_noWater.xtc");
+    //paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/3g71.pdb");
     std::unique_ptr<Protein> upProtein = std::move(mdwrap.load(paths));
     mupGPUProtein = std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()));
 
