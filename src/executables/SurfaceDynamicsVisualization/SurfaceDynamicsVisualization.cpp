@@ -1750,13 +1750,14 @@ void SurfaceDynamicsVisualization::renderGUI()
         {
             mLightDirection = -glm::normalize(mupCamera->getPosition() - mupCamera->getCenter());
         }
+        ImGui::SameLine();
+
+        // SuperSampling
+        ImGui::Checkbox("Use Super Sampling", &mSuperSampling);
 
         // Depth darkening
         ImGui::SliderFloat("Depth Darkening Start", &mDepthDarkeningStart, 0, mDepthDarkeningEnd, "%.1f");
         ImGui::SliderFloat("Depth Darkening End", &mDepthDarkeningEnd, mDepthDarkeningStart, mDepthDarkeningMaxEnd, "%.1f");
-
-        // SuperSampling
-        ImGui::Checkbox("Use Super Sampling", &mSuperSampling);
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background
