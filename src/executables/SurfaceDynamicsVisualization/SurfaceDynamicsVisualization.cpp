@@ -637,6 +637,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 hullProgram.update("frameCount", mupGPUProtein->getFrameCount());
                 hullProgram.update("depthDarkeningStart", mDepthDarkeningStart);
                 hullProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
+                hullProgram.update("selectionColor", mSelectionColor);
 
                 // Draw internal (first, because at clipping plane are all set to same
                 // viewport depth which means internal are always in front of surface)
@@ -680,6 +681,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 ascensionProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
                 ascensionProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
                 ascensionProgram.update("ascensionColorOffsetAngle", mAscensionColorOffsetAngle);
+                ascensionProgram.update("selectionColor", mSelectionColor);
                 glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
 
                 break;
@@ -705,6 +707,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 coloringProgram.update("frameCount", mupGPUProtein->getFrameCount());
                 coloringProgram.update("depthDarkeningStart", mDepthDarkeningStart);
                 coloringProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
+                coloringProgram.update("selectionColor", mSelectionColor);
 
                 // Draw internal (first, because at clipping plane are all set to same
                 // viewport depth which means internal are always in front of surface)
@@ -744,6 +747,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 coloringProgram.update("frameCount", mupGPUProtein->getFrameCount());
                 coloringProgram.update("depthDarkeningStart", mDepthDarkeningStart);
                 coloringProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
+                coloringProgram.update("selectionColor", mSelectionColor);
 
                 // Draw internal (first, because at clipping plane are all set to same
                 // viewport depth which means internal are always in front of surface)
@@ -784,6 +788,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 analysisProgram.update("depthDarkeningStart", mDepthDarkeningStart);
                 analysisProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
                 analysisProgram.update("groupAtomCount", (int)mupOutlineAtomIndices->getSize());
+                analysisProgram.update("selectionColor", mSelectionColor);
                 glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
 
                 break;
@@ -808,6 +813,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             fallbackProgram.update("depthDarkeningStart", mDepthDarkeningStart);
             fallbackProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
             fallbackProgram.update("color", mFallbackAtomColor);
+            fallbackProgram.update("selectionColor", mSelectionColor);
             glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
         }
 
@@ -1576,7 +1582,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                 // Mark if currently selected
                 if(atomIndex == mSelectedAtom)
                 {
-                    ImGui::TextColored(ImVec4(0,1,0,1), "\u2023");
+                    ImGui::TextColored(ImVec4(mSelectionColor.r, mSelectionColor.g, mSelectionColor.b ,1), "\u2023");
                     ImGui::SameLine();
                 }
 

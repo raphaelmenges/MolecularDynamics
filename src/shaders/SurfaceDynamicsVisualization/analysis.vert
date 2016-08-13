@@ -39,6 +39,7 @@ uniform int smoothAnimationRadius;
 uniform float smoothAnimationMaxDeviation;
 uniform int frameCount;
 uniform int groupAtomCount;
+uniform vec3 selectionColor;
 
 // Global
 int atomIndex;
@@ -110,7 +111,7 @@ void main()
     // Set color
     if(atomIndex == selectedIndex)
     {
-        vertColor = vec3(0 ,1, 0);
+        vertColor = selectionColor;
     }
     else if(inGroup)
     {
