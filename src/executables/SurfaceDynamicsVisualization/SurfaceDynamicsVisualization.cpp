@@ -1701,7 +1701,7 @@ void SurfaceDynamicsVisualization::renderGUI()
             }
 
             // Radius of frames in path visualization
-            ImGui::SliderInt("Path Radius", &mPathFrameRadius, 1, 100);
+            ImGui::SliderInt("Path Radius", &mPathFrameRadius, 1, 1000);
 
             // Amount of surface covered by analysis group
             // TODO: very stupid to do every frame and bad texts
