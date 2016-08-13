@@ -169,7 +169,6 @@ private:
     int mPathSmoothRadius = 0; // radius of frames which are used for smoothing the path
     SurfaceRendering mSurfaceRendering = HULL;
     Background mBackground = COMPUTERVISUALISTIK;
-
     bool mAutoCenterCamera = false;
     int mHullSampleCount = 100;
     bool mRenderHullSamples = false;
@@ -180,6 +179,7 @@ private:
     float mAscensionUpToColdFrameCount = 10.f;
     float mAscensionBackToColdFrameCount = 10.f;
     bool mMarkSurfaceAtoms = false;
+    bool mRepeatOnlyComputed = false;
 
     // Report output
     std::string mComputeInformation = "No computation info available";

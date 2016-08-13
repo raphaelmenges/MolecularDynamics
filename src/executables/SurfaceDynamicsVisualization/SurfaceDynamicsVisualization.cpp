@@ -343,9 +343,19 @@ void SurfaceDynamicsVisualization::renderLoop()
                     int nextFrame = mFrame + 1;
 
                     // Cylce if enabled
-                    if(mRepeatAnimation && nextFrame > mEndFrame)
+                    if(mRepeatOnlyComputed && mComputedStartFrame >= 0 && mComputedEndFrame >= 0)
                     {
-                        nextFrame = mStartFrame;
+                        if(mRepeatAnimation && nextFrame > mComputedEndFrame)
+                        {
+                            nextFrame = mComputedStartFrame;
+                        }
+                    }
+                    else
+                    {
+                        if(mRepeatAnimation && nextFrame > mEndFrame)
+                        {
+                            nextFrame = mStartFrame;
+                        }
                     }
 
                     // Increment time (checks are done by method)
@@ -1097,15 +1107,20 @@ void SurfaceDynamicsVisualization::renderGUI()
         // Computatiom
         ImGui::Text("[Surface]");
         ImGui::SliderFloat("Probe Radius", &mComputationProbeRadius, 0.f, 3.f, "%.1f");
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Radius of probe used for surface extraction."); }
         ImGui::Checkbox("Extract Layers", &mExtractLayers);
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Incremental usage of surface extraction."); }
         ImGui::SliderInt("Start Frame", &mComputationStartFrame, mStartFrame, mComputationEndFrame);
         ImGui::SliderInt("End Frame", &mComputationEndFrame, mComputationStartFrame, mEndFrame);
         ImGui::SliderInt("Sample Count", &mHullSampleCount, 0, 1000);
         if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Count of samples used for analysis purposes, not surface extraction."); }
         ImGui::SliderInt("CPU Threads", &mCPUThreads, 1, 24);
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Count of threads utilized by CPU implementation."); }
         if(ImGui::Button("\u2794 GPGPU##surface")) { computeLayers(true); }
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Compute surface with OpenGL implementation."); }
         ImGui::SameLine();
         if(ImGui::Button("\u2794 CPU##surface")) { computeLayers(false); }
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Compute surface with C++ implementation."); }
 
         // Report
         if (ImGui::CollapsingHeader("Report"))
@@ -1124,6 +1139,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::SliderFloat("Cool Down", &mAscensionBackToColdFrameCount, 1.f, 100.f, "%.0f");
         if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until internal atom falls back to cold while rising."); }
         if(ImGui::Button("\u2794 CPU##ascension")) { computeAscension(); }
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Compute ascension."); }
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background
@@ -1179,6 +1195,7 @@ void SurfaceDynamicsVisualization::renderGUI()
             {
                 mAutoCenterCamera = false;
             }
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Manual positioning of camera center."); }
         }
         else
         {
@@ -1186,6 +1203,7 @@ void SurfaceDynamicsVisualization::renderGUI()
             {
                 mAutoCenterCamera = true;
             }
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Sets center of camera to center of molecule."); }
         }
         ImGui::SameLine();
 
@@ -1213,6 +1231,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         }
         ImGui::SameLine();
         ImGui::SliderFloat("", &mClippingPlane, mClippingPlaneMin, mClippingPlaneMax, "%.1f");
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Value of zero indicates no clipping plane usage."); }
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background
@@ -1242,11 +1261,28 @@ void SurfaceDynamicsVisualization::renderGUI()
         }
         ImGui::SameLine();
 
+        // Animation settings
         ImGui::Checkbox("Repeat", &mRepeatAnimation);
 
+        if(mRepeatAnimation)
+        {
+            ImGui::SameLine();
+            ImGui::Checkbox("Computed", &mRepeatOnlyComputed);
+        }
+
         ImGui::SliderInt("Rate", &mPlayAnimationRate, 0, 100);
+
+        // Current frame controlled with slider
         int frame = mFrame;
         ImGui::SliderInt("Frame", &frame, mStartFrame, mEndFrame);
+
+        // Current frame controlled with buttons
+        if(ImGui::Button("-10##frame", ImVec2(40, 22))) { frame -= 10; } ImGui::SameLine();
+        if(ImGui::Button("-1##frame", ImVec2(40, 22))) { frame -= 1; } ImGui::SameLine();
+        if(ImGui::Button("+1##frame", ImVec2(40, 22))) { frame += 1; } ImGui::SameLine();
+        if(ImGui::Button("+10##frame", ImVec2(40, 22))) { frame += 10; }
+
+        // Set current frame
         if(frame != mFrame)
         {
             setFrame(frame);
@@ -1337,6 +1373,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                     mRenderHullSamples = true;
                 }
             }
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Samples which are used for analysis."); }
 
             // Show / hide surface atoms' mark
             if(mMarkSurfaceAtoms)
@@ -1504,7 +1541,7 @@ void SurfaceDynamicsVisualization::renderGUI()
 
             // Graph about relation of surface and internal samples (in relative frames)
             // TODO: stupid to calculate it every frame and bad texts
-            float globalSampleCount = (float)mupHullSamples->getSampleCount();
+            float globalSampleCount = (float)mupHullSamples->getProteinSampleCount();
             auto sampleCount = mupHullSamples->getSurfaceSampleCount();
             std::vector<float> floatSampleAmount;
             floatSampleAmount.reserve(sampleCount.size());
@@ -1559,7 +1596,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                 {
                     mSelectedAtom = atomIndex;
                 }
-                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Select Atom"); } // tooltip
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Select Atom."); } // tooltip
                 ImGui::SameLine();
 
                 // Remove that atom from analysis atoms (use ## to add number for an unique button id)
@@ -1568,7 +1605,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                     toBeRemoved.push_back(atomIndex);
                     analysisAtomsChanged = true;
                 }
-                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Remove Atom"); } // tooltip
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Remove Atom."); } // tooltip
             }
 
             // Remove atoms from analysis
