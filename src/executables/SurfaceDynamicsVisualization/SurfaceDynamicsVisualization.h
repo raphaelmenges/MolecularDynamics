@@ -126,6 +126,13 @@ private:
     const float mSurfaceMarkPointSize = 5.f;
 
     // Controllable parameters
+    bool mShowCameraWindow = true;
+    bool mShowInformationWindow = true;
+    bool mShowValidationWindow = false;
+    bool mShowRenderingWindow = false;
+    bool mShowVisualizationWindow = true;
+    bool mShowComputationWindow = true;
+
     bool mRotateCamera = false;
     bool mMoveCamera = false;
     int mSelectedAtom = 0;
@@ -135,9 +142,6 @@ private:
                                         // for orthographic projection
     bool mShowInternal = true;
     bool mShowSurface = true;
-    bool mShowSurfaceExtractionWindow = true;
-    bool mShowCameraWindow = true;
-    bool mShowInformationWindow = true;
     float mComputationProbeRadius = 1.4f;
     int mCPUThreads = 8;
     int mSurfaceValidationAtomSampleCount = 20;
@@ -145,10 +149,8 @@ private:
     float mClippingPlane = 0.f;
     int mSurfaceValidationSeed = 0;
     bool mShowAxesGizmo = false;
-    bool mShowVisualizationWindow = true;
     bool mPlayAnimation = false;
     int mPlayAnimationRate = 15;
-    bool mShowValidationWindow = true;
     bool mShowInternalSamples = true;
     bool mShowSurfaceSamples = true;
     int mStartFrame = 0;
@@ -167,7 +169,7 @@ private:
     int mPathSmoothRadius = 0; // radius of frames which are used for smoothing the path
     SurfaceRendering mSurfaceRendering = HULL;
     Background mBackground = COMPUTERVISUALISTIK;
-    bool mShowRenderingWindow = true;
+
     bool mAutoCenterCamera = false;
     int mHullSampleCount = 100;
     bool mRenderHullSamples = false;

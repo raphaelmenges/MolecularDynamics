@@ -889,6 +889,11 @@ void SurfaceDynamicsVisualization::keyCallback(int key, int scancode, int action
         switch(key)
         {
             case GLFW_KEY_ESCAPE: { glfwSetWindowShouldClose(mpWindow, GL_TRUE); break; }
+            case GLFW_KEY_1: { mSurfaceRendering = SurfaceRendering::HULL; break; }
+            case GLFW_KEY_2: { mSurfaceRendering = SurfaceRendering::ASCENSION; break; }
+            case GLFW_KEY_3: { mSurfaceRendering = SurfaceRendering::ELEMENTS; break; }
+            case GLFW_KEY_4: { mSurfaceRendering = SurfaceRendering::AMINOACIDS; break; }
+            case GLFW_KEY_5: { mSurfaceRendering = SurfaceRendering::ANALYSIS; break; }
         }
     }
 }
@@ -960,13 +965,13 @@ void SurfaceDynamicsVisualization::renderGUI()
         if (ImGui::BeginMenu("Window"))
         {
             // Computation window
-            if(mShowSurfaceExtractionWindow)
+            if(mShowComputationWindow)
             {
-                if(ImGui::MenuItem("Hide Computation", "", false, true)) { mShowSurfaceExtractionWindow = false; }
+                if(ImGui::MenuItem("Hide Computation", "", false, true)) { mShowComputationWindow = false; }
             }
             else
             {
-                if(ImGui::MenuItem("Show Computation", "", false, true)) { mShowSurfaceExtractionWindow = true; }
+                if(ImGui::MenuItem("Show Computation", "", false, true)) { mShowComputationWindow = true; }
             }
 
             // Camera window
@@ -1083,8 +1088,8 @@ void SurfaceDynamicsVisualization::renderGUI()
     ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.1f, 0.1f, 0.1f, 0.75f)); // header active
     ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(0.1f, 0.1f, 0.1f, 0.75f)); // slider grab active
 
-    // Extraction window
-    if(mShowSurfaceExtractionWindow)
+    // Computation window
+    if(mShowComputationWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.0f, 0.0f, 0.75f)); // window background
         ImGui::Begin("Computation", NULL, 0);
@@ -1276,10 +1281,12 @@ void SurfaceDynamicsVisualization::renderGUI()
             ImGui::Text("[Rendering]");
 
             // Surface rendering
-            ImGui::Combo("##SurfaceRenderingCombo", (int*)&mSurfaceRendering, "Hull\0Ascension\0Elements\0Aminoacids\0Analysis\0");
+            ImGui::Combo("##SurfaceRenderingCombo", (int*)&mSurfaceRendering, "[1] Hull\0[2] Ascension\0[3] Elements\0[4] Aminoacids\0[5] Analysis\0");
 
             // Rendering of internal and surface atoms
-            if(mSurfaceRendering != SurfaceRendering::ASCENSION)
+            if(mSurfaceRendering == SurfaceRendering::HULL
+            || mSurfaceRendering == SurfaceRendering::ELEMENTS
+            || mSurfaceRendering == SurfaceRendering::AMINOACIDS)
             {
                 // Show / hide internal atoms
                 if(mShowInternal)
