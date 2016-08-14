@@ -52,23 +52,19 @@
       <file leaf-file-name="main.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/main.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="146">
-              <caret line="386" column="10" selection-start-line="386" selection-start-column="10" selection-end-line="386" selection-end-column="10" />
+            <state relative-caret-position="1875">
+              <caret line="404" column="33" selection-start-line="404" selection-start-column="33" selection-end-line="404" selection-end-column="33" />
               <folding>
-                <marker date="1471123452837" expanded="true" signature="73:235" ph="..." />
-                <marker date="1471123452837" expanded="true" signature="268:357" ph="..." />
-                <marker date="1471123452837" expanded="true" signature="386:473" ph="..." />
-                <marker date="1471123452837" expanded="false" signature="1385:2722" ph="{...}" />
-                <marker date="1471123452837" expanded="false" signature="2810:2814" ph="{...}" />
-                <marker date="1471123452837" expanded="false" signature="2875:3104" ph="{...}" />
-                <marker date="1471123452837" expanded="false" signature="3158:3234" ph="{...}" />
-                <marker date="1471123452837" expanded="false" signature="3303:4756" ph="{...}" />
-                <marker date="1471123452837" expanded="false" signature="4811:6388" ph="{...}" />
-                <marker date="1471123452837" expanded="false" signature="6464:7461" ph="{...}" />
-                <marker date="1471123452837" expanded="false" signature="7492:7496" ph="{...}" />
-                <marker date="1471123452837" expanded="true" signature="7540:11599" ph="{...}" />
-                <marker date="1471123452837" expanded="false" signature="11618:13704" ph="{...}" />
-                <marker date="1471123452837" expanded="true" signature="13719:14207" ph="{...}" />
+                <element signature="e#64#84#0" expanded="true" />
+                <element signature="e#259#292#0" expanded="true" />
+                <element signature="e#377#403#0" expanded="true" />
+                <element signature="e#1384#2780#0" expanded="false" />
+                <element signature="e#2784#2872#0" expanded="false" />
+                <element signature="e#2874#3162#0" expanded="false" />
+                <element signature="e#3164#3292#0" expanded="false" />
+                <element signature="e#4818#7538#0" expanded="false" />
+                <element signature="e#7540#8611#0" expanded="false" />
+                <element signature="e#13494#15597#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -77,28 +73,37 @@
       <file leaf-file-name="NeighborhoodSearch.cpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="162">
-              <caret line="13" column="0" selection-start-line="13" selection-start-column="0" selection-end-line="13" selection-end-column="0" />
+            <state relative-caret-position="756">
+              <caret line="273" column="50" selection-start-line="273" selection-start-column="50" selection-end-line="273" selection-end-column="50" />
               <folding>
-                <marker date="1471127927802" expanded="true" signature="53:96" ph="..." />
-                <marker date="1471127927802" expanded="false" signature="140:251" ph="{...}" />
-                <marker date="1471127927802" expanded="false" signature="551:872" ph="{...}" />
-                <marker date="1471127927802" expanded="false" signature="935:1773" ph="{...}" />
-                <marker date="1471127927802" expanded="false" signature="1819:2188" ph="{...}" />
-                <marker date="1471127927802" expanded="false" signature="2259:4382" ph="{...}" />
-                <marker date="1471127927802" expanded="false" signature="4430:4638" ph="{...}" />
-                <marker date="1471127927802" expanded="false" signature="4752:7010" ph="{...}" />
-                <marker date="1471127927802" expanded="false" signature="7047:7130" ph="{...}" />
-                <marker date="1471127927802" expanded="false" signature="7211:7996" ph="{...}" />
-                <marker date="1471127927802" expanded="false" signature="8107:8269" ph="{...}" />
-                <marker date="1471127927802" expanded="false" signature="8478:8557" ph="{...}" />
-                <marker date="1471127927802" expanded="false" signature="8610:8684" ph="{...}" />
-                <marker date="1471127927802" expanded="false" signature="8731:8881" ph="{...}" />
-                <marker date="1471127927802" expanded="false" signature="9002:11575" ph="{...}" />
-                <marker date="1471127927802" expanded="false" signature="11622:11654" ph="{...}" />
-                <marker date="1471127927802" expanded="false" signature="11697:11737" ph="{...}" />
-                <marker date="1471127927802" expanded="false" signature="11779:12246" ph="{...}" />
+                <element signature="e#44#64#0" expanded="true" />
+                <element signature="e#98#251#0" expanded="false" />
+                <element signature="e#254#899#0" expanded="false" />
+                <element signature="e#903#1218#0" expanded="false" />
+                <element signature="e#2420#2834#0" expanded="false" />
+                <element signature="e#2838#5292#0" expanded="false" />
+                <element signature="e#5293#5548#0" expanded="false" />
+                <element signature="e#5552#8273#0" expanded="false" />
+                <element signature="e#8274#8393#0" expanded="false" />
+                <element signature="e#8397#9259#0" expanded="false" />
+                <element signature="e#9260#9532#0" expanded="false" />
+                <element signature="e#11432#13044#0" expanded="false" />
+                <element signature="e#13046#13241#0" expanded="false" />
+                <element signature="e#13242#15934#0" expanded="false" />
+                <element signature="e#15935#16012#0" expanded="false" />
+                <element signature="e#16013#16094#0" expanded="false" />
+                <element signature="e#16096#16603#0" expanded="false" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="extractElementPositions.comp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/extractElementPositions.comp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="432">
+              <caret line="24" column="0" selection-start-line="24" selection-start-column="0" selection-end-line="24" selection-end-column="0" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -106,23 +111,10 @@
       <file leaf-file-name="NeighborhoodSearch.h" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="377">
-              <caret line="42" column="16" selection-start-line="42" selection-start-column="16" selection-end-line="42" selection-end-column="16" />
+            <state relative-caret-position="446">
+              <caret line="75" column="56" selection-start-line="75" selection-start-column="56" selection-end-line="75" selection-end-column="56" />
               <folding>
-                <marker date="1471127506092" expanded="true" signature="146:284" ph="..." />
-                <marker date="1471127506092" expanded="true" signature="312:2123" ph="{...}" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="NeighborhoodSearchDefines.h" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/libraries/Search/NeighborhoodSearchDefines.h">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="521">
-              <caret line="31" column="0" selection-start-line="31" selection-start-column="0" selection-end-line="31" selection-end-column="0" />
-              <folding>
-                <marker date="1471125382521" expanded="true" signature="243:498" ph="{...}" />
+                <element signature="e#137#154#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -131,20 +123,9 @@
       <file leaf-file-name="GPUHandler.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/libraries/Search/GPUHandler.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="521">
-              <caret line="103" column="47" selection-start-line="103" selection-start-column="47" selection-end-line="103" selection-end-column="47" />
-              <folding>
-                <marker date="1471126952479" expanded="true" signature="133:542" ph="{...}" />
-                <marker date="1471126952479" expanded="true" signature="607:1017" ph="{...}" />
-                <marker date="1471126952479" expanded="true" signature="1083:1494" ph="{...}" />
-                <marker date="1471126952479" expanded="true" signature="1561:1974" ph="{...}" />
-                <marker date="1471126952479" expanded="true" signature="2051:2350" ph="{...}" />
-                <marker date="1471126952479" expanded="true" signature="2435:2655" ph="{...}" />
-                <marker date="1471126952479" expanded="true" signature="2728:2949" ph="{...}" />
-                <marker date="1471126952479" expanded="true" signature="3024:3246" ph="{...}" />
-                <marker date="1471126952479" expanded="true" signature="3326:3552" ph="{...}" />
-                <marker date="1471126952479" expanded="true" signature="3605:3645" ph="{...}" />
-              </folding>
+            <state relative-caret-position="379">
+              <caret line="129" column="1" selection-start-line="129" selection-start-column="1" selection-end-line="129" selection-end-column="1" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -152,17 +133,43 @@
       <file leaf-file-name="GPUHandler.h" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/libraries/Search/GPUHandler.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="327">
-              <caret line="29" column="24" selection-start-line="29" selection-start-column="24" selection-end-line="29" selection-end-column="24" />
+            <state relative-caret-position="376">
+              <caret line="42" column="83" selection-start-line="42" selection-start-column="83" selection-end-line="42" selection-end-column="83" />
               <folding>
-                <marker date="1471126830693" expanded="true" signature="130:226" ph="..." />
-                <marker date="1471126830693" expanded="true" signature="245:1076" ph="{...}" />
+                <element signature="e#121#139#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
+      <file leaf-file-name="SimpleAtom.h" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/SimpleAtom.h">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="234">
+              <caret line="13" column="45" selection-start-line="13" selection-start-column="45" selection-end-line="13" selection-end-column="45" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="SimpleProtein.h" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/SimpleProtein.h">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="379">
+              <caret line="42" column="0" selection-start-line="42" selection-start-column="0" selection-end-line="42" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
     </leaf>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="GLSL Shader" />
+      </list>
+    </option>
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
@@ -174,7 +181,6 @@
         <option value="$PROJECT_DIR$/cmake/DefaultExecutable.cmake" />
         <option value="$PROJECT_DIR$/cmake/DefaultProject.cmake" />
         <option value="$PROJECT_DIR$/executables/PerfectSurfaceDetection/PerfectSurfaceDetection.cpp" />
-        <option value="$PROJECT_DIR$/executables/NeighborSearch/SimpleAtom.h" />
         <option value="$PROJECT_DIR$/executables/NeighborSearch/SimpleProtein.h" />
         <option value="$PROJECT_DIR$/shaders/NeighborSearch/impostor.geom" />
         <option value="$PROJECT_DIR$/shaders/NeighborSearch/impostor.vert" />
@@ -190,12 +196,19 @@
         <option value="$PROJECT_DIR$/libraries/Utils/Logger.cpp" />
         <option value="$PROJECT_DIR$/libraries/Utils/Logger.h" />
         <option value="$PROJECT_DIR$/shaders/NeighborSearch/impostor.frag" />
-        <option value="$PROJECT_DIR$/executables/NeighborSearch/main.cpp" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/insertElements.comp.glsl" />
         <option value="$PROJECT_DIR$/libraries/Search/NeighborhoodSearchDefines.h" />
-        <option value="$PROJECT_DIR$/libraries/Search/GPUHandler.h" />
-        <option value="$PROJECT_DIR$/libraries/Search/GPUHandler.cpp" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/fullscreenQuad.geom" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/fullscreen.vert" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/debug.frag" />
+        <option value="$PROJECT_DIR$/executables/NeighborSearch/main.cpp" />
         <option value="$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.h" />
+        <option value="$PROJECT_DIR$/executables/NeighborSearch/SimpleAtom.h" />
+        <option value="$PROJECT_DIR$/libraries/Search/GPUHandler.cpp" />
+        <option value="$PROJECT_DIR$/libraries/Search/GPUHandler.h" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/insertElements.comp" />
         <option value="$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.cpp" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/extractElementPositions.comp" />
       </list>
     </option>
   </component>
@@ -208,7 +221,7 @@
   <component name="ProjectFrameBounds">
     <option name="x" value="53" />
     <option name="y" value="24" />
-    <option name="width" value="986" />
+    <option name="width" value="934" />
     <option name="height" value="1056" />
   </component>
   <component name="ProjectInspectionProfilesVisibleTreeState">
@@ -722,17 +735,17 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="53" y="24" width="986" height="1056" extended-state="4" />
+    <frame x="53" y="24" width="934" height="1056" extended-state="4" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3458418" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3340471" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.30994764" sideWeight="0.49598286" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="CMake" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25968587" sideWeight="0.49598286" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3092574" sideWeight="0.49598286" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="CMake" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2659686" sideWeight="0.49598286" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.36012208" sideWeight="0.5040171" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32960325" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32670158" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.37277487" sideWeight="0.49598286" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.21675393" sideWeight="0.49598286" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
@@ -763,61 +776,11 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="33" />
+      <option name="time" value="37" />
     </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/cmake/LinkDevIL.cmake">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/cmake/LinkASSIMP.cmake">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/libraries/Molecule/MDtrajLoader/CMakeLists.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/libraries/Molecule/CMakeLists.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/libraries/Molecule/MDtrajLoader/MdTraj/MdTrajWrapper.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="18">
-          <caret line="7" column="15" selection-start-line="7" selection-start-column="15" selection-end-line="7" selection-end-column="15" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/libraries/AssetTools/Texture.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/libraries/AssetTools/Texture.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/CMakeLists.txt" />
     <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/Main.h" />
     <entry file="file://$PROJECT_DIR$/cmake/FindPython.cmake">
       <provider selected="true" editor-type-id="text-editor">
@@ -900,31 +863,10 @@
     <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/OrbitCamera.cpp" />
     <entry file="file://$PROJECT_DIR$/executables/PerfectSurfaceDetection/PerfectSurfaceDetection.h" />
     <entry file="file://$PROJECT_DIR$/executables/PerfectSurfaceDetection/PerfectSurfaceDetection.cpp" />
-    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/impostor.vert">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="576">
-          <caret line="32" column="47" selection-start-line="32" selection-start-column="47" selection-end-line="32" selection-end-column="47" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/impostor.geom">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="365">
-          <caret line="45" column="17" selection-start-line="45" selection-start-column="17" selection-end-line="45" selection-end-column="17" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/libraries/Search/CMakeLists.txt">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/SimpleAtom.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="234">
-          <caret line="13" column="45" selection-start-line="13" selection-start-column="45" selection-end-line="13" selection-end-column="45" />
         </state>
       </provider>
     </entry>
@@ -937,14 +879,6 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/main_old.h" />
-    <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/SimpleProtein.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="864">
-          <caret line="49" column="0" selection-start-line="49" selection-start-column="0" selection-end-line="49" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/libraries/Molecule/MDtrajLoader/MdTraj/MdTrajWrapper.cpp">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="216">
@@ -967,27 +901,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/libraries/ShaderTools/Renderer.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="612">
-          <caret line="41" column="4" selection-start-line="41" selection-start-column="4" selection-end-line="41" selection-end-column="4" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/impostor.frag">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="695">
-          <caret line="66" column="42" selection-start-line="66" selection-start-column="42" selection-end-line="66" selection-end-column="42" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/ProteinLoader.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="414">
           <caret line="32" column="111" selection-start-line="32" selection-start-column="111" selection-end-line="32" selection-end-column="111" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -995,107 +912,197 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="540">
           <caret line="30" column="33" selection-start-line="30" selection-start-column="29" selection-end-line="30" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/impostor.geom">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="810">
+          <caret line="45" column="17" selection-start-line="45" selection-start-column="17" selection-end-line="45" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/3DObject/projector.frag">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-202">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/main.cpp">
+    <entry file="file://$PROJECT_DIR$/shaders/3DObject/simpleColor.frag">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="146">
-          <caret line="386" column="10" selection-start-line="386" selection-start-column="10" selection-end-line="386" selection-end-column="10" />
-          <folding>
-            <marker date="1471123452837" expanded="true" signature="73:235" ph="..." />
-            <marker date="1471123452837" expanded="true" signature="268:357" ph="..." />
-            <marker date="1471123452837" expanded="true" signature="386:473" ph="..." />
-            <marker date="1471123452837" expanded="false" signature="1385:2722" ph="{...}" />
-            <marker date="1471123452837" expanded="false" signature="2810:2814" ph="{...}" />
-            <marker date="1471123452837" expanded="false" signature="2875:3104" ph="{...}" />
-            <marker date="1471123452837" expanded="false" signature="3158:3234" ph="{...}" />
-            <marker date="1471123452837" expanded="false" signature="3303:4756" ph="{...}" />
-            <marker date="1471123452837" expanded="false" signature="4811:6388" ph="{...}" />
-            <marker date="1471123452837" expanded="false" signature="6464:7461" ph="{...}" />
-            <marker date="1471123452837" expanded="false" signature="7492:7496" ph="{...}" />
-            <marker date="1471123452837" expanded="true" signature="7540:11599" ph="{...}" />
-            <marker date="1471123452837" expanded="false" signature="11618:13704" ph="{...}" />
-            <marker date="1471123452837" expanded="true" signature="13719:14207" ph="{...}" />
-          </folding>
+        <state relative-caret-position="0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/impostor.frag">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1188">
+          <caret line="66" column="42" selection-start-line="66" selection-start-column="42" selection-end-line="66" selection-end-column="42" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/fullscreenQuad.geom">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="378">
+          <caret line="21" column="37" selection-start-line="21" selection-start-column="37" selection-end-line="21" selection-end-column="37" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/dummy.vert">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="90">
+          <caret line="5" column="1" selection-start-line="5" selection-start-column="1" selection-end-line="5" selection-end-column="1" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/libraries/ShaderTools/Renderer.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="189">
+          <caret line="34" column="12" selection-start-line="34" selection-start-column="12" selection-end-line="34" selection-end-column="12" />
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/libraries/Search/NeighborhoodSearchDefines.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="521">
-          <caret line="31" column="0" selection-start-line="31" selection-start-column="0" selection-end-line="31" selection-end-column="0" />
+        <state relative-caret-position="298">
+          <caret line="28" column="9" selection-start-line="28" selection-start-column="9" selection-end-line="28" selection-end-column="9" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/debug.frag">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="324">
+          <caret line="18" column="66" selection-start-line="18" selection-start-column="66" selection-end-line="18" selection-end-column="66" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/impostor.vert">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="108">
+          <caret line="6" column="0" selection-start-line="6" selection-start-column="0" selection-end-line="11" selection-end-column="2" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/include/c++/5/bits/stl_construct.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="216">
+          <caret line="74" column="0" selection-start-line="74" selection-start-column="0" selection-end-line="74" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/SimpleProtein.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="379">
+          <caret line="42" column="0" selection-start-line="42" selection-start-column="0" selection-end-line="42" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="446">
+          <caret line="75" column="56" selection-start-line="75" selection-start-column="56" selection-end-line="75" selection-end-column="56" />
           <folding>
-            <marker date="1471125382521" expanded="true" signature="243:498" ph="{...}" />
+            <element signature="e#137#154#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/libraries/Search/GPUHandler.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="521">
-          <caret line="103" column="47" selection-start-line="103" selection-start-column="47" selection-end-line="103" selection-end-column="47" />
-          <folding>
-            <marker date="1471126952479" expanded="true" signature="133:542" ph="{...}" />
-            <marker date="1471126952479" expanded="true" signature="607:1017" ph="{...}" />
-            <marker date="1471126952479" expanded="true" signature="1083:1494" ph="{...}" />
-            <marker date="1471126952479" expanded="true" signature="1561:1974" ph="{...}" />
-            <marker date="1471126952479" expanded="true" signature="2051:2350" ph="{...}" />
-            <marker date="1471126952479" expanded="true" signature="2435:2655" ph="{...}" />
-            <marker date="1471126952479" expanded="true" signature="2728:2949" ph="{...}" />
-            <marker date="1471126952479" expanded="true" signature="3024:3246" ph="{...}" />
-            <marker date="1471126952479" expanded="true" signature="3326:3552" ph="{...}" />
-            <marker date="1471126952479" expanded="true" signature="3605:3645" ph="{...}" />
-          </folding>
+        <state relative-caret-position="379">
+          <caret line="129" column="1" selection-start-line="129" selection-start-column="1" selection-end-line="129" selection-end-column="1" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/SimpleAtom.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="234">
+          <caret line="13" column="45" selection-start-line="13" selection-start-column="45" selection-end-line="13" selection-end-column="45" />
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/libraries/Search/GPUHandler.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="327">
-          <caret line="29" column="24" selection-start-line="29" selection-start-column="24" selection-end-line="29" selection-end-column="24" />
+        <state relative-caret-position="376">
+          <caret line="42" column="83" selection-start-line="42" selection-start-column="83" selection-end-line="42" selection-end-column="83" />
           <folding>
-            <marker date="1471126830693" expanded="true" signature="130:226" ph="..." />
-            <marker date="1471126830693" expanded="true" signature="245:1076" ph="{...}" />
+            <element signature="e#121#139#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.h">
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/insertElements.comp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="377">
-          <caret line="42" column="16" selection-start-line="42" selection-start-column="16" selection-end-line="42" selection-end-column="16" />
+        <state relative-caret-position="90">
+          <caret line="5" column="8" selection-start-line="5" selection-start-column="8" selection-end-line="5" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/main.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1875">
+          <caret line="404" column="33" selection-start-line="404" selection-start-column="33" selection-end-line="404" selection-end-column="33" />
           <folding>
-            <marker date="1471127506092" expanded="true" signature="146:284" ph="..." />
-            <marker date="1471127506092" expanded="true" signature="312:2123" ph="{...}" />
+            <element signature="e#64#84#0" expanded="true" />
+            <element signature="e#259#292#0" expanded="true" />
+            <element signature="e#377#403#0" expanded="true" />
+            <element signature="e#1384#2780#0" expanded="false" />
+            <element signature="e#2784#2872#0" expanded="false" />
+            <element signature="e#2874#3162#0" expanded="false" />
+            <element signature="e#3164#3292#0" expanded="false" />
+            <element signature="e#4818#7538#0" expanded="false" />
+            <element signature="e#7540#8611#0" expanded="false" />
+            <element signature="e#13494#15597#0" expanded="false" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/extractElementPositions.comp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="432">
+          <caret line="24" column="0" selection-start-line="24" selection-start-column="0" selection-end-line="24" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="162">
-          <caret line="13" column="0" selection-start-line="13" selection-start-column="0" selection-end-line="13" selection-end-column="0" />
+        <state relative-caret-position="756">
+          <caret line="273" column="50" selection-start-line="273" selection-start-column="50" selection-end-line="273" selection-end-column="50" />
           <folding>
-            <marker date="1471127927802" expanded="true" signature="53:96" ph="..." />
-            <marker date="1471127927802" expanded="false" signature="140:251" ph="{...}" />
-            <marker date="1471127927802" expanded="false" signature="551:872" ph="{...}" />
-            <marker date="1471127927802" expanded="false" signature="935:1773" ph="{...}" />
-            <marker date="1471127927802" expanded="false" signature="1819:2188" ph="{...}" />
-            <marker date="1471127927802" expanded="false" signature="2259:4382" ph="{...}" />
-            <marker date="1471127927802" expanded="false" signature="4430:4638" ph="{...}" />
-            <marker date="1471127927802" expanded="false" signature="4752:7010" ph="{...}" />
-            <marker date="1471127927802" expanded="false" signature="7047:7130" ph="{...}" />
-            <marker date="1471127927802" expanded="false" signature="7211:7996" ph="{...}" />
-            <marker date="1471127927802" expanded="false" signature="8107:8269" ph="{...}" />
-            <marker date="1471127927802" expanded="false" signature="8478:8557" ph="{...}" />
-            <marker date="1471127927802" expanded="false" signature="8610:8684" ph="{...}" />
-            <marker date="1471127927802" expanded="false" signature="8731:8881" ph="{...}" />
-            <marker date="1471127927802" expanded="false" signature="9002:11575" ph="{...}" />
-            <marker date="1471127927802" expanded="false" signature="11622:11654" ph="{...}" />
-            <marker date="1471127927802" expanded="false" signature="11697:11737" ph="{...}" />
-            <marker date="1471127927802" expanded="false" signature="11779:12246" ph="{...}" />
+            <element signature="e#44#64#0" expanded="true" />
+            <element signature="e#98#251#0" expanded="false" />
+            <element signature="e#254#899#0" expanded="false" />
+            <element signature="e#903#1218#0" expanded="false" />
+            <element signature="e#2420#2834#0" expanded="false" />
+            <element signature="e#2838#5292#0" expanded="false" />
+            <element signature="e#5293#5548#0" expanded="false" />
+            <element signature="e#5552#8273#0" expanded="false" />
+            <element signature="e#8274#8393#0" expanded="false" />
+            <element signature="e#8397#9259#0" expanded="false" />
+            <element signature="e#9260#9532#0" expanded="false" />
+            <element signature="e#11432#13044#0" expanded="false" />
+            <element signature="e#13046#13241#0" expanded="false" />
+            <element signature="e#13242#15934#0" expanded="false" />
+            <element signature="e#15935#16012#0" expanded="false" />
+            <element signature="e#16013#16094#0" expanded="false" />
+            <element signature="e#16096#16603#0" expanded="false" />
           </folding>
         </state>
       </provider>

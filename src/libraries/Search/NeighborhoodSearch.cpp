@@ -19,12 +19,22 @@ NeighborhoodSearch::~NeighborhoodSearch()
 void NeighborhoodSearch::init(uint numElements, glm::fvec3 min, glm::fvec3 max, glm::ivec3 resolution, float searchRadius)
 {
     m_numElements = numElements;    // save number of elements for later calculations
+    setupComputeShaders();
     allocateBuffers(numElements);
     preallocBlockSumsInt(1);
     setupGrid(min, max, resolution, searchRadius);
     calculateNumberOfBlocksAndThreads(numElements);
     deallocBlockSumsInt();
     preallocBlockSumsInt(m_gridTotal);
+}
+
+
+
+void NeighborhoodSearch::setupComputeShaders()
+{
+    m_extractElementPositionsShader = ShaderProgram("/NeighborSearch/extractElementPositions.comp");
+    m_insertElementsShader = ShaderProgram("/NeighborSearch/insertElements.comp");
+    //m_prescanIntShader = ShaderProgram("/NeighborSearch/insertElements.comp");
 }
 
 
@@ -48,6 +58,11 @@ void NeighborhoodSearch::allocateBuffers(uint numElements)
     m_gpuHandler.initSSBOInt   (m_gpuBuffers.dp_grid,    numElements);
     m_gpuHandler.initSSBOInt   (m_gpuBuffers.dp_gridcnt, numElements);
     m_gpuHandler.initSSBOInt   (m_gpuBuffers.dp_gridoff, numElements);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, *m_gpuBuffers.dp_pos);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, *m_gpuBuffers.dp_gcell);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, *m_gpuBuffers.dp_gndx);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, *m_gpuBuffers.dp_gridcnt);
 }
 void NeighborhoodSearch::deallocateBuffers()
 {
@@ -97,10 +112,12 @@ void NeighborhoodSearch::preallocBlockSumsInt(uint maxNumElements)
      */
     m_scanBlockSumsInt = (GLuint**) malloc(level * sizeof(GLuint*));
     m_numLevelsAllocated = level;
+    Logger::instance().print("array initialized");
 
     // reset value to do the same computation again
     numElements = maxNumElements;
     level = 0;
+    Logger::instance().print("reset values");
 
     /*
      * now allocate an ssbo for every level and store the device pointer
@@ -110,10 +127,13 @@ void NeighborhoodSearch::preallocBlockSumsInt(uint maxNumElements)
     do {
         uint numBlocks = std::max(1, (int)(ceil((float)numElements)/(2.f*blockSize)));
         if (numBlocks > 1) {
+            Logger::instance().print("init ssbo int");
             m_gpuHandler.initSSBOInt(m_scanBlockSumsInt[level++], numBlocks);
+            Logger::instance().print("finished init ssbo int");
         }
         numElements = numBlocks;
     } while (numElements > 1);
+    Logger::instance().print("added pointers");
 
     Logger::instance().tabOut();
 }
@@ -163,13 +183,18 @@ void NeighborhoodSearch::setupGrid(glm::fvec3 min, glm::fvec3 max, glm::ivec3 re
     Logger::instance().print("Init grid"); Logger::instance().tabIn();
     Logger::instance().print("Grid search: floor(2*searchRadius/cellsize) + 1");
     Logger::instance().print(std::to_string(2*searchRadius) + "/" + std::to_string(cellSize) + " + 1 = " + std::to_string(m_gridSearch));
-
     if (m_gridSearch < 2) m_gridSearch = 2;
     m_gridAdjCnt = m_gridSearch * m_gridSearch * m_gridSearch;
     if (m_gridSearch > 6) {
         Logger::instance().print("Error: Neighbor search is n > 6", Logger::Mode::ERROR);
         exit(-1);
     }
+
+    /*
+     * calculate scan reach
+     */
+    glm::ivec3 gridScanMax = m_gridRes;
+    gridScanMax -= glm::ivec3(m_gridSearch, m_gridSearch, m_gridSearch);
 
     // setup adjacency grid
     int cell = 0;
@@ -180,6 +205,14 @@ void NeighborhoodSearch::setupGrid(glm::fvec3 min, glm::fvec3 max, glm::ivec3 re
             }
         }
     }
+
+    /*
+     * set grid data for gpu
+     */
+    m_gridDataGPU.min   = m_gridMin;
+    m_gridDataGPU.delta = m_gridDelta;
+    m_gridDataGPU.res   = m_gridRes;
+    m_gridDataGPU.scan  = gridScanMax;
 
 
     /*
@@ -224,16 +257,80 @@ void NeighborhoodSearch::computeNumBlocks(int numElements, int maxThreads, uint&
 //-----------------------------------------------------//
 //                NEIGHBORHOODSEARCH                   //
 //-----------------------------------------------------//
-void NeighborhoodSearch::run()
+void NeighborhoodSearch::run(std::vector<SimpleProtein>& proteins)
 {
-    insertElementsInGridGPU();
-    prefixSumCellsGPU();
-    countingSort();
+    updateElementPositions(proteins.at(0));
+    //insertElementsInGridGPU();
+    //prefixSumCellsGPU();
+    //countingSort();
+}
+
+void NeighborhoodSearch::updateElementPositions(SimpleProtein& protein)
+{
+    m_extractElementPositionsShader.use();
+    m_extractElementPositionsShader.update("pnum", m_numElements);
+    glDispatchCompute(m_numBlocks, 1, 1);
+    //glFlush();
+    glMemoryBarrier (GL_SHADER_STORAGE_BARRIER_BIT);
+
+
+    Logger::instance().print("Atom positions: "); Logger::instance().tabIn();
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, protein.atomsSSBO);
+    GLuint *ptr;
+    ptr = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    for (int i = 0; i < 10; i++) {
+        SimpleAtom atom = *(((SimpleAtom*)ptr)+i);
+        glm::vec3 pos = atom.pos;
+        Logger::instance().print(std::to_string(i) + ": " + std::to_string(pos.x) + ", " +
+                                 std::to_string(pos.y) + ", " +
+                                 std::to_string(pos.z) + " radius: " + std::to_string(atom.radius));
+    }
+    Logger::instance().tabOut();
+
+
+    Logger::instance().print("Element positions: "); Logger::instance().tabIn();
+    std::vector<glm::vec3> content = m_gpuHandler.downloadSSBODataFloat3(m_gpuBuffers.dp_gridcnt, m_numElements);
+    for (int i = 0; i < 10; i++) {
+        glm::vec3 pos = content.at(i);
+        Logger::instance().print(std::to_string(i) + ": " + std::to_string(pos.x) + ", " +
+                                                            std::to_string(pos.y) + ", " +
+                                                            std::to_string(pos.z));
+    }
+    Logger::instance().tabOut();
+
 }
 
 void NeighborhoodSearch::insertElementsInGridGPU()
 {
     m_gpuHandler.fillSSBOInt(m_gpuBuffers.dp_gridcnt, m_gridTotal, 0);
+    m_insertElementsShader.use();
+    m_insertElementsShader.update("grid.min",   m_gridDataGPU.min);
+    m_insertElementsShader.update("grid.delta", m_gridDataGPU.delta);
+    m_insertElementsShader.update("grid.res",   m_gridDataGPU.res);
+    m_insertElementsShader.update("grid.scan",  m_gridDataGPU.scan);
+    m_insertElementsShader.update("pnum",       m_numElements);
+    glDispatchCompute(m_numBlocks, 1, 1);
+    glMemoryBarrier (GL_ALL_BARRIER_BITS);
+
+    Logger::instance().print("Print data after inserting elements into grid"); Logger::instance().tabIn();
+    Logger::instance().print("Number of elements: " + std::to_string(m_numElements));
+    Logger::instance().print("Number of gridcells: " + std::to_string(m_gridTotal));
+
+    Logger::instance().print("Counts per grid cell: "); Logger::instance().tabIn();
+    std::vector<int> content = m_gpuHandler.downloadSSBODataInt(m_gpuBuffers.dp_gridcnt, m_gridTotal);
+    for (int i = 0; i < content.size(); i++) {
+        Logger::instance().print(std::to_string(i) + ": " + std::to_string(content.at(i)));
+    }
+    Logger::instance().tabOut();
+
+    Logger::instance().print("Get according cell for every atom: "); Logger::instance().tabIn();
+    content = m_gpuHandler.downloadSSBODataInt(m_gpuBuffers.dp_gcell, m_numElements);
+    for (int i = 0; i < 10; i++) {
+        Logger::instance().print(std::to_string(i) + ": " + std::to_string(content.at(i)));
+    }
+    Logger::instance().tabOut();
+
+    Logger::instance().tabOut();
 }
 
 void NeighborhoodSearch::prefixSumCellsGPU()
@@ -241,7 +338,6 @@ void NeighborhoodSearch::prefixSumCellsGPU()
     prescanArrayRecursiveInt(m_gpuBuffers.dp_gridoff, m_gpuBuffers.dp_gridcnt, m_gridTotal, 0);
     // TODO: synchronize threads here if necessary
 }
-
 void NeighborhoodSearch::prescanArrayRecursiveInt(GLuint* outArray, const GLuint* inArray, int numElements, int level)
 {
     uint blockSize = BLOCK_SIZE;
@@ -317,12 +413,10 @@ void NeighborhoodSearch::prescanArrayRecursiveInt(GLuint* outArray, const GLuint
         // TODO: call shader prescanInt
     }
 }
-
 bool NeighborhoodSearch::isPowerOfTwo(int n)
 {
     return ((n&(n-1)) == 0);
 }
-
 int NeighborhoodSearch::floorPow2(int n)
 {
     return 1 << (int)logb((float)n);
@@ -341,4 +435,11 @@ void NeighborhoodSearch::countingSort()
 
     // TODO: call shader countingSortFull
     // TODO: synchronize threads here if necessary
+}
+
+
+
+int NeighborhoodSearch::getTotalGridNum()
+{
+    return m_gridTotal;
 }

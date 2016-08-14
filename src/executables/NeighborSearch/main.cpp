@@ -21,6 +21,11 @@
 
 
 
+#define WIDTH 1280
+#define HEIGHT 720
+
+
+
 /*
  * VARIABLES
  */
@@ -35,6 +40,7 @@ bool m_rotateCamera = false;
 
 // rendering
 glm::vec3 m_lightDirection;
+bool m_drawDebug = false;
 
 // gui
 bool m_showInternal;
@@ -60,7 +66,6 @@ void scrollCallback(double xoffset, double yoffset);
 void loadProtein(std::string fileName);
 void printGPUInfos();
 void initNeighborhoodSearch(glm::vec3 gridResolution, float searchRadius);
-void runNeighborhoodSearch();
 void run();
 void updateGUI();
 
@@ -74,7 +79,7 @@ void setup()
     /*
      * init window
      */
-    mp_Window = generateWindow();
+    mp_Window = generateWindow("Test", WIDTH, HEIGHT);
 
     /*
      * init imgui
@@ -223,6 +228,8 @@ void printGPUInfos()
     GLint maxFragShaderStorageBlocks = -1;
     GLint maxComputeShaderStorageBlocks = -1;
     GLint maxCombinedShaderStorageBlocks = -1;
+    int   work_grp_cnt[3];
+    int work_grp_size[3];
 
     glGetIntegerv(GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS, &maxStorageBufferBindings);
     glGetIntegerv(GL_MAX_SHADER_STORAGE_BLOCK_SIZE,      &maxStorageBlockSize);
@@ -230,6 +237,12 @@ void printGPUInfos()
     glGetIntegerv(GL_MAX_FRAGMENT_SHADER_STORAGE_BLOCKS, &maxFragShaderStorageBlocks);
     glGetIntegerv(GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS,  &maxComputeShaderStorageBlocks);
     glGetIntegerv(GL_MAX_COMBINED_SHADER_STORAGE_BLOCKS, &maxCombinedShaderStorageBlocks);
+    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &work_grp_cnt[0]);
+    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &work_grp_cnt[1]);
+    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &work_grp_cnt[2]);
+    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &work_grp_size[0]);
+    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &work_grp_size[1]);
+    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &work_grp_size[2]);
 
     Logger::instance().print("Max shader storage buffer bindings: " + std::to_string(maxStorageBufferBindings));
     Logger::instance().print("Max shader storage block size:      " + std::to_string(maxStorageBlockSize));
@@ -237,6 +250,12 @@ void printGPUInfos()
     Logger::instance().print("Max fragment shader storage blocks: " + std::to_string(maxFragShaderStorageBlocks));
     Logger::instance().print("Max compute shader storage blocks:  " + std::to_string(maxComputeShaderStorageBlocks));
     Logger::instance().print("Max combined shader storage blocks: " + std::to_string(maxCombinedShaderStorageBlocks));
+    Logger::instance().print("Max global work group size x: " + std::to_string(work_grp_cnt[0])
+                                                     + " y: " + std::to_string(work_grp_cnt[1])
+                                                     + " z: " + std::to_string(work_grp_cnt[2]));
+    Logger::instance().print( "Max local work group size x: " + std::to_string(work_grp_size[0])
+                                                     + " y: " + std::to_string(work_grp_size[1])
+                                                     + " z: " + std::to_string(work_grp_size[2]));
 
     Logger::instance().tabOut();
 }
@@ -270,11 +289,6 @@ void initNeighborhoodSearch(glm::vec3 gridResolution, float searchRadius)
     m_search.init(numAtoms, min, max, gridResolution, searchRadius);
 }
 
-void runNeighborhoodSearch()
-{
-
-}
-
 
 
 /*
@@ -294,6 +308,7 @@ void run()
      * setup shader programs
      */
     ShaderProgram impostorProgram = ShaderProgram("/NeighborSearch/impostor.vert", "/NeighborSearch/impostor.geom", "/NeighborSearch/impostor.frag");
+    ShaderProgram debugProgram    = ShaderProgram("/NeighborSearch/dummy.vert", "/NeighborSearch/fullscreenQuad.geom", "/NeighborSearch/debug.frag");
 
     /*
      * bind atoms in ssbo
@@ -387,27 +402,39 @@ void run()
         /*
          * run neighborhood search
          */
-        m_search.run();
+        m_search.run(m_proteins);
 
-        /*
-         * draw proteins as impostor
-         */
-        impostorProgram.use();
-        impostorProgram.update("view", mp_camera->getViewMatrix());
-        impostorProgram.update("projection", mp_camera->getProjectionMatrix());
-        impostorProgram.update("cameraWorldPos", mp_camera->getPosition());
-        impostorProgram.update("probeRadius", 0.f);
-        impostorProgram.update("lightDir", m_lightDirection);
-        impostorProgram.update("selectedIndex", m_selectedAtom);
-        impostorProgram.update("color", glm::vec3(1.f,1.f,1.f));
+        if (!m_drawDebug) {
+            /*
+             * draw proteins as impostor
+             */
+            impostorProgram.use();
+            impostorProgram.update("view", mp_camera->getViewMatrix());
+            impostorProgram.update("projection", mp_camera->getProjectionMatrix());
+            impostorProgram.update("cameraWorldPos", mp_camera->getPosition());
+            impostorProgram.update("probeRadius", 0.f);
+            impostorProgram.update("lightDir", m_lightDirection);
+            impostorProgram.update("selectedIndex", m_selectedAtom);
+            impostorProgram.update("color", glm::vec3(1.f,1.f,1.f));
 
-        /*
-         * Draw atoms
-         */
-        for (int i = 0; i < m_proteins.size(); i++) {
-            glDrawArrays(GL_POINTS, 0, (GLsizei)m_proteins.at(i).atoms.size());
+            /*
+             * Draw atoms
+             */
+            for (int i = 0; i < m_proteins.size(); i++) {
+                glDrawArrays(GL_POINTS, 0, (GLsizei)m_proteins.at(i).atoms.size());
+            }
+        } else {
+            /*
+             * draw debug view
+             */
+            Logger::instance().print("grid num: " + std::to_string(m_search.getTotalGridNum()));
+            debugProgram.use();
+            debugProgram.update("totalNumElements", (int)m_proteins.at(0).atoms.size());
+            debugProgram.update("numCells", m_search.getTotalGridNum());
+            debugProgram.update("width", WIDTH);
+            debugProgram.update("height", HEIGHT);
+            glDrawArrays(GL_POINTS, 0, 1);
         }
-
 
         /*
          * update gui
@@ -495,10 +522,10 @@ int main()
 
     printGPUInfos();
 
-    //loadProtein("PDB/1a19.pdb");
-    loadProtein("3g71.pdb");
+    loadProtein("PDB/1a19.pdb");
+    //loadProtein("3g71.pdb");
 
-    glm::vec3 gridResolution = glm::vec3(20,20,20);
+    glm::vec3 gridResolution = glm::vec3(3,3,3);
     float searchRadius = 0.5;
     initNeighborhoodSearch(gridResolution, searchRadius);
 

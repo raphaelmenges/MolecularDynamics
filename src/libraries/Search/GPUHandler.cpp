@@ -81,7 +81,7 @@ void GPUHandler::copyDataToSSBOInt(GLuint* targetHandler, int* data, int length)
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 }
 
-void copyDataToSSBOUInt(GLuint* targetHandler, uint* data, int length)
+void GPUHandler::copyDataToSSBOUInt(GLuint* targetHandler, uint* data, int length)
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, *targetHandler);
     GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
@@ -89,7 +89,7 @@ void copyDataToSSBOUInt(GLuint* targetHandler, uint* data, int length)
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 }
 
-void copyDataToSSBOFloat(GLuint* targetHandler, float* data, int length)
+void GPUHandler::copyDataToSSBOFloat(GLuint* targetHandler, float* data, int length)
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, *targetHandler);
     GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
@@ -97,12 +97,36 @@ void copyDataToSSBOFloat(GLuint* targetHandler, float* data, int length)
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 }
 
-void copyDataToSSBOFloat3(GLuint* targetHandler, glm::vec3* data, int length)
+void GPUHandler::copyDataToSSBOFloat3(GLuint* targetHandler, glm::vec3* data, int length)
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, *targetHandler);
     GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
     memcpy(p, &data, sizeof(glm::vec3)*length);
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+}
+
+
+
+std::vector<int> GPUHandler::downloadSSBODataInt(GLuint* ssboHandler, int length)
+{
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler);
+    GLuint *ptr;
+    ptr = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    std::vector<int> result(ptr, ptr + length);
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    return result;
+}
+
+std::vector<glm::vec3> GPUHandler::downloadSSBODataFloat3(GLuint* ssboHandler, int length)
+{
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler);
+    GLuint *ptr;
+    ptr = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    std::vector<glm::vec3> result(ptr, ptr + length);
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    return result;
 }
 
 

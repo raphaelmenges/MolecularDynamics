@@ -8,8 +8,10 @@
 #include <cstring>
 #include <GL/glew.h>
 #include <Utils/Logger.h>
+#include <vector>
 
 #include "NeighborhoodSearchDefines.h"
+#include "../../executables/NeighborSearch/SimpleAtom.h"
 
 class GPUHandler {
 public:
@@ -34,6 +36,15 @@ public:
     void copyDataToSSBOFloat(GLuint* targetHandler, float* data, int length);
     void copyDataToSSBOFloat3(GLuint* targetHandler, glm::vec3* data, int length);
 
+    /*
+     * download data
+     */
+    std::vector<int> downloadSSBODataInt(GLuint* ssboHandler, int length);
+    std::vector<glm::vec3> downloadSSBODataFloat3(GLuint* ssboHandler, int length);
+
+    /*
+     * deleting ssbo
+     */
     void deleteSSBO(GLuint* ssboHandler);
 
 };

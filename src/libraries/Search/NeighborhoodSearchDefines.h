@@ -22,6 +22,12 @@ struct GPUBuffers {
     GLuint* dp_gridoff;     // int
 };
 
+struct Grid {
+    glm::vec3  min;
+    glm::vec3  delta;
+    glm::ivec3 res;
+    glm::ivec3 scan;
+};
 
 
 #define GRID_UCHAR 0xFF

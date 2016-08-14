@@ -8,18 +8,24 @@
 #include <math.h>
 #include <malloc.h>
 #include <string.h>
+#include <ShaderTools/ShaderProgram.h>
 
 #include "Utils/Logger.h"
 #include "NeighborhoodSearchDefines.h"
 #include "GPUHandler.h"
+#include "../../executables/NeighborSearch/SimpleProtein.h"
 
 
 class NeighborhoodSearch {
 public:
     ~NeighborhoodSearch();
 
+    // neighbor search
     void init(uint numElements, glm::fvec3 min, glm::fvec3 max, glm::ivec3 resolution, float searchRadius);
-    void run();
+    void run(std::vector<SimpleProtein>& proteins);
+
+    // other functions
+    int getTotalGridNum();
 
 private:
     // grid parameters
@@ -34,6 +40,7 @@ private:
     glm::fvec3  m_gridSize;      // 3D grid sizes
     glm::fvec3  m_gridDelta;     // delta translate from world space to cell space
     int         m_gridTotal;
+    Grid        m_gridDataGPU;
 
     int         m_numElements;
 
@@ -49,10 +56,13 @@ private:
     uint        m_numThreads;
     uint        m_gridBlocks;
     uint        m_gridThreads;
-
+    ShaderProgram m_insertElementsShader;
+    ShaderProgram m_extractElementPositionsShader;
+    ShaderProgram m_prescanIntShader;
 
 
     // init helper functions
+    void setupComputeShaders();
     void allocateBuffers(uint numElements);
     void deallocateBuffers();
     void preallocBlockSumsInt(uint maxNumElements);
@@ -63,6 +73,7 @@ private:
     void computeNumBlocks(int numElements, int maxThreads, uint& numBlocks, uint &numThreads);
 
     // run helper functions
+    void updateElementPositions(SimpleProtein& protein);
     void insertElementsInGridGPU();
 
     void prefixSumCellsGPU();
@@ -71,7 +82,6 @@ private:
     int floorPow2(int n);
 
     void countingSort();
-
 };
 
 
