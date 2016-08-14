@@ -29,7 +29,7 @@ class SurfaceDynamicsVisualization
 public:
 
     // Constructor
-    SurfaceDynamicsVisualization();
+    SurfaceDynamicsVisualization(std::string filepathPDB, std::string filepathXTC = "");
 
     // Destructor
     virtual ~SurfaceDynamicsVisualization();

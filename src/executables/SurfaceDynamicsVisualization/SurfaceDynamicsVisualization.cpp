@@ -17,7 +17,7 @@
 
 // ### Class implementation ###
 
-SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
+SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathPDB, std::string filepathXTC)
 {
     // TODO: Test text-csv
 
@@ -165,12 +165,11 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization()
     mGPUProteins.push_back(std::move(std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()))));
     */
 
-    // Loading XTC
+    // Loading protein
     MdTrajWrapper mdwrap;
     std::vector<std::string> paths;
-    paths.push_back("/home/raphael/Temp/XTC/MD_PIIIA_Native_10ns_noWater.pdb");
-    paths.push_back("/home/raphael/Temp/XTC/MD_PIIIA_Native_10ns_noPBC_noWater.xtc");
-    //paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/3g71.pdb");
+    paths.push_back(filepathPDB);
+    if(!filepathXTC.empty()) { paths.push_back(filepathXTC); }
     std::unique_ptr<Protein> upProtein = std::move(mdwrap.load(paths));
     mupGPUProtein = std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()));
 
@@ -2093,9 +2092,27 @@ GLuint SurfaceDynamicsVisualization::createCubemap(
 
 // ### Main function ###
 
-int main()
+int main(int argc, char* argv[])
 {
-    SurfaceDynamicsVisualization detection;
-    detection.renderLoop();
+    if(argc < 2)
+    {
+        std::cout << "Please give PDB and optional XTC file as argument" << std::endl;
+    }
+    else
+    {
+        // Extract files to load
+        std::string filepathPDB = argv[1];
+        std::string filepathXTC;
+        if(argc >= 3)
+        {
+            filepathXTC = argv[2];
+        }
+
+        // Create application and enter loop
+        SurfaceDynamicsVisualization detection(filepathPDB, filepathXTC);
+        detection.renderLoop();
+    }
+
+    // Exit
     return 0;
 }
