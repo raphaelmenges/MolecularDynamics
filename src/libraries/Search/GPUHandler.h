@@ -37,10 +37,12 @@ public:
     void copyDataToSSBOFloat3(GLuint* targetHandler, glm::vec3* data, int length);
 
     /*
-     * download data
+     * for debugging
      */
-    std::vector<int> downloadSSBODataInt(GLuint* ssboHandler, int length);
-    std::vector<glm::vec3> downloadSSBODataFloat3(GLuint* ssboHandler, int length);
+    void printSSBODataInt(GLuint* ssboHandler, int length);
+    void printSSBODataUInt(GLuint* ssboHandler, int length);
+    void printSSBODataFloat(GLuint* ssboHandler, int length);
+    void printSSBODataFloat3(GLuint* ssboHandler, int length);
 
     /*
      * deleting ssbo

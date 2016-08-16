@@ -8,6 +8,7 @@
 #include <imgui/examples/opengl3_example/imgui_impl_glfw_gl3.h>
 #include <sstream>
 #include <iomanip>
+#include <exception>
 
 // framework includes
 #include "ShaderTools/Renderer.h"
@@ -18,9 +19,13 @@
 #include "ProteinLoader.h"
 #include "Utils/OrbitCamera.h"
 #include "Search/NeighborhoodSearch.h"
+#include "Search/GPUHandler.h"
 
 
 
+/*
+ * DEFINES
+ */
 #define WIDTH 1280
 #define HEIGHT 720
 
@@ -48,8 +53,13 @@ bool m_showSurface;
 
 // protein
 ProteinLoader m_proteinLoader;
-std::vector<SimpleProtein> m_proteins;
 int m_selectedAtom = 0;
+int m_selectedProtein = 0;
+float m_proteinMoveSpeed = 5.f;
+
+// gpu
+GPUHandler m_gpuHandler;
+GLuint m_atomsSSBO;
 
 // neighborhood search
 NeighborhoodSearch m_search;
@@ -63,8 +73,8 @@ void setup();
 void keyCallback(int key, int scancode, int action, int mods);
 void mouseButtonCallback(int button, int action, int mods);
 void scrollCallback(double xoffset, double yoffset);
-void loadProtein(std::string fileName);
 void printGPUInfos();
+void updateAtomsSSBO();
 void initNeighborhoodSearch(glm::vec3 gridResolution, float searchRadius);
 void run();
 void updateGUI();
@@ -144,7 +154,27 @@ void setup()
  */
 void keyCallback(int key, int scancode, int action, int mods)
 {
-
+    if (key == GLFW_KEY_P) {
+        if (action == GLFW_PRESS) {
+            m_selectedProtein = (m_selectedProtein+1) % m_proteinLoader.getNumberOfProteins();
+        }
+    }
+    else if (key == GLFW_KEY_W) {
+        SimpleProtein* protein = m_proteinLoader.getProteinAt(m_selectedProtein);
+        protein->move(glm::vec3(0,m_proteinMoveSpeed, 0));
+    }
+    else if (key == GLFW_KEY_A) {
+        SimpleProtein* protein = m_proteinLoader.getProteinAt(m_selectedProtein);
+        protein->move(glm::vec3(-m_proteinMoveSpeed, 0, 0));
+    }
+    else if (key == GLFW_KEY_S) {
+        SimpleProtein* protein = m_proteinLoader.getProteinAt(m_selectedProtein);
+        protein->move(glm::vec3(0,-m_proteinMoveSpeed, 0));
+    }
+    else if (key == GLFW_KEY_D) {
+        SimpleProtein* protein = m_proteinLoader.getProteinAt(m_selectedProtein);
+        protein->move(glm::vec3(m_proteinMoveSpeed, 0, 0));
+    }
 }
 
 void mouseButtonCallback(int button, int action, int mods)
@@ -162,55 +192,6 @@ void mouseButtonCallback(int button, int action, int mods)
 void scrollCallback(double xoffset, double yoffset)
 {
     mp_camera->setRadius(mp_camera->getRadius() - 2.f * (float)yoffset);
-}
-
-
-
-/*
- * LOADING PROTEIN
- */
-void loadProtein(std::string fileName)
-{
-    /*
-     * extracting protein name from file name
-     */
-    std::string proteinName = fileName;
-    int lastSlash = proteinName.find_last_of("/");
-    if (lastSlash >= 0) {
-        proteinName = proteinName.substr(lastSlash, proteinName.size());
-    }
-    int lastDot = proteinName.find_last_of(".");
-    if (lastDot >= 0) {
-        proteinName = proteinName.substr(0, lastDot);
-    }
-    Logger::instance().print("Protein name is " + proteinName);
-
-    /*
-     * concatenate full path
-     */
-    std::string subfolder = "/molecules/";
-    std::string filePath = RESOURCES_PATH + subfolder + fileName;
-    //Logger::instance().print("Loading from path: " + filePath);
-
-    /*
-     * load protein from pdb file
-     */
-    SimpleProtein protein;
-    protein.name = proteinName;
-    m_proteinLoader.loadPDB(filePath, protein, protein.bbMin, protein.bbMax);
-    Logger::instance().print("Loading Protein"); Logger::instance().tabIn();
-    Logger::instance().print("Number of atoms: " + std::to_string(protein.atoms.size()));
-    Logger::instance().tabOut();
-
-    /*
-     * generate, bind, fill and then unbind atom ssbo buffer
-     */
-    glGenBuffers(1, &protein.atomsSSBO);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, protein.atomsSSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(SimpleAtom) * protein.atoms.size(), protein.atoms.data(), GL_STATIC_DRAW);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-    m_proteins.push_back(protein);
 }
 
 
@@ -260,10 +241,18 @@ void printGPUInfos()
     Logger::instance().tabOut();
 }
 
+void updateAtomsSSBO()
+{
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_atomsSSBO);
+    GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+    memcpy(p, m_proteinLoader.getAllAtoms().data(), sizeof(SimpleAtom)*m_proteinLoader.getNumberOfAllAtoms());
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+}
+
 void initNeighborhoodSearch(glm::vec3 gridResolution, float searchRadius)
 {
     // at least one protein should have been loaded at that time
-    if(m_proteins.size() <= 0) {
+    if(m_proteinLoader.getNumberOfProteins() <= 0) {
         Logger::instance().print("Error while initializing neighborhood search: No proteins loaded", Logger::Mode::ERROR);
         exit(-1);
     }
@@ -273,20 +262,9 @@ void initNeighborhoodSearch(glm::vec3 gridResolution, float searchRadius)
      * and get number of all atoms in all proteins
      */
     glm::fvec3 min, max;
-    uint numAtoms = 0;
-    for (int i = 0; i < m_proteins.size(); i++) {
-        glm::vec3 bbMin = m_proteins.at(i).bbMin;
-        glm::vec3 bbMax = m_proteins.at(i).bbMax;
-        min.x = (bbMin.x < min.x) ? bbMin.x : min.x;
-        min.y = (bbMin.y < min.y) ? bbMin.y : min.y;
-        min.z = (bbMin.z < min.z) ? bbMin.z : min.z;
-        max.x = (bbMax.x < max.x) ? bbMax.x : max.x;
-        max.y = (bbMax.y < max.y) ? bbMax.y : max.y;
-        max.z = (bbMax.z < max.z) ? bbMax.z : max.z;
-        numAtoms += m_proteins.at(i).atoms.size();
-    }
+    m_proteinLoader.getBoundingBoxAroundProteins(min, max);
 
-    m_search.init(numAtoms, min, max, gridResolution, searchRadius);
+    m_search.init(m_proteinLoader.getNumberOfAllAtoms(), min, max, gridResolution, searchRadius);
 }
 
 
@@ -304,34 +282,40 @@ void run()
     glDepthFunc(GL_LESS);
     glEnable(GL_CULL_FACE);
 
+
+
     /*
      * setup shader programs
      */
     ShaderProgram impostorProgram = ShaderProgram("/NeighborSearch/impostor.vert", "/NeighborSearch/impostor.geom", "/NeighborSearch/impostor.frag");
     ShaderProgram debugProgram    = ShaderProgram("/NeighborSearch/dummy.vert", "/NeighborSearch/fullscreenQuad.geom", "/NeighborSearch/debug.frag");
 
+
+
     /*
-     * bind atoms in ssbo
-     * ssbo's are used to work with compute shader
+     * generate, bind, fill and then unbind atom ssbo buffer
      */
-    // todo: find out how to buffer multiple proteins
-    for (int i = 0; i < m_proteins.size(); i++) {
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_proteins.at(i).atomsSSBO);
-    }
+    Logger::instance().print("Copy atoms to gpu");
+    m_atomsSSBO;
+    glGenBuffers(1, &m_atomsSSBO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_atomsSSBO);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(SimpleAtom) * m_proteinLoader.getNumberOfAllAtoms(), m_proteinLoader.getAllAtoms().data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_atomsSSBO);
+
+
 
     /*
      * setup camera
      */
     glm::vec3 cameraCenter = glm::vec3(0.0, 0.0, 0.0);
     float cameraRadius = 0.0f;
-    for (int i = 0; i < m_proteins.size(); i++)
-    {
-        SimpleProtein protein = m_proteins.at(i);
-        cameraCenter = cameraCenter + ((protein.bbMax + protein.bbMin) / 2);
-        float radius = glm::length(protein.bbMax - protein.bbMin);
-        cameraRadius = (radius > cameraRadius) ? radius : cameraRadius;
-    }
-    //std::cout << "Camera radius is " << cameraRadius << std::endl;
+    glm::vec3 globalMin;
+    glm::vec3 globalMax;
+    m_proteinLoader.getBoundingBoxAroundProteins(globalMin, globalMax);
+    cameraCenter = (globalMax + globalMin) / 2;
+    float radius = glm::length(globalMax - globalMin);
+    cameraRadius = (radius > cameraRadius) ? radius : cameraRadius;
 
     mp_camera = std::unique_ptr<OrbitCamera>(
             new OrbitCamera(
@@ -346,6 +330,8 @@ void run()
             )
     );
 
+
+
     /*
      * setup cursor position
      */
@@ -357,7 +343,6 @@ void run()
      */
     render(mp_Window, [&] (float deltaTime)
     {
-
         /*
          * clear buffer
          */
@@ -400,9 +385,14 @@ void run()
         m_lightDirection = glm::normalize(glm::vec3(0, -1, 0));
 
         /*
+         * update atom positions
+         */
+        updateAtomsSSBO();
+
+        /*
          * run neighborhood search
          */
-        m_search.run(m_proteins);
+        //m_search.run();
 
         if (!m_drawDebug) {
             /*
@@ -415,21 +405,20 @@ void run()
             impostorProgram.update("probeRadius", 0.f);
             impostorProgram.update("lightDir", m_lightDirection);
             impostorProgram.update("selectedIndex", m_selectedAtom);
-            impostorProgram.update("color", glm::vec3(1.f,1.f,1.f));
+            impostorProgram.update("proteinNum", (int)m_proteinLoader.getNumberOfProteins());
+            impostorProgram.update("selectedProtein", m_selectedProtein);
 
             /*
              * Draw atoms
              */
-            for (int i = 0; i < m_proteins.size(); i++) {
-                glDrawArrays(GL_POINTS, 0, (GLsizei)m_proteins.at(i).atoms.size());
-            }
+            glDrawArrays(GL_POINTS, 0, (GLsizei)m_proteinLoader.getNumberOfAllAtoms());
         } else {
             /*
              * draw debug view
              */
             Logger::instance().print("grid num: " + std::to_string(m_search.getTotalGridNum()));
             debugProgram.use();
-            debugProgram.update("totalNumElements", (int)m_proteins.at(0).atoms.size());
+            debugProgram.update("totalNumElements", (int)m_proteinLoader.getNumberOfAllAtoms());
             debugProgram.update("numCells", m_search.getTotalGridNum());
             debugProgram.update("width", WIDTH);
             debugProgram.update("height", HEIGHT);
@@ -455,45 +444,31 @@ void updateGUI()
             ImGui::EndMenu();
         }
 
-        // Rendering menu
-        if (ImGui::BeginMenu("Rendering"))
+        // Protein infos
+        if (ImGui::BeginMenu("Shortcuts"))
         {
-            // Impostors
-            if(ImGui::MenuItem("Show Internal", "P", false, true)) { m_showInternal; }
-            if(ImGui::MenuItem("Show Surface", "P", false, true)) { m_showSurface; }
-
-            ImGui::EndMenu();
-        }
-
-        // Window menu
-        if (ImGui::BeginMenu("Window"))
-        {
-            // Computation window
-            static bool mShowComputationWindow = false;
-            if(mShowComputationWindow)
-            {
-                if(ImGui::MenuItem("Hide Computation", "", false, true)) { mShowComputationWindow = false; }
-            }
-            else
-            {
-                if(ImGui::MenuItem("Show Computation", "", false, true)) { mShowComputationWindow = true; }
-            }
-
+            ImGui::Text("P: Switch between proteins");
+            ImGui::Text("W: Move selected protein up");
+            ImGui::Text("A: Move selected protein left");
+            ImGui::Text("S: Move selected protein down");
+            ImGui::Text("D: Move selected protein right");
             ImGui::EndMenu();
         }
 
         // Protein infos
         if (ImGui::BeginMenu("Proteins"))
         {
-            if (m_proteins.size() > 0) {
-                for (int i = 0; i < m_proteins.size(); i++) {
-                    SimpleProtein protein = m_proteins.at(i);
-                    std::string text = std::to_string(i) + ": " + protein.name + " - atom number: " + std::to_string(protein.atoms.size());
+            if (m_proteinLoader.getNumberOfProteins() > 0) {
+                for (int i = 0; i < m_proteinLoader.getNumberOfProteins(); i++) {
+                    SimpleProtein* protein = m_proteinLoader.getProteinAt(i);
+                    std::string text = std::to_string(i) + ": " + protein->name + " - atom number: " + std::to_string(protein->atoms.size());
                     ImGui::Text(text.c_str());
                 }
             } else {
                 ImGui::Text("No proteins loaded!");
             }
+            std::string atomText = "Total number of atoms: " + std::to_string(m_proteinLoader.getNumberOfAllAtoms());
+            ImGui::Text(atomText.c_str());
             ImGui::EndMenu();
         }
 
@@ -522,12 +497,19 @@ int main()
 
     printGPUInfos();
 
-    loadProtein("PDB/1a19.pdb");
-    //loadProtein("3g71.pdb");
+    SimpleProtein* proteinA = m_proteinLoader.loadProtein("PDB/1a19.pdb");
+    SimpleProtein* proteinB = m_proteinLoader.loadProtein("PDB/1crn.pdb");
+    SimpleProtein* proteinC = m_proteinLoader.loadProtein("PDB/1mbn.pdb");
+    proteinA->center();
+    proteinB->center();
+    proteinC->center();
+    Logger::instance().print(std::to_string(proteinA->extent().x));
+    proteinB->move(glm::vec3(proteinA->extent().x/2 + proteinB->extent().x/2, 0, 0));
+    proteinC->move(glm::vec3(-proteinA->extent().x/2 - proteinC->extent().x/2, 0, 0));
 
     glm::vec3 gridResolution = glm::vec3(3,3,3);
     float searchRadius = 0.5;
-    initNeighborhoodSearch(gridResolution, searchRadius);
+    //initNeighborhoodSearch(gridResolution, searchRadius);
 
     run();
 

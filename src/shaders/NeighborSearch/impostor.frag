@@ -1,9 +1,11 @@
 #version 430
 
 in vec2 uv;
+flat in int atomIsSelected;
 flat in float radius;
 flat in vec3 position;
 flat in vec3 color;
+
 out vec4 outColor;
 layout (depth_less) out float gl_FragDepth; // Makes optimizations possible
 
@@ -11,6 +13,7 @@ uniform mat4 view;
 uniform mat4 projection;
 uniform vec3 cameraWorldPos;
 uniform vec3 lightDir;
+uniform int selectedProtein;
 
 void main()
 {
@@ -22,7 +25,7 @@ void main()
     float distance = length(uv);
     if(distance > 1.0)
     {
-            discard;
+        discard;
     }
 
     /*
@@ -69,4 +72,5 @@ void main()
 
     // Output color
     outColor = vec4(finalColor, 1);
+    if (distance > 0.9 && atomIsSelected == 0) outColor = mix(outColor,vec4(1,1,0,1),0.4);
 }

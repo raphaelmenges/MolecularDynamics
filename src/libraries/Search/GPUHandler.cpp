@@ -107,26 +107,68 @@ void GPUHandler::copyDataToSSBOFloat3(GLuint* targetHandler, glm::vec3* data, in
 
 
 
-std::vector<int> GPUHandler::downloadSSBODataInt(GLuint* ssboHandler, int length)
+void GPUHandler::printSSBODataInt(GLuint* ssboHandler, int length)
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler);
     GLuint *ptr;
     ptr = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-    std::vector<int> result(ptr, ptr + length);
+    Logger::instance().print("SSBO int:"); Logger::instance().tabIn();
+    for (int i = 0; i < length; i++) {
+        int val = *(((int*)ptr)+i);
+        Logger::instance().print(std::to_string(i) + ": " + std::to_string(val));
+    }
+    Logger::instance().tabOut();
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-    return result;
 }
 
-std::vector<glm::vec3> GPUHandler::downloadSSBODataFloat3(GLuint* ssboHandler, int length)
+void GPUHandler::printSSBODataUInt(GLuint* ssboHandler, int length)
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler);
     GLuint *ptr;
     ptr = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-    std::vector<glm::vec3> result(ptr, ptr + length);
+    Logger::instance().print("SSBO uint:"); Logger::instance().tabIn();
+    for (int i = 0; i < length; i++) {
+        uint val = *(((uint*)ptr)+i);
+        Logger::instance().print(std::to_string(i) + ": " + std::to_string(val));
+    }
+    Logger::instance().tabOut();
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-    return result;
+}
+
+void GPUHandler::printSSBODataFloat(GLuint* ssboHandler, int length)
+{
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler);
+    GLuint *ptr;
+    ptr = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    Logger::instance().print("SSBO uint:"); Logger::instance().tabIn();
+    for (int i = 0; i < length; i++) {
+        float val = *(((float*)ptr)+i);
+        Logger::instance().print(std::to_string(i) + ": " + std::to_string(val));
+    }
+    Logger::instance().tabOut();
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void GPUHandler::printSSBODataFloat3(GLuint* ssboHandler, int length)
+{
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler);
+    GLuint *ptr;
+    ptr = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    Logger::instance().print("SSBO float 3:"); Logger::instance().tabIn();
+    int idx = 0;
+    for (int i = 0; i < length*4; i=i+4) {
+        float x = *(((float*)ptr)+i);
+        float y = *(((float*)ptr)+i+1);
+        float z = *(((float*)ptr)+i+2);
+        Logger::instance().print(std::to_string(idx) + ": " + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z));
+        idx++;
+    }
+    Logger::instance().tabOut();
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 

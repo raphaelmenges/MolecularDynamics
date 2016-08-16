@@ -22,7 +22,7 @@ public:
 
     // neighbor search
     void init(uint numElements, glm::fvec3 min, glm::fvec3 max, glm::ivec3 resolution, float searchRadius);
-    void run(std::vector<SimpleProtein>& proteins);
+    void run();
 
     // other functions
     int getTotalGridNum();
@@ -73,7 +73,7 @@ private:
     void computeNumBlocks(int numElements, int maxThreads, uint& numBlocks, uint &numThreads);
 
     // run helper functions
-    void updateElementPositions(SimpleProtein& protein);
+    void updateElementPositions();
     void insertElementsInGridGPU();
 
     void prefixSumCellsGPU();

@@ -6,12 +6,93 @@
 
 ProteinLoader::ProteinLoader()
 {
-
+    m_currentProteinIdx = 0;
 }
 
 ProteinLoader::~ProteinLoader()
 {
+    for (int i = 0; i < m_proteins.size(); i++) {
+        delete m_proteins.at(i);
+    }
+    m_proteins.clear();
+}
 
+int ProteinLoader::getNumberOfProteins()
+{
+    return m_proteins.size();
+}
+
+std::vector<SimpleProtein*> ProteinLoader::getProteins()
+{
+    return m_proteins;
+}
+
+SimpleProtein* ProteinLoader::getProteinAt(int i)
+{
+    return m_proteins.at(i);
+}
+
+void ProteinLoader::updateAtoms()
+{
+    m_allAtoms.clear();
+    for (int i = 0; i < getNumberOfProteins(); i++) {
+        SimpleProtein* protein = getProteinAt(i);
+        m_allAtoms.insert(std::end(m_allAtoms), std::begin(protein->atoms), std::end(protein->atoms));
+    }
+}
+
+std::vector<SimpleAtom> ProteinLoader::getAllAtoms()
+{
+    updateAtoms();
+    return m_allAtoms;
+}
+
+int ProteinLoader::getNumberOfAllAtoms()
+{
+    return m_allAtoms.size();
+}
+
+/*
+ * LOADING PROTEIN
+ */
+SimpleProtein* ProteinLoader::loadProtein(std::string fileName)
+{
+    /*
+     * extracting protein name from file name
+     */
+    std::string proteinName = fileName;
+    int lastSlash = proteinName.find_last_of("/");
+    if (lastSlash >= 0) {
+        proteinName = proteinName.substr(lastSlash+1, proteinName.size());
+    }
+    int lastDot = proteinName.find_last_of(".");
+    if (lastDot >= 0) {
+        proteinName = proteinName.substr(0, lastDot);
+    }
+    Logger::instance().print("Protein name is " + proteinName);
+
+
+
+    /*
+     * concatenate full path
+     */
+    std::string subfolder = "/molecules/";
+    std::string filePath = RESOURCES_PATH + subfolder + fileName;
+
+
+
+    /*
+     * load protein from pdb file
+     */
+    SimpleProtein* protein = new SimpleProtein;
+    protein->name = proteinName;
+    loadPDB(filePath, *protein, protein->bbMin, protein->bbMax);
+    Logger::instance().print("Loading Protein"); Logger::instance().tabIn();
+    Logger::instance().print("Number of atoms: " + std::to_string(protein->atoms.size()));
+    Logger::instance().tabOut();
+    m_proteins.push_back(protein);
+
+    return m_proteins.at(m_proteins.size()-1);
 }
 
 void ProteinLoader::loadPDB(std::string filePath, SimpleProtein &protein, glm::vec3 &minPosition, glm::vec3 &maxPosition)
@@ -130,11 +211,49 @@ void ProteinLoader::loadPDB(std::string filePath, SimpleProtein &protein, glm::v
             glm::vec3 position = positions.at(i);
             float radius = radii.at(i);
 
-            //Logger::instance().print("Atom " + name + " (" + elementName + ") pos: (" + std::to_string(position.x) + ", " + std::to_string(position.y) + ", " + std::to_string(position.z) + ") rad: " + std::to_string(radius));
+            /*
+             * create atom
+             */
+            SimpleAtom atom;
+            atom.pos = position;
+            atom.radius = radius;
+            atom.proteinID = glm::vec4(m_currentProteinIdx, m_currentProteinIdx, m_currentProteinIdx, m_currentProteinIdx);
 
-            protein.createAtom(name, position, radius);
+            /*
+             * add atom to both protein and all atoms
+             */
+            protein.atoms.push_back(atom);
+            m_allAtoms.push_back(atom);
         }
     } else {
         std::cerr << "Size of atom positions " << positions.size() << " and properties " << names.size() << ", " << elementNames.size() << ", " << radii.size() << " dont match" << std::endl;
+    }
+
+
+    /*
+     * increment protein idx
+     */
+    m_currentProteinIdx++;
+}
+
+void ProteinLoader::getBoundingBoxAroundProteins(glm::vec3& min, glm::vec3& max)
+{
+    if (m_proteins.size() > 0) {
+        min = glm::vec3(FLOAT_MAX, FLOAT_MAX, FLOAT_MAX);
+        max = glm::vec3(FLOAT_MIN, FLOAT_MIN, FLOAT_MIN);
+        for (int i = 0; i < m_proteins.size(); i++)
+        {
+            SimpleProtein* protein = m_proteins.at(i);
+            min.x = glm::min(min.x, protein->bbMin.x);
+            min.y = glm::min(min.y, protein->bbMin.y);
+            min.z = glm::min(min.z, protein->bbMin.z);
+            max.x = glm::max(max.x, protein->bbMax.x);
+            max.y = glm::max(max.y, protein->bbMax.y);
+            max.z = glm::max(max.z, protein->bbMax.z);
+        }
+    } else {
+        Logger::instance().print("No proteins there to calculate bounding box!", Logger::Mode::WARNING);
+        min = glm::vec3(0,0,0);
+        max = glm::vec3(0,0,0);
     }
 }

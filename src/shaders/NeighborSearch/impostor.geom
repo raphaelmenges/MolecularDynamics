@@ -6,7 +6,10 @@ layout(triangle_strip, max_vertices = 3) out;
 
 in vec3 vertColor[1];
 in float vertRadius[1];
+in int isSelected[1];
+
 out vec2 uv;
+flat out int atomIsSelected;
 flat out float radius;
 flat out vec3 position;
 flat out vec3 color;
@@ -26,6 +29,7 @@ void main()
      */
     color = vertColor[0];
     radius = vertRadius[0];
+    atomIsSelected = isSelected[0];
 
     /*
      * GLSL is column-major! Get world space camera vectors

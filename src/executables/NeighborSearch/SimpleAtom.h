@@ -14,7 +14,7 @@ public:
     //_____________________________________//
     glm::vec3 pos;
     float radius;
-
+    glm::vec4 proteinID;
 };
 
 #endif //OPENGL_FRAMEWORK_SIMPLEATOM_H

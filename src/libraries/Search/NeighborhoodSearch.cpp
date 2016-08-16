@@ -257,45 +257,24 @@ void NeighborhoodSearch::computeNumBlocks(int numElements, int maxThreads, uint&
 //-----------------------------------------------------//
 //                NEIGHBORHOODSEARCH                   //
 //-----------------------------------------------------//
-void NeighborhoodSearch::run(std::vector<SimpleProtein>& proteins)
+void NeighborhoodSearch::run()
 {
-    updateElementPositions(proteins.at(0));
+    updateElementPositions();
     //insertElementsInGridGPU();
     //prefixSumCellsGPU();
     //countingSort();
 }
 
-void NeighborhoodSearch::updateElementPositions(SimpleProtein& protein)
+void NeighborhoodSearch::updateElementPositions()
 {
     m_extractElementPositionsShader.use();
     m_extractElementPositionsShader.update("pnum", m_numElements);
     glDispatchCompute(m_numBlocks, 1, 1);
-    //glFlush();
-    glMemoryBarrier (GL_SHADER_STORAGE_BARRIER_BIT);
-
-
-    Logger::instance().print("Atom positions: "); Logger::instance().tabIn();
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, protein.atomsSSBO);
-    GLuint *ptr;
-    ptr = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-    for (int i = 0; i < 10; i++) {
-        SimpleAtom atom = *(((SimpleAtom*)ptr)+i);
-        glm::vec3 pos = atom.pos;
-        Logger::instance().print(std::to_string(i) + ": " + std::to_string(pos.x) + ", " +
-                                 std::to_string(pos.y) + ", " +
-                                 std::to_string(pos.z) + " radius: " + std::to_string(atom.radius));
-    }
-    Logger::instance().tabOut();
-
+    glMemoryBarrier (GL_ALL_BARRIER_BITS);
 
     Logger::instance().print("Element positions: "); Logger::instance().tabIn();
-    std::vector<glm::vec3> content = m_gpuHandler.downloadSSBODataFloat3(m_gpuBuffers.dp_gridcnt, m_numElements);
-    for (int i = 0; i < 10; i++) {
-        glm::vec3 pos = content.at(i);
-        Logger::instance().print(std::to_string(i) + ": " + std::to_string(pos.x) + ", " +
-                                                            std::to_string(pos.y) + ", " +
-                                                            std::to_string(pos.z));
-    }
+    Logger::instance().print("Pnum is : " + std::to_string(m_numElements));
+    m_gpuHandler.printSSBODataFloat3(m_gpuBuffers.dp_pos, m_numElements);
     Logger::instance().tabOut();
 
 }
@@ -316,20 +295,11 @@ void NeighborhoodSearch::insertElementsInGridGPU()
     Logger::instance().print("Number of elements: " + std::to_string(m_numElements));
     Logger::instance().print("Number of gridcells: " + std::to_string(m_gridTotal));
 
-    Logger::instance().print("Counts per grid cell: "); Logger::instance().tabIn();
-    std::vector<int> content = m_gpuHandler.downloadSSBODataInt(m_gpuBuffers.dp_gridcnt, m_gridTotal);
-    for (int i = 0; i < content.size(); i++) {
-        Logger::instance().print(std::to_string(i) + ": " + std::to_string(content.at(i)));
-    }
-    Logger::instance().tabOut();
+    Logger::instance().print("Counts per grid cell: ");
+    m_gpuHandler.printSSBODataInt(m_gpuBuffers.dp_gridcnt, m_gridTotal);
 
-    Logger::instance().print("Get according cell for every atom: "); Logger::instance().tabIn();
-    content = m_gpuHandler.downloadSSBODataInt(m_gpuBuffers.dp_gcell, m_numElements);
-    for (int i = 0; i < 10; i++) {
-        Logger::instance().print(std::to_string(i) + ": " + std::to_string(content.at(i)));
-    }
-    Logger::instance().tabOut();
-
+    Logger::instance().print("Get according cell for every atom: ");
+    m_gpuHandler.printSSBODataInt(m_gpuBuffers.dp_gcell, m_numElements);
     Logger::instance().tabOut();
 }
 

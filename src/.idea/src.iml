@@ -90,6 +90,7 @@
       <sourceFolder url="file://$MODULE_DIR$/cmake/LinkASSIMP.cmake" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/impostor.vert" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/impostor.geom" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/extractElementPositions.comp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/fullscreenQuad.geom" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/debug.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/impostor.frag" isTestSource="false" />
