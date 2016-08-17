@@ -1487,20 +1487,33 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.5f, 0.0f, 0.75f)); // window background
         ImGui::Begin("Information", NULL, 0);
 
-        // General infos
+        // # General infos
         ImGui::Text("[General]");
         ImGui::Text(std::string("Atom Count: " + std::to_string(mupGPUProtein->getAtomCount())).c_str());
         ImGui::Separator();
 
-        // Selection infos
+        // # Computation infos
+        ImGui::Text("[Computation]");
+        ImGui::Text(std::string("Computed Start Frame: " + std::to_string(mComputedStartFrame)).c_str());
+        ImGui::Text(std::string("Computed End Frame: " + std::to_string(mComputedEndFrame)).c_str());
+
+        // Display whether layers are extracted for this frame
+        bool extractedLayers = frameComputed() && mGPUSurfaces.at(mFrame-mComputedStartFrame)->layersExtracted();
+        ImGui::Text(std::string("Extracted layers: " + std::string(extractedLayers ? "true" : "false")).c_str());
+        ImGui::Separator();
+
+        // # Selection infos
         ImGui::Text("[Selection]");
+        ImGui::InputInt("Index", &mSelectedAtom, 1);
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Index of atom."); }
+        mSelectedAtom = glm::clamp(mSelectedAtom, 0, mupGPUProtein->getAtomCount() - 1);
         ImGui::Text(std::string("Index: " + std::to_string(mSelectedAtom)).c_str());
         ImGui::Text(std::string("Element: " + mupGPUProtein->getElement(mSelectedAtom)).c_str());
         ImGui::Text(std::string("Aminoacid: " + mupGPUProtein->getAminoacid(mSelectedAtom)).c_str());
         if(frameComputed()) { ImGui::Text(std::string("Layer: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getLayerOfAtom(mSelectedAtom))).c_str()); }
         ImGui::Separator();
 
-        // Hardware infos
+        // # Hardware infos
         ImGui::Text("[Hardware]");
 
         // Show available GPU memory
@@ -1604,7 +1617,6 @@ void SurfaceDynamicsVisualization::renderGUI()
             ImGui::Text(std::string("Surface Atoms: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer))).c_str());
 
             // Graph about relation of surface and internal samples (in relative frames)
-            // TODO: stupid to calculate it every frame and bad texts
             float globalSampleCount = (float)mupHullSamples->getProteinSampleCount();
             auto sampleCount = mupHullSamples->getSurfaceSampleCount();
             std::vector<float> floatSampleAmount;
@@ -1613,7 +1625,7 @@ void SurfaceDynamicsVisualization::renderGUI()
             {
                 floatSampleAmount.push_back((float)sampleCount.at(i) / globalSampleCount);
             }
-            ImGui::PlotLines("Surface Samples", floatSampleAmount.data(), floatSampleAmount.size());
+            ImGui::PlotLines("Surface Amount", floatSampleAmount.data(), floatSampleAmount.size());
             ImGui::Text(std::string("Surface Amount: " + std::to_string(floatSampleAmount.at(mFrame - mComputedStartFrame) * 100) + " percent").c_str());
 
             // Surface area of molecule
@@ -1660,7 +1672,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                 {
                     mSelectedAtom = atomIndex;
                 }
-                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Select Atom."); } // tooltip
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Select atom."); } // tooltip
                 ImGui::SameLine();
 
                 // Remove that atom from analysis atoms (use ## to add number for an unique button id)
@@ -1669,7 +1681,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                     toBeRemoved.push_back(atomIndex);
                     analysisAtomsChanged = true;
                 }
-                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Remove Atom."); } // tooltip
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Remove atom."); } // tooltip
             }
 
             // Remove atoms from analysis
@@ -1678,6 +1690,7 @@ void SurfaceDynamicsVisualization::renderGUI()
 
             // Add new atoms to analyse
             ImGui::InputInt("", &mNextAnalyseAtomIndex);
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Index of atom."); }
             mNextAnalyseAtomIndex = glm::clamp(mNextAnalyseAtomIndex, 0, mupGPUProtein->getAtomCount());
             ImGui::SameLine();
             if(ImGui::Button("Add Atom"))
