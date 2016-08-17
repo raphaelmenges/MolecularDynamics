@@ -296,6 +296,8 @@ SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
 
 void SurfaceDynamicsVisualization::renderLoop()
 {
+    std::cout << "Prepare rendering loop.." << std::endl;
+
     // Setup OpenGL
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -351,9 +353,13 @@ void SurfaceDynamicsVisualization::renderLoop()
     // Shader program for outline rendering
     ShaderProgram outlineProgram("/SurfaceDynamicsVisualization/hull.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/outline.frag");
 
+    std::cout << "..done" << std::endl;
+
     // Call render function of Rendering.h with lambda function
     render(mpWindow, [&] (float deltaTime)
     {
+        if(mFrameLogging) { std::cout << "### New Frame ###" << std::endl; }
+
         // Viewport size
         glm::vec2 resolution = getResolution(mpWindow);
         mWindowWidth = resolution.x;
@@ -362,6 +368,7 @@ void SurfaceDynamicsVisualization::renderLoop()
         // # Update everything before drawing
 
         // ### MOLECULE ANIMATION ##################################################################################
+        if(mFrameLogging) { std::cout << "Update animations.." << std::endl; }
 
         // If playing, decide whether to switch to next frame of animation
         if(mPlayAnimation)
@@ -409,8 +416,10 @@ void SurfaceDynamicsVisualization::renderLoop()
                 }
             }
         }
+        if(mFrameLogging) { std::cout << "..done" << std::endl; }
 
         // ### CAMERA UPDATE #######################################################################################
+        if(mFrameLogging) { std::cout << "Update camera.." << std::endl; }
 
         // Calculate cursor movement
         double cursorX, cursorY;
@@ -469,8 +478,10 @@ void SurfaceDynamicsVisualization::renderLoop()
             prevCursorX = cursorX;
             prevCursorY = cursorY;
         }
+        if(mFrameLogging) { std::cout << "..done" << std::endl; }
 
         // ### OVERLAY RENDERING ###################################################################################
+        if(mFrameLogging) { std::cout << "Render overlay.." << std::endl; }
 
         // # Fill overlay framebuffer
         mupOverlayFramebuffer->bind();
@@ -627,8 +638,10 @@ void SurfaceDynamicsVisualization::renderLoop()
 
         // Unbind framebuffer for overlay
         mupOverlayFramebuffer->unbind();
+        if(mFrameLogging) { std::cout << "..done" << std::endl; }
 
         // ### MOLECULE RENDERING ##################################################################################
+        if(mFrameLogging) { std::cout << "Render molecule.." << std::endl; }
 
         // # Fill molecule framebuffer
         mupMoleculeFramebuffer->bind();
@@ -844,8 +857,10 @@ void SurfaceDynamicsVisualization::renderLoop()
 
         // Unbind molecule framebuffer
         mupMoleculeFramebuffer->unbind();
+        if(mFrameLogging) { std::cout << "..done" << std::endl; }
 
         // ### COMPOSITING #########################################################################################
+        if(mFrameLogging) { std::cout << "Do compositing.." << std::endl; }
 
         // Prepare viewport
         glViewport(0, 0, mWindowWidth, mWindowHeight);
@@ -898,6 +913,7 @@ void SurfaceDynamicsVisualization::renderLoop()
         screenFillingProgram.update("molecule", 0); // tell shader which slot to use
         screenFillingProgram.update("overlay", 1); // tell shader which slot to use
         glDrawArrays(GL_POINTS, 0, 1);
+        if(mFrameLogging) { std::cout << "..done" << std::endl; }
 
         // Back to opaque rendering
         glDisable(GL_BLEND);
@@ -907,8 +923,10 @@ void SurfaceDynamicsVisualization::renderLoop()
         glEnable(GL_DEPTH_TEST);
 
         // Render GUI in standard frame buffer on top of everything
+        if(mFrameLogging) { std::cout << "Render user interface.." << std::endl; }
         ImGui_ImplGlfwGL3_NewFrame();
         renderGUI();
+        if(mFrameLogging) { std::cout << "..done" << std::endl; }
     });
 
     // Delete OpenGL structures
