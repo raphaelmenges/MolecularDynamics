@@ -50,6 +50,9 @@ public:
     // Get layer of atom. Returns -1 if not found in any computed layer
     int getLayerOfAtom(GLuint index) const;
 
+    // Get whether layers were extracted
+    bool layersExtracted() const { return mLayerExtracted; }
+
 private:
 
     // Internal indices
@@ -86,6 +89,9 @@ private:
 
     // Save time which was necessary for computation (has to be set by GPUSurfaceExtraction)
     float mComputationTime = 0;
+
+    // Save whether layers were extracted or not
+    bool mLayerExtracted = false;
 };
 
 #endif // GPU_SURFACE_H

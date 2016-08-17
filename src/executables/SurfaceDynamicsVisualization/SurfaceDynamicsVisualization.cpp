@@ -1490,8 +1490,6 @@ void SurfaceDynamicsVisualization::renderGUI()
         // General infos
         ImGui::Text("[General]");
         ImGui::Text(std::string("Atom Count: " + std::to_string(mupGPUProtein->getAtomCount())).c_str());
-        // TODO: move to analysis: ImGui::Text(std::string("Internal Atoms: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer))).c_str());
-        // TODO: move to analysis: ImGui::Text(std::string("Surface Atoms: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer))).c_str());
         ImGui::Separator();
 
         // Selection infos
@@ -1499,6 +1497,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Text(std::string("Index: " + std::to_string(mSelectedAtom)).c_str());
         ImGui::Text(std::string("Element: " + mupGPUProtein->getElement(mSelectedAtom)).c_str());
         ImGui::Text(std::string("Aminoacid: " + mupGPUProtein->getAminoacid(mSelectedAtom)).c_str());
+        if(frameComputed()) { ImGui::Text(std::string("Layer: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getLayerOfAtom(mSelectedAtom))).c_str()); }
         ImGui::Separator();
 
         // Hardware infos
@@ -1600,6 +1599,9 @@ void SurfaceDynamicsVisualization::renderGUI()
 
             // Analysis of global
             ImGui::Text("[Global]");
+
+            ImGui::Text(std::string("Internal Atoms: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer))).c_str());
+            ImGui::Text(std::string("Surface Atoms: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer))).c_str());
 
             // Graph about relation of surface and internal samples (in relative frames)
             // TODO: stupid to calculate it every frame and bad texts
@@ -1755,9 +1757,41 @@ void SurfaceDynamicsVisualization::renderGUI()
             ImGui::SliderInt("Path Radius", &mPathFrameRadius, 1, 1000);
 
             // Amount of surface covered by analysis group
-            // TODO: very stupid to do every frame and bad texts
             if(mAnalyseAtoms.size() > 0)
             {
+                // ### LAYER OF GROUP ###
+
+                // Go over frames and extract layer of group
+                std::vector<float> minGroupLayers(mGPUSurfaces.size(), -1); // minus one means no data
+                std::vector<float> avgGroupLayers(mGPUSurfaces.size(), -1); // minus one means no data
+                for(int frame = mComputedStartFrame; frame <= mComputedEndFrame; frame++)
+                {
+                    // Do it only when layers were extracted for this frame
+                    if(mGPUSurfaces.at(frame - mComputedStartFrame)->layersExtracted())
+                    {
+                        // Calculate layer of group for that frame
+                        int minLayer = std::numeric_limits<int>::max();
+                        float avgLayer = 0;
+                        for(GLuint atomIndex : mAnalyseAtoms)
+                        {
+                            int layer = mGPUSurfaces.at(frame - mComputedStartFrame)->getLayerOfAtom(atomIndex);
+
+                            // Extract min layer (which mean the one closest or at surface)
+                            minLayer = minLayer > layer ? layer : minLayer;
+
+                            // Accumulate for average layer calculation
+                            avgLayer += (float)layer;
+                        }
+                        minGroupLayers[frame] = (float)minLayer;
+                        avgGroupLayers[frame] = avgLayer / (float)mAnalyseAtoms.size();
+                    }
+                }
+
+                ImGui::PlotLines("Min Group Layer", minGroupLayers.data(), minGroupLayers.size());
+                ImGui::PlotLines("Avg Group Layer", avgGroupLayers.data(), avgGroupLayers.size());
+
+
+
                 // TODO does not work right now
                 /*
                 std::vector<float> floatGroupSurfaceSampleAmount;

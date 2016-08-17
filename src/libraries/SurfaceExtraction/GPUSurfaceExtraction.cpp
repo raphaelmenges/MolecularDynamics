@@ -220,6 +220,9 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(
     // Fill computation time to GPUSurface
     upGPUSurface->mComputationTime = computationTime;
 
+    // Remember whether layers were extracted
+    upGPUSurface->mLayerExtracted = extractLayers;
+
     // Return unique pointer
     return std::move(upGPUSurface);
 }

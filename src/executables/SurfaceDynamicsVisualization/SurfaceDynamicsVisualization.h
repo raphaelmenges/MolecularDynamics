@@ -128,7 +128,7 @@ private:
     const float mAscensionColorOffsetAngle = 1.25f * glm::pi<float>();
     const float mSurfaceMarkPointSize = 5.f;
     const glm::vec3 mSelectionColor = glm::vec3(0.2f, 1.0f, 0.0f);
-    const bool mFrameLogging = true;
+    const bool mFrameLogging = false;
 
     // Controllable parameters
     bool mShowCameraWindow = true;
