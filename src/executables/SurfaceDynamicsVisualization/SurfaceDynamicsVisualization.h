@@ -85,7 +85,7 @@ private:
     int getAtomBeneathCursor() const;
 
     // Calculate approximated surface of molecule
-    float approximateSurfaceArea() const;
+    float approximateSurfaceArea(std::vector<GLuint> indices, int frame) const;
 
     // Get whether frame was computed (otherwise prohibit doing thing which would go wrong)
     bool frameComputed() const { return (mFrame >= mComputedStartFrame) && (mFrame <= mComputedEndFrame); }
