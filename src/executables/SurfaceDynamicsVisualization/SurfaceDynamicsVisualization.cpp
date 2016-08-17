@@ -21,6 +21,8 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
 {
     // TODO: Test text-csv
 
+    std::cout << "Welcome to Surface Dynamics Visualization" << std::endl;
+
     // # Setup members
     mCameraDeltaRotation = glm::vec2(0,0);
     mCameraRotationSmoothTime = 1.f;
@@ -29,9 +31,12 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     mWindowHeight = mInitialWindowHeight;
 
     // Create window (which initializes OpenGL)
+    std::cout << "Creating window.." << std::endl;
     mpWindow = generateWindow(mWindowTitle, mWindowWidth, mWindowHeight);
+    std::cout << "..done" << std::endl;
 
     // Init ImGui and load font
+    std::cout << "Loading GUI.." << std::endl;
     ImGui_ImplGlfwGL3_Init(mpWindow, true);
     ImGuiIO& io = ImGui::GetIO();
     std::string fontpath = std::string(RESOURCES_PATH) + "/fonts/dejavu-fonts-ttf-2.35/ttf/DejaVuSans.ttf";
@@ -52,6 +57,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
         0
     }; // has to be static to be available during run
     io.Fonts->AddFontFromFileTTF(fontpath.c_str(), 16, &config, ranges);
+    std::cout << "..done" << std::endl;
 
     // Clear color (has to be zero for sake of framebuffers)
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -166,6 +172,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     */
 
     // Loading protein
+    std::cout << "Importing molecule.." << std::endl;
     MdTrajWrapper mdwrap;
     std::vector<std::string> paths;
     paths.push_back(filepathPDB);
@@ -177,8 +184,10 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     upProtein->minMax(); // first, one has to calculate min and max value of protein
     mProteinMinExtent = upProtein->getMin();
     mProteinMaxExtent = upProtein->getMax();
+    std::cout << "..done" << std::endl;
 
     // # Prepare framebuffers for rendering
+    std::cout << "Creating framebuffer.." << std::endl;
     mupMoleculeFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight, mSuperSampling));
     mupMoleculeFramebuffer->bind();
     mupMoleculeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA); // color
@@ -188,8 +197,10 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     mupOverlayFramebuffer->bind();
     mupOverlayFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA);
     mupOverlayFramebuffer->unbind();
+    std::cout << "..done" << std::endl;
 
     // # Prepare background cubemaps
+    std::cout << "Loading cubemaps.." << std::endl;
     mScientificCubemapTexture = createCubemap(
         std::string(RESOURCES_PATH) + "/cubemaps/Scientific/posx.png",
         std::string(RESOURCES_PATH) + "/cubemaps/Scientific/negx.png",
@@ -212,9 +223,11 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
         std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posy.jpg",
         std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negy.jpg",
         std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posz.jpg",
-        std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negz.jpg");    
+        std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negz.jpg");
+    std::cout << "..done" << std::endl;
 
     // # Create camera
+    std::cout << "Create camera.." << std::endl;
     glm::vec3 cameraCenter = (mProteinMinExtent + mProteinMaxExtent) / 2.f;
     float cameraRadius = glm::compMax(mProteinMaxExtent - cameraCenter);
     mupCamera = std::unique_ptr<OrbitCamera>(
@@ -227,26 +240,43 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
             5.f * cameraRadius,
             45.f,
             0.1f));
+    std::cout << "..done" << std::endl;
 
-    // # Other
+    // # Surface extraction
+    std::cout << "Prepare surface extraction.." << std::endl;
+
+    // Construct GPUSurfaceExtraction object after OpenGL has been initialized
+    mupGPUSurfaceExtraction = std::unique_ptr<GPUSurfaceExtraction>(new GPUSurfaceExtraction);
+    std::cout << "..done" << std::endl;
+
+    // # Analysis
+    std::cout << "Prepare analysis.." << std::endl;
 
     // Create path for analysis group
     mupPath = std::unique_ptr<Path>(new Path());
 
-    // Create empty outline atoms indices after OpenGL initialization
-    mupOutlineAtomIndices = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(0)); // create empty outline atom indices buffer
-
-    // Construct GPUSurfaceExtraction object after OpenGL has been initialized
-    mupGPUSurfaceExtraction = std::unique_ptr<GPUSurfaceExtraction>(new GPUSurfaceExtraction);
-
-    // Ascension
-    mupAscension = std::unique_ptr<GPUBuffer<GLfloat> >(new GPUBuffer<GLfloat>);
-
     // Hull samples
     mupHullSamples = std::unique_ptr<GPUHullSamples>(new GPUHullSamples());
 
+    // Create empty outline atoms indices after OpenGL initialization
+    mupOutlineAtomIndices = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(0)); // create empty outline atom indices buffer
+    std::cout << "..done" << std::endl;
+
+    // # Ascension
+    std::cout << "Prepare ascension.." << std::endl;
+
+    // Ascension
+    mupAscension = std::unique_ptr<GPUBuffer<GLfloat> >(new GPUBuffer<GLfloat>);
+    std::cout << "..done" << std::endl;
+
+    // # Validation
+    std::cout << "Prepare validation.." << std::endl;
+
     // Prepare validation of the surface
     mupSurfaceValidation = std::unique_ptr<SurfaceValidation>(new SurfaceValidation());
+    std::cout << "..done" << std::endl;
+
+    // # Other
 
     // Set endframe in GUI to maximum number
     mEndFrame = mupGPUProtein->getFrameCount() - 1;
@@ -254,10 +284,14 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
 
 SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
 {
+    std::cout << "Cleaning up.." << std::endl;
+
     // Delete cubemaps
     glDeleteTextures(1, &mScientificCubemapTexture);
     glDeleteTextures(1, &mCVCubemapTexture);
     glDeleteTextures(1, &mBeachCubemapTexture);
+
+    std::cout << "..done" << std::endl;
 }
 
 void SurfaceDynamicsVisualization::renderLoop()
