@@ -69,7 +69,6 @@ SimpleProtein* ProteinLoader::loadProtein(std::string fileName)
     if (lastDot >= 0) {
         proteinName = proteinName.substr(0, lastDot);
     }
-    Logger::instance().print("Protein name is " + proteinName);
 
 
 
@@ -87,10 +86,12 @@ SimpleProtein* ProteinLoader::loadProtein(std::string fileName)
     SimpleProtein* protein = new SimpleProtein;
     protein->name = proteinName;
     loadPDB(filePath, *protein, protein->bbMin, protein->bbMax);
-    Logger::instance().print("Loading Protein"); Logger::instance().tabIn();
+    m_proteins.push_back(protein);
+
+    Logger::instance().print("Loading Protein:"); Logger::instance().tabIn();
+    Logger::instance().print("Protein name is " + proteinName);
     Logger::instance().print("Number of atoms: " + std::to_string(protein->atoms.size()));
     Logger::instance().tabOut();
-    m_proteins.push_back(protein);
 
     return m_proteins.at(m_proteins.size()-1);
 }

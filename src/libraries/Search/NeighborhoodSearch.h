@@ -20,11 +20,25 @@ class NeighborhoodSearch {
 public:
     ~NeighborhoodSearch();
 
-    // neighbor search
+    /*
+     * Getter and setter
+     */
+    int getNumberOfGridCells();
+    glm::vec3 getGridSize();
+    glm::ivec3 getGridResolution();
+    float getCellSize();
+    void getGridMinMax(glm::vec3& min, glm::vec3& max);
+    int getGridSearch();
+
+    /*
+     * neighbor search
+     */
     void init(uint numElements, glm::fvec3 min, glm::fvec3 max, glm::ivec3 resolution, float searchRadius);
     void run();
 
-    // other functions
+    /*
+     * other functions
+     */
     int getTotalGridNum();
 
 private:
@@ -39,8 +53,9 @@ private:
     glm::ivec3  m_gridRes;       // 3D grid resolution
     glm::fvec3  m_gridSize;      // 3D grid sizes
     glm::fvec3  m_gridDelta;     // delta translate from world space to cell space
-    int         m_gridTotal;
+    int         m_gridTotal;     // total number of cells in the grid
     Grid        m_gridDataGPU;
+    float       m_cellSize;
 
     int         m_numElements;
 
@@ -50,18 +65,23 @@ private:
     GLuint**    m_scanBlockSumsInt;
 
     // gpu
-    GPUHandler  m_gpuHandler;
-    GPUBuffers  m_gpuBuffers;
-    uint        m_numBlocks;
-    uint        m_numThreads;
-    uint        m_gridBlocks;
-    uint        m_gridThreads;
+    GPUHandler    m_gpuHandler;
+    GPUBuffers    m_gpuBuffers;
+    uint          m_numBlocks;
+    uint          m_numThreads;
+    uint          m_gridBlocks;
+    uint          m_gridThreads;
+    // shader
     ShaderProgram m_insertElementsShader;
     ShaderProgram m_extractElementPositionsShader;
     ShaderProgram m_prescanIntShader;
+    ShaderProgram m_uniformAddIntShader;
 
 
-    // init helper functions
+
+    /*
+     * init helper functions
+     */
     void setupComputeShaders();
     void allocateBuffers(uint numElements);
     void deallocateBuffers();
@@ -72,12 +92,16 @@ private:
     void calculateNumberOfBlocksAndThreads(uint numElements);
     void computeNumBlocks(int numElements, int maxThreads, uint& numBlocks, uint &numThreads);
 
-    // run helper functions
+    /*
+     * run helper functions
+     */
     void updateElementPositions();
     void insertElementsInGridGPU();
 
     void prefixSumCellsGPU();
-    void prescanArrayRecursiveInt(GLuint* outArray, const GLuint* inArray, int numElements, int level);
+    void prescanArrayRecursiveInt(GLuint* outArray, GLuint* inArray, int numElements, int level);
+    void prescanInt(int numThreads, int numBlocks, int sharedMemSize, bool storeSum, bool isNP2, GLuint* outArray, GLuint* inArray, int level, int n, int blockIndex, int baseIndex);
+    void uniformAddInt(int numThreads, int numBlocks, GLuint* outArray, int level, int n, int blockOffset, int baseIndex);
     bool isPowerOfTwo(int n);
     int floorPow2(int n);
 

@@ -88,13 +88,15 @@
       <sourceFolder url="file://$MODULE_DIR$/cmake/FindGLFW3.cmake" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/cmake/LinkGLFW3.cmake" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/cmake/LinkASSIMP.cmake" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/impostor.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/prescanInt.comp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/dummy.vert" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/impostor.geom" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/extractElementPositions.comp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/fullscreenQuad.geom" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/debug.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/impostor.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/dummy.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/impostor.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/uniformAddInt.comp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/insertElements.comp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/SortVisibleIDList.comp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/toneMapperLinearInstanceCount.frag" isTestSource="false" />

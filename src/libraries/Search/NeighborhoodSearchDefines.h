@@ -34,4 +34,6 @@ struct Grid {
 #define BLOCK_SIZE 256
 #define NUM_BANKS  16    // TODO: make it variable
 
+#define NHS_DEBUG true
+
 #endif //OPENGL_FRAMEWORK_NEIGHBORHOODSEARCHDEFINES_H

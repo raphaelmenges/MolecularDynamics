@@ -22,6 +22,7 @@ public:
     void initSSBOUInt(GLuint* ssboHandler, int length);
     void initSSBOFloat(GLuint* ssboHandler, int length);
     void initSSBOFloat3(GLuint* ssboHandler, int length);
+    void initSSBOFloat4(GLuint* ssboHandler, int length);
 
     /*
      * fill every block of the ssbo with the provided value
@@ -43,6 +44,13 @@ public:
     void printSSBODataUInt(GLuint* ssboHandler, int length);
     void printSSBODataFloat(GLuint* ssboHandler, int length);
     void printSSBODataFloat3(GLuint* ssboHandler, int length);
+    void printSSBODataFloat4(GLuint* ssboHandler, int length);
+
+    void assertAtomsAreInBounds(GLuint* ssboHandler, int length, glm::vec3 min, glm::vec3 max);
+    void assertSum(GLuint* ssboHandler, int length, int sum);
+    void assertBelowLimit(GLuint* ssboHandler, int length, int limit);
+    void assertAboveLimit(GLuint* ssboHandler, int length, int limit);
+    void assertCellContent(GLuint* cellHandler,GLuint* cellCntHandler, int length1, int length2);
 
     /*
      * deleting ssbo

@@ -8,7 +8,6 @@
 #include <imgui/examples/opengl3_example/imgui_impl_glfw_gl3.h>
 #include <sstream>
 #include <iomanip>
-#include <exception>
 
 // framework includes
 #include "ShaderTools/Renderer.h"
@@ -46,10 +45,6 @@ bool m_rotateCamera = false;
 // rendering
 glm::vec3 m_lightDirection;
 bool m_drawDebug = false;
-
-// gui
-bool m_showInternal;
-bool m_showSurface;
 
 // protein
 ProteinLoader m_proteinLoader;
@@ -210,7 +205,7 @@ void printGPUInfos()
     GLint maxComputeShaderStorageBlocks = -1;
     GLint maxCombinedShaderStorageBlocks = -1;
     int   work_grp_cnt[3];
-    int work_grp_size[3];
+    int   work_grp_size[3];
 
     glGetIntegerv(GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS, &maxStorageBufferBindings);
     glGetIntegerv(GL_MAX_SHADER_STORAGE_BLOCK_SIZE,      &maxStorageBlockSize);
@@ -282,28 +277,25 @@ void run()
     glDepthFunc(GL_LESS);
     glEnable(GL_CULL_FACE);
 
-
-
     /*
      * setup shader programs
      */
     ShaderProgram impostorProgram = ShaderProgram("/NeighborSearch/impostor.vert", "/NeighborSearch/impostor.geom", "/NeighborSearch/impostor.frag");
     ShaderProgram debugProgram    = ShaderProgram("/NeighborSearch/dummy.vert", "/NeighborSearch/fullscreenQuad.geom", "/NeighborSearch/debug.frag");
-
-
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR) {
+        Logger::instance().print("GLerror after init shader programs: " + std::to_string(err), Logger::Mode::ERROR);
+    }
 
     /*
      * generate, bind, fill and then unbind atom ssbo buffer
      */
-    Logger::instance().print("Copy atoms to gpu");
     m_atomsSSBO;
     glGenBuffers(1, &m_atomsSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_atomsSSBO);
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(SimpleAtom) * m_proteinLoader.getNumberOfAllAtoms(), m_proteinLoader.getAllAtoms().data(), GL_STATIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_atomsSSBO);
-
-
 
     /*
      * setup camera
@@ -348,6 +340,10 @@ void run()
          */
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+
+        /*
+         * request new frame for ImGui
+         */
         ImGui_ImplGlfwGL3_NewFrame();
 
         /*
@@ -392,8 +388,11 @@ void run()
         /*
          * run neighborhood search
          */
-        //m_search.run();
+        m_search.run();
 
+        /*
+         * do the actual drawing
+         */
         if (!m_drawDebug) {
             /*
              * draw proteins as impostor
@@ -437,14 +436,18 @@ void updateGUI()
     // Main menu bar
     if (ImGui::BeginMainMenuBar())
     {
-        // General menu
+        /*
+         * General menu
+         */
         if (ImGui::BeginMenu("Menu"))
         {
             if(ImGui::MenuItem("Quit", "Esc", false, true)) { glfwSetWindowShouldClose(mp_Window, GL_TRUE); }
             ImGui::EndMenu();
         }
 
-        // Protein infos
+        /*
+         * Shortcut infos
+         */
         if (ImGui::BeginMenu("Shortcuts"))
         {
             ImGui::Text("P: Switch between proteins");
@@ -455,7 +458,9 @@ void updateGUI()
             ImGui::EndMenu();
         }
 
-        // Protein infos
+        /*
+         * Protein infos
+         */
         if (ImGui::BeginMenu("Proteins"))
         {
             if (m_proteinLoader.getNumberOfProteins() > 0) {
@@ -472,14 +477,53 @@ void updateGUI()
             ImGui::EndMenu();
         }
 
-        // Frametime
+        /*
+         * Protein infos
+         */
+        if (ImGui::BeginMenu("Grid"))
+        {
+            glm::vec3 min, max;
+            m_search.getGridMinMax(min, max);
+
+            std::string gridSizeText = "Gridsize: " + std::to_string(m_search.getGridSize().x)
+                                             + ", " + std::to_string(m_search.getGridSize().y)
+                                             + ", " + std::to_string(m_search.getGridSize().z);
+            std::string gridResText  = "Gridres: "  + std::to_string(m_search.getGridResolution().x)
+                                             + ", " + std::to_string(m_search.getGridResolution().y)
+                                             + ", " + std::to_string(m_search.getGridResolution().z);
+            std::string gridMinText  = "Gridmin: "  + std::to_string(min.x)
+                                             + ", " + std::to_string(min.y)
+                                             + ", " + std::to_string(min.z);
+            std::string gridMaxText  = "Gridmax: "  + std::to_string(max.x)
+                                             + ", " + std::to_string(max.y)
+                                             + ", " + std::to_string(max.z);
+            std::string gridCellNumText = "#Gridcells: " + std::to_string(m_search.getTotalGridNum());
+            std::string cellSizeText = "Cellsize: " + std::to_string(m_search.getCellSize());
+            std::string gridSearchText = "Gridsearch: " + std::to_string(m_search.getGridSearch());
+
+            ImGui::Text(gridSizeText.c_str());
+            ImGui::Text(gridResText.c_str());
+            ImGui::Text(gridMinText.c_str());
+            ImGui::Text(gridMaxText.c_str());
+            ImGui::Text(gridCellNumText.c_str());
+            ImGui::Text(gridSearchText.c_str());
+            ImGui::Text(cellSizeText.c_str());
+
+            ImGui::EndMenu();
+        }
+
+        /*
+         * Frametime
+         */
         float framerate = ImGui::GetIO().Framerate;
         std::stringstream stream;
         stream << std::fixed << std::setprecision(0) << framerate;
         std::string fps = "FPS: " + stream.str();
         ImGui::MenuItem(fps.c_str(), "", false, false);
 
-        // End main menu bar
+        /*
+         * End main menu bar
+         */
         ImGui::EndMainMenuBar();
     }
 
@@ -490,7 +534,7 @@ void updateGUI()
 
 int main()
 {
-    Logger::instance().changeTab("|  ");
+    Logger::instance().changeTab("     ");
     Logger::instance().print("Start Neighborhood search"); Logger::instance().tabIn();
 
     setup();
@@ -498,18 +542,20 @@ int main()
     printGPUInfos();
 
     SimpleProtein* proteinA = m_proteinLoader.loadProtein("PDB/1a19.pdb");
+    /*
     SimpleProtein* proteinB = m_proteinLoader.loadProtein("PDB/1crn.pdb");
     SimpleProtein* proteinC = m_proteinLoader.loadProtein("PDB/1mbn.pdb");
+
     proteinA->center();
     proteinB->center();
     proteinC->center();
-    Logger::instance().print(std::to_string(proteinA->extent().x));
     proteinB->move(glm::vec3(proteinA->extent().x/2 + proteinB->extent().x/2, 0, 0));
     proteinC->move(glm::vec3(-proteinA->extent().x/2 - proteinC->extent().x/2, 0, 0));
+    */
 
     glm::vec3 gridResolution = glm::vec3(3,3,3);
     float searchRadius = 0.5;
-    //initNeighborhoodSearch(gridResolution, searchRadius);
+    initNeighborhoodSearch(gridResolution, searchRadius);
 
     run();
 
