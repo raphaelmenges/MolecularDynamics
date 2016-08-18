@@ -1535,7 +1535,6 @@ void SurfaceDynamicsVisualization::renderGUI()
     if(mFrameLogging) { std::cout << "..done" << std::endl; }
 
     // ### ANALYSIS ######################################################################################
-    /*
     if(mFrameLogging) { std::cout << "Analysis window.." << std::endl; }
     if(mShowAnalysisWindow)
     {
@@ -1556,33 +1555,13 @@ void SurfaceDynamicsVisualization::renderGUI()
                 ImGui::Text(std::string("Surface Atoms In Frame: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer))).c_str());
 
                 // ### Relation of internal and surface samples ###
-
-                // Graph about relation of surface and internal samples
-                auto sampleCounts = mupHullSamples->getSurfaceSampleCount();
-                std::vector<float> surfaceAmount(sampleCounts.size(), -1);
-                for(int i = 0; i < sampleCounts.size(); i++)
-                {
-                    surfaceAmount.at(i) = (float)sampleCounts.at(i) / (float)mupHullSamples->getProteinSampleCount();
-                }
-                ImGui::PlotLines("Surface Amount", surfaceAmount.data(), surfaceAmount.size());
-                ImGui::Text(std::string("Surface Amount In Frame: " + std::to_string(surfaceAmount.at(mFrame - mComputedStartFrame) * 100) + " %%").c_str());
+                ImGui::PlotLines("Surface Amount", mAnalysisSurfaceAmount.data(), mAnalysisSurfaceAmount.size());
+                ImGui::Text(std::string("Surface Amount In Frame: " + std::to_string(mAnalysisSurfaceAmount.at(mFrame - mComputedStartFrame) * 100) + " %%").c_str());
                 if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Relation between hull samples on surface and internal ones over all atoms."); }
 
                 // ### Approximated surface of molecule ###
-
-                // Surface area of molecule
-                std::vector<float> surfaceArea(mGPUSurfaces.size(), -1);
-                for(int frame = mComputedStartFrame; frame <= mComputedEndFrame; frame++)
-                {
-                    // Relative frame
-                    int relativeFrame = frame - mComputedStartFrame;
-
-                    // Approximate surface for that frame
-                    surfaceArea.at(relativeFrame) = approximateSurfaceArea(mGPUSurfaces.at(relativeFrame)->getSurfaceIndices(0), frame);
-                }
-
-                ImGui::PlotLines("Surface Area", surfaceArea.data(), surfaceArea.size());
-                ImGui::Text(std::string("Surface Area In Frame: " + std::to_string(surfaceArea.at(mFrame - mComputedStartFrame)) + " \u212b²").c_str());
+                ImGui::PlotLines("Surface Area", mAnalysisSurfaceArea.data(), mAnalysisSurfaceArea.size());
+                ImGui::Text(std::string("Surface Area In Frame: " + std::to_string(mAnalysisSurfaceArea.at(mFrame - mComputedStartFrame)) + " \u212b²").c_str());
             }
 
             // ### Analysis of group ###
@@ -1602,7 +1581,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                 bool analysisAtomsChanged = false;
 
                 // Go over analyse atoms and list them
-                for (int atomIndex : mAnalyseAtoms)
+                for (int atomIndex : mAnalyseGroup)
                 {
                     // Mark if currently selected
                     if(atomIndex == mSelectedAtom)
@@ -1641,7 +1620,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                 }
 
                 // Remove atoms from analysis
-                for(int atomIndex : toBeRemoved) { mAnalyseAtoms.erase(atomIndex); }
+                for(int atomIndex : toBeRemoved) { mAnalyseGroup.erase(atomIndex); }
                 ImGui::EndChild();
 
                 // Add new atoms to analyse
@@ -1652,20 +1631,23 @@ void SurfaceDynamicsVisualization::renderGUI()
                 if(ImGui::Button("Add Atom"))
                 {
                     // Add atom to list of analyse atoms
-                    mAnalyseAtoms.insert((GLuint)mNextAnalyseAtomIndex);
+                    mAnalyseGroup.insert((GLuint)mNextAnalyseAtomIndex);
                     analysisAtomsChanged = true;
                 }
 
-                // Recreate outline atom indices and path visualization
+                // Recreate outline atom indices, path visualization and group analysis
                 if(analysisAtomsChanged)
                 {
                     // Outline
                     std::vector<GLuint> analyseAtomVector;
-                    std::copy(mAnalyseAtoms.begin(), mAnalyseAtoms.end(), std::back_inserter(analyseAtomVector));
+                    std::copy(mAnalyseGroup.begin(), mAnalyseGroup.end(), std::back_inserter(analyseAtomVector));
                     mupOutlineAtomIndices = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(analyseAtomVector));
 
                     // Path
                     doUpdatePath = true;
+
+                    // Group analysis update
+                    updateGroupAnalysis();
                 }
                 ImGui::Separator();
 
@@ -1706,7 +1688,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                 ImGui::Separator();
 
                 // Analysis of group
-                if(mAnalyseAtoms.size() > 0)
+                if(mAnalyseGroup.size() > 0)
                 {
                     // ### Path ###
                     std::ostringstream stringPathLength;
@@ -1725,6 +1707,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                     stringPathLength = std::ostringstream();
                     stringPathLength << std::fixed << std::setprecision(2) << mupPath->getLength(mPathLengthStartFrame, mPathLengthEndFrame);
                     ImGui::Text(std::string("Path Length: " + stringPathLength.str() + " \u212b").c_str());
+                    ImGui::Separator();
 
                     // Radius of frames which are taken into account for path smoothing
                     int radius = mPathSmoothRadius;
@@ -1749,71 +1732,21 @@ void SurfaceDynamicsVisualization::renderGUI()
                     stringPathLength = std::ostringstream();
                     stringPathLength << std::fixed << std::setprecision(2) << mupPath->getCompleteLength();
                     ImGui::Text(std::string("Path Complete Length: " + stringPathLength.str() + " \u212b").c_str());
+                    ImGui::Separator();
 
                     // ### Layer of group ###
-
-                    // Go over frames and extract layer of group
-                    std::vector<float> groupMinLayers(mGPUSurfaces.size(), -1); // minus one means no data
-                    std::vector<float> groupAvgLayers(mGPUSurfaces.size(), -1); // minus one means no data
-                    for(int frame = mComputedStartFrame; frame <= mComputedEndFrame; frame++)
-                    {
-                        // Relative frame
-                        int relativeFrame = frame - mComputedStartFrame;
-
-                        // Do it only when layers were extracted for this frame
-                        if(mGPUSurfaces.at(relativeFrame)->layersExtracted())
-                        {
-                            // Calculate layer of group for that frame
-                            int minLayer = std::numeric_limits<int>::max();
-                            float avgLayer = 0;
-                            for(GLuint atomIndex : mAnalyseAtoms)
-                            {
-                                int layer = mGPUSurfaces.at(relativeFrame)->getLayerOfAtom(atomIndex);
-
-                                // Extract min layer (which mean the one closest or at surface)
-                                minLayer = minLayer > layer ? layer : minLayer;
-
-                                // Accumulate for average layer calculation
-                                avgLayer += (float)layer;
-                            }
-                            groupMinLayers.at(relativeFrame) = (float)minLayer;
-                            groupAvgLayers.at(relativeFrame) = avgLayer / (float)mAnalyseAtoms.size();
-                        }
-                    }
-
-                    ImGui::PlotLines("Group Min Layer", groupMinLayers.data(), groupMinLayers.size());
-                    ImGui::PlotLines("Group Avg Layer", groupAvgLayers.data(), groupAvgLayers.size());
+                    ImGui::PlotLines("Group Min Layer", mAnalysisGroupMinLayers.data(), mAnalysisGroupMinLayers.size());
+                    ImGui::PlotLines("Group Avg Layer", mAnalysisGroupAvgLayers.data(), mAnalysisGroupAvgLayers.size());
+                    ImGui::Separator();
 
                     // ### Surface amount of group ###
+                    ImGui::PlotLines("Group Surface Amount", mAnalysisGroupSurfaceAmount.data(), mAnalysisGroupSurfaceAmount.size());
+                    ImGui::Text(std::string("Group Surface Amount In Frame: " + std::to_string(mAnalysisGroupSurfaceAmount.at(mFrame - mComputedStartFrame) * 100) + " %%").c_str());
+                    ImGui::Separator();
 
-                    // Go over frames and calculate how much surface area is covered by atoms of group in relation to all hull samples of group
-                    std::vector<float> groupSurfaceAmount(mGPUSurfaces.size(), -1); // minus one means no data
-                    std::vector<float> groupSurfaceArea(mGPUSurfaces.size(), -1); // minus one means no data
-                    for(int frame = mComputedStartFrame; frame <= mComputedEndFrame; frame++)
-                    {
-                        // Relative frame
-                        int relativeFrame = frame - mComputedStartFrame;
-
-                        // Accumulate sample count
-                        float surfaceSampleCount = 0;
-                        for(GLuint atomIndex : mAnalyseAtoms)
-                        {
-                            // Surface amount for group in that frame for that atom
-                            surfaceSampleCount += (float)mupHullSamples->getSurfaceSampleCount(frame, atomIndex);
-                        }
-
-                        // Save surface amount of group for that frame
-                        groupSurfaceAmount[relativeFrame] = surfaceSampleCount / (float)mupHullSamples->getSampleCount(mAnalyseAtoms.size());
-
-                        // Save surface area
-                        groupSurfaceArea[relativeFrame] = approximateSurfaceArea(std::vector<GLuint>(mAnalyseAtoms.begin(), mAnalyseAtoms.end()), frame);
-                    }
-
-                    ImGui::PlotLines("Group Surface Amount", groupSurfaceAmount.data(), groupSurfaceAmount.size());
-                    ImGui::Text(std::string("Group Surface Amount In Frame: " + std::to_string(groupSurfaceAmount.at(mFrame - mComputedStartFrame) * 100) + " %%").c_str());
-
-                    ImGui::PlotLines("Group Surface Area", groupSurfaceArea.data(), groupSurfaceArea.size());
-                    ImGui::Text(std::string("Group Surface Area In Frame: " + std::to_string(groupSurfaceArea.at(mFrame - mComputedStartFrame)) + " \u212b²").c_str());
+                    // ### Surface area of group ###
+                    ImGui::PlotLines("Group Surface Area", mAnalysisGroupSurfaceArea.data(), mAnalysisGroupSurfaceArea.size());
+                    ImGui::Text(std::string("Group Surface Area In Frame: " + std::to_string(mAnalysisGroupSurfaceArea.at(mFrame - mComputedStartFrame)) + " \u212b²").c_str());
                     if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Relation between hull samples on surface and internal ones over group's atoms."); }
                 }
             }
@@ -1821,7 +1754,7 @@ void SurfaceDynamicsVisualization::renderGUI()
             // Update path if necessary
             if(doUpdatePath)
             {
-                mupPath->update(mupGPUProtein.get(), mAnalyseAtoms, mPathSmoothRadius);
+                mupPath->update(mupGPUProtein.get(), mAnalyseGroup, mPathSmoothRadius);
             }
         }
         else
@@ -1833,7 +1766,6 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::PopStyleColor(); // window background
     }
     if(mFrameLogging) { std::cout << "..done" << std::endl; }
-    */
 
     // ### RENDERING #####################################################################################
     if(mFrameLogging) { std::cout << "Rendering window.." << std::endl; }
@@ -1969,14 +1901,6 @@ void SurfaceDynamicsVisualization::computeLayers(bool useGPU)
     updateComputationInformation(
         (useGPU ? "GPU" : "CPU with " + std::to_string(mCPUThreads) + " threads"), computationTime);
 
-    // Hull sample computation
-    computeHullSamples();
-
-    // Ascension computation
-    computeAscension();
-
-    // # Frame setting
-
     // Remember which frames were computed
     mComputedStartFrame = mComputationStartFrame;
     mComputedEndFrame = mComputationEndFrame;
@@ -1984,12 +1908,19 @@ void SurfaceDynamicsVisualization::computeLayers(bool useGPU)
     // Remember which probe radius was used
     mComputedProbeRadius = mComputationProbeRadius;
 
+    // Hull sample computation
+    computeHullSamples();
+
+    // Ascension computation
+    computeAscension();
+
     // Set to first computed frame
     setFrame(mComputedStartFrame);
 }
 
 void SurfaceDynamicsVisualization::computeHullSamples()
 {
+    // Compute hull samples
     mupHullSamples->compute(
         mupGPUProtein.get(),
         &mGPUSurfaces,
@@ -2001,6 +1932,10 @@ void SurfaceDynamicsVisualization::computeHullSamples()
         {
             this->setProgressDisplay("Hull Samples", progress);
         });
+
+    // Update analysis which depends on hull samples
+    updateGlobalAnalysis();
+    updateGroupAnalysis();
 }
 
 void SurfaceDynamicsVisualization::computeAscension()
@@ -2162,6 +2097,84 @@ float SurfaceDynamicsVisualization::approximateSurfaceArea(std::vector<GLuint> i
     }
 
     return surface;
+}
+
+void SurfaceDynamicsVisualization::updateGlobalAnalysis()
+{
+    // Surface amount of molecule
+    auto sampleCounts = mupHullSamples->getSurfaceSampleCount();
+    mAnalysisSurfaceAmount = std::vector<float>(sampleCounts.size(), -1);
+    for(int i = 0; i < sampleCounts.size(); i++)
+    {
+        mAnalysisSurfaceAmount.at(i) = (float)sampleCounts.at(i) / (float)mupHullSamples->getProteinSampleCount();
+    }
+
+    // Surface area of molecule
+    mAnalysisSurfaceArea = std::vector<float>(mGPUSurfaces.size(), -1);
+    for(int frame = mComputedStartFrame; frame <= mComputedEndFrame; frame++)
+    {
+        // Relative frame
+        int relativeFrame = frame - mComputedStartFrame;
+
+        // Approximate surface for that frame
+        mAnalysisSurfaceArea.at(relativeFrame) = approximateSurfaceArea(mGPUSurfaces.at(relativeFrame)->getSurfaceIndices(0), frame);
+    }
+}
+
+void SurfaceDynamicsVisualization::updateGroupAnalysis()
+{
+    // Go over frames and extract layer of group
+    mAnalysisGroupMinLayers = std::vector<float>(mGPUSurfaces.size(), -1); // minus one means no data
+    mAnalysisGroupAvgLayers = std::vector<float>(mGPUSurfaces.size(), -1); // minus one means no data
+    for(int frame = mComputedStartFrame; frame <= mComputedEndFrame; frame++)
+    {
+        // Relative frame
+        int relativeFrame = frame - mComputedStartFrame;
+
+        // Do it only when layers were extracted for this frame
+        if(mGPUSurfaces.at(relativeFrame)->layersExtracted())
+        {
+            // Calculate layer of group for that frame
+            int minLayer = std::numeric_limits<int>::max();
+            float avgLayer = 0;
+            for(GLuint atomIndex : mAnalyseGroup)
+            {
+                // Get layer of that atom
+                int layer = mGPUSurfaces.at(relativeFrame)->getLayerOfAtom(atomIndex);
+
+                // Extract min layer (which mean the one closest or at surface)
+                minLayer = minLayer > layer ? layer : minLayer;
+
+                // Accumulate for average layer calculation
+                avgLayer += (float)layer;
+            }
+            mAnalysisGroupMinLayers.at(relativeFrame) = (float)minLayer;
+            mAnalysisGroupAvgLayers.at(relativeFrame) = avgLayer / (float)mAnalyseGroup.size();
+        }
+    }
+
+    // Go over frames and calculate surface amount and area of group atoms
+    mAnalysisGroupSurfaceAmount = std::vector<float>(mGPUSurfaces.size(), -1); // minus one means no data
+    mAnalysisGroupSurfaceArea = std::vector<float>(mGPUSurfaces.size(), -1); // minus one means no data
+    for(int frame = mComputedStartFrame; frame <= mComputedEndFrame; frame++)
+    {
+        // Relative frame
+        int relativeFrame = frame - mComputedStartFrame;
+
+        // Accumulate sample count
+        float surfaceSampleCount = 0;
+        for(GLuint atomIndex : mAnalyseGroup)
+        {
+            // Surface amount for group in that frame for that atom
+            surfaceSampleCount += (float)mupHullSamples->getSurfaceSampleCount(frame, atomIndex);
+        }
+
+        // Save surface amount of group for that frame
+        mAnalysisGroupSurfaceAmount.at(relativeFrame) = surfaceSampleCount / (float)mupHullSamples->getSampleCount(mAnalyseGroup.size());
+
+        // Save surface area
+        mAnalysisGroupSurfaceArea.at(relativeFrame) = approximateSurfaceArea(std::vector<GLuint>(mAnalyseGroup.begin(), mAnalyseGroup.end()), frame);
+    }
 }
 
 GLuint SurfaceDynamicsVisualization::createCubemapTexture(

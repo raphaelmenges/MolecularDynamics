@@ -87,6 +87,12 @@ private:
     // Calculate approximated surface of molecule
     float approximateSurfaceArea(std::vector<GLuint> indices, int frame) const;
 
+    // Update global analysis
+    void updateGlobalAnalysis();
+
+    // Update group analysis
+    void updateGroupAnalysis();
+
     // Get whether frame was computed (otherwise prohibit doing thing which would go wrong)
     bool frameComputed() const { return (mFrame >= mComputedStartFrame) && (mFrame <= mComputedEndFrame); }
 
@@ -128,7 +134,7 @@ private:
     const float mAscensionColorOffsetAngle = 1.25f * glm::pi<float>();
     const float mSurfaceMarkPointSize = 5.f;
     const glm::vec3 mSelectionColor = glm::vec3(0.2f, 1.0f, 0.0f);
-    const bool mFrameLogging = true;
+    const bool mFrameLogging = false;
     const std::string mNoComputedFrameMessage = "Frame was not computed.";
 
     // Controllable parameters
@@ -218,11 +224,19 @@ private:
     std::unique_ptr<Framebuffer> mupMoleculeFramebuffer;
     std::unique_ptr<Framebuffer> mupOverlayFramebuffer;
     std::unique_ptr<GPUTextureBuffer> mupOutlineAtomIndices;
-    std::set<GLuint> mAnalyseAtoms;
-    int mNextAnalyseAtomIndex = 0;
     std::unique_ptr<GPUBuffer<GLfloat> > mupAscension; // values have range [0..2Pi]
-    std::unique_ptr<Path> mupPath;
     std::unique_ptr<GPUHullSamples> mupHullSamples;
+
+    // Analysis
+    std::set<GLuint> mAnalyseGroup;
+    int mNextAnalyseAtomIndex = 0;
+    std::vector<float> mAnalysisSurfaceAmount;
+    std::vector<float> mAnalysisSurfaceArea;
+    std::vector<float> mAnalysisGroupMinLayers;
+    std::vector<float> mAnalysisGroupAvgLayers;
+    std::vector<float> mAnalysisGroupSurfaceAmount;
+    std::vector<float> mAnalysisGroupSurfaceArea;
+    std::unique_ptr<Path> mupPath;
 
     // Surface validation
     std::unique_ptr<SurfaceValidation> mupSurfaceValidation;
