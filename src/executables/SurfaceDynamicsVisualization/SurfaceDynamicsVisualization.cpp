@@ -379,7 +379,7 @@ void SurfaceDynamicsVisualization::renderLoop()
 
             mupCamera->setCenter(
                 mupCamera->getCenter()
-                + (deltaTime * mupCamera->getRadius()
+                + (deltaTime * mupCamera->getRadius() * 0.3f
                     * (((float)cursorDeltaX * a)
                         + ((float)cursorDeltaY * b))));
 
@@ -1079,7 +1079,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.0f, 0.0f, 0.75f)); // window background
         ImGui::Begin("Computation", NULL, 0);
 
-        // Surface
+        // ### Surface ###
         ImGui::Text("[Surface]");
         ImGui::SliderFloat("Probe Radius", &mComputationProbeRadius, 0.f, 3.f, "%.1f");
         if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Radius of probe used for surface extraction."); }
@@ -1102,15 +1102,15 @@ void SurfaceDynamicsVisualization::renderGUI()
         }
         ImGui::Separator();
 
-        // Analysis
-        ImGui::Text("[Anaylsis]");
+        // ### Hull Samples ###
+        ImGui::Text("[Hull Samples]");
         ImGui::SliderInt("Atom Sample Count", &mHullSampleCount, 0, 1000);
         if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Count of samples per atom used for analysis purposes, not surface extraction."); }
         if(ImGui::Button("\u2794 GPGPU##analysis")) { computeHullSamples(); }
         if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Compute hull samples."); }
         ImGui::Separator();
 
-        // Ascension
+        // ### Ascension ###
         ImGui::Text("[Ascension]");
         ImGui::SliderFloat("Hot Up", &mAscensionUpToHotFrameCount, 1.f, 100.f, "%.0f");
         if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until surface atom gets from cold to hot."); }
@@ -1406,12 +1406,12 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.5f, 0.0f, 0.75f)); // window background
         ImGui::Begin("Information", NULL, 0);
 
-        // # General infos
+        // ### General infos ###
         ImGui::Text("[General]");
         ImGui::Text(std::string("Atom Count: " + std::to_string(mupGPUProtein->getAtomCount())).c_str());
         ImGui::Separator();
 
-        // # Computation infos
+        // ### Computation infos ###
         ImGui::Text("[Computation]");
         ImGui::Text(std::string("Computed Start Frame: " + std::to_string(mComputedStartFrame)).c_str());
         ImGui::Text(std::string("Computed End Frame: " + std::to_string(mComputedEndFrame)).c_str());
@@ -1421,7 +1421,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Text(std::string("Extracted layers: " + std::string(extractedLayers ? "true" : "false")).c_str());
         ImGui::Separator();
 
-        // # Selection infos
+        // ### Selection infos ###
         ImGui::Text("[Selection]");
         ImGui::InputInt("Index", &mSelectedAtom, 1);
         if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Index of atom."); }
@@ -1432,7 +1432,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         if(frameComputed()) { ImGui::Text(std::string("Layer: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getLayerOfAtom(mSelectedAtom))).c_str()); }
         ImGui::Separator();
 
-        // # Hardware infos
+        // ### Hardware infos ###
         ImGui::Text("[Hardware]");
 
         // Show available GPU memory
@@ -1814,7 +1814,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         }
         ImGui::SameLine();
 
-        // SuperSampling
+        // Super sampling
         ImGui::Checkbox("Use Super Sampling", &mSuperSampling);
 
         // Depth darkening
