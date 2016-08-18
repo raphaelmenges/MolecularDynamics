@@ -1742,12 +1742,12 @@ void SurfaceDynamicsVisualization::renderGUI()
                     // ### Surface amount of group ###
                     ImGui::PlotLines("Group Surface Amount", mAnalysisGroupSurfaceAmount.data(), mAnalysisGroupSurfaceAmount.size());
                     ImGui::Text(std::string("Group Surface Amount In Frame: " + std::to_string(mAnalysisGroupSurfaceAmount.at(mFrame - mComputedStartFrame) * 100) + " %%").c_str());
+                    if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Relation between hull samples on surface and internal ones over group's atoms."); }
                     ImGui::Separator();
 
                     // ### Surface area of group ###
                     ImGui::PlotLines("Group Surface Area", mAnalysisGroupSurfaceArea.data(), mAnalysisGroupSurfaceArea.size());
                     ImGui::Text(std::string("Group Surface Area In Frame: " + std::to_string(mAnalysisGroupSurfaceArea.at(mFrame - mComputedStartFrame)) + " \u212b²").c_str());
-                    if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Relation between hull samples on surface and internal ones over group's atoms."); }
                 }
             }
 
