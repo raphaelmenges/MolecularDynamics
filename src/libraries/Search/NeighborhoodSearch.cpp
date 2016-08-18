@@ -336,9 +336,11 @@ void NeighborhoodSearch::prefixSumCellsGPU()
     prescanArrayRecursiveInt(m_gpuBuffers.dp_gridoff, m_gpuBuffers.dp_gridcnt, m_gridTotal, 0);
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
+    /*
     Logger::instance().print("Prefixsumcells"); Logger::instance().tabIn();
     m_gpuHandler.printSSBODataInt(m_gpuBuffers.dp_gridoff, m_gridTotal);
     Logger::instance().tabOut();
+    */
 
     /*
      * sanity check
@@ -346,13 +348,15 @@ void NeighborhoodSearch::prefixSumCellsGPU()
     if (NHS_DEBUG) {
         Logger::instance().print("Checking data for prefixSumCellsGPU:"); Logger::instance().tabIn();
         m_gpuHandler.assertAboveLimit(m_gpuBuffers.dp_gridoff, m_gridTotal, -1);
-        m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_gridoff, m_gridTotal, m_numElements);
+        m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_gridoff, m_gridTotal, m_numElements+1);
         Logger::instance().print("Checks successful");
         Logger::instance().tabOut();
     }
 }
 void NeighborhoodSearch::prescanArrayRecursiveInt(GLuint* outArray, GLuint* inArray, int numElements, int level)
 {
+    //Logger::instance().print("PrescanArrayRecursiveInt"); Logger::instance().tabIn();
+
     uint numBlocks = std::max(1, (int)(ceil((float)numElements/(2.f*BLOCK_SIZE))));
     uint numThreads;
 
@@ -402,9 +406,21 @@ void NeighborhoodSearch::prescanArrayRecursiveInt(GLuint* outArray, GLuint* inAr
     int actualNumBlocks = std::max(1, (int)(numBlocks - np2LastBlock));
 
     /*
+    Logger::instance().print("Num threads: " + std::to_string(numThreads));
+    Logger::instance().print("Num blocks: " + std::to_string(numBlocks));
+    Logger::instance().print("Num elements: " + std::to_string(numElements));
+    Logger::instance().print("Num elements per block: " + std::to_string(numElementsPerBlock));
+    Logger::instance().print("Shared memory: " + std::to_string(sharedMemorySize));
+    Logger::instance().print("Last block is NP2: " + std::to_string(np2LastBlock));
+    Logger::instance().print("Num elements in last block: " + std::to_string(numElementsLastBlock));
+    Logger::instance().print("Shared memory last block: " + std::to_string(sharedMemoryLastBlock));
+    */
+
+    /*
      * execute scan
      */
     if(numBlocks > 1) {
+        Logger::instance().print("Case: num blocks > 1");
         prescanInt(numThreads, actualNumBlocks, sharedMemorySize, true, false, outArray, inArray, level, numThreads * 2, 0, 0);
         if(np2LastBlock) {
             prescanInt(numThreadsLastBlock, 1, sharedMemoryLastBlock, true, true, outArray, inArray, level, numElementsLastBlock, numBlocks-1, numElements-numElementsLastBlock);
@@ -421,17 +437,31 @@ void NeighborhoodSearch::prescanArrayRecursiveInt(GLuint* outArray, GLuint* inAr
             uniformAddInt(numThreadsLastBlock, 1, outArray, level, numElementsLastBlock, numBlocks-1, numElements-numElementsLastBlock);
         }
     } else if(isPowerOfTwo(numElements)) {
+        //Logger::instance().print("Case: num blocks == 1 && num elements power of two");
         prescanInt(numThreads, actualNumBlocks, sharedMemorySize, false, false, outArray, inArray, 0, numThreads * 2, 0, 0);
     } else {
+        //Logger::instance().print("Case: num blocks == 1 && num elements not power of two");
         prescanInt(numThreads, actualNumBlocks, sharedMemorySize, false, true, outArray, inArray, 0, numElements, 0, 0);
     }
+
+    //Logger::instance().tabOut();
+    //Logger::instance().print("_____________________________________");
 }
 void NeighborhoodSearch::prescanInt(int numThreads, int numBlocks, int sharedMemSize, bool storeSum, bool isNP2, GLuint* outArray, GLuint* inArray, int level, int n, int blockIndex, int baseIndex)
 {
+    /*
     Logger::instance().print("Prescanint: "); Logger::instance().tabIn();
     Logger::instance().print("Number of threads is: " + std::to_string(numThreads));
+    Logger::instance().print("Number of blocks is: " + std::to_string(numBlocks));
     Logger::instance().print("Shared memory size is: " + std::to_string(sharedMemSize));
+    Logger::instance().print("Store sum: " + std::to_string(storeSum));
+    Logger::instance().print("isNP2: " + std::to_string(isNP2));
+    Logger::instance().print("Level is: " + std::to_string(level));
+    Logger::instance().print("N is: " + std::to_string(n));
+    Logger::instance().print("Block index is: " + std::to_string(blockIndex));
+    Logger::instance().print("Base index is: " + std::to_string(baseIndex));
     Logger::instance().tabOut();
+    */
 
     m_prescanIntShader.use();
     m_prescanIntShader.update("n", n);

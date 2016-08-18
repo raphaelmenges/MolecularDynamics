@@ -45,6 +45,7 @@ bool m_rotateCamera = false;
 // rendering
 glm::vec3 m_lightDirection;
 bool m_drawDebug = false;
+static bool m_drawGrid  = false;
 
 // protein
 ProteinLoader m_proteinLoader;
@@ -55,6 +56,9 @@ float m_proteinMoveSpeed = 5.f;
 // gpu
 GPUHandler m_gpuHandler;
 GLuint m_atomsSSBO;
+GLuint m_pointsVBO;
+int    m_numVBOEntries;
+GLuint m_pointsVAO;
 
 // neighborhood search
 NeighborhoodSearch m_search;
@@ -68,10 +72,15 @@ void setup();
 void keyCallback(int key, int scancode, int action, int mods);
 void mouseButtonCallback(int button, int action, int mods);
 void scrollCallback(double xoffset, double yoffset);
+void moveProteinInsideGrid(glm::vec3 offset);
 void printGPUInfos();
 void updateAtomsSSBO();
 void initNeighborhoodSearch(glm::vec3 gridResolution, float searchRadius);
+
 void run();
+void initBuffers();
+void updateBuffers();
+void drawGrid(ShaderProgram linesProgram);
 void updateGUI();
 
 
@@ -155,20 +164,22 @@ void keyCallback(int key, int scancode, int action, int mods)
         }
     }
     else if (key == GLFW_KEY_W) {
-        SimpleProtein* protein = m_proteinLoader.getProteinAt(m_selectedProtein);
-        protein->move(glm::vec3(0,m_proteinMoveSpeed, 0));
+        moveProteinInsideGrid(glm::vec3(0,m_proteinMoveSpeed, 0));
     }
     else if (key == GLFW_KEY_A) {
-        SimpleProtein* protein = m_proteinLoader.getProteinAt(m_selectedProtein);
-        protein->move(glm::vec3(-m_proteinMoveSpeed, 0, 0));
+        moveProteinInsideGrid(glm::vec3(-m_proteinMoveSpeed, 0, 0));
     }
     else if (key == GLFW_KEY_S) {
-        SimpleProtein* protein = m_proteinLoader.getProteinAt(m_selectedProtein);
-        protein->move(glm::vec3(0,-m_proteinMoveSpeed, 0));
+        moveProteinInsideGrid(glm::vec3(0,-m_proteinMoveSpeed, 0));
     }
     else if (key == GLFW_KEY_D) {
-        SimpleProtein* protein = m_proteinLoader.getProteinAt(m_selectedProtein);
-        protein->move(glm::vec3(m_proteinMoveSpeed, 0, 0));
+        moveProteinInsideGrid(glm::vec3(m_proteinMoveSpeed, 0, 0));
+    }
+    else if (key == GLFW_KEY_Q) {
+        moveProteinInsideGrid(glm::vec3(0, 0, -m_proteinMoveSpeed));
+    }
+    else if (key == GLFW_KEY_E) {
+        moveProteinInsideGrid(glm::vec3(0, 0, m_proteinMoveSpeed));
     }
 }
 
@@ -187,6 +198,38 @@ void mouseButtonCallback(int button, int action, int mods)
 void scrollCallback(double xoffset, double yoffset)
 {
     mp_camera->setRadius(mp_camera->getRadius() - 2.f * (float)yoffset);
+}
+
+void moveProteinInsideGrid(glm::vec3 offset)
+{
+    SimpleProtein* protein = m_proteinLoader.getProteinAt(m_selectedProtein);
+
+    glm::vec3 min = protein->bbMin + offset;
+    glm::vec3 max = protein->bbMax + offset;
+    glm::vec3 gridMin, gridMax;
+    m_search.getGridMinMax(gridMin, gridMax);
+
+    Logger::instance().print("Grid move:"); Logger::instance().tabIn();
+    Logger::instance().print("Min: " + std::to_string(min.x) + ", " + std::to_string(min.y) + ", " + std::to_string(min.z));
+    Logger::instance().print("Max: " + std::to_string(max.x) + ", " + std::to_string(max.y) + ", " + std::to_string(max.z));
+    Logger::instance().print("Gridmin: " + std::to_string(gridMin.x) + ", " + std::to_string(gridMin.y) + ", " + std::to_string(gridMin.z));
+    Logger::instance().print("Gridmax: " + std::to_string(gridMax.x) + ", " + std::to_string(gridMax.y) + ", " + std::to_string(gridMax.z));
+    Logger::instance().print("Offset before: " + std::to_string(offset.x) + ", " + std::to_string(offset.y) + ", " + std::to_string(offset.z));
+
+    // checking lower bounds
+    if (min.x < gridMin.x) offset.x += gridMin.x - min.x;
+    if (min.y < gridMin.y) offset.y += gridMin.y - min.y;
+    if (min.z < gridMin.z) offset.z += gridMin.z - min.z;
+
+    // checking upper bounds
+    if (max.x > gridMax.x) offset.x -= max.x - gridMax.x;
+    if (max.y > gridMax.y) offset.y -= max.y - gridMax.y;
+    if (max.z > gridMax.z) offset.z -= max.z - gridMax.z;
+
+    Logger::instance().print("Offset after: " + std::to_string(offset.x) + ", " + std::to_string(offset.y) + ", " + std::to_string(offset.z));
+    Logger::instance().tabOut();
+
+    protein->move(offset);
 }
 
 
@@ -257,7 +300,7 @@ void initNeighborhoodSearch(glm::vec3 gridResolution, float searchRadius)
      * and get number of all atoms in all proteins
      */
     glm::fvec3 min, max;
-    m_proteinLoader.getBoundingBoxAroundProteins(min, max);
+    m_proteinLoader.getCenteredBoundingBoxAroundProteins(min, max);
 
     m_search.init(m_proteinLoader.getNumberOfAllAtoms(), min, max, gridResolution, searchRadius);
 }
@@ -282,6 +325,7 @@ void run()
      */
     ShaderProgram impostorProgram = ShaderProgram("/NeighborSearch/impostor.vert", "/NeighborSearch/impostor.geom", "/NeighborSearch/impostor.frag");
     ShaderProgram debugProgram    = ShaderProgram("/NeighborSearch/dummy.vert", "/NeighborSearch/fullscreenQuad.geom", "/NeighborSearch/debug.frag");
+    ShaderProgram linesProgram    = ShaderProgram("/NeighborSearch/lines.vert", "/NeighborSearch/lines.frag");
     GLenum err = glGetError();
     if (err != GL_NO_ERROR) {
         Logger::instance().print("GLerror after init shader programs: " + std::to_string(err), Logger::Mode::ERROR);
@@ -296,6 +340,9 @@ void run()
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(SimpleAtom) * m_proteinLoader.getNumberOfAllAtoms(), m_proteinLoader.getAllAtoms().data(), GL_STATIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_atomsSSBO);
+
+    initBuffers();
+
 
     /*
      * setup camera
@@ -406,10 +453,6 @@ void run()
             impostorProgram.update("selectedIndex", m_selectedAtom);
             impostorProgram.update("proteinNum", (int)m_proteinLoader.getNumberOfProteins());
             impostorProgram.update("selectedProtein", m_selectedProtein);
-
-            /*
-             * Draw atoms
-             */
             glDrawArrays(GL_POINTS, 0, (GLsizei)m_proteinLoader.getNumberOfAllAtoms());
         } else {
             /*
@@ -425,10 +468,173 @@ void run()
         }
 
         /*
+         * draw the grid
+         */
+        if (m_drawGrid) {
+            drawGrid(linesProgram);
+        }
+
+        /*
          * update gui
          */
         updateGUI();
     });
+}
+
+void initBuffers()
+{
+    glm::vec3 min, max;
+    m_search.getGridMinMax(min, max);
+    float cellSize = m_search.getCellSize();
+    glm::ivec3 gridRes = m_search.getGridResolution();
+
+    Logger::instance().print("Grid min max:"); Logger::instance().tabIn();
+    Logger::instance().print("Min:" + std::to_string(min.x) + ", " + std::to_string(min.y) + ", " + std::to_string(min.z));
+    Logger::instance().print("Max:" + std::to_string(max.x) + ", " + std::to_string(max.y) + ", " + std::to_string(max.z));
+    Logger::instance().tabOut();
+
+    /*
+     * grid hull
+     */
+    std::vector<glm::vec4> points;
+    glm::vec4 p1 = glm::vec4(min.x, min.y, min.z, 1);
+    glm::vec4 p2 = glm::vec4(max.x, min.y, min.z, 1);
+    glm::vec4 p3 = glm::vec4(min.x, min.y, max.z, 1);
+    glm::vec4 p4 = glm::vec4(max.x, min.y, max.z, 1);
+    glm::vec4 p5 = glm::vec4(min.x, max.y, min.z, 1);
+    glm::vec4 p6 = glm::vec4(max.x, max.y, min.z, 1);
+    glm::vec4 p7 = glm::vec4(min.x, max.y, max.z, 1);
+    glm::vec4 p8 = glm::vec4(max.x, max.y, max.z, 1);
+    // bottom
+    points.push_back(p1);
+    points.push_back(p2);
+    points.push_back(p1);
+    points.push_back(p3);
+    points.push_back(p2);
+    points.push_back(p4);
+    points.push_back(p3);
+    points.push_back(p4);
+    // side
+    points.push_back(p1);
+    points.push_back(p5);
+    points.push_back(p2);
+    points.push_back(p6);
+    points.push_back(p3);
+    points.push_back(p7);
+    points.push_back(p4);
+    points.push_back(p8);
+    // top
+    points.push_back(p5);
+    points.push_back(p6);
+    points.push_back(p5);
+    points.push_back(p7);
+    points.push_back(p6);
+    points.push_back(p8);
+    points.push_back(p7);
+    points.push_back(p8);
+
+    m_numVBOEntries = 24;
+
+    /*
+     * grid cell divisions
+     */
+    float xs[2] = {min.x, max.x};
+    float ys[2] = {min.y, max.y};
+    float zs[2] = {min.z, max.z};
+
+    // x resolution
+    for (int i = 0; i < gridRes.x; i++) {
+        float x = min.x + (i * cellSize);
+        for (int j = 0; j < 2; j++) {
+            for (int k = 0; k < 2; k++) {
+                float y = ys[j];
+                float z = zs[k];
+                points.push_back(glm::vec4(x, y, z, 1));
+                m_numVBOEntries++;
+            }
+        }
+        for (int j = 0; j < 2; j++) {
+            for (int k = 0; k < 2; k++) {
+                float y = ys[k];
+                float z = zs[j];
+                points.push_back(glm::vec4(x, y, z, 1));
+                m_numVBOEntries++;
+            }
+        }
+    }
+
+    // y resolution
+    for (int i = 0; i < gridRes.y; i++) {
+        float y = min.y + (i * cellSize);
+        for (int j = 0; j < 2; j++) {
+            for (int k = 0; k < 2; k++) {
+                float x = xs[j];
+                float z = zs[k];
+                points.push_back(glm::vec4(x, y, z, 1));
+                m_numVBOEntries++;
+            }
+        }
+        for (int j = 0; j < 2; j++) {
+            for (int k = 0; k < 2; k++) {
+                float x = xs[k];
+                float z = zs[j];
+                points.push_back(glm::vec4(x, y, z, 1));
+                m_numVBOEntries++;
+            }
+        }
+    }
+
+    // z resolution
+    for (int i = 0; i < gridRes.z; i++) {
+        float z = min.z + (i * cellSize);
+        for (int j = 0; j < 2; j++) {
+            for (int k = 0; k < 2; k++) {
+                float x = xs[j];
+                float y = ys[k];
+                points.push_back(glm::vec4(x, y, z, 1));
+                m_numVBOEntries++;
+            }
+        }
+        for (int j = 0; j < 2; j++) {
+            for (int k = 0; k < 2; k++) {
+                float x = xs[k];
+                float y = ys[j];
+                points.push_back(glm::vec4(x, y, z, 1));
+                m_numVBOEntries++;
+            }
+        }
+    }
+
+    m_pointsVBO = 0;
+    glGenBuffers(1, &m_pointsVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_pointsVBO);
+    glBufferData(GL_ARRAY_BUFFER, points.size() * 4 * sizeof(float), points.data(), GL_STATIC_DRAW);
+
+    m_pointsVAO = 0;
+    glGenVertexArrays(1, &m_pointsVAO);
+    glBindVertexArray(m_pointsVAO);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
+
+    // disable the vao and vbo
+    glEnableVertexAttribArray(0);
+    glBindVertexArray(0);
+}
+
+void drawGrid(ShaderProgram linesProgram)
+{
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glBindVertexArray(m_pointsVAO);
+
+    linesProgram.use();
+    linesProgram.update("viewMat", mp_camera->getViewMatrix());
+    linesProgram.update("projMat", mp_camera->getProjectionMatrix());
+    glDrawArrays(GL_LINES, 0, m_numVBOEntries);
+
+    glBindVertexArray(0);
+
+    glDisable(GL_BLEND);
 }
 
 void updateGUI()
@@ -508,6 +714,7 @@ void updateGUI()
             ImGui::Text(gridCellNumText.c_str());
             ImGui::Text(gridSearchText.c_str());
             ImGui::Text(cellSizeText.c_str());
+            ImGui::Checkbox("Show grid", &m_drawGrid);
 
             ImGui::EndMenu();
         }
@@ -542,7 +749,7 @@ int main()
     printGPUInfos();
 
     SimpleProtein* proteinA = m_proteinLoader.loadProtein("PDB/1a19.pdb");
-    /*
+
     SimpleProtein* proteinB = m_proteinLoader.loadProtein("PDB/1crn.pdb");
     SimpleProtein* proteinC = m_proteinLoader.loadProtein("PDB/1mbn.pdb");
 
@@ -551,7 +758,7 @@ int main()
     proteinC->center();
     proteinB->move(glm::vec3(proteinA->extent().x/2 + proteinB->extent().x/2, 0, 0));
     proteinC->move(glm::vec3(-proteinA->extent().x/2 - proteinC->extent().x/2, 0, 0));
-    */
+
 
     glm::vec3 gridResolution = glm::vec3(3,3,3);
     float searchRadius = 0.5;

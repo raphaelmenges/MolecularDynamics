@@ -106,6 +106,7 @@ void ProteinLoader::loadPDB(std::string filePath, SimpleProtein &protein, glm::v
     double max = std::numeric_limits<double>::max();
     minPosition = glm::vec3(max, max, max);
     maxPosition = glm::vec3(min, min, min);
+    float maxRadius = 0;
 
     /*
      * the informations we need to create our atoms
@@ -190,7 +191,13 @@ void ProteinLoader::loadPDB(std::string filePath, SimpleProtein &protein, glm::v
 
         names.push_back(PyUnicode_AsUTF8(name_py));
         elementNames.push_back(PyUnicode_AsUTF8(element_name_py));
-        radii.push_back(PyFloat_AsDouble(atom_radius_py) * 10);
+        double radius = PyFloat_AsDouble(atom_radius_py) * 10;
+        radii.push_back(radius);
+
+        /*
+         * find the atom with the biggest radius
+         */
+        maxRadius = std::max((float)radius, maxRadius);
 
         Py_DECREF(name_py);
         Py_DECREF(element_py);
@@ -203,7 +210,15 @@ void ProteinLoader::loadPDB(std::string filePath, SimpleProtein &protein, glm::v
 
 
     /*
-     * Create protein
+     * extent the bounding box by the radius of the biggest atom
+     */
+    minPosition -= maxRadius;
+    maxPosition += maxRadius;
+
+
+    /*
+     * Create atoms and add them to the protein
+     * and to the allAtoms vector
      */
     if ((positions.size() == names.size()) && (positions.size() == elementNames.size()) && (positions.size() == radii.size())) {
         for (int i = 0; i < names.size(); i++) {
@@ -257,4 +272,14 @@ void ProteinLoader::getBoundingBoxAroundProteins(glm::vec3& min, glm::vec3& max)
         min = glm::vec3(0,0,0);
         max = glm::vec3(0,0,0);
     }
+}
+
+void ProteinLoader::getCenteredBoundingBoxAroundProteins(glm::vec3& min, glm::vec3& max)
+{
+    getBoundingBoxAroundProteins(min, max);
+    glm::vec3 extent = max - min;
+    glm::vec3 center = (max + min) / 2;
+    float longestSideHalf = std::max(std::max(extent.x, extent.y), extent.z) / 2;
+    min = center - longestSideHalf;
+    max = center + longestSideHalf;
 }

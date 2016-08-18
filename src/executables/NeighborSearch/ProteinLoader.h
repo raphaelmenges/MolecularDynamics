@@ -35,6 +35,7 @@ public:
     void updateAtoms();
     int getNumberOfAllAtoms();
     void getBoundingBoxAroundProteins(glm::vec3& min, glm::vec3& max);
+    void getCenteredBoundingBoxAroundProteins(glm::vec3& min, glm::vec3& max);
 
 
     //_____________________________________//

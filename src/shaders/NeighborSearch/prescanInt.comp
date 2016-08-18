@@ -59,6 +59,7 @@ void loadSharedChunkFromMemInt(
      * cache the computational window in shared memory
      * pad values beyond n with zeros
      */
+     sharedData[ai + bankOffsetA] = idata[mem_ai];
     if (isNP2) {
         sharedData[bi + bankOffsetB] = (bi < n) ? idata[mem_bi] : 0;
     } else {
