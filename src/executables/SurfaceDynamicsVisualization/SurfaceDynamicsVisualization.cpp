@@ -156,7 +156,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
             cameraCenter,
             mCameraDefaultAlpha,
             mCameraDefaultBeta,
-            cameraRadius,
+            2.f * cameraRadius,
             cameraRadius / 2.f,
             8.f * cameraRadius,
             45.f,
@@ -1068,7 +1068,7 @@ void SurfaceDynamicsVisualization::renderGUI()
     ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // scrollbar background
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.5f, 0.5f, 0.5f)); // button
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.5f, 0.5f, 0.5f, 0.75f)); // button hovered
-    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.5f, 0.5f, 0.5f, 0.5f)); // header
+    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.2f, 0.2f, 0.2f, 0.75f)); // header
     ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.5f, 0.5f, 0.5f, 0.75f)); // header hovered
     ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.1f, 0.1f, 0.1f, 0.75f)); // header active
     ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(0.1f, 0.1f, 0.1f, 0.75f)); // slider grab active
@@ -1080,48 +1080,56 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Begin("Computation", NULL, 0);
 
         // ### Surface ###
-        ImGui::Text("[Surface]");
-        ImGui::SliderFloat("Probe Radius", &mComputationProbeRadius, 0.f, 3.f, "%.1f");
-        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Radius of probe used for surface extraction."); }
-        ImGui::Checkbox("Extract Layers", &mExtractLayers);
-        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Incremental usage of surface extraction."); }
-        ImGui::SliderInt("Start Frame", &mComputationStartFrame, mStartFrame, mComputationEndFrame);
-        ImGui::SliderInt("End Frame", &mComputationEndFrame, mComputationStartFrame, mEndFrame);
-        ImGui::SliderInt("CPU Threads", &mCPUThreads, 1, 24);
-        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Count of threads utilized by CPU implementation."); }
-        if(ImGui::Button("\u2794 GPGPU##surface")) { computeLayers(true); }
-        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Compute surface with OpenGL implementation, plus hull samples and ascension."); }
-        ImGui::SameLine();
-        if(ImGui::Button("\u2794 CPU##surface")) { computeLayers(false); }
-        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Compute surface with C++ implementation, plus hull samples and ascension."); }
-
-        // Report
-        if (ImGui::CollapsingHeader("Report"))
+        if (ImGui::CollapsingHeader("Surface", "Surface##Computation", true, true))
         {
-            ImGui::Text(mComputeInformation.c_str());
+            // Surface extraction
+            ImGui::SliderFloat("Probe Radius", &mComputationProbeRadius, 0.f, 3.f, "%.1f");
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Radius of probe used for surface extraction."); }
+            ImGui::Checkbox("Extract Layers", &mExtractLayers);
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Incremental usage of surface extraction."); }
+            ImGui::SliderInt("Start Frame", &mComputationStartFrame, mStartFrame, mComputationEndFrame);
+            ImGui::SliderInt("End Frame", &mComputationEndFrame, mComputationStartFrame, mEndFrame);
+            ImGui::SliderInt("CPU Threads", &mCPUThreads, 1, 24);
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Count of threads utilized by CPU implementation."); }
+            if(ImGui::Button("\u2794 GPGPU##surface")) { computeLayers(true); }
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Compute surface with OpenGL implementation, plus hull samples and ascension."); }
+            ImGui::SameLine();
+            if(ImGui::Button("\u2794 CPU##surface")) { computeLayers(false); }
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Compute surface with C++ implementation, plus hull samples and ascension."); }
+
+            // Report
+            ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.5f, 0.5f, 0.5f, 0.5f)); // header
+            if (ImGui::CollapsingHeader("Report", "Report##Computation", true, false))
+            {
+                ImGui::Text(mComputeInformation.c_str());
+            }
+            ImGui::PopStyleColor(); // header
         }
-        ImGui::Separator();
 
         // ### Hull Samples ###
-        ImGui::Text("[Hull Samples]");
-        ImGui::SliderInt("Atom Sample Count", &mHullSampleCount, 0, 1000);
-        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Count of samples per atom used for analysis purposes, not surface extraction."); }
-        if(ImGui::Button("\u2794 GPGPU##analysis")) { computeHullSamples(); }
-        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Compute hull samples."); }
-        ImGui::Separator();
+        if (ImGui::CollapsingHeader("Hull Samples", "Hull Samples##Computation", true, true))
+        {
+            ImGui::Text("[Hull Samples]");
+            ImGui::SliderInt("Atom Sample Count", &mHullSampleCount, 0, 1000);
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Count of samples per atom used for analysis purposes, not surface extraction."); }
+            if(ImGui::Button("\u2794 GPGPU##hullsamples")) { computeHullSamples(); }
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Compute hull samples."); }
+        }
 
         // ### Ascension ###
-        ImGui::Text("[Ascension]");
-        ImGui::SliderFloat("Hot Up", &mAscensionUpToHotFrameCount, 1.f, 100.f, "%.0f");
-        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until surface atom gets from cold to hot."); }
-        ImGui::SliderFloat("Hot Down", &mAscensionBackToHotFrameCount, 1.f, 100.f, "%.0f");
-        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until surface atom falls back to hot while dropping."); }
-        ImGui::SliderFloat("Cool Up", &mAscensionUpToColdFrameCount, 1.f, 100.f, "%.0f");
-        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until internal atom gets from hot to cold."); }
-        ImGui::SliderFloat("Cool Down", &mAscensionBackToColdFrameCount, 1.f, 100.f, "%.0f");
-        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until internal atom falls back to cold while rising."); }
-        if(ImGui::Button("\u2794 CPU##ascension")) { computeAscension(); }
-        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Compute ascension."); }
+        if (ImGui::CollapsingHeader("Ascension", "Ascension##Computation", true, true))
+        {
+            ImGui::SliderFloat("Hot Up", &mAscensionUpToHotFrameCount, 1.f, 100.f, "%.0f");
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until surface atom gets from cold to hot."); }
+            ImGui::SliderFloat("Hot Down", &mAscensionBackToHotFrameCount, 1.f, 100.f, "%.0f");
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until surface atom falls back to hot while dropping."); }
+            ImGui::SliderFloat("Cool Up", &mAscensionUpToColdFrameCount, 1.f, 100.f, "%.0f");
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until internal atom gets from hot to cold."); }
+            ImGui::SliderFloat("Cool Down", &mAscensionBackToColdFrameCount, 1.f, 100.f, "%.0f");
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until internal atom falls back to cold while rising."); }
+            if(ImGui::Button("\u2794 CPU##ascension")) { computeAscension(); }
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Compute ascension."); }
+        }
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background
@@ -1134,85 +1142,87 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Begin("Camera", NULL, 0);
 
         // Camera
-        ImGui::Text("[Orthographic Camera]");
-
-        // Set to fixed positions
-        if(ImGui::Button("Align to X"))
+        if (ImGui::CollapsingHeader("Orthographic Camera", "Orthographic Camera##Camera", true, true))
         {
-            mupCamera->setAlpha(0);
-            mupCamera->setBeta(90);
-        }
-        ImGui::SameLine();
-        if(ImGui::Button("Align to Y"))
-        {
-            // Internal, this is not possible. There is some epsilon on beta inside the camera object
-            mupCamera->setAlpha(0);
-            mupCamera->setBeta(0);
-        }
-        ImGui::SameLine();
-        if(ImGui::Button("Align to Z"))
-        {
-            mupCamera->setAlpha(90.f);
-            mupCamera->setBeta(90.f);
-        }
-
-        // Rotation
-        float alpha = mupCamera->getAlpha();
-        ImGui::DragFloat("Horizontal", &alpha);
-        mupCamera->setAlpha(alpha);
-
-        float beta = mupCamera->getBeta();
-        ImGui::DragFloat("Vertical", &beta);
-        mupCamera->setBeta(beta);
-
-        // Movement
-        glm::vec3 center = mupCamera->getCenter();
-        ImGui::DragFloat3("Position", glm::value_ptr(center));
-        mupCamera->setCenter(center);
-
-        // Put center of camera in protein's center
-        if(ImGui::Button("Center", ImVec2(100, 22)))
-        {
-            // Smooth center by taking average of multiple centers at different times
-            int startFrame = glm::max(0, mFrame - mCameraAutoCenterSmoothFrameRadius);
-            int endFrame = glm::min(mupGPUProtein->getFrameCount() - 1, mFrame + mCameraAutoCenterSmoothFrameRadius);
-            glm::vec3 accCenter(0, 0, 0);
-            for(int i = startFrame; i <= endFrame; i++)
+            // Set to fixed positions
+            if(ImGui::Button("Align to X"))
             {
-                accCenter += mupGPUProtein->getCenterOfMass(mFrame);
+                mupCamera->setAlpha(0);
+                mupCamera->setBeta(90);
+            }
+            ImGui::SameLine();
+            if(ImGui::Button("Align to Y"))
+            {
+                // Internal, this is not possible. There is some epsilon on beta inside the camera object
+                mupCamera->setAlpha(0);
+                mupCamera->setBeta(0);
+            }
+            ImGui::SameLine();
+            if(ImGui::Button("Align to Z"))
+            {
+                mupCamera->setAlpha(90.f);
+                mupCamera->setBeta(90.f);
             }
 
-            // Applied for next frame
-            mupCamera->setCenter(accCenter / (float)((endFrame - startFrame) + 1.f));
-        }
-        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Sets center of camera to center of molecule."); }
-        ImGui::SameLine();
+            // Rotation
+            float alpha = mupCamera->getAlpha();
+            ImGui::DragFloat("Horizontal", &alpha);
+            mupCamera->setAlpha(alpha);
 
-        // Reset
-        if(ImGui::Button("Reset Camera", ImVec2(100, 22)))
-        {
-            mupCamera->setAlpha(mCameraDefaultAlpha);
-            mupCamera->setBeta(mCameraDefaultBeta);
-            mupCamera->setCenter(glm::vec3(0));
+            float beta = mupCamera->getBeta();
+            ImGui::DragFloat("Vertical", &beta);
+            mupCamera->setBeta(beta);
+
+            // Movement
+            glm::vec3 center = mupCamera->getCenter();
+            ImGui::DragFloat3("Position", glm::value_ptr(center));
+            mupCamera->setCenter(center);
+
+            // Put center of camera in protein's center
+            if(ImGui::Button("Center", ImVec2(100, 22)))
+            {
+                // Smooth center by taking average of multiple centers at different times
+                int startFrame = glm::max(0, mFrame - mCameraAutoCenterSmoothFrameRadius);
+                int endFrame = glm::min(mupGPUProtein->getFrameCount() - 1, mFrame + mCameraAutoCenterSmoothFrameRadius);
+                glm::vec3 accCenter(0, 0, 0);
+                for(int i = startFrame; i <= endFrame; i++)
+                {
+                    accCenter += mupGPUProtein->getCenterOfMass(mFrame);
+                }
+
+                // Applied for next frame
+                mupCamera->setCenter(accCenter / (float)((endFrame - startFrame) + 1.f));
+            }
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Sets center of camera to center of molecule."); }
+            ImGui::SameLine();
+
+            // Reset
+            if(ImGui::Button("Reset Camera", ImVec2(100, 22)))
+            {
+                mupCamera->setAlpha(mCameraDefaultAlpha);
+                mupCamera->setBeta(mCameraDefaultBeta);
+                mupCamera->setCenter(glm::vec3(0));
+            }
         }
-        ImGui::Separator();
 
         // Clipping
-        ImGui::Text("[Clipping Plane]");
-        if(ImGui::Button("+0.1"))
+        if (ImGui::CollapsingHeader("Clipping Plane", "Clipping Plane##Camera", true, true))
         {
-            mClippingPlane += 0.1f;
-            mClippingPlane = glm::clamp(mClippingPlane, mClippingPlaneMin, mClippingPlaneMax);
+            if(ImGui::Button("+0.1"))
+            {
+                mClippingPlane += 0.1f;
+                mClippingPlane = glm::clamp(mClippingPlane, mClippingPlaneMin, mClippingPlaneMax);
+            }
+            ImGui::SameLine();
+            if(ImGui::Button("-0.1"))
+            {
+                mClippingPlane -= 0.1f;
+                mClippingPlane = glm::clamp(mClippingPlane, mClippingPlaneMin, mClippingPlaneMax);
+            }
+            ImGui::SameLine();
+            ImGui::SliderFloat("", &mClippingPlane, mClippingPlaneMin, mClippingPlaneMax, "%.1f");
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Value of zero indicates no clipping plane usage."); }
         }
-        ImGui::SameLine();
-        if(ImGui::Button("-0.1"))
-        {
-            mClippingPlane -= 0.1f;
-            mClippingPlane = glm::clamp(mClippingPlane, mClippingPlaneMin, mClippingPlaneMax);
-        }
-        ImGui::SameLine();
-        ImGui::SliderFloat("", &mClippingPlane, mClippingPlaneMin, mClippingPlaneMax, "%.1f");
-        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Value of zero indicates no clipping plane usage."); }
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background
@@ -1225,64 +1235,65 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Begin("Visualization", NULL, 0);
 
         // Animation
-        ImGui::Text("[Animation]");
-        if(mPlayAnimation)
+        if (ImGui::CollapsingHeader("Animation", "Animation##Visualization", true, true))
         {
-            if(ImGui::Button("\u05f0 Pause", ImVec2(90, 22)))
+            if(mPlayAnimation)
             {
-                mPlayAnimation = false;
+                if(ImGui::Button("\u05f0 Pause", ImVec2(90, 22)))
+                {
+                    mPlayAnimation = false;
+                }
             }
-        }
-        else
-        {
-            if(ImGui::Button("\u25B8 Play", ImVec2(90, 22)))
+            else
             {
-                mPlayAnimation = true;
+                if(ImGui::Button("\u25B8 Play", ImVec2(90, 22)))
+                {
+                    mPlayAnimation = true;
+                }
             }
-        }
-        ImGui::SameLine();
-
-        // Animation settings
-        ImGui::Checkbox("Repeat", &mRepeatAnimation);
-
-        if(mRepeatAnimation)
-        {
             ImGui::SameLine();
-            ImGui::Checkbox("Computed", &mRepeatOnlyComputed);
-        }
 
-        ImGui::SliderInt("Rate", &mPlayAnimationRate, 0, 100);
+            // Animation settings
+            ImGui::Checkbox("Repeat", &mRepeatAnimation);
 
-        // Current frame controlled with slider
-        int frame = mFrame;
-        ImGui::SliderInt("Frame", &frame, mStartFrame, mEndFrame);
-
-        // Current frame controlled with buttons
-        if(ImGui::Button("-10##frame", ImVec2(40, 22))) { frame -= 10; } ImGui::SameLine();
-        if(ImGui::Button("-1##frame", ImVec2(40, 22))) { frame -= 1; } ImGui::SameLine();
-        if(ImGui::Button("+1##frame", ImVec2(40, 22))) { frame += 1; } ImGui::SameLine();
-        if(ImGui::Button("+10##frame", ImVec2(40, 22))) { frame += 10; }
-
-        // Set current frame
-        if(frame != mFrame)
-        {
-            setFrame(frame);
-        }
-        ImGui::Separator();
-
-        // Render / not render with probe radius
-        if(mRenderWithProbeRadius)
-        {
-            if(ImGui::Button("No Probe Radius", ImVec2(208, 22)))
+            if(mRepeatAnimation)
             {
-                mRenderWithProbeRadius = false;
+                ImGui::SameLine();
+                ImGui::Checkbox("Computed", &mRepeatOnlyComputed);
             }
-        }
-        else
-        {
-            if(ImGui::Button("Add Probe Radius", ImVec2(208, 22)))
+
+            ImGui::SliderInt("Rate", &mPlayAnimationRate, 0, 100);
+
+            // Current frame controlled with slider
+            int frame = mFrame;
+            ImGui::SliderInt("Frame", &frame, mStartFrame, mEndFrame);
+
+            // Current frame controlled with buttons
+            if(ImGui::Button("-10##frame", ImVec2(40, 22))) { frame -= 10; } ImGui::SameLine();
+            if(ImGui::Button("-1##frame", ImVec2(40, 22))) { frame -= 1; } ImGui::SameLine();
+            if(ImGui::Button("+1##frame", ImVec2(40, 22))) { frame += 1; } ImGui::SameLine();
+            if(ImGui::Button("+10##frame", ImVec2(40, 22))) { frame += 10; }
+
+            // Set current frame
+            if(frame != mFrame)
             {
-                mRenderWithProbeRadius = true;
+                setFrame(frame);
+            }
+
+            // Render / not render with probe radius
+            if(mRenderWithProbeRadius)
+            {
+                if(ImGui::Button("No Probe Radius", ImVec2(208, 22)))
+                {
+                    mRenderWithProbeRadius = false;
+                }
+            }
+            else
+            {
+                if(ImGui::Button("Add Probe Radius", ImVec2(208, 22)))
+                {
+                    mRenderWithProbeRadius = true;
+                }
             }
         }
 
@@ -1290,111 +1301,97 @@ void SurfaceDynamicsVisualization::renderGUI()
         if(frameComputed())
         {
             // Layer
-            ImGui::Text("[Layer]");
-            ImGui::SliderInt("Layer", &mLayer, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getLayerCount() - 1);
-            ImGui::Separator();
+            if (ImGui::CollapsingHeader("Layer", "Layer##Visualization", true, true))
+            {
+                ImGui::SliderInt("Layer", &mLayer, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getLayerCount() - 1);
+            }
 
             // Rendering
-            ImGui::Text("[Rendering]");
-
-            // Surface rendering
-            ImGui::Combo("##SurfaceRenderingCombo", (int*)&mSurfaceRendering, "[1] Hull\0[2] Ascension\0[3] Elements\0[4] Aminoacids\0[5] Analysis\0");
-
-            // Rendering of internal and surface atoms
-            if(mSurfaceRendering == SurfaceRendering::HULL
-            || mSurfaceRendering == SurfaceRendering::ELEMENTS
-            || mSurfaceRendering == SurfaceRendering::AMINOACIDS)
+            if (ImGui::CollapsingHeader("Rendering", "Rendering##Visualization", true, true))
             {
-                // Show / hide internal atoms
-                if(mShowInternal)
+                // Surface rendering
+                ImGui::Combo("##SurfaceRenderingCombo", (int*)&mSurfaceRendering, "[1] Hull\0[2] Ascension\0[3] Elements\0[4] Aminoacids\0[5] Analysis\0");
+
+                // Rendering of internal and surface atoms
+                if(mSurfaceRendering == SurfaceRendering::HULL
+                || mSurfaceRendering == SurfaceRendering::ELEMENTS
+                || mSurfaceRendering == SurfaceRendering::AMINOACIDS)
                 {
-                    if(ImGui::Button("Hide Internal", ImVec2(100, 22)))
+                    // Show / hide internal atoms
+                    if(mShowInternal)
                     {
-                        mShowInternal = false;
+                        if(ImGui::Button("Hide Internal", ImVec2(100, 22)))
+                        {
+                            mShowInternal = false;
+                        }
+                    }
+                    else
+                    {
+                        if(ImGui::Button("Show Internal", ImVec2(100, 22)))
+                        {
+                            mShowInternal = true;
+                        }
+                    }
+                    ImGui::SameLine();
+
+                    // Show / hide surface atoms
+                    if(mShowSurface)
+                    {
+                        if(ImGui::Button("Hide Surface", ImVec2(100, 22)))
+                        {
+                            mShowSurface = false;
+                        }
+                    }
+                    else
+                    {
+                        if(ImGui::Button("Show Surface", ImVec2(100, 22)))
+                        {
+                            mShowSurface = true;
+                        }
+                    }
+                }
+
+                // Show / hide hull samples
+                if(mRenderHullSamples)
+                {
+                    if(ImGui::Button("Hide Hull Samples", ImVec2(208, 22)))
+                    {
+                        mRenderHullSamples = false;
                     }
                 }
                 else
                 {
-                    if(ImGui::Button("Show Internal", ImVec2(100, 22)))
+                    if(ImGui::Button("Show Hull Samples", ImVec2(208, 22)))
                     {
-                        mShowInternal = true;
+                        mRenderHullSamples = true;
                     }
                 }
-                ImGui::SameLine();
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Samples which are used for analysis."); }
 
-                // Show / hide surface atoms
-                if(mShowSurface)
+                // Show / hide surface atoms' mark
+                if(mMarkSurfaceAtoms)
                 {
-                    if(ImGui::Button("Hide Surface", ImVec2(100, 22)))
+                    if(ImGui::Button("Unmark Surface Atoms", ImVec2(208, 22)))
                     {
-                        mShowSurface = false;
+                        mMarkSurfaceAtoms = false;
                     }
                 }
                 else
                 {
-                    if(ImGui::Button("Show Surface", ImVec2(100, 22)))
+                    if(ImGui::Button("Mark Surface Atoms", ImVec2(208, 22)))
                     {
-                        mShowSurface = true;
+                        mMarkSurfaceAtoms = true;
                     }
                 }
             }
-
-            // Show / hide hull samples
-            if(mRenderHullSamples)
-            {
-                if(ImGui::Button("Hide Hull Samples", ImVec2(208, 22)))
-                {
-                    mRenderHullSamples = false;
-                }
-            }
-            else
-            {
-                if(ImGui::Button("Show Hull Samples", ImVec2(208, 22)))
-                {
-                    mRenderHullSamples = true;
-                }
-            }
-            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Samples which are used for analysis."); }
-
-            // Show / hide surface atoms' mark
-            if(mMarkSurfaceAtoms)
-            {
-                if(ImGui::Button("Unmark Surface Atoms", ImVec2(208, 22)))
-                {
-                    mMarkSurfaceAtoms = false;
-                }
-            }
-            else
-            {
-                if(ImGui::Button("Mark Surface Atoms", ImVec2(208, 22)))
-                {
-                    mMarkSurfaceAtoms = true;
-                }
-            }
         }
-
-        // Show / hide axes gizmo
-        if(mShowAxesGizmo)
-        {
-            if(ImGui::Button("Hide Axes Gizmo", ImVec2(208, 22)))
-            {
-                mShowAxesGizmo = false;
-            }
-        }
-        else
-        {
-            if(ImGui::Button("Show Axes Gizmo", ImVec2(208, 22)))
-            {
-                mShowAxesGizmo = true;
-            }
-        }
-
-        ImGui::Separator();
 
         // Animation smoothing
-        ImGui::Text("[Animation Smoothing]");
-        ImGui::SliderInt("Smooth Radius", &mSmoothAnimationRadius, 0, 10);
-        ImGui::SliderFloat("Smooth Max Deviation", &mSmoothAnimationMaxDeviation, 0, 100, "%.1f");
+        if (ImGui::CollapsingHeader("Animation Smoothing", "Animation Smoothing##Visualization", true, true))
+        {
+            ImGui::SliderInt("Smooth Radius", &mSmoothAnimationRadius, 0, 10);
+            ImGui::SliderFloat("Smooth Max Deviation", &mSmoothAnimationMaxDeviation, 0, 100, "%.1f");
+        }
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background
@@ -1407,40 +1404,44 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Begin("Information", NULL, 0);
 
         // ### General infos ###
-        ImGui::Text("[General]");
-        ImGui::Text(std::string("Atom Count: " + std::to_string(mupGPUProtein->getAtomCount())).c_str());
-        ImGui::Separator();
+        if (ImGui::CollapsingHeader("General", "General##Information", true, true))
+        {
+            ImGui::Text(std::string("Atom Count: " + std::to_string(mupGPUProtein->getAtomCount())).c_str());
+        }
 
         // ### Computation infos ###
-        ImGui::Text("[Computation]");
-        ImGui::Text(std::string("Computed Start Frame: " + std::to_string(mComputedStartFrame)).c_str());
-        ImGui::Text(std::string("Computed End Frame: " + std::to_string(mComputedEndFrame)).c_str());
+        if (ImGui::CollapsingHeader("Computation", "Computation##Information", true, true))
+        {
+            ImGui::Text(std::string("Computed Start Frame: " + std::to_string(mComputedStartFrame)).c_str());
+            ImGui::Text(std::string("Computed End Frame: " + std::to_string(mComputedEndFrame)).c_str());
 
-        // Display whether layers are extracted for this frame
-        bool extractedLayers = frameComputed() && mGPUSurfaces.at(mFrame-mComputedStartFrame)->layersExtracted();
-        ImGui::Text(std::string("Extracted layers: " + std::string(extractedLayers ? "true" : "false")).c_str());
-        ImGui::Separator();
+            // Display whether layers are extracted for this frame
+            bool extractedLayers = frameComputed() && mGPUSurfaces.at(mFrame-mComputedStartFrame)->layersExtracted();
+            ImGui::Text(std::string("Extracted layers: " + std::string(extractedLayers ? "true" : "false")).c_str());
+        }
 
         // ### Selection infos ###
-        ImGui::Text("[Selection]");
-        ImGui::InputInt("Index", &mSelectedAtom, 1);
-        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Index of atom."); }
-        mSelectedAtom = glm::clamp(mSelectedAtom, 0, mupGPUProtein->getAtomCount() - 1);
-        ImGui::Text(std::string("Index: " + std::to_string(mSelectedAtom)).c_str());
-        ImGui::Text(std::string("Element: " + mupGPUProtein->getElement(mSelectedAtom)).c_str());
-        ImGui::Text(std::string("Aminoacid: " + mupGPUProtein->getAminoacid(mSelectedAtom)).c_str());
-        if(frameComputed()) { ImGui::Text(std::string("Layer: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getLayerOfAtom(mSelectedAtom))).c_str()); }
-        ImGui::Separator();
+        if (ImGui::CollapsingHeader("Selection", "Selection##Information", true, true))
+        {
+            ImGui::InputInt("Index", &mSelectedAtom, 1);
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Index of atom."); }
+            mSelectedAtom = glm::clamp(mSelectedAtom, 0, mupGPUProtein->getAtomCount() - 1);
+            ImGui::Text(std::string("Index: " + std::to_string(mSelectedAtom)).c_str());
+            ImGui::Text(std::string("Element: " + mupGPUProtein->getElement(mSelectedAtom)).c_str());
+            ImGui::Text(std::string("Aminoacid: " + mupGPUProtein->getAminoacid(mSelectedAtom)).c_str());
+            if(frameComputed()) { ImGui::Text(std::string("Layer: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getLayerOfAtom(mSelectedAtom))).c_str()); }
+        }
 
         // ### Hardware infos ###
-        ImGui::Text("[Hardware]");
-
-        // Show available GPU memory
-        int availableMemory;
-        glGetIntegerv(0x9049, &availableMemory); // Nvidia only
-        availableMemory = availableMemory / 1000;
-        ImGui::Text(std::string("Available VRAM: " + std::to_string(availableMemory) + "MB").c_str());
-        // TODO: one may want to clean up glGetError if query failed and show failure message on GUI (for example on Intel or AMD)
+        if (ImGui::CollapsingHeader("Hardware", "Hardware##Information", true, true))
+        {
+            // Show available GPU memory
+            int availableMemory;
+            glGetIntegerv(0x9049, &availableMemory); // Nvidia only
+            availableMemory = availableMemory / 1000;
+            ImGui::Text(std::string("Available VRAM: " + std::to_string(availableMemory) + "MB").c_str());
+            // TODO: one may want to clean up glGetError if query failed and show failure message on GUI (for example on Intel or AMD)
+        }
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background
@@ -1507,11 +1508,13 @@ void SurfaceDynamicsVisualization::renderGUI()
         }
         ImGui::Separator();
 
-        // Report
-        if (ImGui::CollapsingHeader("Report"))
+        // Report      
+        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.5f, 0.5f, 0.5f, 0.5f)); // header
+        if (ImGui::CollapsingHeader("Report", "Report##Validation", true, false))
         {
             ImGui::Text(mValidationInformation.c_str());
         }
+        ImGui::PopStyleColor(); // header
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background
@@ -1530,257 +1533,269 @@ void SurfaceDynamicsVisualization::renderGUI()
             bool doUpdatePath = false;
 
             // Analysis of global
-            ImGui::Text("[Global]");
-
-            ImGui::Text(std::string("Internal Atoms In Frame: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer))).c_str());
-            ImGui::Text(std::string("Surface Atoms In Frame: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer))).c_str());
-
-            // Graph about relation of surface and internal samples (in relative frames)
-            auto sampleCounts = mupHullSamples->getSurfaceSampleCount();
-            std::vector<float> surfaceAmount(sampleCounts.size(), -1);
-            for(int i = 0; i < sampleCounts.size(); i++)
+            if (ImGui::CollapsingHeader("Global", "Global##Analysis", true, true))
             {
-                surfaceAmount.at(i) = (float)sampleCounts.at(i) / (float)mupHullSamples->getProteinSampleCount();
+                // ### Count of internal and surface atoms ###
+                ImGui::Text(std::string("Internal Atoms In Frame: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer))).c_str());
+                ImGui::Text(std::string("Surface Atoms In Frame: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer))).c_str());
+
+                // ### Relation of internal and surface samples ###
+
+                // Graph about relation of surface and internal samples
+                auto sampleCounts = mupHullSamples->getSurfaceSampleCount();
+                std::vector<float> surfaceAmount(sampleCounts.size(), -1);
+                for(int i = 0; i < sampleCounts.size(); i++)
+                {
+                    surfaceAmount.at(i) = (float)sampleCounts.at(i) / (float)mupHullSamples->getProteinSampleCount();
+                }
+                ImGui::PlotLines("Surface Amount", surfaceAmount.data(), surfaceAmount.size());
+                ImGui::Text(std::string("Surface Amount In Frame: " + std::to_string(surfaceAmount.at(mFrame - mComputedStartFrame) * 100) + " %%").c_str());
+
+                // ### Approximated surface of molecule ###
+
+                // Surface area of molecule
+                std::vector<float> surfaceArea(mGPUSurfaces.size(), -1);
+                for(int frame = mComputedStartFrame; frame <= mComputedEndFrame; frame++)
+                {
+                    // Relative frame
+                    int relativeFrame = frame - mComputedStartFrame;
+
+                    // Approximate surface for that frame
+                    surfaceArea.at(relativeFrame) = approximateSurfaceArea(mGPUSurfaces.at(relativeFrame)->getSurfaceIndices(0), frame);
+                }
+
+                ImGui::PlotLines("Surface Area", surfaceArea.data(), surfaceArea.size());
+                ImGui::Text(std::string("Surface Area In Frame: " + std::to_string(approximateSurfaceArea(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getSurfaceIndices(0), mFrame)) + " \u212b²").c_str());
             }
-            ImGui::PlotLines("Surface Amount", surfaceAmount.data(), surfaceAmount.size());
-            ImGui::Text(std::string("Surface Amount In Frame: " + std::to_string(surfaceAmount.at(mFrame - mComputedStartFrame) * 100) + " %%").c_str());
-
-            // Surface area of molecule
-            std::vector<float> surfaceArea(mGPUSurfaces.size(), -1);
-            for(int frame = mComputedStartFrame; frame <= mComputedEndFrame; frame++)
-            {
-                // Relative frame
-                int relativeFrame = frame - mComputedStartFrame;
-
-                // Approximate surface for that frame
-                surfaceArea.at(relativeFrame) = approximateSurfaceArea(mGPUSurfaces.at(relativeFrame)->getSurfaceIndices(0), frame);
-            }
-
-            ImGui::PlotLines("Surface Area", surfaceArea.data(), surfaceArea.size());
-            ImGui::Text(std::string("Surface Area In Frame: " + std::to_string(approximateSurfaceArea(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getSurfaceIndices(0), mFrame)) + " \u212b²").c_str());
-            ImGui::Separator();
 
             // Analysis of group
-            ImGui::Text("[Group]");
-            ImGui::BeginChild(
-                "AnalyseAtoms",
-                ImVec2(ImGui::GetWindowContentRegionWidth() * 1.0f, 100),
-                false,
-                ImGuiWindowFlags_HorizontalScrollbar);
-
-            // Useful variables
-            std::vector<int> toBeRemoved;
-            bool analysisAtomsChanged = false;
-
-            // Go over analyse atoms and list them
-            for (int atomIndex : mAnalyseAtoms)
+            if (ImGui::CollapsingHeader("Group", "Group##Analysis", true, true))
             {
-                // Mark if currently selected
-                if(atomIndex == mSelectedAtom)
+                // ### Managment of group members ###
+
+                // Scrollable part for members
+                ImGui::BeginChild(
+                    "AnalyseAtoms",
+                    ImVec2(ImGui::GetWindowContentRegionWidth() * 1.0f, 100),
+                    false,
+                    ImGuiWindowFlags_HorizontalScrollbar);
+
+                // Useful variables
+                std::vector<int> toBeRemoved;
+                bool analysisAtomsChanged = false;
+
+                // Go over analyse atoms and list them
+                for (int atomIndex : mAnalyseAtoms)
                 {
-                    ImGui::TextColored(ImVec4(mSelectionColor.r, mSelectionColor.g, mSelectionColor.b ,1), "\u2023");
+                    // Mark if currently selected
+                    if(atomIndex == mSelectedAtom)
+                    {
+                        ImGui::TextColored(ImVec4(mSelectionColor.r, mSelectionColor.g, mSelectionColor.b ,1), "\u2023");
+                        ImGui::SameLine();
+                    }
+
+                    // Index of atom
+                    ImGui::Text("%05d", atomIndex);
                     ImGui::SameLine();
+
+                    // Element of atom
+                    ImGui::Text(mupGPUProtein->getElement(atomIndex).c_str());
+                    ImGui::SameLine();
+
+                    // Aminoacid of atom
+                    ImGui::Text(mupGPUProtein->getAminoacid(atomIndex).c_str());
+                    ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 60);
+
+                    // Select that atom (use ## to add number for an unique button id)
+                    if(ImGui::Button(std::string("\u25cb##" + std::to_string(atomIndex)).c_str()))
+                    {
+                        mSelectedAtom = atomIndex;
+                    }
+                    if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Select atom."); } // tooltip
+                    ImGui::SameLine();
+
+                    // Remove that atom from analysis atoms (use ## to add number for an unique button id)
+                    if(ImGui::Button(std::string("\u00D7##" + std::to_string(atomIndex)).c_str()))
+                    {
+                        toBeRemoved.push_back(atomIndex);
+                        analysisAtomsChanged = true;
+                    }
+                    if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Remove atom."); } // tooltip
                 }
 
-                // Index of atom
-                ImGui::Text("%05d", atomIndex);
+                // Remove atoms from analysis
+                for(int atomIndex : toBeRemoved) { mAnalyseAtoms.erase(atomIndex); }
+                ImGui::EndChild();
+
+                // Add new atoms to analyse
+                ImGui::InputInt("", &mNextAnalyseAtomIndex);
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Index of atom."); }
+                mNextAnalyseAtomIndex = glm::clamp(mNextAnalyseAtomIndex, 0, mupGPUProtein->getAtomCount());
                 ImGui::SameLine();
-
-                // Element of atom
-                ImGui::Text(mupGPUProtein->getElement(atomIndex).c_str());
-                ImGui::SameLine();
-
-                // Aminoacid of atom
-                ImGui::Text(mupGPUProtein->getAminoacid(atomIndex).c_str());
-                ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 60);
-
-                // Select that atom (use ## to add number for an unique button id)
-                if(ImGui::Button(std::string("\u25cb##" + std::to_string(atomIndex)).c_str()))
+                if(ImGui::Button("Add Atom"))
                 {
-                    mSelectedAtom = atomIndex;
-                }
-                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Select atom."); } // tooltip
-                ImGui::SameLine();
-
-                // Remove that atom from analysis atoms (use ## to add number for an unique button id)
-                if(ImGui::Button(std::string("\u00D7##" + std::to_string(atomIndex)).c_str()))
-                {
-                    toBeRemoved.push_back(atomIndex);
+                    // Add atom to list of analyse atoms
+                    mAnalyseAtoms.insert((GLuint)mNextAnalyseAtomIndex);
                     analysisAtomsChanged = true;
                 }
-                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Remove atom."); } // tooltip
-            }
 
-            // Remove atoms from analysis
-            for(int atomIndex : toBeRemoved) { mAnalyseAtoms.erase(atomIndex); }
-            ImGui::EndChild();
-
-            // Add new atoms to analyse
-            ImGui::InputInt("", &mNextAnalyseAtomIndex);
-            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Index of atom."); }
-            mNextAnalyseAtomIndex = glm::clamp(mNextAnalyseAtomIndex, 0, mupGPUProtein->getAtomCount());
-            ImGui::SameLine();
-            if(ImGui::Button("Add Atom"))
-            {
-                // Add atom to list of analyse atoms
-                mAnalyseAtoms.insert((GLuint)mNextAnalyseAtomIndex);
-                analysisAtomsChanged = true;
-            }
-
-            // Recreate outline atom indices and path visualization
-            if(analysisAtomsChanged)
-            {
-                // Outline
-                std::vector<GLuint> analyseAtomVector;
-                std::copy(mAnalyseAtoms.begin(), mAnalyseAtoms.end(), std::back_inserter(analyseAtomVector));
-                mupOutlineAtomIndices = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(analyseAtomVector));
-
-                // Path
-                doUpdatePath = true;
-            }
-            ImGui::Separator();
-
-            // Show / hide outline
-            if(mRenderOutline)
-            {
-                if(ImGui::Button("Hide Outline", ImVec2(90, 22)))
+                // Recreate outline atom indices and path visualization
+                if(analysisAtomsChanged)
                 {
-                    mRenderOutline = false;
+                    // Outline
+                    std::vector<GLuint> analyseAtomVector;
+                    std::copy(mAnalyseAtoms.begin(), mAnalyseAtoms.end(), std::back_inserter(analyseAtomVector));
+                    mupOutlineAtomIndices = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(analyseAtomVector));
+
+                    // Path
+                    doUpdatePath = true;
                 }
-            }
-            else
-            {
-                if(ImGui::Button("Show Outline", ImVec2(90, 22)))
+                ImGui::Separator();
+
+                // ### Rendering ###
+
+                // Show / hide outline
+                if(mRenderOutline)
                 {
-                    mRenderOutline = true;
-                }
-            }
-            ImGui::SameLine();
-
-            // Show / hide path
-            if(mShowPath)
-            {
-                if(ImGui::Button("Hide Path", ImVec2(75, 22)))
-                {
-                    mShowPath = false;
-                }
-            }
-            else
-            {
-                if(ImGui::Button("Show Path", ImVec2(75, 22)))
-                {
-                    mShowPath = true;
-                }
-            }
-            ImGui::Separator();
-
-            // Amount of surface covered by analysis group
-            if(mAnalyseAtoms.size() > 0)
-            {
-                // ### PATH ###
-                std::ostringstream stringPathLength;
-
-                // Manual path length determination
-                int maxFrameIndex = mupGPUProtein->getFrameCount() - 1;
-                ImGui::InputInt("Path Start Frame", &mPathLengthStartFrame);
-                ImGui::InputInt("Path End Frame", &mPathLengthEndFrame);
-                mPathLengthStartFrame = glm::clamp(mPathLengthStartFrame, 0, maxFrameIndex);
-                mPathLengthEndFrame = glm::clamp(mPathLengthEndFrame, 0, maxFrameIndex);
-                mPathLengthStartFrame = glm::min(mPathLengthEndFrame, mPathLengthStartFrame);
-                mPathLengthEndFrame = glm::max(mPathLengthStartFrame, mPathLengthEndFrame);
-
-                stringPathLength = std::ostringstream();
-                stringPathLength << std::fixed << std::setprecision(2) << mupPath->getLength(mPathLengthStartFrame, mPathLengthEndFrame);
-                ImGui::Text(std::string("Path Length: " + stringPathLength.str() + " \u212b").c_str());
-
-                // Radius of frames which are taken into account for path smoothing
-                int radius = mPathSmoothRadius;
-                ImGui::SliderInt("Path Smooth Radius", &radius, 0, 10);
-                if(radius != mPathSmoothRadius)
-                {
-                    mPathSmoothRadius = radius; // save new radius
-                    doUpdatePath = true; // remember to update display path
-                }
-
-                // Radius of frames in path visualization
-                ImGui::SliderInt("Path Display Radius", &mPathFrameRadius, 1, 1000);
-
-                // Length of complete path
-                stringPathLength = std::ostringstream();
-                stringPathLength << std::fixed << std::setprecision(2) << mupPath->getCompleteLength();
-                ImGui::Text(std::string("Path Complete Length: " + stringPathLength.str() + " \u212b").c_str());
-
-                // Length of displayed path
-                int startFrame = glm::max(0, mFrame - mPathFrameRadius);
-                int endFrame = glm::min(mupPath->getVertexCount()-1, mFrame + mPathFrameRadius);
-                stringPathLength = std::ostringstream();
-                stringPathLength << std::fixed << std::setprecision(2) << mupPath->getLength(startFrame, endFrame);
-                ImGui::Text(std::string("Path Displayed Length: " + stringPathLength.str() + " \u212b").c_str());
-
-                // ### LAYER OF GROUP ###
-
-                // Go over frames and extract layer of group
-                std::vector<float> groupMinLayers(mGPUSurfaces.size(), -1); // minus one means no data
-                std::vector<float> groupAvgLayers(mGPUSurfaces.size(), -1); // minus one means no data
-                for(int frame = mComputedStartFrame; frame <= mComputedEndFrame; frame++)
-                {
-                    // Relative frame
-                    int relativeFrame = frame - mComputedStartFrame;
-
-                    // Do it only when layers were extracted for this frame
-                    if(mGPUSurfaces.at(relativeFrame)->layersExtracted())
+                    if(ImGui::Button("Hide Outline", ImVec2(90, 22)))
                     {
-                        // Calculate layer of group for that frame
-                        int minLayer = std::numeric_limits<int>::max();
-                        float avgLayer = 0;
+                        mRenderOutline = false;
+                    }
+                }
+                else
+                {
+                    if(ImGui::Button("Show Outline", ImVec2(90, 22)))
+                    {
+                        mRenderOutline = true;
+                    }
+                }
+                ImGui::SameLine();
+
+                // Show / hide path
+                if(mShowPath)
+                {
+                    if(ImGui::Button("Hide Path", ImVec2(75, 22)))
+                    {
+                        mShowPath = false;
+                    }
+                }
+                else
+                {
+                    if(ImGui::Button("Show Path", ImVec2(75, 22)))
+                    {
+                        mShowPath = true;
+                    }
+                }
+                ImGui::Separator();
+
+                // Analysis of group
+                if(mAnalyseAtoms.size() > 0)
+                {
+                    // ### Path ###
+                    std::ostringstream stringPathLength;
+
+                    // Manual path length determination
+                    int maxFrameIndex = mupGPUProtein->getFrameCount() - 1;
+                    ImGui::InputInt("Path Start Frame", &mPathLengthStartFrame);
+                    ImGui::InputInt("Path End Frame", &mPathLengthEndFrame);
+                    mPathLengthStartFrame = glm::clamp(mPathLengthStartFrame, 0, maxFrameIndex);
+                    mPathLengthEndFrame = glm::clamp(mPathLengthEndFrame, 0, maxFrameIndex);
+                    mPathLengthStartFrame = glm::min(mPathLengthEndFrame, mPathLengthStartFrame);
+                    mPathLengthEndFrame = glm::max(mPathLengthStartFrame, mPathLengthEndFrame);
+
+                    stringPathLength = std::ostringstream();
+                    stringPathLength << std::fixed << std::setprecision(2) << mupPath->getLength(mPathLengthStartFrame, mPathLengthEndFrame);
+                    ImGui::Text(std::string("Path Length: " + stringPathLength.str() + " \u212b").c_str());
+
+                    // Radius of frames which are taken into account for path smoothing
+                    int radius = mPathSmoothRadius;
+                    ImGui::SliderInt("Path Smooth Radius", &radius, 0, 10);
+                    if(radius != mPathSmoothRadius)
+                    {
+                        mPathSmoothRadius = radius; // save new radius
+                        doUpdatePath = true; // remember to update display path
+                    }
+
+                    // Radius of frames in path visualization
+                    ImGui::SliderInt("Path Display Radius", &mPathFrameRadius, 1, 1000);
+
+                    // Length of complete path
+                    stringPathLength = std::ostringstream();
+                    stringPathLength << std::fixed << std::setprecision(2) << mupPath->getCompleteLength();
+                    ImGui::Text(std::string("Path Complete Length: " + stringPathLength.str() + " \u212b").c_str());
+
+                    // Length of displayed path
+                    int startFrame = glm::max(0, mFrame - mPathFrameRadius);
+                    int endFrame = glm::min(mupPath->getVertexCount()-1, mFrame + mPathFrameRadius);
+                    stringPathLength = std::ostringstream();
+                    stringPathLength << std::fixed << std::setprecision(2) << mupPath->getLength(startFrame, endFrame);
+                    ImGui::Text(std::string("Path Displayed Length: " + stringPathLength.str() + " \u212b").c_str());
+
+                    // ### Layer of group ###
+
+                    // Go over frames and extract layer of group
+                    std::vector<float> groupMinLayers(mGPUSurfaces.size(), -1); // minus one means no data
+                    std::vector<float> groupAvgLayers(mGPUSurfaces.size(), -1); // minus one means no data
+                    for(int frame = mComputedStartFrame; frame <= mComputedEndFrame; frame++)
+                    {
+                        // Relative frame
+                        int relativeFrame = frame - mComputedStartFrame;
+
+                        // Do it only when layers were extracted for this frame
+                        if(mGPUSurfaces.at(relativeFrame)->layersExtracted())
+                        {
+                            // Calculate layer of group for that frame
+                            int minLayer = std::numeric_limits<int>::max();
+                            float avgLayer = 0;
+                            for(GLuint atomIndex : mAnalyseAtoms)
+                            {
+                                int layer = mGPUSurfaces.at(relativeFrame)->getLayerOfAtom(atomIndex);
+
+                                // Extract min layer (which mean the one closest or at surface)
+                                minLayer = minLayer > layer ? layer : minLayer;
+
+                                // Accumulate for average layer calculation
+                                avgLayer += (float)layer;
+                            }
+                            groupMinLayers.at(relativeFrame) = (float)minLayer;
+                            groupAvgLayers.at(relativeFrame) = avgLayer / (float)mAnalyseAtoms.size();
+                        }
+                    }
+
+                    ImGui::PlotLines("Group Min Layer", groupMinLayers.data(), groupMinLayers.size());
+                    ImGui::PlotLines("Group Avg Layer", groupAvgLayers.data(), groupAvgLayers.size());
+
+                    // ### Surface amount of group ###
+
+                    // Go over frames and calculate how much surface area is covered by atoms of group
+                    std::vector<float> groupSurfaceAmount(mGPUSurfaces.size(), -1); // minus one means no data
+                    std::vector<float> groupSurfaceArea(mGPUSurfaces.size(), -1); // minus one means no data
+                    for(int frame = mComputedStartFrame; frame <= mComputedEndFrame; frame++)
+                    {
+                        // Relative frame
+                        int relativeFrame = frame - mComputedStartFrame;
+
+                        // Accumulate sample count
+                        float surfaceSampleCount = 0;
                         for(GLuint atomIndex : mAnalyseAtoms)
                         {
-                            int layer = mGPUSurfaces.at(relativeFrame)->getLayerOfAtom(atomIndex);
-
-                            // Extract min layer (which mean the one closest or at surface)
-                            minLayer = minLayer > layer ? layer : minLayer;
-
-                            // Accumulate for average layer calculation
-                            avgLayer += (float)layer;
+                            // Surface amount for group in that frame for that atom
+                            surfaceSampleCount += (float)mupHullSamples->getSurfaceSampleCount(frame, atomIndex);
                         }
-                        groupMinLayers.at(relativeFrame) = (float)minLayer;
-                        groupAvgLayers.at(relativeFrame) = avgLayer / (float)mAnalyseAtoms.size();
-                    }
-                }
 
-                ImGui::PlotLines("Group Min Layer", groupMinLayers.data(), groupMinLayers.size());
-                ImGui::PlotLines("Group Avg Layer", groupAvgLayers.data(), groupAvgLayers.size());
+                        // Save surface amount of group for that frame
+                        groupSurfaceAmount[relativeFrame] = surfaceSampleCount / (float)mupHullSamples->getProteinSampleCount();
 
-                // ### SURFACE AMOUNT OF GROUP ###
-
-                // Go over frames and calculate how much surface area is covered by atoms of group
-                std::vector<float> groupSurfaceAmount(mGPUSurfaces.size(), -1); // minus one means no data
-                std::vector<float> groupSurfaceArea(mGPUSurfaces.size(), -1); // minus one means no data
-                for(int frame = mComputedStartFrame; frame <= mComputedEndFrame; frame++)
-                {
-                    // Relative frame
-                    int relativeFrame = frame - mComputedStartFrame;
-
-                    // Accumulate sample count
-                    float surfaceSampleCount = 0;
-                    for(GLuint atomIndex : mAnalyseAtoms)
-                    {
-                        // Surface amount for group in that frame for that atom
-                        surfaceSampleCount += (float)mupHullSamples->getSurfaceSampleCount(frame, atomIndex);
+                        // Save surface area
+                        groupSurfaceArea[relativeFrame] = approximateSurfaceArea(std::vector<GLuint>(mAnalyseAtoms.begin(), mAnalyseAtoms.end()), frame);
                     }
 
-                    // Save surface amount of group for that frame
-                    groupSurfaceAmount[relativeFrame] = surfaceSampleCount / (float)mupHullSamples->getProteinSampleCount();
+                    ImGui::PlotLines("Group Surface Amount", groupSurfaceAmount.data(), groupSurfaceAmount.size());
+                    ImGui::Text(std::string("Group Surface Amount In Frame: " + std::to_string(groupSurfaceAmount.at(mFrame - mComputedStartFrame) * 100) + " %%").c_str());
 
-                    // Save surface area
-                    groupSurfaceArea[relativeFrame] = approximateSurfaceArea(std::vector<GLuint>(mAnalyseAtoms.begin(), mAnalyseAtoms.end()), frame);
+                    ImGui::PlotLines("Group Surface Area", groupSurfaceArea.data(), groupSurfaceArea.size());
+                    ImGui::Text(std::string("Group Surface Area In Frame: " + std::to_string(groupSurfaceArea.at(mFrame - mComputedStartFrame)) + " \u212b²").c_str());
                 }
-
-                ImGui::PlotLines("Group Surface Amount", groupSurfaceAmount.data(), groupSurfaceAmount.size());
-                ImGui::Text(std::string("Group Surface Amount In Frame: " + std::to_string(groupSurfaceAmount.at(mFrame - mComputedStartFrame) * 100) + " %%").c_str());
-
-                ImGui::PlotLines("Group Surface Area", groupSurfaceArea.data(), groupSurfaceArea.size());
-                ImGui::Text(std::string("Group Surface Area In Frame: " + std::to_string(groupSurfaceArea.at(mFrame - mComputedStartFrame)) + " \u212b²").c_str());
             }
 
             // Update path if necessary
@@ -1820,6 +1835,22 @@ void SurfaceDynamicsVisualization::renderGUI()
         // Depth darkening
         ImGui::SliderFloat("Depth Darkening Start", &mDepthDarkeningStart, 0, mDepthDarkeningEnd, "%.1f");
         ImGui::SliderFloat("Depth Darkening End", &mDepthDarkeningEnd, mDepthDarkeningStart, mDepthDarkeningMaxEnd, "%.1f");
+
+        // Show / hide axes gizmo
+        if(mShowAxesGizmo)
+        {
+            if(ImGui::Button("Hide Axes Gizmo", ImVec2(208, 22)))
+            {
+                mShowAxesGizmo = false;
+            }
+        }
+        else
+        {
+            if(ImGui::Button("Show Axes Gizmo", ImVec2(208, 22)))
+            {
+                mShowAxesGizmo = true;
+            }
+        }
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background

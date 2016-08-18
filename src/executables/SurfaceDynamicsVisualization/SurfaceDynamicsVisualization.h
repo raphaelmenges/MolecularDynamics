@@ -189,8 +189,8 @@ private:
     int mPathLengthEndFrame = 0;
 
     // Report output
-    std::string mComputeInformation = "No computation info available";
-    std::string mValidationInformation = "No validation info available";
+    std::string mComputeInformation = "No computation info available.";
+    std::string mValidationInformation = "No validation info available.";
 
     // Members
     GLFWwindow* mpWindow;
