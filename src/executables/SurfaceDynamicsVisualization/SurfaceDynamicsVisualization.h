@@ -124,7 +124,7 @@ private:
     const int mInitialWindowWidth = 1280;
     const int mInitialWindowHeight = 720;
     const float mOutlineWidth = 0.15f;
-    const glm::vec4 mOutlineColor = glm::vec4(1.f, 1.f, 0.f, 0.9f);
+    const glm::vec4 mOutlineColor = glm::vec4(0.5f, 0.0f, 0.5f, 0.9f);
     const glm::vec3 mPastPathColor = glm::vec3(1.f, 0.f, 0.f);
     const glm::vec3 mFuturePathColor = glm::vec3(0.f, 1.f, 0.f);
     const int mCameraAutoCenterSmoothFrameRadius = 10;
@@ -222,6 +222,7 @@ private:
     GLuint mCVCubemapTexture;
     GLuint mBeachCubemapTexture;
     std::unique_ptr<Framebuffer> mupMoleculeFramebuffer;
+    std::unique_ptr<Framebuffer> mupSelectedAtomFramebuffer;
     std::unique_ptr<Framebuffer> mupOverlayFramebuffer;
     std::unique_ptr<GPUTextureBuffer> mupOutlineAtomIndices;
     std::unique_ptr<GPUBuffer<GLfloat> > mupAscension; // values have range [0..2Pi]

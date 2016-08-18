@@ -110,6 +110,10 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     mupMoleculeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA); // color
     mupMoleculeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGB); // picking index
     mupMoleculeFramebuffer->unbind();
+    mupSelectedAtomFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight, mSuperSampling));
+    mupSelectedAtomFramebuffer->bind();
+    mupSelectedAtomFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA); // color
+    mupSelectedAtomFramebuffer->unbind();
     mupOverlayFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight));
     mupOverlayFramebuffer->bind();
     mupOverlayFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA);
@@ -784,6 +788,21 @@ void SurfaceDynamicsVisualization::renderLoop()
         mupMoleculeFramebuffer->unbind();
         if(mFrameLogging) { std::cout << "..done" << std::endl; }
 
+        // ### SELCTED ATOM RENDERING ##############################################################################
+        if(mFrameLogging) { std::cout << "Render selected atom.." << std::endl; }
+
+        // # Fill selected atom framebuffer
+        mupSelectedAtomFramebuffer->bind();
+        mupSelectedAtomFramebuffer->resize(mWindowWidth, mWindowHeight, mSuperSampling);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Bind buffers of radii and trajectory for rendering molecule
+        mupGPUProtein->bind(0, 1);
+
+        // Unbind selected atom framebuffer
+        mupSelectedAtomFramebuffer->unbind();
+        if(mFrameLogging) { std::cout << "..done" << std::endl; }
+
         // ### COMPOSITING #########################################################################################
         if(mFrameLogging) { std::cout << "Do compositing.." << std::endl; }
 
@@ -829,14 +848,19 @@ void SurfaceDynamicsVisualization::renderLoop()
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, mupMoleculeFramebuffer->getAttachment(0));
 
-        // Bind overlay framebuffer texture
+        // Bind molecule framebuffer texture
         glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, mupSelectedAtomFramebuffer->getAttachment(0));
+
+        // Bind overlay framebuffer texture
+        glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, mupOverlayFramebuffer->getAttachment(0));
 
         // Draw screenfilling quad
         screenFillingProgram.use();
         screenFillingProgram.update("molecule", 0); // tell shader which slot to use
-        screenFillingProgram.update("overlay", 1); // tell shader which slot to use
+        screenFillingProgram.update("selectedAtom", 1); // tell shader which slot to use
+        screenFillingProgram.update("overlay", 2); // tell shader which slot to use
         glDrawArrays(GL_POINTS, 0, 1);
         if(mFrameLogging) { std::cout << "..done" << std::endl; }
 
