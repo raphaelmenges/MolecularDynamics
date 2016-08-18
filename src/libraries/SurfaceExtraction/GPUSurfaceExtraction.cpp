@@ -347,7 +347,7 @@ void GPUSurfaceExtraction::CPUSurfaceExtraction::execute(
 
         // Increment cutting face list index and break if max count of neighbors reached
         mCuttingFaceCount++;
-        if(mCuttingFaceCount == mNeighborsMaxCount) { std::cout << "TOO MANY NEIGHBORS" << std::endl; break; } // TODO: Pipe cout to GUI
+        if(mCuttingFaceCount == mNeighborsMaxCount) { std::cout << "Error: Too many neighbors for calculation!" << std::endl; break; } // TODO: Pipe cout to GUI
     }
 
     // CALCULATE WHICH CUTTING FACES ARE USED FOR ENDPOINT CALCULATION

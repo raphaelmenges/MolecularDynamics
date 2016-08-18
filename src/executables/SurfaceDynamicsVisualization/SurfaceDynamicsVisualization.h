@@ -128,7 +128,7 @@ private:
     const float mAscensionColorOffsetAngle = 1.25f * glm::pi<float>();
     const float mSurfaceMarkPointSize = 5.f;
     const glm::vec3 mSelectionColor = glm::vec3(0.2f, 1.0f, 0.0f);
-    const bool mFrameLogging = false;
+    const bool mFrameLogging = true;
 
     // Controllable parameters
     bool mShowCameraWindow = true;
@@ -162,7 +162,7 @@ private:
     int mEndFrame = 0;
     int mComputationStartFrame = 0;
     int mComputationEndFrame = 0;
-    bool mExtractLayers = false;
+    bool mExtractLayers = true;
     bool mRepeatAnimation = false;
     int mSmoothAnimationRadius = 0;
     float mSmoothAnimationMaxDeviation = 5;
