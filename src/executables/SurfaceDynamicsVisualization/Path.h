@@ -52,7 +52,7 @@ private:
     float mlength = 0;
     GLuint mVBO = 0;
     GLuint mVAO = 0;
-    int mVertexCount;
+    int mVertexCount = 0;
     std::unique_ptr<ShaderProgram> mupProgram;
     int mPositionAttribue = 0;
     std::vector<float> mAccLengths; // saving accumulated lengths for easier computations. Size = mVertexCount - 1
