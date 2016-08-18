@@ -175,7 +175,7 @@ private:
     int mPathSmoothRadius = 0; // radius of frames which are used for smoothing the path
     SurfaceRendering mSurfaceRendering = HULL;
     Background mBackground = SCIENTIFIC;
-    int mHullSampleCount = 100; // sample count per atom
+    int mHullSampleCount = 250; // sample count per atom
     bool mRenderHullSamples = false;
     bool mRenderOutline = true;
     bool mShowTooltips = true;
