@@ -1536,6 +1536,7 @@ void SurfaceDynamicsVisualization::renderGUI()
     if(mFrameLogging) { std::cout << "..done" << std::endl; }
 
     // ### ANALYSIS ######################################################################################
+    /*
     if(mFrameLogging) { std::cout << "Analysis window.." << std::endl; }
     if(mShowAnalysisWindow)
     {
@@ -1833,6 +1834,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::PopStyleColor(); // window background
     }
     if(mFrameLogging) { std::cout << "..done" << std::endl; }
+    */
 
     // ### RENDERING #####################################################################################
     if(mFrameLogging) { std::cout << "Rendering window.." << std::endl; }
