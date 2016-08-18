@@ -1788,7 +1788,7 @@ void SurfaceDynamicsVisualization::renderGUI()
 
         // Super sampling
         ImGui::Checkbox("Use Super Sampling", &mSuperSampling);
-        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Switch 2x supersampling on or off."); }
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Switch 2x super sampling on or off."); }
 
         // Depth darkening
         ImGui::SliderFloat("Depth Darkening Start", &mDepthDarkeningStart, 0, mDepthDarkeningEnd, "%.1f");
