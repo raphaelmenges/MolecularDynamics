@@ -100,6 +100,9 @@ private:
     // Get whether frame was computed (otherwise prohibit doing thing which would go wrong)
     bool frameComputed() const { return (mFrame >= mComputedStartFrame) && (mFrame <= mComputedEndFrame); }
 
+    // Reset path
+    void resetPath(std::string& rPath, std::string appendage = "") const;
+
     // Load cubemap texture. Returns texture handle
     GLuint createCubemapTexture(
         std::string filepathPosX,
@@ -242,6 +245,9 @@ private:
     std::vector<float> mAnalysisGroupSurfaceAmount;
     std::vector<float> mAnalysisGroupSurfaceArea;
     std::unique_ptr<Path> mupPath;
+    std::string mSurfaceIndicesFilePath = "";
+    std::string mGlobalAnalysisFilePath = "";
+    std::string mGroupAnalysisFilePath = "";
 
     // Surface validation
     std::unique_ptr<SurfaceValidation> mupSurfaceValidation;

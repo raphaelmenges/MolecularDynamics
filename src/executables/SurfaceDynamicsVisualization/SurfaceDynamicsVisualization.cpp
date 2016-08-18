@@ -19,6 +19,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 
+// Namespace for text-csv
+namespace csv = ::text::csv;
+
 // ### Class implementation ###
 
 SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathPDB, std::string filepathXTC)
@@ -31,6 +34,11 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     mLightDirection = glm::normalize(glm::vec3(-0.5, -0.75, -0.3));
     mWindowWidth = mInitialWindowWidth;
     mWindowHeight = mInitialWindowHeight;
+
+    // # Setup paths
+    resetPath(mGlobalAnalysisFilePath, "/GlobalAnalysis.csv");
+    resetPath(mGroupAnalysisFilePath, "/GroupAnalysis.csv");
+    resetPath(mSurfaceIndicesFilePath, "/SurfaceIndices.csv");
 
     // Create window (which initializes OpenGL)
     std::cout << "Creating window.." << std::endl;
@@ -1601,15 +1609,71 @@ void SurfaceDynamicsVisualization::renderGUI()
                 // ### Count of internal and surface atoms ###
                 ImGui::Text(std::string("Internal Atoms In Frame: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer))).c_str());
                 ImGui::Text(std::string("Surface Atoms In Frame: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer))).c_str());
+                ImGui::Separator();
+
+                // ### Save surface indices to file ###
+                if(ImGui::Button("Save##surfaceindices"))
+                {
+                    // Open file
+                    std::ofstream fs(mSurfaceIndicesFilePath, std::ios_base::out); // overwrite existing
+                    csv::csv_ostream csvs(fs);
+
+                    // Fill data
+                    auto indices = mGPUSurfaces.at(mFrame - mComputedStartFrame)->getSurfaceIndices(0);
+                    for(const int index : indices)
+                    {
+                        csvs << std::to_string(index);
+                    }
+                }
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Save surface indices of this frame to file."); }
+                ImGui::SameLine();
+                ImGui::Text(mSurfaceIndicesFilePath.c_str());
+                ImGui::Separator();
 
                 // ### Relation of internal and surface samples ###
                 ImGui::PlotLines("Surface Amount", mAnalysisSurfaceAmount.data(), mAnalysisSurfaceAmount.size());
                 ImGui::Text(std::string("Surface Amount In Frame: " + std::to_string(mAnalysisSurfaceAmount.at(mFrame - mComputedStartFrame) * 100) + " %%").c_str());
                 if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Relation between hull samples on surface and internal ones over all atoms."); }
+                ImGui::Separator();
 
                 // ### Approximated surface of molecule ###
                 ImGui::PlotLines("Surface Area", mAnalysisSurfaceArea.data(), mAnalysisSurfaceArea.size());
                 ImGui::Text(std::string("Surface Area In Frame: " + std::to_string(mAnalysisSurfaceArea.at(mFrame - mComputedStartFrame)) + " \u212b²").c_str());
+                ImGui::Separator();
+
+                // ### Save global analysis to file ###
+                if(ImGui::Button("Save##globalanalysis"))
+                {
+                    // Open file
+                    std::ofstream fs(mGlobalAnalysisFilePath, std::ios_base::out); // overwrite existing
+                    csv::csv_ostream csvs(fs);
+
+                    // Create header
+                    csvs << "Frame" << "SurfaceAmount" << "SurfaceArea";
+                    csvs << csv::endl;
+
+                    // Fill data
+                    for(int frame = mComputedStartFrame; frame <= mComputedEndFrame; frame++)
+                    {
+                        // Relative frame
+                        int relativeFrame = frame - mComputedStartFrame;
+
+                        // Frame
+                        csvs << std::to_string(frame);
+
+                        // Surface Amount
+                        csvs << std::to_string(mAnalysisSurfaceAmount.at(relativeFrame));
+
+                        // SurfaceArea
+                        csvs << std::to_string(mAnalysisSurfaceArea.at(relativeFrame));
+
+                        // End line
+                        csvs << csv::endl;
+                    }
+                }
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Save global analysis to file."); }
+                ImGui::SameLine();
+                ImGui::Text(mGlobalAnalysisFilePath.c_str());
             }
 
             // ### Analysis of group ###
@@ -1784,7 +1848,11 @@ void SurfaceDynamicsVisualization::renderGUI()
 
                     // ### Layer of group ###
                     ImGui::PlotLines("Group Min Layer", mAnalysisGroupMinLayers.data(), mAnalysisGroupMinLayers.size());
+                    ImGui::Text(std::string("Group Min Layer In Frame: " + std::to_string(mAnalysisGroupMinLayers.at(mFrame - mComputedStartFrame))).c_str());
+                    ImGui::Separator();
+
                     ImGui::PlotLines("Group Avg Layer", mAnalysisGroupAvgLayers.data(), mAnalysisGroupAvgLayers.size());
+                    ImGui::Text(std::string("Group Avg Layer In Frame: " + std::to_string(mAnalysisGroupAvgLayers.at(mFrame - mComputedStartFrame))).c_str());
                     ImGui::Separator();
 
                     // ### Surface amount of group ###
@@ -1796,6 +1864,50 @@ void SurfaceDynamicsVisualization::renderGUI()
                     // ### Surface area of group ###
                     ImGui::PlotLines("Group Surface Area", mAnalysisGroupSurfaceArea.data(), mAnalysisGroupSurfaceArea.size());
                     ImGui::Text(std::string("Group Surface Area In Frame: " + std::to_string(mAnalysisGroupSurfaceArea.at(mFrame - mComputedStartFrame)) + " \u212b²").c_str());
+                    ImGui::Separator();
+
+                    // ### Save group analysis to file ###
+                    if(ImGui::Button("Save##groupanalysis"))
+                    {
+                        // Open file
+                        std::ofstream fs(mGroupAnalysisFilePath, std::ios_base::out); // overwrite existing
+                        csv::csv_ostream csvs(fs);
+
+                        // Create header
+                        csvs << "Frame" << "MinLayer" << "AvgLayer" << "SurfaceAmount" << "SurfaceArea" << "AccPath";
+                        csvs << csv::endl;
+
+                        // Fill data
+                        for(int frame = mComputedStartFrame; frame <= mComputedEndFrame; frame++)
+                        {
+                            // Relative frame
+                            int relativeFrame = frame - mComputedStartFrame;
+
+                            // Frame
+                            csvs << std::to_string(frame);
+
+                            // MinLayer
+                            csvs << std::to_string(mAnalysisGroupMinLayers.at(relativeFrame));
+
+                            // AvgLayer
+                            csvs << std::to_string(mAnalysisGroupAvgLayers.at(relativeFrame));
+
+                            // Surface Amount
+                            csvs << std::to_string(mAnalysisGroupSurfaceAmount.at(relativeFrame));
+
+                            // SurfaceArea
+                            csvs << std::to_string(mAnalysisGroupSurfaceArea.at(relativeFrame));
+
+                            // Accumulated path length
+                            csvs << std::to_string(mupPath->getLength(0, frame));
+
+                            // End line
+                            csvs << csv::endl;
+                        }
+                    }
+                    if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Save group analysis to file."); }
+                    ImGui::SameLine();
+                    ImGui::Text(mGroupAnalysisFilePath.c_str());
                 }
             }
 
@@ -2283,6 +2395,18 @@ GLuint SurfaceDynamicsVisualization::createCubemapTexture(
 
     // Return texture handle
     return texture;
+}
+
+void SurfaceDynamicsVisualization::resetPath(std::string& rPath, std::string appendage) const
+{
+    // Fetch directory for saving bookmarks etc.
+    std::string path(getenv("HOME"));
+
+    // Append stuff
+    path.append(appendage);
+
+    // Set reference
+    rPath = path;
 }
 
 // ### Main function ###
