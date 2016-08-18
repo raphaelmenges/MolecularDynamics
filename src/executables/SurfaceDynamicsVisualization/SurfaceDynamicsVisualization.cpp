@@ -927,6 +927,9 @@ void SurfaceDynamicsVisualization::scrollCallback(double xoffset, double yoffset
 
 void SurfaceDynamicsVisualization::renderGUI()
 {
+    // ###################################################################################################
+    // ### MAIN MENU BAR #######################################################################################
+    // ###################################################################################################
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.75f)); // window background
     ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4(0.2f, 0.2f, 0.2f, 0.25f)); // menu bar background
 
@@ -1053,6 +1056,9 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::EndMainMenuBar();
     }
 
+    // ###################################################################################################
+    // ### WINDOWS #######################################################################################
+    // ###################################################################################################
     ImGui::PopStyleColor(); // menu bar background
     ImGui::PopStyleColor(); // window background
     ImGui::PushStyleColor(ImGuiCol_TitleBg, ImVec4(0.5f, 0.5f, 0.5f, 0.5f)); // window title
@@ -1067,7 +1073,7 @@ void SurfaceDynamicsVisualization::renderGUI()
     ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.1f, 0.1f, 0.1f, 0.75f)); // header active
     ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(0.1f, 0.1f, 0.1f, 0.75f)); // slider grab active
 
-    // Computation window
+    // ### COMPUTATION ###################################################################################
     if(mShowComputationWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.0f, 0.0f, 0.75f)); // window background
@@ -1121,7 +1127,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::PopStyleColor(); // window background
     }
 
-    // Camera window
+    // ### CAMERA ########################################################################################
     if(mShowCameraWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.5f, 0.75f)); // window background
@@ -1212,7 +1218,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::PopStyleColor(); // window background
     }
 
-    // Visualization window
+    // ### VISUALIZATION #################################################################################
     if(mShowVisualizationWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.5f, 0.0f, 0.75f)); // window background
@@ -1394,7 +1400,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::PopStyleColor(); // window background
     }
 
-    // Information window
+    // ### INFORMATION ###################################################################################
     if(mShowInformationWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.5f, 0.0f, 0.75f)); // window background
@@ -1440,7 +1446,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::PopStyleColor(); // window background
     }
 
-    // Validation window
+    // ### VALIDATION ####################################################################################
     if(mShowValidationWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.5f, 0.5f, 0.75f)); // window background
@@ -1511,7 +1517,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::PopStyleColor(); // window background
     }
 
-    // Analysis window
+    // ### ANALYSIS ######################################################################################
     if(mShowAnalysisWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.0f, 0.5f, 0.75f)); // window background
@@ -1632,6 +1638,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                 // Path
                 doUpdatePath = true;
             }
+            ImGui::Separator();
 
             // Show / hide outline
             if(mRenderOutline)
@@ -1665,6 +1672,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                     mShowPath = true;
                 }
             }
+            ImGui::Separator();
 
             // Amount of surface covered by analysis group
             if(mAnalyseAtoms.size() > 0)
@@ -1790,7 +1798,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::PopStyleColor(); // window background
     }
 
-    // Rendering window
+    // ### RENDERING #####################################################################################
     if(mShowRenderingWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.25f, 0.25f, 0.25f, 0.75f)); // window background
