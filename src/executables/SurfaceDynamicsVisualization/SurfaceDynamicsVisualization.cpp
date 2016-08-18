@@ -922,7 +922,7 @@ void SurfaceDynamicsVisualization::mouseButtonCallback(int button, int action, i
 
 void SurfaceDynamicsVisualization::scrollCallback(double xoffset, double yoffset)
 {
-    mupCamera->setRadius(mupCamera->getRadius() - 0.5f * (float)yoffset);
+    mupCamera->setRadius(mupCamera->getRadius() - (float)yoffset);
 }
 
 void SurfaceDynamicsVisualization::renderGUI()
@@ -1088,7 +1088,9 @@ void SurfaceDynamicsVisualization::renderGUI()
             ImGui::Checkbox("Extract Layers", &mExtractLayers);
             if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Incremental usage of surface extraction."); }
             ImGui::SliderInt("Start Frame", &mComputationStartFrame, mStartFrame, mComputationEndFrame);
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Start frame of computation."); }
             ImGui::SliderInt("End Frame", &mComputationEndFrame, mComputationStartFrame, mEndFrame);
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("End frame of computation."); }
             ImGui::SliderInt("CPU Threads", &mCPUThreads, 1, 24);
             if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Count of threads utilized by CPU implementation."); }
             if(ImGui::Button("\u2794 GPGPU##surface")) { computeLayers(true); }
@@ -1141,7 +1143,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.5f, 0.75f)); // window background
         ImGui::Begin("Camera", NULL, 0);
 
-        // Camera
+        // ### Camera ###
         if (ImGui::CollapsingHeader("Orthographic Camera", "Orthographic Camera##Camera", true, true))
         {
             // Set to fixed positions
@@ -1203,9 +1205,10 @@ void SurfaceDynamicsVisualization::renderGUI()
                 mupCamera->setBeta(mCameraDefaultBeta);
                 mupCamera->setCenter(glm::vec3(0));
             }
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Reset angle and center of camera."); }
         }
 
-        // Clipping
+        // ### Clipping ###
         if (ImGui::CollapsingHeader("Clipping Plane", "Clipping Plane##Camera", true, true))
         {
             if(ImGui::Button("+0.1"))
@@ -1234,7 +1237,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.5f, 0.0f, 0.75f)); // window background
         ImGui::Begin("Visualization", NULL, 0);
 
-        // Animation
+        // ### Animation ###
         if (ImGui::CollapsingHeader("Animation", "Animation##Visualization", true, true))
         {
             if(mPlayAnimation)
@@ -1300,13 +1303,13 @@ void SurfaceDynamicsVisualization::renderGUI()
         // Stuff that is only possible on computed frames
         if(frameComputed())
         {
-            // Layer
+            // ### Layer ###
             if (ImGui::CollapsingHeader("Layer", "Layer##Visualization", true, true))
             {
                 ImGui::SliderInt("Layer", &mLayer, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getLayerCount() - 1);
             }
 
-            // Rendering
+            // ### Rendering ###
             if (ImGui::CollapsingHeader("Rendering", "Rendering##Visualization", true, true))
             {
                 // Surface rendering
@@ -1386,7 +1389,7 @@ void SurfaceDynamicsVisualization::renderGUI()
             }
         }
 
-        // Animation smoothing
+        // ### Animation smoothing ###
         if (ImGui::CollapsingHeader("Animation Smoothing", "Animation Smoothing##Visualization", true, true))
         {
             ImGui::SliderInt("Smooth Radius", &mSmoothAnimationRadius, 0, 10);
@@ -1417,14 +1420,14 @@ void SurfaceDynamicsVisualization::renderGUI()
 
             // Display whether layers are extracted for this frame
             bool extractedLayers = frameComputed() && mGPUSurfaces.at(mFrame-mComputedStartFrame)->layersExtracted();
-            ImGui::Text(std::string("Extracted layers: " + std::string(extractedLayers ? "true" : "false")).c_str());
+            ImGui::Text(std::string("Extracted Layers: " + std::string(extractedLayers ? "True" : "False")).c_str());
         }
 
         // ### Selection infos ###
         if (ImGui::CollapsingHeader("Selection", "Selection##Information", true, true))
         {
             ImGui::InputInt("Index", &mSelectedAtom, 1);
-            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Index of atom."); }
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Index of selected atom."); }
             mSelectedAtom = glm::clamp(mSelectedAtom, 0, mupGPUProtein->getAtomCount() - 1);
             ImGui::Text(std::string("Index: " + std::to_string(mSelectedAtom)).c_str());
             ImGui::Text(std::string("Element: " + mupGPUProtein->getElement(mSelectedAtom)).c_str());
@@ -1471,7 +1474,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         }
         else
         {
-            ImGui::Text("Frame Not Computed");
+            ImGui::Text(mNoComputedFrameMessage.c_str());
         }
 
         // Show / hide internal samples
@@ -1532,7 +1535,7 @@ void SurfaceDynamicsVisualization::renderGUI()
             // Some variables for this window
             bool doUpdatePath = false;
 
-            // Analysis of global
+            // ### Analysis of global ###
             if (ImGui::CollapsingHeader("Global", "Global##Analysis", true, true))
             {
                 // ### Count of internal and surface atoms ###
@@ -1550,6 +1553,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                 }
                 ImGui::PlotLines("Surface Amount", surfaceAmount.data(), surfaceAmount.size());
                 ImGui::Text(std::string("Surface Amount In Frame: " + std::to_string(surfaceAmount.at(mFrame - mComputedStartFrame) * 100) + " %%").c_str());
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Relation between hull samples on surface and internal ones over all atoms."); }
 
                 // ### Approximated surface of molecule ###
 
@@ -1568,7 +1572,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                 ImGui::Text(std::string("Surface Area In Frame: " + std::to_string(approximateSurfaceArea(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getSurfaceIndices(0), mFrame)) + " \u212b²").c_str());
             }
 
-            // Analysis of group
+            // ### Analysis of group ###
             if (ImGui::CollapsingHeader("Group", "Group##Analysis", true, true))
             {
                 // ### Managment of group members ###
@@ -1697,7 +1701,9 @@ void SurfaceDynamicsVisualization::renderGUI()
                     // Manual path length determination
                     int maxFrameIndex = mupGPUProtein->getFrameCount() - 1;
                     ImGui::InputInt("Path Start Frame", &mPathLengthStartFrame);
+                    if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Start frame used for path length calculation below."); }
                     ImGui::InputInt("Path End Frame", &mPathLengthEndFrame);
+                    if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("End frame used for path length calculation below."); }
                     mPathLengthStartFrame = glm::clamp(mPathLengthStartFrame, 0, maxFrameIndex);
                     mPathLengthEndFrame = glm::clamp(mPathLengthEndFrame, 0, maxFrameIndex);
                     mPathLengthStartFrame = glm::min(mPathLengthEndFrame, mPathLengthStartFrame);
@@ -1719,17 +1725,17 @@ void SurfaceDynamicsVisualization::renderGUI()
                     // Radius of frames in path visualization
                     ImGui::SliderInt("Path Display Radius", &mPathFrameRadius, 1, 1000);
 
-                    // Length of complete path
-                    stringPathLength = std::ostringstream();
-                    stringPathLength << std::fixed << std::setprecision(2) << mupPath->getCompleteLength();
-                    ImGui::Text(std::string("Path Complete Length: " + stringPathLength.str() + " \u212b").c_str());
-
                     // Length of displayed path
                     int startFrame = glm::max(0, mFrame - mPathFrameRadius);
                     int endFrame = glm::min(mupPath->getVertexCount()-1, mFrame + mPathFrameRadius);
                     stringPathLength = std::ostringstream();
                     stringPathLength << std::fixed << std::setprecision(2) << mupPath->getLength(startFrame, endFrame);
                     ImGui::Text(std::string("Path Displayed Length: " + stringPathLength.str() + " \u212b").c_str());
+
+                    // Length of complete path
+                    stringPathLength = std::ostringstream();
+                    stringPathLength << std::fixed << std::setprecision(2) << mupPath->getCompleteLength();
+                    ImGui::Text(std::string("Path Complete Length: " + stringPathLength.str() + " \u212b").c_str());
 
                     // ### Layer of group ###
 
@@ -1767,7 +1773,7 @@ void SurfaceDynamicsVisualization::renderGUI()
 
                     // ### Surface amount of group ###
 
-                    // Go over frames and calculate how much surface area is covered by atoms of group
+                    // Go over frames and calculate how much surface area is covered by atoms of group in relation to all hull samples of group
                     std::vector<float> groupSurfaceAmount(mGPUSurfaces.size(), -1); // minus one means no data
                     std::vector<float> groupSurfaceArea(mGPUSurfaces.size(), -1); // minus one means no data
                     for(int frame = mComputedStartFrame; frame <= mComputedEndFrame; frame++)
@@ -1784,7 +1790,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                         }
 
                         // Save surface amount of group for that frame
-                        groupSurfaceAmount[relativeFrame] = surfaceSampleCount / (float)mupHullSamples->getProteinSampleCount();
+                        groupSurfaceAmount[relativeFrame] = surfaceSampleCount / (float)mupHullSamples->getSampleCount(mAnalyseAtoms.size());
 
                         // Save surface area
                         groupSurfaceArea[relativeFrame] = approximateSurfaceArea(std::vector<GLuint>(mAnalyseAtoms.begin(), mAnalyseAtoms.end()), frame);
@@ -1795,6 +1801,7 @@ void SurfaceDynamicsVisualization::renderGUI()
 
                     ImGui::PlotLines("Group Surface Area", groupSurfaceArea.data(), groupSurfaceArea.size());
                     ImGui::Text(std::string("Group Surface Area In Frame: " + std::to_string(groupSurfaceArea.at(mFrame - mComputedStartFrame)) + " \u212b²").c_str());
+                    if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Relation between hull samples on surface and internal ones over group's atoms."); }
                 }
             }
 
@@ -1806,7 +1813,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         }
         else
         {
-            ImGui::Text("No Computed Frame Available");
+            ImGui::Text(mNoComputedFrameMessage.c_str());
         }
 
         ImGui::End();
@@ -1821,16 +1828,19 @@ void SurfaceDynamicsVisualization::renderGUI()
 
         // Background
         ImGui::Combo("Background", (int*)&mBackground, "Scientific\0Computervisualistik\0Beach\0");
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Choose cubemap used for background."); }
 
         // Lighting
         if(ImGui::Button("Spot Light"))
         {
             mLightDirection = -glm::normalize(mupCamera->getPosition() - mupCamera->getCenter());
         }
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Set light direction to current camera direction."); }
         ImGui::SameLine();
 
         // Super sampling
         ImGui::Checkbox("Use Super Sampling", &mSuperSampling);
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Switch 2x supersampling on or off."); }
 
         // Depth darkening
         ImGui::SliderFloat("Depth Darkening Start", &mDepthDarkeningStart, 0, mDepthDarkeningEnd, "%.1f");
@@ -1851,6 +1861,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                 mShowAxesGizmo = true;
             }
         }
+        if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Gizmo visualizing coordinate axes."); }
 
         ImGui::End();
         ImGui::PopStyleColor(); // window background

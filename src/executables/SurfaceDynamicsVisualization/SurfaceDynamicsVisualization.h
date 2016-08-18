@@ -129,6 +129,7 @@ private:
     const float mSurfaceMarkPointSize = 5.f;
     const glm::vec3 mSelectionColor = glm::vec3(0.2f, 1.0f, 0.0f);
     const bool mFrameLogging = true;
+    const std::string mNoComputedFrameMessage = "Frame was not computed.";
 
     // Controllable parameters
     bool mShowCameraWindow = true;
