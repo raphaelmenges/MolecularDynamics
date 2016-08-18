@@ -57,6 +57,12 @@ public:
     // Get aminoacid
     std::string getAminoacid(int atomIndex) const { return mAminoacids.at(atomIndex); }
 
+    // Get minimum initial coordinates
+    glm::vec3 getMinCoordinates() const { return mMinCoordinates; }
+
+    // Get maximum initial coordinates
+    glm::vec3 getMaxCoordinates() const { return mMaxCoordinates; }
+
 private:
 
     // Initialize SSBOs
@@ -88,6 +94,10 @@ private:
 
     // SSBO with colors for atoms according to aminoacid
     GPUBuffer<glm::vec3> mColorsAminoacidBuffer;
+
+    // Save mininum and maximum values of initial atom coordinate values
+    glm::vec3 mMinCoordinates;
+    glm::vec3 mMaxCoordinates;
 };
 
 #endif // GPU_PROTEIN_H

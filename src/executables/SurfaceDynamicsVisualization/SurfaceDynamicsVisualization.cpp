@@ -91,84 +91,9 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     };
     setScrollCallback(mpWindow, kS);
 
-    // # Load protein (outcommented must be tested again, may not work)
+    // # Load molecule
 
-    /*
-    // Path to protein molecule
-    std::vector<std::string> paths;
-    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1crn.pdb");
-    paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1a19.pdb");
-    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1vis.pdb");
-    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/2mp3.pdb");
-    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/4d2i.pdb");
-    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/2AtomsIntersection.pdb");
-    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/3AtomsIntersection.pdb");
-    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/7AtomsIntersection.pdb");
-    // paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/8AtomsIntersection.pdb");
-
-    // Load protein
-    MdTrajWrapper mdwrap;
-    std::unique_ptr<Protein> upProtein = std::move(mdwrap.load(paths));
-
-    // Get min/max extent of protein
-    upProtein->minMax(); // first, one has to calculate min and max value of protein
-    mProteinMinExtent = upProtein->getMin();
-    mProteinMaxExtent = upProtein->getMax();
-
-    */
-
-    /*
-    // Simple PDB loader (TODO: GPUProtein adaption)
-    // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Polymerase-of-E-coli-DNA.txt", mProteinMinExtent, mProteinMaxExtent);
-    mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Myoglobin.txt", mProteinMinExtent, mProteinMaxExtent);
-    // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/PDB_Nitrogen-Paracoccus-Cytochrome-C550.txt", mProteinMinExtent, mProteinMaxExtent);
-    // mAtomStructs = parseSimplePDB(std::string(RESOURCES_PATH) + "/molecules/SimplePDB/8AtomsIntersection.txt", mProteinMinExtent, mProteinMaxExtent);
-    */
-
-    /*
-    // Load series of proteins
-    MdTrajWrapper mdwrap;
-    std::vector<std::string> paths;
-    paths.push_back("/home/raphael/Temp/XTC/Output_0.pdb");
-    //paths.push_back(std::string(RESOURCES_PATH) + "/molecules/PDB/1a19.pdb");
-    std::unique_ptr<Protein> upProtein = std::move(mdwrap.load(paths));
-
-    // Get min/max extent of protein
-    upProtein->minMax(); // first, one has to calculate min and max value of protein
-    mProteinMinExtent = upProtein->getMin();
-    mProteinMaxExtent = upProtein->getMax();
-
-    // Fill GPUProtein
-    mGPUProteins.push_back(std::move(std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()))));
-
-    // Load other animation frames
-    paths.clear();
-    paths.push_back("/home/raphael/Temp/XTC/Output_1.pdb");
-    upProtein = std::move(mdwrap.load(paths));
-    mGPUProteins.push_back(std::move(std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()))));
-
-    paths.clear();
-    paths.push_back("/home/raphael/Temp/XTC/Output_2.pdb");
-    upProtein = std::move(mdwrap.load(paths));
-    mGPUProteins.push_back(std::move(std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()))));
-
-    paths.clear();
-    paths.push_back("/home/raphael/Temp/XTC/Output_3.pdb");
-    upProtein = std::move(mdwrap.load(paths));
-    mGPUProteins.push_back(std::move(std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()))));
-
-    paths.clear();
-    paths.push_back("/home/raphael/Temp/XTC/Output_4.pdb");
-    upProtein = std::move(mdwrap.load(paths));
-    mGPUProteins.push_back(std::move(std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()))));
-
-    paths.clear();
-    paths.push_back("/home/raphael/Temp/XTC/Output_5.pdb");
-    upProtein = std::move(mdwrap.load(paths));
-    mGPUProteins.push_back(std::move(std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()))));
-    */
-
-    // Loading protein
+    // Loading molecule
     std::cout << "Importing molecule.." << std::endl;
     MdTrajWrapper mdwrap;
     std::vector<std::string> paths;
@@ -176,11 +101,6 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     if(!filepathXTC.empty()) { paths.push_back(filepathXTC); }
     std::unique_ptr<Protein> upProtein = std::move(mdwrap.load(paths));
     mupGPUProtein = std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()));
-
-    // Get min/max extent of protein
-    upProtein->minMax(); // first, one has to calculate min and max value of protein
-    mProteinMinExtent = upProtein->getMin();
-    mProteinMaxExtent = upProtein->getMax();
     std::cout << "..done" << std::endl;
 
     // # Prepare framebuffers for rendering
@@ -198,7 +118,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
 
     // # Prepare background cubemaps
     std::cout << "Loading cubemaps.." << std::endl;
-    mScientificCubemapTexture = createCubemap(
+    mScientificCubemapTexture = createCubemapTexture(
         std::string(RESOURCES_PATH) + "/cubemaps/Scientific/posx.png",
         std::string(RESOURCES_PATH) + "/cubemaps/Scientific/negx.png",
         std::string(RESOURCES_PATH) + "/cubemaps/Scientific/posy.png",
@@ -206,7 +126,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
         std::string(RESOURCES_PATH) + "/cubemaps/Scientific/posz.png",
         std::string(RESOURCES_PATH) + "/cubemaps/Scientific/negz.png");
 
-    mCVCubemapTexture = createCubemap(
+    mCVCubemapTexture = createCubemapTexture(
         std::string(RESOURCES_PATH) + "/cubemaps/CV/posx.png",
         std::string(RESOURCES_PATH) + "/cubemaps/CV/negx.png",
         std::string(RESOURCES_PATH) + "/cubemaps/CV/posy.png",
@@ -214,7 +134,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
         std::string(RESOURCES_PATH) + "/cubemaps/CV/posz.png",
         std::string(RESOURCES_PATH) + "/cubemaps/CV/negz.png");
 
-    mBeachCubemapTexture = createCubemap(
+    mBeachCubemapTexture = createCubemapTexture(
         std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posx.jpg",
         std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negx.jpg",
         std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posy.jpg",
@@ -225,8 +145,12 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
 
     // # Create camera
     std::cout << "Create camera.." << std::endl;
-    glm::vec3 cameraCenter = (mProteinMinExtent + mProteinMaxExtent) / 2.f;
-    float cameraRadius = glm::compMax(mProteinMaxExtent - cameraCenter);
+    glm::vec3 cameraCenter = (mupGPUProtein->getMinCoordinates() + mupGPUProtein->getMaxCoordinates()) / 2.f;
+    glm::vec3 maxAbsCoordinates(
+        glm::max(glm::abs(mupGPUProtein->getMinCoordinates().x), glm::abs(mupGPUProtein->getMaxCoordinates().x)),
+        glm::max(glm::abs(mupGPUProtein->getMinCoordinates().y), glm::abs(mupGPUProtein->getMaxCoordinates().y)),
+        glm::max(glm::abs(mupGPUProtein->getMinCoordinates().z), glm::abs(mupGPUProtein->getMaxCoordinates().z))        );
+    float cameraRadius = glm::compMax(maxAbsCoordinates - cameraCenter);
     mupCamera = std::unique_ptr<OrbitCamera>(
         new OrbitCamera(
             cameraCenter,
@@ -234,7 +158,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
             mCameraDefaultBeta,
             cameraRadius,
             cameraRadius / 2.f,
-            5.f * cameraRadius,
+            8.f * cameraRadius,
             45.f,
             0.1f));
     std::cout << "..done" << std::endl;
@@ -300,7 +224,7 @@ void SurfaceDynamicsVisualization::renderLoop()
     glDepthFunc(GL_LESS);
     glEnable(GL_CULL_FACE);
 
-    // Cursor
+    // Cursor is saved for camera rotation smoothing
     float prevCursorX, prevCursorY = 0;
 
     // # Create gizmo to display coordinate system axes
@@ -485,103 +409,108 @@ void SurfaceDynamicsVisualization::renderLoop()
         mupOverlayFramebuffer->resize(mWindowWidth, mWindowHeight);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Get count of atoms which will get a outline (size of buffer can be used here because all elements are valid)
-        int outlineAtomCount = mupOutlineAtomIndices->getSize();
-        if(frameComputed() && mRenderOutline && (outlineAtomCount > 0))
+        // Only show analysis visualization when frame is computed
+        if(frameComputed())
         {
-            // Bind buffers of radii and trajectory for rendering
-            mupGPUProtein->bind(0, 1);
 
-            // Bind texture buffer with input atoms
-            mupOutlineAtomIndices->bindAsImage(2, GPUAccess::READ_ONLY);
+            // Get count of atoms which will get a outline (size of buffer can be used here because all elements are valid)
+            int outlineAtomCount = mupOutlineAtomIndices->getSize();
+            if(mRenderOutline && (outlineAtomCount > 0))
+            {
+                // Bind buffers of radii and trajectory for rendering
+                mupGPUProtein->bind(0, 1);
 
-            // Probe radius
-            float probeRadius = mRenderWithProbeRadius ? mComputedProbeRadius : 0.f;
+                // Bind texture buffer with input atoms
+                mupOutlineAtomIndices->bindAsImage(2, GPUAccess::READ_ONLY);
 
-            // Enable stencil test
-            glEnable(GL_STENCIL_TEST);
+                // Probe radius
+                float probeRadius = mRenderWithProbeRadius ? mComputedProbeRadius : 0.f;
 
-            // Set up shader for outline drawing
-            outlineProgram.use();
-            outlineProgram.update("view", mupCamera->getViewMatrix());
-            outlineProgram.update("projection", mupCamera->getProjectionMatrix());
-            outlineProgram.update("frame", mFrame);
-            outlineProgram.update("atomCount", mupGPUProtein->getAtomCount());
-            outlineProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
-            outlineProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
-            outlineProgram.update("frameCount", mupGPUProtein->getFrameCount());
-            outlineProgram.update("outlineColor", mOutlineColor);
+                // Enable stencil test
+                glEnable(GL_STENCIL_TEST);
 
-            // Create stencil
-            glStencilFunc(GL_ALWAYS, 1, 0xFF); // set reference value for new stencil values
-            glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE); // use reference when stencil and depth test successful
-            glStencilMask(0xFF); // write to stencil buffer
-            glClear(GL_STENCIL_BUFFER_BIT); // clear stencil buffer (0 by default)
-            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // disable to write color
-            glDepthMask(GL_FALSE); // disable to write depth
-            outlineProgram.update("probeRadius", probeRadius);
-            glDrawArrays(GL_POINTS, 0, outlineAtomCount);
-            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); // enable to write color
-            glDepthMask(GL_TRUE); // enable to write depth
+                // Set up shader for outline drawing
+                outlineProgram.use();
+                outlineProgram.update("view", mupCamera->getViewMatrix());
+                outlineProgram.update("projection", mupCamera->getProjectionMatrix());
+                outlineProgram.update("frame", mFrame);
+                outlineProgram.update("atomCount", mupGPUProtein->getAtomCount());
+                outlineProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+                outlineProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+                outlineProgram.update("frameCount", mupGPUProtein->getFrameCount());
+                outlineProgram.update("outlineColor", mOutlineColor);
 
-            // Draw outline
-            glStencilFunc(GL_NOTEQUAL, 1, 0xFF); // pass test if stencil at that pixel is not eqaul one
-            glStencilMask(0x00); // do not write to stencil buffer
-            outlineProgram.update("probeRadius", probeRadius + mOutlineWidth); // just add outline radius to probe radius
-            glDrawArrays(GL_POINTS, 0, outlineAtomCount);
+                // Create stencil
+                glStencilFunc(GL_ALWAYS, 1, 0xFF); // set reference value for new stencil values
+                glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE); // use reference when stencil and depth test successful
+                glStencilMask(0xFF); // write to stencil buffer
+                glClear(GL_STENCIL_BUFFER_BIT); // clear stencil buffer (0 by default)
+                glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // disable to write color
+                glDepthMask(GL_FALSE); // disable to write depth
+                outlineProgram.update("probeRadius", probeRadius);
+                glDrawArrays(GL_POINTS, 0, outlineAtomCount);
+                glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); // enable to write color
+                glDepthMask(GL_TRUE); // enable to write depth
 
-            // Disable stencil test
-            glDisable(GL_STENCIL_TEST);
-        }
+                // Draw outline
+                glStencilFunc(GL_NOTEQUAL, 1, 0xFF); // pass test if stencil at that pixel is not eqaul one
+                glStencilMask(0x00); // do not write to stencil buffer
+                outlineProgram.update("probeRadius", probeRadius + mOutlineWidth); // just add outline radius to probe radius
+                glDrawArrays(GL_POINTS, 0, outlineAtomCount);
 
-        // Render point inside of surface atoms for marking
-        if(frameComputed() && mMarkSurfaceAtoms)
-        {
-            // Bind protein
-            mupGPUProtein->bind(0, 1);
+                // Disable stencil test
+                glDisable(GL_STENCIL_TEST);
+            }
 
-            // Bind surface indices
-            mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 2);
+            // Render point inside of surface atoms for marking
+            if(mMarkSurfaceAtoms)
+            {
+                // Bind protein
+                mupGPUProtein->bind(0, 1);
 
-            // Setup shader
-            glPointSize(mSurfaceMarkPointSize);
-            surfaceMarksProgram.use();
-            surfaceMarksProgram.update("view", mupCamera->getViewMatrix());
-            surfaceMarksProgram.update("projection", mupCamera->getProjectionMatrix());
-            surfaceMarksProgram.update("clippingPlane", mClippingPlane);
-            surfaceMarksProgram.update("frame", mFrame);
-            surfaceMarksProgram.update("atomCount", mupGPUProtein->getAtomCount());
-            surfaceMarksProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
-            surfaceMarksProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
-            surfaceMarksProgram.update("frameCount", mupGPUProtein->getFrameCount());
-            surfaceMarksProgram.update("color", glm::vec4(mSurfaceAtomColor, 1.f));
-            glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
-        }
+                // Bind surface indices
+                mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 2);
 
-        // Hull samples
-        if(frameComputed() && mRenderHullSamples)
-        {
-            mupHullSamples->drawSamples(
-                mFrame,
-                mSamplePointSize,
-                mInternalHullSampleColor,
-                mSurfaceHullSampleColor,
-                mupCamera->getViewMatrix(),
-                mupCamera->getProjectionMatrix(),
-                mClippingPlane);
-        }
+                // Setup shader
+                glPointSize(mSurfaceMarkPointSize);
+                surfaceMarksProgram.use();
+                surfaceMarksProgram.update("view", mupCamera->getViewMatrix());
+                surfaceMarksProgram.update("projection", mupCamera->getProjectionMatrix());
+                surfaceMarksProgram.update("clippingPlane", mClippingPlane);
+                surfaceMarksProgram.update("frame", mFrame);
+                surfaceMarksProgram.update("atomCount", mupGPUProtein->getAtomCount());
+                surfaceMarksProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+                surfaceMarksProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+                surfaceMarksProgram.update("frameCount", mupGPUProtein->getFrameCount());
+                surfaceMarksProgram.update("color", glm::vec4(mSurfaceAtomColor, 1.f));
+                glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
+            }
 
-        // Drawing of path (does not care for depth)
-        if(mShowPath)
-        {
-            mupPath->draw(
-                mFrame,
-                mPathFrameRadius,
-                mupCamera->getViewMatrix(),
-                mupCamera->getProjectionMatrix(),
-                mPastPathColor,
-                mFuturePathColor,
-                mPathPointSize);
+            // Hull samples
+            if(mRenderHullSamples)
+            {
+                mupHullSamples->drawSamples(
+                    mFrame,
+                    mSamplePointSize,
+                    mInternalHullSampleColor,
+                    mSurfaceHullSampleColor,
+                    mupCamera->getViewMatrix(),
+                    mupCamera->getProjectionMatrix(),
+                    mClippingPlane);
+            }
+
+            // Drawing of path (does not care for depth)
+            if(mShowPath)
+            {
+                mupPath->draw(
+                    mFrame,
+                    mPathFrameRadius,
+                    mupCamera->getViewMatrix(),
+                    mupCamera->getProjectionMatrix(),
+                    mPastPathColor,
+                    mFuturePathColor,
+                    mPathPointSize);
+            }
         }
 
         // Drawing of surface validation before molecules, so sample points at same z coordinate as impostor are in front
@@ -645,7 +574,7 @@ void SurfaceDynamicsVisualization::renderLoop()
         mupMoleculeFramebuffer->resize(mWindowWidth, mWindowHeight, mSuperSampling);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Bind buffers of radii and trajectory for rendering
+        // Bind buffers of radii and trajectory for rendering molecule
         mupGPUProtein->bind(0, 1);
 
         // Decide about surface rendering
@@ -931,7 +860,7 @@ void SurfaceDynamicsVisualization::renderLoop()
     glDeleteBuffers(1, &axisGizmoVBO);
 }
 
-void SurfaceDynamicsVisualization::setProgressDispaly(std::string task, float progress)
+void SurfaceDynamicsVisualization::setProgressDisplay(std::string task, float progress)
 {
     if(progress != 1.f)
     {
@@ -994,19 +923,6 @@ void SurfaceDynamicsVisualization::mouseButtonCallback(int button, int action, i
 void SurfaceDynamicsVisualization::scrollCallback(double xoffset, double yoffset)
 {
     mupCamera->setRadius(mupCamera->getRadius() - 0.5f * (float)yoffset);
-}
-
-void SurfaceDynamicsVisualization::updateComputationInformation(std::string device, float computationTime)
-{
-    std::stringstream stream;
-    stream <<
-        device << " used" << "\n"
-        << "Probe radius: " + std::to_string(mComputationProbeRadius) << "\n"
-        << "Extracted layers: " << (mExtractLayers ? "yes" : "no") << "\n"
-        << "Start frame: " << mComputationStartFrame << " End frame: " << mComputationEndFrame << "\n"
-        << "Count of frames: " << (mComputationEndFrame - mComputationStartFrame + 1) << "\n"
-        << "Extraction time: " << computationTime << "ms";
-    mComputeInformation = stream.str();
 }
 
 void SurfaceDynamicsVisualization::renderGUI()
@@ -1916,6 +1832,19 @@ void SurfaceDynamicsVisualization::renderGUI()
     ImGui::Render();
 }
 
+void SurfaceDynamicsVisualization::updateComputationInformation(std::string device, float computationTime)
+{
+    std::stringstream stream;
+    stream <<
+        device << " used" << "\n"
+        << "Probe radius: " + std::to_string(mComputationProbeRadius) << "\n"
+        << "Extracted layers: " << (mExtractLayers ? "yes" : "no") << "\n"
+        << "Start frame: " << mComputationStartFrame << " End frame: " << mComputationEndFrame << "\n"
+        << "Count of frames: " << (mComputationEndFrame - mComputationStartFrame + 1) << "\n"
+        << "Extraction time: " << computationTime << "ms";
+    mComputeInformation = stream.str();
+}
+
 bool SurfaceDynamicsVisualization::setFrame(int frame)
 {
     // Clamp frame
@@ -1966,7 +1895,7 @@ void SurfaceDynamicsVisualization::computeLayers(bool useGPU)
 
         // Show progress
         float progress = (float)(i- mComputationStartFrame + 1) / (float)(mComputationEndFrame - mComputationStartFrame + 1);
-        setProgressDispaly("Surface", progress);
+        setProgressDisplay("Surface", progress);
     }
 
     // Update compute information
@@ -2003,7 +1932,7 @@ void SurfaceDynamicsVisualization::computeHullSamples()
         0,
         [this](float progress) // [0,1]
         {
-            this->setProgressDispaly("Hull Samples", progress);
+            this->setProgressDisplay("Hull Samples", progress);
         });
 }
 
@@ -2168,7 +2097,7 @@ float SurfaceDynamicsVisualization::approximateSurfaceArea(std::vector<GLuint> i
     return surface;
 }
 
-GLuint SurfaceDynamicsVisualization::createCubemap(
+GLuint SurfaceDynamicsVisualization::createCubemapTexture(
         std::string filepathPosX,
         std::string filepathNegX,
         std::string filepathPosY,

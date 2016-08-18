@@ -37,8 +37,8 @@ public:
     // Render
     void renderLoop();
 
-    // Set window title displaying progressm(hides processing part when progress is one)
-    void setProgressDispaly(std::string task, float progress = 1.0f);
+    // Set window title displaying progress (hides processing part when progress is equal one)
+    void setProgressDisplay(std::string task, float progress = 1.0f);
 
 private:
 
@@ -63,11 +63,11 @@ private:
     // Scroll callback for GLFW
     void scrollCallback(double xoffset, double yoffset);
 
-    // Update computation information
-    void updateComputationInformation(std::string device, float computationTime);
-
     // Render GUI
     void renderGUI();
+
+    // Update computation information
+    void updateComputationInformation(std::string device, float computationTime);
 
     // Set frame. Returns whether frame has been changed
     bool setFrame(int frame);
@@ -91,7 +91,7 @@ private:
     bool frameComputed() const { return (mFrame >= mComputedStartFrame) && (mFrame <= mComputedEndFrame); }
 
     // Load cubemap texture. Returns texture handle
-    GLuint createCubemap(
+    GLuint createCubemapTexture(
         std::string filepathPosX,
         std::string filepathNegX,
         std::string filepathPosY,
@@ -198,8 +198,6 @@ private:
     glm::vec2 mCameraDeltaRotation;
     float mCameraRotationSmoothTime;
     glm::vec3 mLightDirection;
-    glm::vec3 mProteinMinExtent;
-    glm::vec3 mProteinMaxExtent;
     std::unique_ptr<GPUProtein> mupGPUProtein; // protein on GPU
     std::unique_ptr<GPUSurfaceExtraction> mupGPUSurfaceExtraction;  // factory for GPUSurfaces
                                                                     // (unique pointer because has to be constructed after OpenGL initialization)

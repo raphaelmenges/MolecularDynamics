@@ -27,6 +27,14 @@ GPUProtein::GPUProtein(Protein * const pProtein)
     mAminoacids.reserve(atomCount);
 
     // Fill radii, elements and aminoacids on CPU
+    mMinCoordinates = glm::vec3(
+        std::numeric_limits<float>::max(),
+        std::numeric_limits<float>::max(),
+        std::numeric_limits<float>::max());
+    mMaxCoordinates = glm::vec3(
+        std::numeric_limits<float>::min(),
+        std::numeric_limits<float>::min(),
+        std::numeric_limits<float>::min());
     for(int i = 0; i < atomCount; i++) // go over atoms
     {
         // Collect radius
@@ -37,6 +45,15 @@ GPUProtein::GPUProtein(Protein * const pProtein)
 
         // Aminoacid
         mAminoacids.push_back(pProtein->getAtomAt(i)->getAmino());
+
+        // Update min / max coordinate values
+        glm::vec3 position = pProtein->getAtomAt(i)->getPosition();
+        mMinCoordinates.x = mMinCoordinates.x > position.x ? position.x : mMinCoordinates.x;
+        mMinCoordinates.y = mMinCoordinates.y > position.y ? position.y : mMinCoordinates.y;
+        mMinCoordinates.z = mMinCoordinates.z > position.z ? position.z : mMinCoordinates.z;
+        mMaxCoordinates.x = mMaxCoordinates.x < position.x ? position.x : mMaxCoordinates.x;
+        mMaxCoordinates.y = mMaxCoordinates.y < position.y ? position.y : mMaxCoordinates.y;
+        mMaxCoordinates.z = mMaxCoordinates.z < position.z ? position.z : mMaxCoordinates.z;
     }
 
     // Fill trajectory on CPU
