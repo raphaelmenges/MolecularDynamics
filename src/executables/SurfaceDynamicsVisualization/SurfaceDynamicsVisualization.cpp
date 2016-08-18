@@ -265,6 +265,7 @@ void SurfaceDynamicsVisualization::renderLoop()
     ShaderProgram coloringProgram("/SurfaceDynamicsVisualization/coloring.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
     ShaderProgram analysisProgram("/SurfaceDynamicsVisualization/analysis.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
     ShaderProgram fallbackProgram("/SurfaceDynamicsVisualization/fallback.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
+    ShaderProgram selectionProgram("/SurfaceDynamicsVisualization/selection.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
 
     // Shader program to mark surface atoms
     ShaderProgram surfaceMarksProgram("/SurfaceDynamicsVisualization/point.vert", "/SurfaceDynamicsVisualization/point.geom", "/SurfaceDynamicsVisualization/point.frag");
@@ -799,6 +800,25 @@ void SurfaceDynamicsVisualization::renderLoop()
         // Bind buffers of radii and trajectory for rendering molecule
         mupGPUProtein->bind(0, 1);
 
+        // Prepare shader program
+        selectionProgram.use();
+        selectionProgram.update("view", mupCamera->getViewMatrix());
+        selectionProgram.update("projection", mupCamera->getProjectionMatrix());
+        selectionProgram.update("cameraWorldPos", mupCamera->getPosition());
+        selectionProgram.update("probeRadius", mRenderWithProbeRadius ? mComputedProbeRadius : 0.f);
+        selectionProgram.update("lightDir", mLightDirection);
+        selectionProgram.update("clippingPlane", mClippingPlane);
+        selectionProgram.update("frame", mFrame);
+        selectionProgram.update("atomCount", mupGPUProtein->getAtomCount());
+        selectionProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+        selectionProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+        selectionProgram.update("frameCount", mupGPUProtein->getFrameCount());
+        selectionProgram.update("depthDarkeningStart", mDepthDarkeningStart);
+        selectionProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
+        selectionProgram.update("color", mSelectionColor);
+        selectionProgram.update("atomIndex", mSelectedAtom);
+        glDrawArrays(GL_POINTS, 0, 1);
+
         // Unbind selected atom framebuffer
         mupSelectedAtomFramebuffer->unbind();
         if(mFrameLogging) { std::cout << "..done" << std::endl; }
@@ -1264,7 +1284,7 @@ void SurfaceDynamicsVisualization::renderGUI()
     if(mFrameLogging) { std::cout << "Visualization window.." << std::endl; }
     if(mShowVisualizationWindow)
     {
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.5f, 0.0f, 0.75f)); // window background
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.0f, 0.5f, 0.75f)); // window background
         ImGui::Begin("Visualization", NULL, 0);
 
         // ### Animation ###
@@ -1562,7 +1582,7 @@ void SurfaceDynamicsVisualization::renderGUI()
     if(mFrameLogging) { std::cout << "Analysis window.." << std::endl; }
     if(mShowAnalysisWindow)
     {
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.0f, 0.5f, 0.75f)); // window background
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.5f, 0.0f, 0.75f)); // window background
         ImGui::Begin("Analysis", NULL, 0);
 
         // Only display when frame is computed
