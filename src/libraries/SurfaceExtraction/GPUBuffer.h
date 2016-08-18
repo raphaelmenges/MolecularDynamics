@@ -1,4 +1,7 @@
-// Author: Raphael Menges
+//============================================================================
+// Distributed under the MIT License. Author: Raphael Menges
+//============================================================================
+
 // Buffer on GPU.
 
 #ifndef GPU_BUFFER_H

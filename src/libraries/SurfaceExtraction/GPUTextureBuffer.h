@@ -1,4 +1,7 @@
-// Author: Raphael Menges
+//============================================================================
+// Distributed under the MIT License. Author: Raphael Menges
+//============================================================================
+
 // Texture buffer on GPU which can be bound as image.
 
 #ifndef GPU_TEXTURE_BUFFER_H

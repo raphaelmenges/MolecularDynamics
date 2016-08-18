@@ -1,3 +1,7 @@
+//============================================================================
+// Distributed under the MIT License. Author: Raphael Menges
+//============================================================================
+
 #include "SimpleLoader.h"
 
 #include <fstream>

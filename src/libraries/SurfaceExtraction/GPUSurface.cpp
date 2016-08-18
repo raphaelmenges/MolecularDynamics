@@ -1,4 +1,7 @@
-#include "GPUSurface.h"
+//============================================================================
+// Distributed under the MIT License. Author: Raphael Menges
+//============================================================================
+
 #include "SurfaceExtraction/GPUSurfaceExtraction.h"
 
 GPUSurface::GPUSurface(int atomCount)

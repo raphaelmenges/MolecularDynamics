@@ -1,4 +1,7 @@
-// Author: Raphael Menges
+//============================================================================
+// Distributed under the MIT License. Author: Raphael Menges
+//============================================================================
+
 // Samples of atoms' hull.
 
 #ifndef GPU_HULL_SAMPLES_H

@@ -1,4 +1,7 @@
-// Author: Raphael Menges
+//============================================================================
+// Distributed under the MIT License. Author: Raphael Menges
+//============================================================================
+
 // Extraction of protein surface on GPU. Factory-like pattern.
 
 #ifndef GPU_SURFACE_EXTRACTION_H

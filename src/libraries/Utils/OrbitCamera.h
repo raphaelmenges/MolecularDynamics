@@ -1,4 +1,7 @@
-// Author: Raphael Menges
+//============================================================================
+// Distributed under the MIT License. Author: Raphael Menges
+//============================================================================
+
 // Simple orbit camera. Supports perspective and orthographic projection.
 
 #ifndef ORBIT_CAMERA_H

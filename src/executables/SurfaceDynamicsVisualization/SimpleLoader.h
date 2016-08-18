@@ -1,3 +1,7 @@
+//============================================================================
+// Distributed under the MIT License. Author: Raphael Menges
+//============================================================================
+
 #ifndef SIMPLE_LOADER_H
 #define SIMPLE_LOADER_H
 

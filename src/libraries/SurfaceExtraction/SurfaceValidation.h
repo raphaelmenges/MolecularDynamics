@@ -1,4 +1,7 @@
-// Author: Raphael Menges
+//============================================================================
+// Distributed under the MIT License. Author: Raphael Menges
+//============================================================================
+
 // Validation of Surface Extraction algorithm.
 
 #ifndef SURFACE_EXTRACTION_H

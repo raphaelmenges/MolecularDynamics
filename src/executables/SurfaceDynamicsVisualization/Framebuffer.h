@@ -1,4 +1,7 @@
-// Author: Raphael Menges
+//============================================================================
+// Distributed under the MIT License. Author: Raphael Menges
+//============================================================================
+
 // Framebuffer for own purposes.
 
 #ifndef FRAMEBUFFER_H

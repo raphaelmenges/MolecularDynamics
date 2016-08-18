@@ -1,3 +1,7 @@
+//============================================================================
+// Distributed under the MIT License. Author: Raphael Menges
+//============================================================================
+
 #include "Framebuffer.h"
 
 Framebuffer::Framebuffer(int width, int height, bool superSampling)

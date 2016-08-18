@@ -1,4 +1,7 @@
-// Author: Raphael Menges
+//============================================================================
+// Distributed under the MIT License. Author: Raphael Menges
+//============================================================================
+
 // Access policy for buffers on GPU.
 
 #ifndef GPU_ACCESS_H

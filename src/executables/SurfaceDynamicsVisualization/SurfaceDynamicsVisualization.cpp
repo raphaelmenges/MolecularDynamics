@@ -1,3 +1,7 @@
+//============================================================================
+// Distributed under the MIT License. Author: Raphael Menges
+//============================================================================
+
 #include "SurfaceDynamicsVisualization.h"
 #include "Utils/OrbitCamera.h"
 #include "ShaderTools/Renderer.h"

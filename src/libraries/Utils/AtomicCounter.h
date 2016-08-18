@@ -1,4 +1,7 @@
-// Author: Raphael Menges
+//============================================================================
+// Distributed under the MIT License. Author: Raphael Menges
+//============================================================================
+
 // OpenGL atomic counter.
 
 #ifndef ATOMIC_COUNTER_H

@@ -1,3 +1,7 @@
+//============================================================================
+// Distributed under the MIT License. Author: Raphael Menges
+//============================================================================
+
 #include "GPUSurfaceExtraction.h"
 #include "Utils/AtomicCounter.h"
 #include <GLFW/glfw3.h>

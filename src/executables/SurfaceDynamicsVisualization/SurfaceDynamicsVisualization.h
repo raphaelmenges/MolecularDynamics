@@ -1,3 +1,7 @@
+//============================================================================
+// Distributed under the MIT License. Author: Raphael Menges
+//============================================================================
+
 #ifndef SURFACE_DYNAMICS_VISUALIZATION_H
 #define SURFACE_DYNAMICS_VISUALIZATION_H
 

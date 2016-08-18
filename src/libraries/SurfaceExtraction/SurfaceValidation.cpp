@@ -1,3 +1,7 @@
+//============================================================================
+// Distributed under the MIT License. Author: Raphael Menges
+//============================================================================
+
 #include "SurfaceValidation.h"
 #include "SurfaceExtraction/GPUProtein.h"
 #include "SurfaceExtraction/GPUSurface.h"
