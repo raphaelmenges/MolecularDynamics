@@ -41,12 +41,12 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     resetPath(mSurfaceIndicesFilePath, "/SurfaceIndices.csv");
 
     // Create window (which initializes OpenGL)
-    std::cout << "Creating window.." << std::endl;
+    std::cout << "Create window.." << std::endl;
     mpWindow = generateWindow(mWindowTitle, mWindowWidth, mWindowHeight);
     std::cout << "..done" << std::endl;
 
     // Init ImGui and load font
-    std::cout << "Loading GUI.." << std::endl;
+    std::cout << "Load GUI.." << std::endl;
     ImGui_ImplGlfwGL3_Init(mpWindow, true);
     ImGuiIO& io = ImGui::GetIO();
     std::string fontpath = std::string(RESOURCES_PATH) + "/fonts/dejavu-fonts-ttf-2.35/ttf/DejaVuSans.ttf";
@@ -106,7 +106,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     // # Load molecule
 
     // Loading molecule
-    std::cout << "Importing molecule.." << std::endl;
+    std::cout << "Import molecule.." << std::endl;
     MdTrajWrapper mdwrap;
     std::vector<std::string> paths;
     paths.push_back(filepathPDB);
@@ -116,7 +116,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     std::cout << "..done" << std::endl;
 
     // # Prepare framebuffers for rendering
-    std::cout << "Creating framebuffer.." << std::endl;
+    std::cout << "Create framebuffer.." << std::endl;
     mupMoleculeFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight, mSuperSampling));
     mupMoleculeFramebuffer->bind();
     mupMoleculeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA); // color
@@ -133,7 +133,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     std::cout << "..done" << std::endl;
 
     // # Prepare background cubemaps
-    std::cout << "Loading cubemaps.." << std::endl;
+    std::cout << "Load cubemaps.." << std::endl;
     mScientificCubemapTexture = createCubemapTexture(
         std::string(RESOURCES_PATH) + "/cubemaps/Scientific/posx.png",
         std::string(RESOURCES_PATH) + "/cubemaps/Scientific/negx.png",
@@ -221,7 +221,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
 
 SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
 {
-    std::cout << "Cleaning up.." << std::endl;
+    std::cout << "Clean up.." << std::endl;
 
     // Delete cubemaps
     glDeleteTextures(1, &mScientificCubemapTexture);
@@ -229,6 +229,8 @@ SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
     glDeleteTextures(1, &mBeachCubemapTexture);
 
     std::cout << "..done" << std::endl;
+
+    std::cout << "Goodbye!" << std::endl;
 }
 
 void SurfaceDynamicsVisualization::renderLoop()
@@ -292,6 +294,8 @@ void SurfaceDynamicsVisualization::renderLoop()
     ShaderProgram outlineProgram("/SurfaceDynamicsVisualization/hull.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/outline.frag");
 
     std::cout << "..done" << std::endl;
+
+    std::cout << "Enter render loop.." << std::endl;
 
     // Call render function of Rendering.h with lambda function
     render(mpWindow, [&] (float deltaTime)
@@ -909,6 +913,8 @@ void SurfaceDynamicsVisualization::renderLoop()
         renderGUI();
         if(mFrameLogging) { std::cout << "..done" << std::endl; }
     });
+
+    std::cout << "..exit" << std::endl;
 
     // Delete OpenGL structures
     glDeleteVertexArrays(1, &axisGizmoVAO);
@@ -1624,6 +1630,9 @@ void SurfaceDynamicsVisualization::renderGUI()
                     {
                         csvs << std::to_string(index);
                     }
+
+                    // Tell user
+                    std::cout << "Saved file: " << mSurfaceIndicesFilePath << std::endl;
                 }
                 if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Save surface indices of this frame to file."); }
                 ImGui::SameLine();
@@ -1670,6 +1679,9 @@ void SurfaceDynamicsVisualization::renderGUI()
                         // End line
                         csvs << csv::endl;
                     }
+
+                    // Tell user
+                    std::cout << "Saved file: " << mGlobalAnalysisFilePath << std::endl;
                 }
                 if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Save global analysis to file."); }
                 ImGui::SameLine();
@@ -1904,6 +1916,9 @@ void SurfaceDynamicsVisualization::renderGUI()
                             // End line
                             csvs << csv::endl;
                         }
+
+                        // Tell user
+                        std::cout << "Saved file: " << mGroupAnalysisFilePath << std::endl;
                     }
                     if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Save group analysis to file."); }
                     ImGui::SameLine();
