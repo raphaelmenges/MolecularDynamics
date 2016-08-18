@@ -26,7 +26,7 @@ namespace csv = ::text::csv;
 
 SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathPDB, std::string filepathXTC)
 {
-    std::cout << "Welcome to Surface Dynamics Visualization" << std::endl;
+    std::cout << "Welcome to Surface Dynamics Visualization!" << std::endl;
 
     // # Setup members
     mCameraDeltaRotation = glm::vec2(0,0);
