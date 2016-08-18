@@ -175,21 +175,18 @@ float Path::getCompleteLength() const
     }
 }
 
-float Path::getLength(int start, int end) const
+float Path::getLength(int startFrame, int endFrame) const
 {
-    if(mAccLengths.empty())
+    if(mAccLengths.empty() || startFrame >= endFrame)
     {
         return 0.f;
     }
+    else if(startFrame == 0)
+    {
+        return mAccLengths.at(endFrame - 1);
+    }
     else
     {
-        if(start > 0)
-        {
-            return (mAccLengths.at(end) - mAccLengths.at(start-1));
-        }
-        else
-        {
-            return mAccLengths.at(end);
-        }
+        return (mAccLengths.at(endFrame - 1) - mAccLengths.at(startFrame - 1));
     }
 }

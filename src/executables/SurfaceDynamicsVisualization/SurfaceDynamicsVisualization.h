@@ -185,6 +185,8 @@ private:
     bool mMarkSurfaceAtoms = false;
     bool mRepeatOnlyComputed = false;
     bool mSuperSampling = true;
+    int mPathLengthStartFrame = 0;
+    int mPathLengthEndFrame = 0;
 
     // Report output
     std::string mComputeInformation = "No computation info available";

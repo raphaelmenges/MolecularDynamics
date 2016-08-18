@@ -52,7 +52,6 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
         0x2794, 0x2794, // right arrow
         0x25cb, 0x25cb, // circle
         0x212b, 0x212b, // angstrom
-        0x0025, 0x0025, // percent
         0x2023, 0x2023, // triangle bullet
         0
     }; // has to be static to be available during run
@@ -1626,7 +1625,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                 floatSampleAmount.push_back((float)sampleCount.at(i) / globalSampleCount);
             }
             ImGui::PlotLines("Surface Amount", floatSampleAmount.data(), floatSampleAmount.size());
-            ImGui::Text(std::string("Surface Amount: " + std::to_string(floatSampleAmount.at(mFrame - mComputedStartFrame) * 100) + " percent").c_str());
+            ImGui::Text(std::string("Surface Amount: " + std::to_string(floatSampleAmount.at(mFrame - mComputedStartFrame) * 100) + " %%").c_str());
 
             // Surface area of molecule
             ImGui::Text(std::string("Approximate Surface Area: " + std::to_string(approximateSurfaceArea( mGPUSurfaces.at(mFrame - mComputedStartFrame)->getSurfaceIndices(0), mFrame)) + " \u212b²").c_str());
@@ -1745,33 +1744,48 @@ void SurfaceDynamicsVisualization::renderGUI()
                 }
             }
 
-            // Length of complete path
-            std::ostringstream stringPathLength;
-            stringPathLength << std::fixed << std::setprecision(2) << mupPath->getCompleteLength();
-            ImGui::Text(std::string("Path Complete Length: " + stringPathLength.str() + " \u212b").c_str());
-
-            // Length of displayed path
-            int startFrame = glm::max(0, mFrame - mPathFrameRadius);
-            int endFrame = glm::min(mupPath->getVertexCount()-1, mFrame + mPathFrameRadius);
-            stringPathLength = std::ostringstream();
-            stringPathLength << std::fixed << std::setprecision(2) << mupPath->getLength(startFrame, endFrame);
-            ImGui::Text(std::string("Path Displayed Length: " + stringPathLength.str() + " \u212b").c_str());
-
-            // Radius of frames which are taken into account for path smoothing
-            int radius = mPathSmoothRadius;
-            ImGui::SliderInt("Path Smooth Radius", &radius, 0, 10);
-            if(radius != mPathSmoothRadius)
-            {
-                mPathSmoothRadius = radius; // save new radius
-                doUpdatePath = true; // remember to update display path
-            }
-
-            // Radius of frames in path visualization
-            ImGui::SliderInt("Path Radius", &mPathFrameRadius, 1, 1000);
-
             // Amount of surface covered by analysis group
             if(mAnalyseAtoms.size() > 0)
             {
+                // ### PATH ###
+
+                // Length of complete path
+                std::ostringstream stringPathLength;
+                stringPathLength << std::fixed << std::setprecision(2) << mupPath->getCompleteLength();
+                ImGui::Text(std::string("Path Complete Length: " + stringPathLength.str() + " \u212b").c_str());
+
+                // Length of displayed path
+                int startFrame = glm::max(0, mFrame - mPathFrameRadius);
+                int endFrame = glm::min(mupPath->getVertexCount()-1, mFrame + mPathFrameRadius);
+                stringPathLength = std::ostringstream();
+                stringPathLength << std::fixed << std::setprecision(2) << mupPath->getLength(startFrame, endFrame);
+                ImGui::Text(std::string("Path Displayed Length: " + stringPathLength.str() + " \u212b").c_str());
+
+                // Manual path length determination
+                int maxFrameIndex = mupGPUProtein->getFrameCount() - 1;
+                ImGui::InputInt("Start Frame", &mPathLengthStartFrame);
+                ImGui::InputInt("End Frame", &mPathLengthEndFrame);
+                mPathLengthStartFrame = glm::clamp(mPathLengthStartFrame, 0, maxFrameIndex);
+                mPathLengthEndFrame = glm::clamp(mPathLengthEndFrame, 0, maxFrameIndex);
+                mPathLengthStartFrame = glm::min(mPathLengthEndFrame, mPathLengthStartFrame);
+                mPathLengthEndFrame = glm::max(mPathLengthStartFrame, mPathLengthEndFrame);
+
+                stringPathLength = std::ostringstream();
+                stringPathLength << std::fixed << std::setprecision(2) << mupPath->getLength(mPathLengthStartFrame, mPathLengthEndFrame);
+                ImGui::Text(std::string("Path Length: " + stringPathLength.str() + " \u212b").c_str());
+
+                // Radius of frames which are taken into account for path smoothing
+                int radius = mPathSmoothRadius;
+                ImGui::SliderInt("Path Smooth Radius", &radius, 0, 10);
+                if(radius != mPathSmoothRadius)
+                {
+                    mPathSmoothRadius = radius; // save new radius
+                    doUpdatePath = true; // remember to update display path
+                }
+
+                // Radius of frames in path visualization
+                ImGui::SliderInt("Path Radius", &mPathFrameRadius, 1, 1000);
+
                 // ### LAYER OF GROUP ###
 
                 // Go over frames and extract layer of group
@@ -1810,19 +1824,32 @@ void SurfaceDynamicsVisualization::renderGUI()
 
                 // Go over frames and calculate how much surface area is covered by atoms of group
                 std::vector<float> groupSurfaceAmount(mGPUSurfaces.size(), -1); // minus one means no data
+                std::vector<float> groupSurfaceArea(mGPUSurfaces.size(), -1); // minus one means no data
                 for(int frame = mComputedStartFrame; frame <= mComputedEndFrame; frame++)
                 {
-                    // TODO: that is not amount but surface area!
-
                     // Relative frame
                     int relativeFrame = frame - mComputedStartFrame;
 
-                    // Surface amount for group in that frame
-                    groupSurfaceAmount[relativeFrame] = approximateSurfaceArea(std::vector<GLuint>(mAnalyseAtoms.begin(), mAnalyseAtoms.end()), frame);
+                    // Accumulate sample count
+                    float surfaceSampleCount = 0;
+                    for(GLuint atomIndex : mAnalyseAtoms)
+                    {
+                        // Surface amount for group in that frame for that atom
+                        surfaceSampleCount += (float)mupHullSamples->getSurfaceSampleCount(frame, atomIndex);
+                    }
+
+                    // Save surface amount of group for that frame
+                    groupSurfaceAmount[relativeFrame] = surfaceSampleCount / (float)mupHullSamples->getProteinSampleCount();
+
+                    // Save surface area
+                    groupSurfaceArea[relativeFrame] = approximateSurfaceArea(std::vector<GLuint>(mAnalyseAtoms.begin(), mAnalyseAtoms.end()), frame);
                 }
 
                 ImGui::PlotLines("Group Surface Amount", groupSurfaceAmount.data(), groupSurfaceAmount.size());
-                ImGui::Text(std::string("Group Surface Amount:" + std::to_string(groupSurfaceAmount.at(mFrame - mComputedStartFrame)) + "%").c_str());
+                ImGui::Text(std::string("Group Surface Amount: " + std::to_string(100 * groupSurfaceAmount.at(mFrame - mComputedStartFrame)) + " %%").c_str());
+
+                ImGui::PlotLines("Group Surface Area", groupSurfaceArea.data(), groupSurfaceArea.size());
+                ImGui::Text(std::string("Group Surface Area: " + std::to_string(groupSurfaceArea.at(mFrame - mComputedStartFrame)) + " \u212b²").c_str());
             }
 
             // Update path if necessary
@@ -1830,6 +1857,10 @@ void SurfaceDynamicsVisualization::renderGUI()
             {
                 mupPath->update(mupGPUProtein.get(), mAnalyseAtoms, mPathSmoothRadius);
             }
+        }
+        else
+        {
+            ImGui::Text("No Computed Frame Available");
         }
 
         ImGui::End();
