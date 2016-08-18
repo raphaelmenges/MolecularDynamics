@@ -1536,7 +1536,6 @@ void SurfaceDynamicsVisualization::renderGUI()
     if(mFrameLogging) { std::cout << "..done" << std::endl; }
 
     // ### ANALYSIS ######################################################################################
-    /*
     if(mFrameLogging) { std::cout << "Analysis window.." << std::endl; }
     if(mShowAnalysisWindow)
     {
@@ -1583,7 +1582,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                 }
 
                 ImGui::PlotLines("Surface Area", surfaceArea.data(), surfaceArea.size());
-                ImGui::Text(std::string("Surface Area In Frame: " + std::to_string(approximateSurfaceArea(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getSurfaceIndices(0), mFrame)) + " \u212b²").c_str());
+                ImGui::Text(std::string("Surface Area In Frame: " + std::to_string(surfaceArea.at(mFrame - mComputedStartFrame)) + " \u212b²").c_str());
             }
 
             // ### Analysis of group ###
@@ -1834,7 +1833,6 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::PopStyleColor(); // window background
     }
     if(mFrameLogging) { std::cout << "..done" << std::endl; }
-    */
 
     // ### RENDERING #####################################################################################
     if(mFrameLogging) { std::cout << "Rendering window.." << std::endl; }
@@ -2159,7 +2157,7 @@ float SurfaceDynamicsVisualization::approximateSurfaceArea(std::vector<GLuint> i
         // Add surface
         float radius = mupGPUProtein->getRadii()->at(index);
         float atomSurface = 4.f * glm::pi<float>() * radius * radius;
-        surface += atomSurface * ((float)mupHullSamples->getSurfaceSampleCount(frame - mComputedStartFrame, index) / (float)mupHullSamples->getSampleCount());
+        surface += atomSurface * ((float)mupHullSamples->getSurfaceSampleCount(frame, index) / (float)mupHullSamples->getSampleCount());
     }
 
     return surface;
