@@ -934,6 +934,7 @@ void SurfaceDynamicsVisualization::renderGUI()
     ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4(0.2f, 0.2f, 0.2f, 0.25f)); // menu bar background
 
     // Main menu bar
+    if(mFrameLogging) { std::cout << "Main menu bar.." << std::endl; }
     if (ImGui::BeginMainMenuBar())
     {
         // General menu
@@ -1055,6 +1056,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         // End main menu bar
         ImGui::EndMainMenuBar();
     }
+    if(mFrameLogging) { std::cout << "..done" << std::endl; }
 
     // ###################################################################################################
     // ### WINDOWS #######################################################################################
@@ -1074,6 +1076,7 @@ void SurfaceDynamicsVisualization::renderGUI()
     ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(0.1f, 0.1f, 0.1f, 0.75f)); // slider grab active
 
     // ### COMPUTATION ###################################################################################
+    if(mFrameLogging) { std::cout << "Computation window.." << std::endl; }
     if(mShowComputationWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.0f, 0.0f, 0.75f)); // window background
@@ -1136,8 +1139,10 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::End();
         ImGui::PopStyleColor(); // window background
     }
+    if(mFrameLogging) { std::cout << "..done" << std::endl; }
 
     // ### CAMERA ########################################################################################
+    if(mFrameLogging) { std::cout << "Camera window.." << std::endl; }
     if(mShowCameraWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.5f, 0.75f)); // window background
@@ -1230,8 +1235,10 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::End();
         ImGui::PopStyleColor(); // window background
     }
+    if(mFrameLogging) { std::cout << "..done" << std::endl; }
 
     // ### VISUALIZATION #################################################################################
+    if(mFrameLogging) { std::cout << "Visualization window.." << std::endl; }
     if(mShowVisualizationWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.5f, 0.0f, 0.75f)); // window background
@@ -1399,8 +1406,10 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::End();
         ImGui::PopStyleColor(); // window background
     }
+    if(mFrameLogging) { std::cout << "..done" << std::endl; }
 
     // ### INFORMATION ###################################################################################
+    if(mFrameLogging) { std::cout << "Information window.." << std::endl; }
     if(mShowInformationWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.5f, 0.0f, 0.75f)); // window background
@@ -1449,8 +1458,10 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::End();
         ImGui::PopStyleColor(); // window background
     }
+    if(mFrameLogging) { std::cout << "..done" << std::endl; }
 
     // ### VALIDATION ####################################################################################
+    if(mFrameLogging) { std::cout << "Validation window.." << std::endl; }
     if(mShowValidationWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.5f, 0.5f, 0.75f)); // window background
@@ -1522,8 +1533,10 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::End();
         ImGui::PopStyleColor(); // window background
     }
+    if(mFrameLogging) { std::cout << "..done" << std::endl; }
 
     // ### ANALYSIS ######################################################################################
+    if(mFrameLogging) { std::cout << "Analysis window.." << std::endl; }
     if(mShowAnalysisWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.0f, 0.5f, 0.75f)); // window background
@@ -1819,8 +1832,10 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::End();
         ImGui::PopStyleColor(); // window background
     }
+    if(mFrameLogging) { std::cout << "..done" << std::endl; }
 
     // ### RENDERING #####################################################################################
+    if(mFrameLogging) { std::cout << "Rendering window.." << std::endl; }
     if(mShowRenderingWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.25f, 0.25f, 0.25f, 0.75f)); // window background
@@ -1866,6 +1881,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::End();
         ImGui::PopStyleColor(); // window background
     }
+    if(mFrameLogging) { std::cout << "..done" << std::endl; }
 
     ImGui::PopStyleColor(); // slider grab active
     ImGui::PopStyleColor(); // header active
