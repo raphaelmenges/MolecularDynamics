@@ -412,7 +412,6 @@ void SurfaceDynamicsVisualization::renderLoop()
         // Only show analysis visualization when frame is computed
         if(frameComputed())
         {
-
             // Get count of atoms which will get a outline (size of buffer can be used here because all elements are valid)
             int outlineAtomCount = mupOutlineAtomIndices->getSize();
             if(mRenderOutline && (outlineAtomCount > 0))
