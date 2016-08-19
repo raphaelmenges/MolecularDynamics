@@ -1175,7 +1175,6 @@ void SurfaceDynamicsVisualization::renderGUI()
         // ### Hull Samples ###
         if (ImGui::CollapsingHeader("Hull Samples", "Hull Samples##Computation", true, true))
         {
-            ImGui::Text("[Hull Samples]");
             ImGui::SliderInt("Atom Sample Count", &mHullSampleCount, 0, 1000);
             if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Count of samples per atom used for analysis purposes, not surface extraction."); }
             if(ImGui::Button("\u2794 GPGPU##hullsamples")) { computeHullSamples(); }
