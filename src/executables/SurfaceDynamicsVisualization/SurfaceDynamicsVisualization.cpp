@@ -117,19 +117,37 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
 
     // # Prepare framebuffers for rendering
     std::cout << "Create framebuffer.." << std::endl;
-    mupMoleculeFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight, mSuperSampling));
+
+    // Molecule
+    mupMoleculeFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight, true, mSuperSampling));
     mupMoleculeFramebuffer->bind();
     mupMoleculeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA); // color
     mupMoleculeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGB); // picking index
     mupMoleculeFramebuffer->unbind();
-    mupSelectedAtomFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight, mSuperSampling));
+
+    // Selected atom
+    mupSelectedAtomFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight, true, mSuperSampling));
     mupSelectedAtomFramebuffer->bind();
     mupSelectedAtomFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA); // color
     mupSelectedAtomFramebuffer->unbind();
-    mupOverlayFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight));
+
+    // Overlay
+    mupOverlayFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, true, mWindowHeight));
     mupOverlayFramebuffer->bind();
     mupOverlayFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA);
     mupOverlayFramebuffer->unbind();
+
+    // Full resolution ambient occlusion
+    mupAOFullResolutionFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight, false));
+    mupAOFullResolutionFramebuffer->bind();
+    mupAOFullResolutionFramebuffer->addAttachment(Framebuffer::ColorFormat::RED);
+    mupAOFullResolutionFramebuffer->unbind();
+
+    // Half resolution ambient occlusion
+    mupAOHalfResolutionFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth / 2, mWindowHeight / 2, false));
+    mupAOHalfResolutionFramebuffer->bind();
+    mupAOHalfResolutionFramebuffer->addAttachment(Framebuffer::ColorFormat::RED);
+    mupAOHalfResolutionFramebuffer->unbind();
     std::cout << "..done" << std::endl;
 
     // # Prepare background cubemaps
@@ -165,7 +183,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     glm::vec3 maxAbsCoordinates(
         glm::max(glm::abs(mupGPUProtein->getMinCoordinates().x), glm::abs(mupGPUProtein->getMaxCoordinates().x)),
         glm::max(glm::abs(mupGPUProtein->getMinCoordinates().y), glm::abs(mupGPUProtein->getMaxCoordinates().y)),
-        glm::max(glm::abs(mupGPUProtein->getMinCoordinates().z), glm::abs(mupGPUProtein->getMaxCoordinates().z))        );
+        glm::max(glm::abs(mupGPUProtein->getMinCoordinates().z), glm::abs(mupGPUProtein->getMaxCoordinates().z)));
     float cameraRadius = glm::compMax(maxAbsCoordinates - cameraCenter);
     mupCamera = std::unique_ptr<OrbitCamera>(
         new OrbitCamera(
@@ -285,13 +303,17 @@ void SurfaceDynamicsVisualization::renderLoop()
     ShaderProgram surfaceMarksProgram("/SurfaceDynamicsVisualization/point.vert", "/SurfaceDynamicsVisualization/point.geom", "/SurfaceDynamicsVisualization/point.frag");
 
     // Shader program for screenfilling quad rendering
-    ShaderProgram screenFillingProgram("/SurfaceDynamicsVisualization/screenfilling.vert", "/SurfaceDynamicsVisualization/screenfilling.geom", "/SurfaceDynamicsVisualization/screenfilling.frag");
+    ShaderProgram compositeProgram("/PostProcessing/screenfilling.vert", "/PostProcessing/screenfilling.geom", "/SurfaceDynamicsVisualization/composite.frag");
 
     // Shader program for cubemap
     ShaderProgram cubemapProgram("/SurfaceDynamicsVisualization/cubemap.vert", "/SurfaceDynamicsVisualization/cubemap.geom", "/SurfaceDynamicsVisualization/cubemap.frag");
 
     // Shader program for outline rendering
     ShaderProgram outlineProgram("/SurfaceDynamicsVisualization/hull.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/outline.frag");
+
+    // Shader programs for ambient occlusion of molecule
+    ShaderProgram downsampingeProgram("/PostProcessing/screenfilling.vert", "/PostProcessing/screenfilling.geom", "/PostProcessing/downsampling.frag");
+    // ShaderProgram hbaoProgram("/PostProcessing/screenfilling.vert", "/PostProcessing/screenfilling.geom", "/PostProcessing/downsampling.frag");
 
     std::cout << "..done" << std::endl;
 
@@ -805,6 +827,43 @@ void SurfaceDynamicsVisualization::renderLoop()
         mupMoleculeFramebuffer->unbind();
         if(mFrameLogging) { std::cout << "..done" << std::endl; }
 
+        // ### AMBIENT OCCLUSION RENDERING #########################################################################
+        if(mFrameLogging) { std::cout << "Render selected atom.." << std::endl; }
+
+        // Disable depth test and write
+        glDisable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);
+
+        // # Downsample depth texture
+
+        // Bind framebuffer with half res texture
+        mupAOHalfResolutionFramebuffer->bind();
+        mupAOHalfResolutionFramebuffer->resize(mWindowWidth / 2, mWindowHeight / 2);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // Bind depth attachment of molecule rendering
+        // TODO
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, mupMoleculeFramebuffer->getAttachment(0));
+
+        // Do downsampling
+        downsampingeProgram.use();
+        downsampingeProgram.update("depthTexture", 0); // tell shader which slot to use
+        glDrawArrays(GL_POINTS, 0, 1);
+
+        // # Calculate ambient occlusion
+
+        // Unbind half resolution
+        mupAOHalfResolutionFramebuffer->unbind();
+
+        // # Blur on full resolution
+
+        // Enable depth test and write
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
+
+        if(mFrameLogging) { std::cout << "..done" << std::endl; }
+
         // ### SELCTED ATOM RENDERING ##############################################################################
         if(mFrameLogging) { std::cout << "Render selected atom.." << std::endl; }
 
@@ -848,11 +907,13 @@ void SurfaceDynamicsVisualization::renderLoop()
         // # Fill standard framebuffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Disable depth test
+        // Disable depth test, depth write and enable blending
         glDisable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         // Render cubemap
-        glDisable(GL_DEPTH_TEST);
         glActiveTexture(GL_TEXTURE0);
 
         switch(mBackground)
@@ -873,12 +934,6 @@ void SurfaceDynamicsVisualization::renderLoop()
         cubemapProgram.update("view", mupCamera->getViewMatrix());
         cubemapProgram.update("projection", mupCamera->getProjectionMatrix());
         glDrawArrays(GL_POINTS, 0, 1);
-        glEnable(GL_DEPTH_TEST);
-
-        // Transparent rendering to render framebuffer on top of standard buffer
-        glDepthMask(GL_FALSE);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         // Bind molecule framebuffer texture
         glActiveTexture(GL_TEXTURE0);
@@ -892,20 +947,23 @@ void SurfaceDynamicsVisualization::renderLoop()
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, mupOverlayFramebuffer->getAttachment(0));
 
-        // Draw screenfilling quad
-        screenFillingProgram.use();
-        screenFillingProgram.update("molecule", 0); // tell shader which slot to use
-        screenFillingProgram.update("selectedAtom", 1); // tell shader which slot to use
-        screenFillingProgram.update("overlay", 2); // tell shader which slot to use
-        glDrawArrays(GL_POINTS, 0, 1);
-        if(mFrameLogging) { std::cout << "..done" << std::endl; }
+        // Bind ambient occlusion framebuffer texture
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, mupAOHalfResolutionFramebuffer->getAttachment(0)); // TODO: use full res one
 
-        // Back to opaque rendering
+        // Draw screenfilling quad
+        compositeProgram.use();
+        compositeProgram.update("molecule", 0); // tell shader which slot to use
+        compositeProgram.update("selectedAtom", 1); // tell shader which slot to use
+        compositeProgram.update("overlay", 2); // tell shader which slot to use
+        compositeProgram.update("ambientOcclusion", 3); // tell shader which slot to use
+        glDrawArrays(GL_POINTS, 0, 1);
+
+        // Back to opaque standard rendering
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);
-
-        // Enable depth test
         glEnable(GL_DEPTH_TEST);
+        if(mFrameLogging) { std::cout << "..done" << std::endl; }
 
         // Render GUI in standard frame buffer on top of everything
         if(mFrameLogging) { std::cout << "Render user interface.." << std::endl; }

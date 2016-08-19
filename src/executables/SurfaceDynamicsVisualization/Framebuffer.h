@@ -18,11 +18,11 @@ public:
     // Enumeration of color formats
     enum ColorFormat
     {
-        RGB, RGBA
+        RED, RGB, RGBA
     };
 
     // Constructor
-    Framebuffer(int width, int height, bool superSampling = false);
+    Framebuffer(int width, int height, bool supportDepthAndStencil = true, bool superSampling = false);
 
     // Destructor
     virtual ~Framebuffer();
@@ -51,6 +51,12 @@ public:
 
 private:
 
+    // Decide internal format
+    GLenum decideInternalPixelFormat(ColorFormat format) const;
+
+    // Decide format
+    GLenum decidePixelFormat(ColorFormat format) const;
+
     // Pair of color format and texture handle
     typedef std::pair<GLuint, ColorFormat> ColorAttachment;
 
@@ -62,6 +68,7 @@ private:
     int mHeight = -1;
     bool mSuperSampling = false;
     const int mSuperSamplingMultiplier = 2; // more than 2 make advanced filtering at composition necessary
+    bool mSupportDepthAndStencil = true;
 };
 
 #endif // FRAMEBUFFER_H

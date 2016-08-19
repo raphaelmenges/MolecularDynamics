@@ -4,11 +4,14 @@
 
 #include "Framebuffer.h"
 
-Framebuffer::Framebuffer(int width, int height, bool superSampling)
+Framebuffer::Framebuffer(int width, int height, bool supportDepthAndStencil, bool superSampling)
 {
+    // Save members
+    mSupportDepthAndStencil = supportDepthAndStencil;
+
     // Generate framebuffer and renderbuffer for depth and stencil tests
     glGenFramebuffers(1, &mFramebuffer);
-    glGenRenderbuffers(1, &mDepthStencil);
+    if(mSupportDepthAndStencil) { glGenRenderbuffers(1, &mDepthStencil); }
 
     // Bind framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
@@ -23,7 +26,7 @@ Framebuffer::Framebuffer(int width, int height, bool superSampling)
 Framebuffer::~Framebuffer()
 {
     glDeleteFramebuffers(1, &mFramebuffer);
-    glDeleteRenderbuffers(1, &mDepthStencil);
+    if(mSupportDepthAndStencil) { glDeleteRenderbuffers(1, &mDepthStencil); }
 
     for(const auto& rPair : colorAttachments)
     {
@@ -59,31 +62,35 @@ void Framebuffer::resize(int width, int height)
         mHeight = height;
 
         // Create renderbuffer
-        glBindRenderbuffer(GL_RENDERBUFFER, mDepthStencil);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, mWidth, mHeight);
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        if(mSupportDepthAndStencil)
+        {
+            glBindRenderbuffer(GL_RENDERBUFFER, mDepthStencil);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, mWidth, mHeight);
+            glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
-        // (Re)Bind depth and stencil
-        glFramebufferRenderbuffer(
-            GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mDepthStencil);
+            // (Re)Bind depth and stencil
+            glFramebufferRenderbuffer(
+                GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mDepthStencil);
         }
 
         // Do it for all color attachments
         for(const auto& rPair : colorAttachments)
         {
+            // Create empty texture
             glBindTexture(GL_TEXTURE_2D, rPair.first);
             glTexImage2D(
                 GL_TEXTURE_2D,
                 0,
-                rPair.second == ColorFormat::RGB ? GL_RGB8 : GL_RGBA8,
+                decideInternalPixelFormat(rPair.second),
                 mWidth,
                 mHeight,
                 0,
-                rPair.second == ColorFormat::RGB ? GL_RGB : GL_RGBA,
+                decidePixelFormat(rPair.second),
                 GL_UNSIGNED_BYTE,
                 NULL);
             glBindTexture(GL_TEXTURE_2D, 0);
         }
+    }
 }
 
 void Framebuffer::resize(int width, int height, bool superSampling)
@@ -109,11 +116,11 @@ void Framebuffer::addAttachment(ColorFormat colorFormat)
     glTexImage2D(
         GL_TEXTURE_2D,
         0,
-        colorFormat == ColorFormat::RGB ? GL_RGB8 : GL_RGBA8,
+        decideInternalPixelFormat(colorFormat),
         mWidth,
         mHeight,
         0,
-        colorFormat == ColorFormat::RGB ? GL_RGB : GL_RGBA,
+        decidePixelFormat(colorFormat),
         GL_UNSIGNED_BYTE,
         NULL);
 
@@ -139,4 +146,38 @@ void Framebuffer::addAttachment(ColorFormat colorFormat)
 
     // Remember that attachment
     colorAttachments.push_back(std::make_pair(texture, colorFormat));
+}
+
+GLenum Framebuffer::decideInternalPixelFormat(ColorFormat format) const
+{
+    GLenum internalPixelFormat; // pixel format on graphics card
+    switch(format)
+    {
+    case ColorFormat::RED:
+        internalPixelFormat = GL_R8;
+        break;
+    case ColorFormat::RGB:
+        internalPixelFormat = GL_RGB8;
+        break;
+    default:
+        internalPixelFormat = GL_RGBA8;
+    }
+    return internalPixelFormat;
+}
+
+GLenum Framebuffer::decidePixelFormat(ColorFormat format) const
+{
+    GLenum pixelFormat; // pixel format of input
+    switch(format)
+    {
+    case ColorFormat::RED:
+        pixelFormat = GL_RED;
+        break;
+    case ColorFormat::RGB:
+        pixelFormat = GL_RGB;
+        break;
+    default:
+        pixelFormat = GL_RGBA;
+    }
+    return pixelFormat;
 }

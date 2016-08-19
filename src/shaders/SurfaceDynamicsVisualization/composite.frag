@@ -9,6 +9,7 @@ layout(location = 0) out vec4 fragColor;
 uniform sampler2D molecule;
 uniform sampler2D selectedAtom;
 uniform sampler2D overlay;
+uniform sampler2D ambientOcclusion;
 
 // Main function
 void main()
@@ -18,4 +19,5 @@ void main()
     vec4 overlayColor = texture(overlay, uv);
     vec4 color = mix(moleculeColor, selectedAtomColor, 0.5 * selectedAtomColor.a);
     fragColor = mix(color, overlayColor, overlayColor.a);
+    fragColor = texture(ambientOcclusion, uv);
 }
