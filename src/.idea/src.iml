@@ -88,38 +88,31 @@
       <sourceFolder url="file://$MODULE_DIR$/cmake/FindGLFW3.cmake" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/cmake/LinkGLFW3.cmake" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/cmake/LinkASSIMP.cmake" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/prescanInt.comp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/dummy.vert" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/impostor.geom" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/extractElementPositions.comp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/fullscreenQuad.geom" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/debug.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/lines.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/dummy.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/fullscreenQuad.geom" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/extractElementPositions.comp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/insertElements.comp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/impostor.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/countingSort.comp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/fillTempData.comp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/lines.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/prescanInt.comp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/impostor.vert" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/uniformAddInt.comp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/insertElements.comp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/SortVisibleIDList.comp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/toneMapperLinearInstanceCount.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/DetectVisibleInstanceIDs.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/CollectVisibleIDs.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/CreateVisibleIDList_fromIntervals.comp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/CollectVisibleIDs_frontOnly.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/solidColorInstanceCount.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/impostorSpheres_InstancedUA.vert" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/impostorSpheres_Instanced.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/impostorSpheres_Instanced.vert" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/Impostor3DSphere_Ortho_StoreIntervals_2.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/impostorSpheres.vert" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/Impostor3DSphereTetrahedron.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/Impostor3DTorus.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/Impostor3DSphere_Ortho.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/Impostor3DSphere_Ortho_StoreIntervals.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/impostorSpheres_discardFragments_Instanced.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/Impostor3DSphere.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/impostorSpheres.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Base/modelViewProjectionInstanced.vert" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Base/fullscreen.vert" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Base/modelViewProjectionInstancedUA.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/impostor.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/impostor.geom" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/point.geom" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/surface.comp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/axis.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/impostor.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/point.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/axis.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/point.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/sample.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/sample.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/VisibleAtomsDetection/Detection/toneMapperLinearInstanceCount.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/VisibleAtomsDetection/Detection/solidColorInstanceCount.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/VisibleAtomsDetection/Detection/DetectVisibleInstanceIDs.frag" isTestSource="false" />
@@ -167,24 +160,35 @@
       <sourceFolder url="file://$MODULE_DIR$/shaders/Filters/boxBlur.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/Filters/solidColor.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/Impostor/impostorSpheres_Instanced.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/Impostor/impostorSpheres.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/Impostor/impostorSpheres.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/Impostor/Impostor3DSphereTetrahedron.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/Impostor/Impostor3DTorus.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/Impostor/impostorSpheres_Instanced.vert" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/Impostor/impostorSpheres_discardFragments_Instanced.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/Impostor/Impostor3DSphere.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/Impostor/Impostor3DSphereTetrahedron.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/impostor.vert" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/impostor.geom" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/point.geom" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/surface.comp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/axis.vert" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/impostor.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/point.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/axis.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/point.vert" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/sample.vert" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/sample.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/Impostor/impostorSpheres.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/SortVisibleIDList.comp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/toneMapperLinearInstanceCount.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/DetectVisibleInstanceIDs.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/CollectVisibleIDs.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/CreateVisibleIDList_fromIntervals.comp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/CollectVisibleIDs_frontOnly.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/solidColorInstanceCount.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/impostorSpheres_InstancedUA.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/impostorSpheres_Instanced.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/impostorSpheres_Instanced.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/Impostor3DSphere_Ortho_StoreIntervals_2.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/impostorSpheres.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/Impostor3DSphereTetrahedron.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/Impostor3DTorus.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/Impostor3DSphere_Ortho.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/Impostor3DSphere_Ortho_StoreIntervals.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/impostorSpheres_discardFragments_Instanced.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/Impostor3DSphere.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/impostorSpheres.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Base/modelViewProjectionInstanced.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Base/fullscreen.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Base/modelViewProjectionInstancedUA.vert" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/3DObject/modelViewProjectionInstanced.vert" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/3DObject/billboardBall.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/3DObject/billboard.vert" isTestSource="false" />

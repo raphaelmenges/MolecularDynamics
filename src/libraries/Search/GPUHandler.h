@@ -38,6 +38,12 @@ public:
     void copyDataToSSBOFloat3(GLuint* targetHandler, glm::vec3* data, int length);
 
     /*
+     * copy data from ssbo to ssbo
+     */
+    void copySSBOtoSSBOUInt(GLuint* targetHandler, GLuint* dataHandler, int length);
+    void copySSBOtoSSBOFloat4(GLuint* targetHandler, GLuint* dataHandler, int length);
+
+    /*
      * for debugging
      */
     void printSSBODataInt(GLuint* ssboHandler, int length);

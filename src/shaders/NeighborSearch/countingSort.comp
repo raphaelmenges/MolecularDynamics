@@ -1,0 +1,43 @@
+#version 430
+
+#define GRID_UNDEF 4294967295
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+// SSBOs
+layout(std430, binding = 1) buffer PositionsBuffer       { vec4 pos[];       };
+layout(std430, binding = 2) buffer GridcellsBuffer       { uint gcell[];     };
+layout(std430, binding = 3) buffer GridindicesBuffer     { uint gndx[];      };
+layout(std430, binding = 5) buffer GridoffsetBuffer      { int  gridoff[];   };
+layout(std430, binding = 8) buffer GridBuffer            { uint grid[];      };
+
+layout(std430, binding = 9) buffer TempPositionsBuffer   { vec4 tempPos[];   };
+layout(std430, binding =10) buffer TempGridcellsBuffer   { uint tempGcell[]; };
+layout(std430, binding =11) buffer TempGridindicesBuffer { uint tempGndx[];  };
+
+uniform int pnum;
+
+void main() {
+    // get particle index
+    int i = int(gl_GlobalInvocationID.x);
+    if (i >= pnum) return;
+
+    // copy element from temporary unsorted buffer into sorted buffer
+    uint icell = tempGcell[i];
+    uint indx  = tempGndx[i];
+
+    // only copy data if it is inside the grid
+    if (icell != GRID_UNDEF) {
+        /*
+         * determine the sorted index location of the particle after sort
+         * sort index is offset of the cell plus offset of the element inside the cell
+         */
+        uint sort_ndx = gridoff[icell] + indx;
+
+        // transfer data to sort location
+        grid[sort_ndx]  = sort_ndx; // grid indexing becomes identity
+        pos[sort_ndx]   = tempPos[i];
+        gcell[sort_ndx] = icell;
+        gndx[sort_ndx]  = indx;
+    }
+}

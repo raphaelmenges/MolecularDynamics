@@ -13,13 +13,17 @@
 typedef unsigned int uint;
 
 struct GPUBuffers {
+    // particle and grid buffers
     GLuint* dp_pos;         // float3
     GLuint* dp_gcell;       // uint
     GLuint* dp_gndx;        // uint
-    GLuint* dp_sortbuf;     // char
     GLuint* dp_grid;        // uint
     GLuint* dp_gridcnt;     // int
     GLuint* dp_gridoff;     // int
+    // temporary buffers
+    GLuint* dp_tempPos;     // float3
+    GLuint* dp_tempGcell;   // uint
+    GLuint* dp_tempGndx;    // uint
 };
 
 struct Grid {

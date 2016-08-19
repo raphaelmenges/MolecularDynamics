@@ -71,11 +71,13 @@ private:
     uint          m_numThreads;
     uint          m_gridBlocks;
     uint          m_gridThreads;
-    // shader
+    // compute shader
     ShaderProgram m_insertElementsShader;
     ShaderProgram m_extractElementPositionsShader;
     ShaderProgram m_prescanIntShader;
     ShaderProgram m_uniformAddIntShader;
+    ShaderProgram m_fillTempDataShader;
+    ShaderProgram m_countingSortShader;
 
 
 
@@ -95,7 +97,6 @@ private:
     /*
      * run helper functions
      */
-    void updateElementPositions();
     void insertElementsInGridGPU();
 
     void prefixSumCellsGPU();
@@ -106,6 +107,8 @@ private:
     int floorPow2(int n);
 
     void countingSort();
+
+    void colorAtomsInRadius();
 };
 
 

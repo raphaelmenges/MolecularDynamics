@@ -127,6 +127,22 @@ void GPUHandler::copyDataToSSBOFloat3(GLuint* targetHandler, glm::vec3* data, in
 
 
 
+void GPUHandler::copySSBOtoSSBOUInt(GLuint* targetHandler, GLuint* dataHandler, int length) {
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, *targetHandler);
+    GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+    memcpy(p, dataHandler, sizeof(uint)*length);
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+}
+
+void GPUHandler::copySSBOtoSSBOFloat4(GLuint* targetHandler, GLuint* dataHandler, int length) {
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, *targetHandler);
+    GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+    memcpy(p, dataHandler, sizeof(float)*length*4);
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+}
+
+
+
 void GPUHandler::printSSBODataInt(GLuint* ssboHandler, int length)
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler);
