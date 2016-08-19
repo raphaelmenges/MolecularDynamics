@@ -4,14 +4,26 @@
 
 #include "Framebuffer.h"
 
-Framebuffer::Framebuffer(int width, int height, bool supportDepthAndStencil, bool superSampling)
+Framebuffer::Framebuffer(int width, int height, Mode mode, bool superSampling)
 {
     // Save members
-    mSupportDepthAndStencil = supportDepthAndStencil;
+    mMode = mode;
 
-    // Generate framebuffer and renderbuffer for depth and stencil tests
+    // Generate framebuffer
     glGenFramebuffers(1, &mFramebuffer);
-    if(mSupportDepthAndStencil) { glGenRenderbuffers(1, &mDepthStencil); }
+
+    // Generate either render buffer or texture
+    switch(mMode)
+    {
+        case DEPTH_STENCIL_RENDERBUFFER:
+            glGenRenderbuffers(1, &mDepthStencilRenderbuffer);
+            break;
+        case DEPTH_TEXTURE:
+            glGenTextures(1, &mDepthTexture);
+            break;
+        default:
+            {} // Do nothing
+    }
 
     // Bind framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
@@ -25,9 +37,23 @@ Framebuffer::Framebuffer(int width, int height, bool supportDepthAndStencil, boo
 
 Framebuffer::~Framebuffer()
 {
+    // Delete framebuffer
     glDeleteFramebuffers(1, &mFramebuffer);
-    if(mSupportDepthAndStencil) { glDeleteRenderbuffers(1, &mDepthStencil); }
 
+    // Delete either renderbuffer or texture
+    switch(mMode)
+    {
+        case DEPTH_STENCIL_RENDERBUFFER:
+            glDeleteRenderbuffers(1, &mDepthStencilRenderbuffer);
+            break;
+        case DEPTH_TEXTURE:
+            glDeleteTextures(1, &mDepthTexture);
+            break;
+        default:
+            {} // Do nothing
+    }
+
+    // Delete all attachments
     for(const auto& rPair : colorAttachments)
     {
         glDeleteTextures(1, &rPair.first);
@@ -61,16 +87,28 @@ void Framebuffer::resize(int width, int height)
         mWidth = width;
         mHeight = height;
 
-        // Create renderbuffer
-        if(mSupportDepthAndStencil)
+        // Create renderbuffer or texture
+        switch(mMode)
         {
-            glBindRenderbuffer(GL_RENDERBUFFER, mDepthStencil);
-            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, mWidth, mHeight);
-            glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-            // (Re)Bind depth and stencil
-            glFramebufferRenderbuffer(
-                GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mDepthStencil);
+            case DEPTH_STENCIL_RENDERBUFFER:
+                glBindRenderbuffer(GL_RENDERBUFFER, mDepthStencilRenderbuffer);
+                glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, mWidth, mHeight);
+                glBindRenderbuffer(GL_RENDERBUFFER, 0);
+                glBindRenderbuffer(GL_RENDERBUFFER, 0);
+                glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mDepthStencilRenderbuffer);
+                break;
+            case DEPTH_TEXTURE:
+                glBindTexture(GL_TEXTURE_2D, mDepthTexture);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, mWidth, mHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                glBindTexture(GL_TEXTURE_2D, 0);
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, mDepthTexture, 0);
+                break;
+            default:
+                {} // Do nothing
         }
 
         // Do it for all color attachments
@@ -133,15 +171,24 @@ void Framebuffer::addAttachment(ColorFormat colorFormat)
     attachmentNumber += count;
 
     // Bind texture to framebuffer
-    glFramebufferTexture2D(
-        GL_FRAMEBUFFER, attachmentNumber, GL_TEXTURE_2D, texture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, attachmentNumber, GL_TEXTURE_2D, texture, 0);
 
     // Tell framebuffer how many attachments to fill
     std::vector<GLenum> attachmentIdentifiers;
+
+    // Add depth
+    if(mMode != NONE)
+    {
+        attachmentIdentifiers.push_back(GL_DEPTH_ATTACHMENT);
+    }
+
+    // Add color attachments
     for(int i = 0; i <= count; i++)
     {
         attachmentIdentifiers.push_back(GL_COLOR_ATTACHMENT0 + i);
     }
+
+    // Give it the framebuffer
     glDrawBuffers(attachmentIdentifiers.size(), attachmentIdentifiers.data());
 
     // Remember that attachment

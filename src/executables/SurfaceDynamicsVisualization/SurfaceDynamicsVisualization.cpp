@@ -119,35 +119,41 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     std::cout << "Create framebuffer.." << std::endl;
 
     // Molecule
-    mupMoleculeFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight, true, mSuperSampling));
+    mupMoleculeFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight, Framebuffer::Mode::DEPTH_TEXTURE, mSuperSampling));
     mupMoleculeFramebuffer->bind();
     mupMoleculeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA); // color
     mupMoleculeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGB); // picking index
     mupMoleculeFramebuffer->unbind();
 
     // Selected atom
-    mupSelectedAtomFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight, true, mSuperSampling));
+    mupSelectedAtomFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight, Framebuffer::Mode::DEPTH_STENCIL_RENDERBUFFER, mSuperSampling));
     mupSelectedAtomFramebuffer->bind();
     mupSelectedAtomFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA); // color
     mupSelectedAtomFramebuffer->unbind();
 
     // Overlay
-    mupOverlayFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, true, mWindowHeight));
+    mupOverlayFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight, Framebuffer::Mode::DEPTH_STENCIL_RENDERBUFFER));
     mupOverlayFramebuffer->bind();
     mupOverlayFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA);
     mupOverlayFramebuffer->unbind();
 
-    // Full resolution ambient occlusion
-    mupAOFullResolutionFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight, false));
-    mupAOFullResolutionFramebuffer->bind();
-    mupAOFullResolutionFramebuffer->addAttachment(Framebuffer::ColorFormat::RED);
-    mupAOFullResolutionFramebuffer->unbind();
+    // Downsampling for ambient occlusion
+    mupAODownsamplingFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth / 2, mWindowHeight / 2, Framebuffer::Mode::NONE));
+    mupAODownsamplingFramebuffer->bind();
+    mupAODownsamplingFramebuffer->addAttachment(Framebuffer::ColorFormat::RED);
+    mupAODownsamplingFramebuffer->unbind();
 
-    // Half resolution ambient occlusion
-    mupAOHalfResolutionFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth / 2, mWindowHeight / 2, false));
-    mupAOHalfResolutionFramebuffer->bind();
-    mupAOHalfResolutionFramebuffer->addAttachment(Framebuffer::ColorFormat::RED);
-    mupAOHalfResolutionFramebuffer->unbind();
+    // Half resolution for ambient occlusion
+    mupAOFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth / 2, mWindowHeight / 2, Framebuffer::Mode::NONE));
+    mupAOFramebuffer->bind();
+    mupAOFramebuffer->addAttachment(Framebuffer::ColorFormat::RED);
+    mupAOFramebuffer->unbind();
+
+    // Full resolution blurring of ambient occlusion
+    mupAOBlurFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight, Framebuffer::Mode::NONE));
+    mupAOBlurFramebuffer->bind();
+    mupAOBlurFramebuffer->addAttachment(Framebuffer::ColorFormat::RED);
+    mupAOBlurFramebuffer->unbind();
     std::cout << "..done" << std::endl;
 
     // # Prepare background cubemaps
@@ -312,8 +318,9 @@ void SurfaceDynamicsVisualization::renderLoop()
     ShaderProgram outlineProgram("/SurfaceDynamicsVisualization/hull.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/outline.frag");
 
     // Shader programs for ambient occlusion of molecule
-    ShaderProgram downsampingeProgram("/PostProcessing/screenfilling.vert", "/PostProcessing/screenfilling.geom", "/PostProcessing/downsampling.frag");
-    // ShaderProgram hbaoProgram("/PostProcessing/screenfilling.vert", "/PostProcessing/screenfilling.geom", "/PostProcessing/downsampling.frag");
+    ShaderProgram downsamplingProgram("/PostProcessing/screenfilling.vert", "/PostProcessing/screenfilling.geom", "/PostProcessing/downsampling.frag");
+    ShaderProgram hbaoProgram("/PostProcessing/screenfilling.vert", "/PostProcessing/screenfilling.geom", "/PostProcessing/hbao.frag");
+    ShaderProgram blurProgram("/PostProcessing/screenfilling.vert", "/PostProcessing/screenfilling.geom", "/PostProcessing/blur.frag");
 
     std::cout << "..done" << std::endl;
 
@@ -836,27 +843,60 @@ void SurfaceDynamicsVisualization::renderLoop()
 
         // # Downsample depth texture
 
-        // Bind framebuffer with half res texture
-        mupAOHalfResolutionFramebuffer->bind();
-        mupAOHalfResolutionFramebuffer->resize(mWindowWidth / 2, mWindowHeight / 2);
+        // Bind framebuffer for downsampling
+        mupAODownsamplingFramebuffer->bind();
+        mupAODownsamplingFramebuffer->resize(mWindowWidth / 2, mWindowHeight / 2);
         glClear(GL_COLOR_BUFFER_BIT);
 
         // Bind depth attachment of molecule rendering
-        // TODO
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, mupMoleculeFramebuffer->getAttachment(0));
+        glBindTexture(GL_TEXTURE_2D, mupMoleculeFramebuffer->getDepthTexture());
 
         // Do downsampling
-        downsampingeProgram.use();
-        downsampingeProgram.update("depthTexture", 0); // tell shader which slot to use
+        downsamplingProgram.use();
+        downsamplingProgram.update("depthTexture", 0); // tell shader which slot to use
         glDrawArrays(GL_POINTS, 0, 1);
+
+        // Unbind downsampling framebuffer
+        mupAODownsamplingFramebuffer->unbind();
 
         // # Calculate ambient occlusion
 
-        // Unbind half resolution
-        mupAOHalfResolutionFramebuffer->unbind();
+        // Bind framebuffer for ambient occlusion
+        mupAOFramebuffer->bind();
+        mupAOFramebuffer->resize(mWindowWidth / 2, mWindowHeight / 2);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // Bind outcome of downsampling
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, mupAODownsamplingFramebuffer->getAttachment(0));
+
+        // Do downsampling
+        hbaoProgram.use();
+        hbaoProgram.update("depthTexture", 0); // tell shader which slot to use
+        glDrawArrays(GL_POINTS, 0, 1);
+
+        // Unbind framebuffer for ambient occlusion
+        mupAOFramebuffer->unbind();
 
         // # Blur on full resolution
+
+        // Bind framebuffer for blurring
+        mupAOBlurFramebuffer->bind();
+        mupAOBlurFramebuffer->resize(mWindowWidth, mWindowHeight);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // Bind outcome of ambient occlusion
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, mupAOFramebuffer->getAttachment(0));
+
+        // Do downsampling
+        blurProgram.use();
+        blurProgram.update("ambientOcclusion", 0); // tell shader which slot to use
+        glDrawArrays(GL_POINTS, 0, 1);
+
+        // Unbind framebuffer for blurring
+        mupAOBlurFramebuffer->unbind();
 
         // Enable depth test and write
         glEnable(GL_DEPTH_TEST);
@@ -949,7 +989,7 @@ void SurfaceDynamicsVisualization::renderLoop()
 
         // Bind ambient occlusion framebuffer texture
         glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_2D, mupAOHalfResolutionFramebuffer->getAttachment(0)); // TODO: use full res one
+        glBindTexture(GL_TEXTURE_2D, mupAOBlurFramebuffer->getAttachment(0));
 
         // Draw screenfilling quad
         compositeProgram.use();

@@ -21,8 +21,14 @@ public:
         RED, RGB, RGBA
     };
 
+    // Enumeration of depth and stencil modes
+    enum Mode
+    {
+        NONE, DEPTH_STENCIL_RENDERBUFFER, DEPTH_TEXTURE
+    };
+
     // Constructor
-    Framebuffer(int width, int height, bool supportDepthAndStencil = true, bool superSampling = false);
+    Framebuffer(int width, int height, Mode mode, bool superSampling = false);
 
     // Destructor
     virtual ~Framebuffer();
@@ -49,6 +55,9 @@ public:
     // Get multiplier of super sampling
     int getSuperSamplingMultiplier() const { return mSuperSamplingMultiplier; }
 
+    // Get extra depth texture. Works only when mode is DEPTH_TEXTURE, otherwise zero is returned
+    GLuint getDepthTexture() const { return mDepthTexture; }
+
 private:
 
     // Decide internal format
@@ -62,13 +71,14 @@ private:
 
     // Members
     std::vector<ColorAttachment> colorAttachments;
-    GLuint mFramebuffer;
-    GLuint mDepthStencil;
+    GLuint mFramebuffer = 0;
+    GLuint mDepthStencilRenderbuffer = 0;
+    GLuint mDepthTexture = 0;
     int mWidth = -1;
     int mHeight = -1;
+    Mode mMode;
     bool mSuperSampling = false;
     const int mSuperSamplingMultiplier = 2; // more than 2 make advanced filtering at composition necessary
-    bool mSupportDepthAndStencil = true;
 };
 
 #endif // FRAMEBUFFER_H

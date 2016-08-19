@@ -19,5 +19,5 @@ void main()
     vec4 overlayColor = texture(overlay, uv);
     vec4 color = mix(moleculeColor, selectedAtomColor, 0.5 * selectedAtomColor.a);
     fragColor = mix(color, overlayColor, overlayColor.a);
-    fragColor = texture(ambientOcclusion, uv);
+    fragColor = vec4(texture(ambientOcclusion, uv).rrr, 1);
 }

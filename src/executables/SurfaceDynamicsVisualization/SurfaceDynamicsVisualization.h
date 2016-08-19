@@ -231,8 +231,9 @@ private:
     std::unique_ptr<Framebuffer> mupMoleculeFramebuffer;
     std::unique_ptr<Framebuffer> mupSelectedAtomFramebuffer;
     std::unique_ptr<Framebuffer> mupOverlayFramebuffer;
-    std::unique_ptr<Framebuffer> mupAOFullResolutionFramebuffer;
-    std::unique_ptr<Framebuffer> mupAOHalfResolutionFramebuffer;
+    std::unique_ptr<Framebuffer> mupAODownsamplingFramebuffer;
+    std::unique_ptr<Framebuffer> mupAOFramebuffer;
+    std::unique_ptr<Framebuffer> mupAOBlurFramebuffer;
     std::unique_ptr<GPUTextureBuffer> mupOutlineAtomIndices;
     std::unique_ptr<GPUBuffer<GLfloat> > mupAscension; // values have range [0..2Pi]
     std::unique_ptr<GPUHullSamples> mupHullSamples;
