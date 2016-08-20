@@ -3,7 +3,6 @@
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
 // SSBOs
-// TODO: check buffer
 layout(std430, binding = 5) buffer dataBuffer     { int data[];     };
 layout(std430, binding = 7) buffer uniformsBuffer { int uniforms[]; };
 
@@ -19,7 +18,7 @@ void main() {
     // get particle index
     uint thid = gl_LocalInvocationID.x;
 
-    //first thread copies unifroms
+    // first thread copies unifroms
     if (thid == 0) uni = uniforms[gl_WorkGroupID.x + blockOffset];
     uint address = (gl_WorkGroupID.x * (gl_WorkGroupSize.x << 1)) + baseIndex + thid;
 
@@ -30,6 +29,5 @@ void main() {
 
     // two adds per thread
     data[address] += uni;
-    //data[address + workGroupSize] += int((thid + workGroupSize) < n) * uni; // TODO: check if bordercondition is casted correctly
     if ((thid + gl_WorkGroupSize.x) < n) data[address + gl_WorkGroupSize.x] = uni;
 }

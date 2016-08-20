@@ -29,6 +29,10 @@ public:
     float getCellSize();
     void getGridMinMax(glm::vec3& min, glm::vec3& max);
     int getGridSearch();
+    int getNumberOfBlocksForElementsComputation();
+    int getNumberOfThreadsPerBlockForElementsComputation();
+    int getNumberOfBlocksForGridComputation();
+    int getNumberOfThreadsPerBlockForGridComputation();
 
     /*
      * neighbor search
@@ -56,6 +60,7 @@ private:
     int         m_gridTotal;     // total number of cells in the grid
     Grid        m_gridDataGPU;
     float       m_cellSize;
+    float       m_searchRadius;
 
     int         m_numElements;
 
@@ -78,6 +83,8 @@ private:
     ShaderProgram m_uniformAddIntShader;
     ShaderProgram m_fillTempDataShader;
     ShaderProgram m_countingSortShader;
+
+    ShaderProgram m_colorAtomsInRadiusShader;
 
 
 
@@ -108,6 +115,9 @@ private:
 
     void countingSort();
 
+    /*
+     * actual use of neighborhood
+     */
     void colorAtomsInRadius();
 };
 

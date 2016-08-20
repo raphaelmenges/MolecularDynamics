@@ -9,11 +9,13 @@ layout(std430, binding = 1) buffer PositionsBuffer       { vec4 pos[];       };
 layout(std430, binding = 2) buffer GridcellsBuffer       { uint gcell[];     };
 layout(std430, binding = 3) buffer GridindicesBuffer     { uint gndx[];      };
 layout(std430, binding = 5) buffer GridoffsetBuffer      { int  gridoff[];   };
+
 layout(std430, binding = 8) buffer GridBuffer            { uint grid[];      };
 
 layout(std430, binding = 9) buffer TempPositionsBuffer   { vec4 tempPos[];   };
 layout(std430, binding =10) buffer TempGridcellsBuffer   { uint tempGcell[]; };
 layout(std430, binding =11) buffer TempGridindicesBuffer { uint tempGndx[];  };
+layout(std430, binding =12) buffer UnsortedIndexBuffer   { uint undx[];      };
 
 uniform int pnum;
 
@@ -32,12 +34,13 @@ void main() {
          * determine the sorted index location of the particle after sort
          * sort index is offset of the cell plus offset of the element inside the cell
          */
-        uint sort_ndx = gridoff[icell] + indx;
+        uint sort_ndx = uint(gridoff[icell]) + indx;
 
         // transfer data to sort location
         grid[sort_ndx]  = sort_ndx; // grid indexing becomes identity
         pos[sort_ndx]   = tempPos[i];
         gcell[sort_ndx] = icell;
         gndx[sort_ndx]  = indx;
+        undx[sort_ndx]  = i;
     }
 }

@@ -94,19 +94,20 @@
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/dummy.vert" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/fullscreenQuad.geom" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/extractElementPositions.comp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/insertElements.comp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/impostor.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/insertElements.comp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/prescanInt.comp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/countingSort.comp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/fillTempData.comp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/lines.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/prescanInt.comp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/colorAtomsInRadius.comp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/impostor.vert" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/uniformAddInt.comp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/impostor.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/axis.vert" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/impostor.geom" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/point.geom" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/surface.comp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/axis.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/impostor.vert" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/impostor.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/point.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/axis.frag" isTestSource="false" />
@@ -132,13 +133,12 @@
       <sourceFolder url="file://$MODULE_DIR$/shaders/VisibleAtomsDetection/Base/modelViewProjectionInstancedUA.vert" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/sphere_patch_impostor__tetrahedron.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/sphere_patch_impostor__triangle.geom" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/atom_impostor__full_colored.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/toroidal_patch_impostor__full_colored.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/toroidal_patch_impostor.geom" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/toroidal_patch_impostor__full.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/sphere_patch_impostor__normal.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/toroidal_patch_impostor__normal.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/atom_impostor__normal.frag" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/toroidal_patch_impostor__full_colored.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/atom_impostor__full_colored.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/sphere_patch_impostor__triangle.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/atom_impostor__quad.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/toroidal_patch_impostor.vert" isTestSource="false" />
@@ -147,6 +147,7 @@
       <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/sphere_patch_impostor.vert" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/sphere_patch_impostor__full_colored.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/atom_impostor__sphere_raymarching.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/atom_impostor__normal.frag" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/sphere_patch_impostor.geom" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/atom_impostor.vert" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/sphere_patch_impostor__full.frag" isTestSource="false" />

@@ -59,6 +59,13 @@ GLuint m_atomsSSBO;
 GLuint m_pointsVBO;
 int    m_numVBOEntries;
 GLuint m_pointsVAO;
+// imgui gpu
+GLint m_maxStorageBufferBindings = -1;
+GLint m_maxVertShaderStorageBlocks = -1;
+GLint m_maxFragShaderStorageBlocks = -1;
+GLint m_maxComputeShaderStorageBlocks = -1;
+int   m_work_grp_cnt[3];
+int   m_work_grp_size[3];
 
 // neighborhood search
 NeighborhoodSearch m_search;
@@ -73,13 +80,12 @@ void keyCallback(int key, int scancode, int action, int mods);
 void mouseButtonCallback(int button, int action, int mods);
 void scrollCallback(double xoffset, double yoffset);
 void moveProteinInsideGrid(glm::vec3 offset);
-void printGPUInfos();
+void retrieveGPUInfos();
 void updateAtomsSSBO();
 void initNeighborhoodSearch(glm::vec3 gridResolution, float searchRadius);
 
 void run();
 void initBuffers();
-void updateBuffers();
 void drawGrid(ShaderProgram linesProgram);
 void updateGUI();
 
@@ -237,46 +243,18 @@ void moveProteinInsideGrid(glm::vec3 offset)
 /*
  * NEIGHBORHOOD SEARCH
  */
-void printGPUInfos()
+void retrieveGPUInfos()
 {
-    Logger::instance().print("GPU limits:"); Logger::instance().tabIn();
-
-    GLint maxStorageBufferBindings = -1;
-    GLint maxStorageBlockSize = -1;
-    GLint maxVertShaderStorageBlocks = -1;
-    GLint maxFragShaderStorageBlocks = -1;
-    GLint maxComputeShaderStorageBlocks = -1;
-    GLint maxCombinedShaderStorageBlocks = -1;
-    int   work_grp_cnt[3];
-    int   work_grp_size[3];
-
-    glGetIntegerv(GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS, &maxStorageBufferBindings);
-    glGetIntegerv(GL_MAX_SHADER_STORAGE_BLOCK_SIZE,      &maxStorageBlockSize);
-    glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS,   &maxVertShaderStorageBlocks);
-    glGetIntegerv(GL_MAX_FRAGMENT_SHADER_STORAGE_BLOCKS, &maxFragShaderStorageBlocks);
-    glGetIntegerv(GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS,  &maxComputeShaderStorageBlocks);
-    glGetIntegerv(GL_MAX_COMBINED_SHADER_STORAGE_BLOCKS, &maxCombinedShaderStorageBlocks);
-    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &work_grp_cnt[0]);
-    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &work_grp_cnt[1]);
-    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &work_grp_cnt[2]);
-    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &work_grp_size[0]);
-    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &work_grp_size[1]);
-    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &work_grp_size[2]);
-
-    Logger::instance().print("Max shader storage buffer bindings: " + std::to_string(maxStorageBufferBindings));
-    Logger::instance().print("Max shader storage block size:      " + std::to_string(maxStorageBlockSize));
-    Logger::instance().print("Max vertex shader storage blocks:   " + std::to_string(maxVertShaderStorageBlocks));
-    Logger::instance().print("Max fragment shader storage blocks: " + std::to_string(maxFragShaderStorageBlocks));
-    Logger::instance().print("Max compute shader storage blocks:  " + std::to_string(maxComputeShaderStorageBlocks));
-    Logger::instance().print("Max combined shader storage blocks: " + std::to_string(maxCombinedShaderStorageBlocks));
-    Logger::instance().print("Max global work group size x: " + std::to_string(work_grp_cnt[0])
-                                                     + " y: " + std::to_string(work_grp_cnt[1])
-                                                     + " z: " + std::to_string(work_grp_cnt[2]));
-    Logger::instance().print( "Max local work group size x: " + std::to_string(work_grp_size[0])
-                                                     + " y: " + std::to_string(work_grp_size[1])
-                                                     + " z: " + std::to_string(work_grp_size[2]));
-
-    Logger::instance().tabOut();
+    glGetIntegerv(GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS, &m_maxStorageBufferBindings);
+    glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS,   &m_maxVertShaderStorageBlocks);
+    glGetIntegerv(GL_MAX_FRAGMENT_SHADER_STORAGE_BLOCKS, &m_maxFragShaderStorageBlocks);
+    glGetIntegerv(GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS,  &m_maxComputeShaderStorageBlocks);
+    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &m_work_grp_cnt[0]);
+    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &m_work_grp_cnt[1]);
+    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &m_work_grp_cnt[2]);
+    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &m_work_grp_size[0]);
+    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &m_work_grp_size[1]);
+    glGetIntegeri_v (GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &m_work_grp_size[2]);
 }
 
 void updateAtomsSSBO()
@@ -328,7 +306,7 @@ void run()
     ShaderProgram linesProgram    = ShaderProgram("/NeighborSearch/lines.vert", "/NeighborSearch/lines.frag");
     GLenum err = glGetError();
     if (err != GL_NO_ERROR) {
-        Logger::instance().print("GLerror after init shader programs: " + std::to_string(err), Logger::Mode::ERROR);
+        //Logger::instance().print("GLerror after init shader programs: " + std::to_string(err), Logger::Mode::ERROR);
     }
 
     /*
@@ -487,11 +465,6 @@ void initBuffers()
     m_search.getGridMinMax(min, max);
     float cellSize = m_search.getCellSize();
     glm::ivec3 gridRes = m_search.getGridResolution();
-
-    Logger::instance().print("Grid min max:"); Logger::instance().tabIn();
-    Logger::instance().print("Min:" + std::to_string(min.x) + ", " + std::to_string(min.y) + ", " + std::to_string(min.z));
-    Logger::instance().print("Max:" + std::to_string(max.x) + ", " + std::to_string(max.y) + ", " + std::to_string(max.z));
-    Logger::instance().tabOut();
 
     /*
      * grid hull
@@ -661,6 +634,8 @@ void updateGUI()
             ImGui::Text("A: Move selected protein left");
             ImGui::Text("S: Move selected protein down");
             ImGui::Text("D: Move selected protein right");
+            ImGui::Text("Q: Move selected protein back");
+            ImGui::Text("E: Move selected protein forth");
             ImGui::EndMenu();
         }
 
@@ -678,13 +653,14 @@ void updateGUI()
             } else {
                 ImGui::Text("No proteins loaded!");
             }
+            ImGui::Separator();
             std::string atomText = "Total number of atoms: " + std::to_string(m_proteinLoader.getNumberOfAllAtoms());
             ImGui::Text(atomText.c_str());
             ImGui::EndMenu();
         }
 
         /*
-         * Protein infos
+         * Grid infos
          */
         if (ImGui::BeginMenu("Grid"))
         {
@@ -714,10 +690,47 @@ void updateGUI()
             ImGui::Text(gridCellNumText.c_str());
             ImGui::Text(gridSearchText.c_str());
             ImGui::Text(cellSizeText.c_str());
+            ImGui::Separator();
             ImGui::Checkbox("Show grid", &m_drawGrid);
 
             ImGui::EndMenu();
         }
+
+        /*
+         * Gpu infos
+         */
+
+        if (ImGui::BeginMenu("GPU"))
+        {
+            ImGui::Text("Limits");
+            std::string maxSSBBindingsText = "Maximum shader storage buffer bindings: " + std::to_string(m_maxStorageBufferBindings);
+            std::string maxVSBlocksText = "Maximum vertex shader storage blocks: " + std::to_string(m_maxVertShaderStorageBlocks);
+            std::string maxFSBlocksText = "Maximum fragment shader storage blocks: " + std::to_string(m_maxFragShaderStorageBlocks);
+            std::string maxCSBlocksText = "Maximum compute shader storage blocks: " + std::to_string(m_maxComputeShaderStorageBlocks);
+            std::string maxGWGSizeText = "Maximum global work group size: " + std::to_string(m_work_grp_cnt[0]) + ", " + std::to_string(m_work_grp_cnt[1]) + ", " + std::to_string(m_work_grp_cnt[2]);
+            std::string maxLWGSizeText = "Maximum local work group size: " + std::to_string(m_work_grp_size[0]) + ", " + std::to_string(m_work_grp_size[1]) + ", " + std::to_string(m_work_grp_size[2]);
+            ImGui::Text(maxSSBBindingsText.c_str());
+            ImGui::Text(maxVSBlocksText.c_str());
+            ImGui::Text(maxFSBlocksText.c_str());
+            ImGui::Text(maxCSBlocksText.c_str());
+            ImGui::Text(maxGWGSizeText.c_str());
+            ImGui::Text(maxLWGSizeText.c_str());
+
+            ImGui::Separator();
+
+            ImGui::Text("Current Computation");
+            std::string numBlocksAtomsText = "Number of used workgroups for the atoms: " + std::to_string(m_search.getNumberOfBlocksForElementsComputation());
+            std::string numThreadsAtomsText = "Number of workitems per workgroup for the atoms: " + std::to_string(m_search.getNumberOfThreadsPerBlockForElementsComputation());
+            std::string numBlocksGridText = "Number of used workgroups for the grid: " + std::to_string(m_search.getNumberOfBlocksForGridComputation());
+            std::string numThreadsGridText = "Number of workitems per workgroup for the grid: " + std::to_string(m_search.getNumberOfThreadsPerBlockForGridComputation());
+            ImGui::Text(numBlocksAtomsText.c_str());
+            ImGui::Text(numThreadsAtomsText.c_str());
+            ImGui::Text(numBlocksGridText.c_str());
+            ImGui::Text(numThreadsGridText.c_str());
+
+            ImGui::EndMenu();
+        }
+
 
         /*
          * Frametime
@@ -746,22 +759,21 @@ int main()
 
     setup();
 
-    printGPUInfos();
+    retrieveGPUInfos();
 
     SimpleProtein* proteinA = m_proteinLoader.loadProtein("PDB/1a19.pdb");
-
     SimpleProtein* proteinB = m_proteinLoader.loadProtein("PDB/1crn.pdb");
-    SimpleProtein* proteinC = m_proteinLoader.loadProtein("PDB/1mbn.pdb");
+    //SimpleProtein* proteinC = m_proteinLoader.loadProtein("PDB/1mbn.pdb");
 
     proteinA->center();
     proteinB->center();
-    proteinC->center();
+    //proteinC->center();
     proteinB->move(glm::vec3(proteinA->extent().x/2 + proteinB->extent().x/2, 0, 0));
-    proteinC->move(glm::vec3(-proteinA->extent().x/2 - proteinC->extent().x/2, 0, 0));
+    //proteinC->move(glm::vec3(-proteinA->extent().x/2 - proteinC->extent().x/2, 0, 0));
 
 
-    glm::vec3 gridResolution = glm::vec3(3,3,3);
-    float searchRadius = 0.5;
+    glm::vec3 gridResolution = glm::vec3(5,5,5);
+    float searchRadius = 10;
     initNeighborhoodSearch(gridResolution, searchRadius);
 
     run();

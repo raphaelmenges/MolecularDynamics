@@ -4,6 +4,8 @@
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
+
+
 // Struct for atom
 struct AtomStruct
 {
@@ -11,6 +13,8 @@ struct AtomStruct
     float radius;
     vec4 proteinID;
 };
+
+
 
 // SSBOs
 layout(std430, binding = 0) buffer AtomsBuffer           { AtomStruct atom[];};
@@ -20,30 +24,37 @@ layout(std430, binding = 3) buffer GridindicesBuffer     { uint gndx[];      };
 layout(std430, binding = 4) buffer GridcountBuffer       { int  gridcnt[];   };
 layout(std430, binding = 5) buffer GridoffsetBuffer      { int  gridoff[];   };
 layout(std430, binding = 8) buffer GridBuffer            { uint grid[];      };
+layout(std430, binding =12) buffer UnsortedIndexBuffer   { uint  undx[];      };
+layout(std430, binding =13) buffer SearchResultBuffer    { int  searchRes[]; };
 
-layout(std430, binding = 9) buffer TempPositionsBuffer   { vec4 tempPos[];   };
-layout(std430, binding =10) buffer TempGridcellsBuffer   { uint tempGcell[]; };
-layout(std430, binding =11) buffer TempGridindicesBuffer { uint tempGndx[];  };
+
 
 uniform int pnum;
 uniform float radius2; // radius^2
 uniform ivec3 gridRes;
 uniform int gridAdjCnt;
+uniform int searchCellOff;
 uniform int gridAdj[216];
 
-void checkIfAtomsAreInRadius(int i, int cell, vec3 position, int pID, inout int isInRadius)
+
+
+void checkIfAtomsAreInRadius(uint cell, vec4 position, int pID, inout int isInRadius)
 {
     if (gridcnt[cell] != 0) {
-        int cfirst = gridoff[cell];
-        int clast  = cfirst + gridcnt[cell];
+        uint cfirst = gridoff[cell];
+        uint clast  = cfirst + gridcnt[cell];
 
         // iterate over all atoms
-        for (int cndx = cfirst; cndx < clast; cndx++) {
-            int j = grid[cndx];
-            vec3 distance = position - pos[j];
-            float d2 = distance.x * distance.x + distance.y * distance.y + distance.z * distance.z;
+        for (uint cndx = cfirst; cndx < clast; cndx++) {
+            uint j = grid[cndx];
+
+            // is atom j within search radius?
+            vec4 distance = position - pos[j];
+            float d2 = (distance.x * distance.x) + (distance.y * distance.y) + (distance.z * distance.z);
             if (d2 < radius2) {
-                int pID2 = atoms[j].proteinID;
+
+                // do both atoms belong to different proteins?
+                int pID2 = int(atom[undx[j]].proteinID.x);
                 if (pID != pID2) {
                     isInRadius = 1;
                 }
@@ -54,28 +65,29 @@ void checkIfAtomsAreInRadius(int i, int cell, vec3 position, int pID, inout int 
 
 void main() {
     // get element index
-    int i = int(gl_GlobalInvocationID.x);
+    uint i = gl_GlobalInvocationID.x;
     if (i >= pnum) return;
 
-    // get cell for the corresponding element
+    // get cell for the corresponding atom
     uint icell = gcell[i];
     if (icell == GRID_UNDEF) return; // particle is outside the grid
 
-    // get the first cell of the grid
-    int nadj = (1*gridRes.z + 1) * gridRes.x + 1;
-    icell -= nadj;
-
     // important informations for the compare
-    vec3 position = pos[i];
-    int  pID      = atoms[i].proteinID;
+    vec4 position = pos[i];
+    uint uidx     = undx[i];
+    int  pID      = int(atom[uidx].proteinID.x);
 
-    // iterate over all gridcells
-
+    /*
+     * check for all adjacent grid cells within the search radius of this atom
+     */
     int isInRadius = 0;
+    uint startCell = icell - searchCellOff;
     for (int cellIdx = 0; cellIdx < gridAdjCnt; cellIdx++) {
-        checkIfAtomsAreInRadius(i, icell + gridAdj[cellIdx], position, pID, isInRadius);
+        uint currentCell = startCell + gridAdj[cellIdx];
+        checkIfAtomsAreInRadius(currentCell, position, pID, isInRadius);
     }
 
-    // TODO: add aditional field that indicates that the condition is true
     // assign isInRadius to this field
+    searchRes[uidx] = isInRadius;
+
 }

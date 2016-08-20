@@ -14,10 +14,8 @@ struct AtomStruct
 };
 
 // SSBOs
-layout(std430, binding = 0) restrict readonly buffer AtomBuffer
-{
-   AtomStruct atoms[];
-};
+layout(std430, binding = 0) restrict readonly buffer AtomBuffer { AtomStruct atoms[];     };
+layout(std430, binding =13) buffer SearchResultBuffer           { int        searchRes[]; };
 
 // Uniforms
 uniform vec3 cameraWorldPos;
@@ -48,7 +46,11 @@ void main()
     /*
      * color selected atom different to all atoms
      */
-    if(index == selectedIndex)
+    if (index == selectedIndex)
+    {
+        vertColor = vec3(1,0,0);
+    }
+    else if (searchRes[index] == 1)
     {
         vertColor = vec3(0,1,0);
     }

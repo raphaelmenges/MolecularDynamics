@@ -91,6 +91,24 @@ void GPUHandler::fillSSBOInt(GLuint* ssboHandler, int length, int value)
     delete[] values;
 }
 
+void GPUHandler::fillSSBOUInt(GLuint* ssboHandler, int length, uint value)
+{
+    uint* values = new uint[length];
+    memset(values, value, sizeof(uint)*length);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler);
+    GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+    memcpy(p, values, sizeof(uint)*length);
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR) {
+        Logger::instance().print("Error while filling SSBO with ints: " + std::to_string(err), Logger::Mode::ERROR);
+    }
+
+    delete[] values;
+}
+
 
 
 void GPUHandler::copyDataToSSBOInt(GLuint* targetHandler, int* data, int length)
@@ -248,6 +266,7 @@ void GPUHandler::assertAtomsAreInBounds(GLuint* ssboHandler, int length, glm::ve
         bool yInBounds = y >= min.y && y <= max.y;
         bool zInBounds = z >= min.z && z <= max.z;
         if (!(xInBounds && yInBounds && zInBounds)) {
+            Logger::instance().print(std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + "not in bounds", Logger::Mode::ERROR);
             numOutlier++;
         }
         idx++;
@@ -288,6 +307,7 @@ void GPUHandler::assertBelowLimit(GLuint* ssboHandler, int length, int limit)
     for (int i = 0; i < length; i++) {
         int val = *(((int*)ptr)+i);
         if (val >= limit) {
+            Logger::instance().print(std::to_string(val) + " not below " + std::to_string(limit), Logger::Mode::ERROR);
             numOutlier++;
         }
     }
@@ -295,7 +315,7 @@ void GPUHandler::assertBelowLimit(GLuint* ssboHandler, int length, int limit)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     if (numOutlier > 0) {
-        Logger::instance().print("Assertion error: Number of values not below limit (" + std::to_string(limit) + "): " + std::to_string(numOutlier), Logger::Mode::ERROR);
+        Logger::instance().print("Assertion error: Number of values not below limit (" + std::to_string(limit) + "): " + std::to_string(numOutlier) + "/" + std::to_string(length), Logger::Mode::ERROR);
         exit(-1);
     }
 }
@@ -309,6 +329,7 @@ void GPUHandler::assertAboveLimit(GLuint* ssboHandler, int length, int limit)
     for (int i = 0; i < length; i++) {
         int val = *(((int*)ptr)+i);
         if (val <= limit) {
+            //Logger::instance().print(std::to_string(val) + " not above " + std::to_string(limit), Logger::Mode::ERROR);
             numOutlier++;
         }
     }
@@ -316,7 +337,117 @@ void GPUHandler::assertAboveLimit(GLuint* ssboHandler, int length, int limit)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     if (numOutlier > 0) {
-        Logger::instance().print("Assertion error: Number of values not above limit (" + std::to_string(limit) + "): " + std::to_string(numOutlier), Logger::Mode::ERROR);
+        Logger::instance().print("Assertion error: Number of values not above limit (" + std::to_string(limit) + "): " + std::to_string(numOutlier) + "/" + std::to_string(length), Logger::Mode::ERROR);
+        exit(-1);
+    }
+}
+
+void GPUHandler::assertAboveLimit(GLuint* ssboHandler, int length, uint limit)
+{
+    int numOutlier = 0;
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler);
+    GLuint *ptr;
+    ptr = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    for (int i = 0; i < length; i++) {
+        uint val = *(((uint*)ptr)+i);
+        if (val <= limit) {
+            //Logger::instance().print(std::to_string(val) + " not above " + std::to_string(limit), Logger::Mode::ERROR);
+            numOutlier++;
+        }
+    }
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    if (numOutlier > 0) {
+        Logger::instance().print("Assertion error: Number of values not above limit (" + std::to_string(limit) + "): " + std::to_string(numOutlier) + "/" + std::to_string(length), Logger::Mode::ERROR);
+        exit(-1);
+    }
+}
+
+void GPUHandler::assertAboveEqLimit(GLuint* ssboHandler, int length, int limit)
+{
+    int numOutlier = 0;
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler);
+    GLuint *ptr;
+    ptr = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    for (int i = 0; i < length; i++) {
+        int val = *(((int*)ptr)+i);
+        if (val < limit) {
+            //Logger::instance().print(std::to_string(val) + " not above " + std::to_string(limit), Logger::Mode::ERROR);
+            numOutlier++;
+        }
+    }
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    if (numOutlier > 0) {
+        Logger::instance().print("Assertion error: Number of values not above limit (" + std::to_string(limit) + "): " + std::to_string(numOutlier) + "/" + std::to_string(length), Logger::Mode::ERROR);
+        exit(-1);
+    }
+}
+
+void GPUHandler::assertAboveEqLimit(GLuint* ssboHandler, int length, uint limit)
+{
+    int numOutlier = 0;
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler);
+    GLuint *ptr;
+    ptr = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    for (int i = 0; i < length; i++) {
+        uint val = *(((uint*)ptr)+i);
+        if (val < limit) {
+            //Logger::instance().print(std::to_string(val) + " not above " + std::to_string(limit), Logger::Mode::ERROR);
+            numOutlier++;
+        }
+    }
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    if (numOutlier > 0) {
+        Logger::instance().print("Assertion error: Number of values not above limit (" + std::to_string(limit) + "): " + std::to_string(numOutlier) + "/" + std::to_string(length), Logger::Mode::ERROR);
+        exit(-1);
+    }
+}
+
+void GPUHandler::assertAllEqual(GLuint* ssboHandler, int length, int value)
+{
+    int numOutlier = 0;
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler);
+    GLuint *ptr;
+    ptr = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    for (int i = 0; i < length; i++) {
+        int val = *(((int*)ptr)+i);
+        if (val != value) {
+            Logger::instance().print(std::to_string(val) + " not equal to " + std::to_string(value), Logger::Mode::ERROR);
+            numOutlier++;
+        }
+    }
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    if (numOutlier > 0) {
+        Logger::instance().print("Assertion error: Number of values that don't equal (" + std::to_string(value) + "): " + std::to_string(numOutlier) + "/" + std::to_string(length), Logger::Mode::ERROR);
+        exit(-1);
+    }
+}
+
+void GPUHandler::assertAllEqual(GLuint* ssboHandler, int length, uint value)
+{
+    int numOutlier = 0;
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler);
+    GLuint *ptr;
+    ptr = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    for (int i = 0; i < length; i++) {
+        uint val = *(((uint*)ptr)+i);
+        if (val != value) {
+            Logger::instance().print(std::to_string(val) + " not equal to " + std::to_string(value), Logger::Mode::ERROR);
+            numOutlier++;
+        }
+    }
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    if (numOutlier > 0) {
+        Logger::instance().print("Assertion error: Number of values that don't equal (" + std::to_string(value) + "): " + std::to_string(numOutlier) + "/" + std::to_string(length), Logger::Mode::ERROR);
         exit(-1);
     }
 }
@@ -359,7 +490,7 @@ void GPUHandler::assertCellContent(GLuint* cellHandler,GLuint* cellCntHandler, i
     delete[] tempCellCnt;
 
     if (numOutlier++) {
-        Logger::instance().print("Assertion error: Num of wrong cell counts: " + std::to_string(numOutlier), Logger::Mode::ERROR);
+        Logger::instance().print("Assertion error: Num of wrong cell counts: " + std::to_string(numOutlier) + "/" + std::to_string(length2), Logger::Mode::ERROR);
         exit(-1);
     }
 }

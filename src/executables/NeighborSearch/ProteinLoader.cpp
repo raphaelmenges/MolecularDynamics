@@ -88,11 +88,6 @@ SimpleProtein* ProteinLoader::loadProtein(std::string fileName)
     loadPDB(filePath, *protein, protein->bbMin, protein->bbMax);
     m_proteins.push_back(protein);
 
-    Logger::instance().print("Loading Protein:"); Logger::instance().tabIn();
-    Logger::instance().print("Protein name is " + proteinName);
-    Logger::instance().print("Number of atoms: " + std::to_string(protein->atoms.size()));
-    Logger::instance().tabOut();
-
     return m_proteins.at(m_proteins.size()-1);
 }
 
