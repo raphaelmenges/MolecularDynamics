@@ -33,11 +33,14 @@ public:
     int getNumberOfThreadsPerBlockForElementsComputation();
     int getNumberOfBlocksForGridComputation();
     int getNumberOfThreadsPerBlockForGridComputation();
+    float getMaxSearchRadius();
 
     /*
      * neighbor search
      */
     void init(uint numElements, glm::fvec3 min, glm::fvec3 max, glm::ivec3 resolution, float searchRadius);
+    void update(uint numElements, glm::fvec3 min, glm::fvec3 max, glm::ivec3 resolution, float searchRadius);
+
     void run();
     void find(int selectedAtomIdx, bool findOnlyNeighborsOfSelectedAtom);
 
@@ -63,6 +66,7 @@ private:
     Grid        m_gridDataGPU;
     float       m_cellSize;
     float       m_searchRadius;
+    float       m_maxSearchRadius;
 
     int         m_numElements;
 

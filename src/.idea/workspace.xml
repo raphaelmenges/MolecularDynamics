@@ -52,28 +52,80 @@
       <file leaf-file-name="main.cpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/main.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="306">
-              <caret line="20" column="38" selection-start-line="20" selection-start-column="38" selection-end-line="20" selection-end-column="38" />
+            <state relative-caret-position="342">
+              <caret line="468" column="9" selection-start-line="468" selection-start-column="9" selection-end-line="468" selection-end-column="9" />
               <folding>
                 <element signature="e#64#84#0" expanded="true" />
                 <element signature="e#293#326#0" expanded="true" />
                 <element signature="e#411#437#0" expanded="true" />
-                <element signature="e#2124#3605#0" expanded="false" />
-                <element signature="e#3609#4928#0" expanded="false" />
-                <element signature="e#4930#5378#0" expanded="false" />
-                <element signature="e#5380#5508#0" expanded="false" />
-                <element signature="e#5510#5937#0" expanded="false" />
-                <element signature="e#5939#6670#0" expanded="false" />
-                <element signature="e#6674#7556#0" expanded="false" />
-                <element signature="e#7558#7867#0" expanded="false" />
-                <element signature="e#7869#8509#0" expanded="false" />
-                <element signature="e#8513#13932#0" expanded="false" />
-                <element signature="e#13934#17811#0" expanded="false" />
-                <element signature="e#17813#18234#0" expanded="false" />
-                <element signature="e#18236#19065#0" expanded="false" />
-                <element signature="e#19067#19503#0" expanded="false" />
-                <element signature="e#19505#26288#0" expanded="false" />
-                <element signature="e#26292#27209#0" expanded="false" />
+                <element signature="e#3677#4996#0" expanded="false" />
+                <element signature="e#4998#5446#0" expanded="false" />
+                <element signature="e#5448#5576#0" expanded="false" />
+                <element signature="e#5578#6005#0" expanded="false" />
+                <element signature="e#6007#6738#0" expanded="false" />
+                <element signature="e#6742#7624#0" expanded="false" />
+                <element signature="e#7626#7935#0" expanded="false" />
+                <element signature="e#7937#8577#0" expanded="false" />
+                <element signature="e#18440#18861#0" expanded="false" />
+                <element signature="e#18863#19692#0" expanded="false" />
+                <element signature="e#19694#20130#0" expanded="false" />
+                <element signature="e#27623#28544#0" expanded="false" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="NeighborhoodSearch.h" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.h">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="290">
+              <caret line="35" column="31" selection-start-line="35" selection-start-column="31" selection-end-line="35" selection-end-column="31" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="NeighborhoodSearch.cpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.cpp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="559">
+              <caret line="252" column="0" selection-start-line="252" selection-start-column="0" selection-end-line="252" selection-end-column="0" />
+              <folding>
+                <element signature="e#98#251#0" expanded="false" />
+                <element signature="e#254#356#0" expanded="false" />
+                <element signature="e#357#427#0" expanded="false" />
+                <element signature="e#428#504#0" expanded="false" />
+                <element signature="e#505#571#0" expanded="false" />
+                <element signature="e#572#688#0" expanded="false" />
+                <element signature="e#689#757#0" expanded="false" />
+                <element signature="e#758#827#0" expanded="false" />
+                <element signature="e#828#921#0" expanded="false" />
+                <element signature="e#922#1025#0" expanded="false" />
+                <element signature="e#1026#1116#0" expanded="false" />
+                <element signature="e#1117#1217#0" expanded="false" />
+                <element signature="e#1218#1298#0" expanded="false" />
+                <element signature="e#1302#1951#0" expanded="false" />
+                <element signature="e#1955#2360#0" expanded="false" />
+                <element signature="e#2364#3349#0" expanded="false" />
+                <element signature="e#3353#5864#0" expanded="false" />
+                <element signature="e#5865#6498#0" expanded="false" />
+                <element signature="e#6502#8509#0" expanded="false" />
+                <element signature="e#8510#8765#0" expanded="false" />
+                <element signature="e#8769#11429#0" expanded="false" />
+                <element signature="e#11430#11549#0" expanded="false" />
+                <element signature="e#11553#11831#0" expanded="false" />
+                <element signature="e#11832#12104#0" expanded="false" />
+                <element signature="e#12111#12395#0" expanded="false" />
+                <element signature="e#12399#14619#0" expanded="false" />
+                <element signature="e#14623#15447#0" expanded="false" />
+                <element signature="e#15448#18845#0" expanded="false" />
+                <element signature="e#18846#19646#0" expanded="false" />
+                <element signature="e#19647#20209#0" expanded="false" />
+                <element signature="e#20210#20287#0" expanded="false" />
+                <element signature="e#20288#20369#0" expanded="false" />
+                <element signature="e#20373#26674#0" expanded="false" />
+                <element signature="e#26681#26918#0" expanded="false" />
+                <element signature="e#26920#27778#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -130,8 +182,6 @@
         <option value="$PROJECT_DIR$/shaders/NeighborSearch/renderSearchRadius/radius.frag" />
         <option value="$PROJECT_DIR$/shaders/NeighborSearch/renderAtoms/impostor.vert" />
         <option value="$PROJECT_DIR$/shaders/NeighborSearch/searchApplication/findSelectedAtomsNeighbors.comp" />
-        <option value="$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.h" />
-        <option value="$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.cpp" />
         <option value="$PROJECT_DIR$/libraries/Utils/OrbitCamera.cpp" />
         <option value="$PROJECT_DIR$/libraries/Utils/OrbitCamera.h" />
         <option value="$PROJECT_DIR$/shaders/Picking/picking.vert" />
@@ -141,6 +191,8 @@
         <option value="$PROJECT_DIR$/libraries/Utils/PickingTexture.cpp" />
         <option value="$PROJECT_DIR$/shaders/NeighborSearch/atomPicking/picking.frag" />
         <option value="$PROJECT_DIR$/shaders/NeighborSearch/atomPicking/picking.vert" />
+        <option value="$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.h" />
+        <option value="$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.cpp" />
         <option value="$PROJECT_DIR$/executables/NeighborSearch/main.cpp" />
       </list>
     </option>
@@ -153,9 +205,9 @@
   </component>
   <component name="ProjectFrameBounds">
     <option name="x" value="53" />
-    <option name="y" value="52" />
-    <option name="width" value="1101" />
-    <option name="height" value="1028" />
+    <option name="y" value="24" />
+    <option name="width" value="1867" />
+    <option name="height" value="1056" />
   </component>
   <component name="ProjectInspectionProfilesVisibleTreeState">
     <entry key="Project Default">
@@ -245,76 +297,6 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="shaders" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="shaders" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Picking" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="shaders" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="NeighborSearch" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="shaders" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="NeighborSearch" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="atomPicking" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -747,16 +729,16 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="53" y="52" width="1101" height="1028" extended-state="4" />
+    <frame x="53" y="24" width="1867" height="1056" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.37693006" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.22228174" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2356021" sideWeight="0.49598286" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.23499492" sideWeight="0.49598286" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="CMake" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.29319373" sideWeight="0.49598286" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.36012208" sideWeight="0.5040171" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.16125655" sideWeight="0.49598286" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.15666327" sideWeight="0.49598286" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
@@ -1091,53 +1073,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="384">
-          <caret line="123" column="55" selection-start-line="123" selection-start-column="55" selection-end-line="123" selection-end-column="55" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4014">
-          <caret line="710" column="42" selection-start-line="710" selection-start-column="42" selection-end-line="710" selection-end-column="42" />
-          <folding>
-            <element signature="e#98#251#0" expanded="false" />
-            <element signature="e#254#356#0" expanded="false" />
-            <element signature="e#357#427#0" expanded="false" />
-            <element signature="e#428#504#0" expanded="false" />
-            <element signature="e#505#571#0" expanded="false" />
-            <element signature="e#572#688#0" expanded="false" />
-            <element signature="e#689#757#0" expanded="false" />
-            <element signature="e#758#827#0" expanded="false" />
-            <element signature="e#828#921#0" expanded="false" />
-            <element signature="e#922#1025#0" expanded="false" />
-            <element signature="e#1026#1116#0" expanded="false" />
-            <element signature="e#1117#1217#0" expanded="false" />
-            <element signature="e#1221#1870#0" expanded="false" />
-            <element signature="e#1874#2859#0" expanded="false" />
-            <element signature="e#2863#5374#0" expanded="false" />
-            <element signature="e#5375#6008#0" expanded="false" />
-            <element signature="e#6012#8019#0" expanded="false" />
-            <element signature="e#8020#8275#0" expanded="false" />
-            <element signature="e#10822#10941#0" expanded="false" />
-            <element signature="e#10945#11223#0" expanded="false" />
-            <element signature="e#11224#11496#0" expanded="false" />
-            <element signature="e#11503#11787#0" expanded="false" />
-            <element signature="e#11791#14011#0" expanded="false" />
-            <element signature="e#14015#14839#0" expanded="false" />
-            <element signature="e#14840#18237#0" expanded="false" />
-            <element signature="e#18238#19038#0" expanded="false" />
-            <element signature="e#19039#19601#0" expanded="false" />
-            <element signature="e#19602#19679#0" expanded="false" />
-            <element signature="e#19680#19761#0" expanded="false" />
-            <element signature="e#19765#26066#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/libraries/Utils/OrbitCamera.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="324">
@@ -1258,30 +1193,78 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="290">
+          <caret line="35" column="31" selection-start-line="35" selection-start-column="31" selection-end-line="35" selection-end-column="31" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="559">
+          <caret line="252" column="0" selection-start-line="252" selection-start-column="0" selection-end-line="252" selection-end-column="0" />
+          <folding>
+            <element signature="e#98#251#0" expanded="false" />
+            <element signature="e#254#356#0" expanded="false" />
+            <element signature="e#357#427#0" expanded="false" />
+            <element signature="e#428#504#0" expanded="false" />
+            <element signature="e#505#571#0" expanded="false" />
+            <element signature="e#572#688#0" expanded="false" />
+            <element signature="e#689#757#0" expanded="false" />
+            <element signature="e#758#827#0" expanded="false" />
+            <element signature="e#828#921#0" expanded="false" />
+            <element signature="e#922#1025#0" expanded="false" />
+            <element signature="e#1026#1116#0" expanded="false" />
+            <element signature="e#1117#1217#0" expanded="false" />
+            <element signature="e#1218#1298#0" expanded="false" />
+            <element signature="e#1302#1951#0" expanded="false" />
+            <element signature="e#1955#2360#0" expanded="false" />
+            <element signature="e#2364#3349#0" expanded="false" />
+            <element signature="e#3353#5864#0" expanded="false" />
+            <element signature="e#5865#6498#0" expanded="false" />
+            <element signature="e#6502#8509#0" expanded="false" />
+            <element signature="e#8510#8765#0" expanded="false" />
+            <element signature="e#8769#11429#0" expanded="false" />
+            <element signature="e#11430#11549#0" expanded="false" />
+            <element signature="e#11553#11831#0" expanded="false" />
+            <element signature="e#11832#12104#0" expanded="false" />
+            <element signature="e#12111#12395#0" expanded="false" />
+            <element signature="e#12399#14619#0" expanded="false" />
+            <element signature="e#14623#15447#0" expanded="false" />
+            <element signature="e#15448#18845#0" expanded="false" />
+            <element signature="e#18846#19646#0" expanded="false" />
+            <element signature="e#19647#20209#0" expanded="false" />
+            <element signature="e#20210#20287#0" expanded="false" />
+            <element signature="e#20288#20369#0" expanded="false" />
+            <element signature="e#20373#26674#0" expanded="false" />
+            <element signature="e#26681#26918#0" expanded="false" />
+            <element signature="e#26920#27778#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/main.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="306">
-          <caret line="20" column="38" selection-start-line="20" selection-start-column="38" selection-end-line="20" selection-end-column="38" />
+        <state relative-caret-position="342">
+          <caret line="468" column="9" selection-start-line="468" selection-start-column="9" selection-end-line="468" selection-end-column="9" />
           <folding>
             <element signature="e#64#84#0" expanded="true" />
             <element signature="e#293#326#0" expanded="true" />
             <element signature="e#411#437#0" expanded="true" />
-            <element signature="e#2124#3605#0" expanded="false" />
-            <element signature="e#3609#4928#0" expanded="false" />
-            <element signature="e#4930#5378#0" expanded="false" />
-            <element signature="e#5380#5508#0" expanded="false" />
-            <element signature="e#5510#5937#0" expanded="false" />
-            <element signature="e#5939#6670#0" expanded="false" />
-            <element signature="e#6674#7556#0" expanded="false" />
-            <element signature="e#7558#7867#0" expanded="false" />
-            <element signature="e#7869#8509#0" expanded="false" />
-            <element signature="e#8513#13932#0" expanded="false" />
-            <element signature="e#13934#17811#0" expanded="false" />
-            <element signature="e#17813#18234#0" expanded="false" />
-            <element signature="e#18236#19065#0" expanded="false" />
-            <element signature="e#19067#19503#0" expanded="false" />
-            <element signature="e#19505#26288#0" expanded="false" />
-            <element signature="e#26292#27209#0" expanded="false" />
+            <element signature="e#3677#4996#0" expanded="false" />
+            <element signature="e#4998#5446#0" expanded="false" />
+            <element signature="e#5448#5576#0" expanded="false" />
+            <element signature="e#5578#6005#0" expanded="false" />
+            <element signature="e#6007#6738#0" expanded="false" />
+            <element signature="e#6742#7624#0" expanded="false" />
+            <element signature="e#7626#7935#0" expanded="false" />
+            <element signature="e#7937#8577#0" expanded="false" />
+            <element signature="e#18440#18861#0" expanded="false" />
+            <element signature="e#18863#19692#0" expanded="false" />
+            <element signature="e#19694#20130#0" expanded="false" />
+            <element signature="e#27623#28544#0" expanded="false" />
           </folding>
         </state>
       </provider>

@@ -45,7 +45,7 @@ PickingTexture m_pickingTexture;
 
 // rendering
 glm::vec3 m_lightDirection;
-static bool m_drawGrid  = false;
+static bool m_drawGrid  = true;
 
 // protein
 ProteinLoader m_proteinLoader;
@@ -70,7 +70,9 @@ int   m_work_grp_size[3];
 // neighborhood search
 NeighborhoodSearch m_search;
 float m_searchRadius;
+glm::ivec3 m_gridRes;
 static bool  m_findOnlySelectedAtomsNeighbors = false;
+bool  m_updateNeighborhoodSearch = false;
 
 // for debug
 int m_debugOffset = 0;
@@ -92,7 +94,7 @@ void updateAtomsSSBO();
 void initNeighborhoodSearch(glm::vec3 gridResolution, float searchRadius);
 
 void run();
-void initBuffers();
+void setupLinesBuffer();
 void drawGrid(ShaderProgram linesProgram);
 void drawSearchRadius(ShaderProgram searchRadiusProgram);
 void fillPickingTexture(ShaderProgram pickingProgram);
@@ -361,7 +363,7 @@ void run()
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_atomsSSBO);
 
-    initBuffers();
+    setupLinesBuffer();
 
 
     /*
@@ -453,6 +455,20 @@ void run()
         updateAtomsSSBO();
 
         /*
+         * update neighborhood search if requested
+         */
+        if (m_updateNeighborhoodSearch) {
+            m_updateNeighborhoodSearch = false;
+
+            glm::fvec3 min, max;
+            m_proteinLoader.getCenteredBoundingBoxAroundProteins(min, max);
+
+            m_search.update(m_proteinLoader.getNumberOfAllAtoms(), min, max, m_gridRes, m_searchRadius);
+
+            setupLinesBuffer();
+        }
+
+        /*
          * setup neighborhood search
          */
         m_search.run();
@@ -494,7 +510,7 @@ void run()
     });
 }
 
-void initBuffers()
+void setupLinesBuffer()
 {
     glm::vec3 min, max;
     m_search.getGridMinMax(min, max);
@@ -613,11 +629,13 @@ void initBuffers()
         }
     }
 
+    if (m_pointsVBO != 0) glDeleteBuffers(1, &m_pointsVBO);
     m_pointsVBO = 0;
     glGenBuffers(1, &m_pointsVBO);
     glBindBuffer(GL_ARRAY_BUFFER, m_pointsVBO);
     glBufferData(GL_ARRAY_BUFFER, points.size() * 4 * sizeof(float), points.data(), GL_STATIC_DRAW);
 
+    if (m_pointsVAO != 0) glDeleteVertexArrays(1, &m_pointsVAO);
     m_pointsVAO = 0;
     glGenVertexArrays(1, &m_pointsVAO);
     glBindVertexArray(m_pointsVAO);
@@ -800,10 +818,22 @@ void updateGUI()
         }
 
         /*
-         * debug infos
+         * Neighborhood search infos
          */
         if (ImGui::BeginMenu("Neighborhood search"))
         {
+            float oldSearchRadius = m_searchRadius;
+            glm::ivec3 oldGridRes = m_gridRes;
+            ImGui::SliderInt("Grid resolution x", &m_gridRes.x, 1, 20);
+            ImGui::SliderInt("Grid resolution y", &m_gridRes.y, 1, 20);
+            ImGui::SliderInt("Grid resolution z", &m_gridRes.z, 1, 20);
+            ImGui::SliderFloat("Search radius", &m_searchRadius, 0, m_search.getMaxSearchRadius());
+            if (oldSearchRadius != m_searchRadius ||
+                    m_gridRes.x != oldGridRes.x   ||
+                    m_gridRes.y != oldGridRes.y   ||
+                    m_gridRes.z != oldGridRes.z) {
+                m_updateNeighborhoodSearch = true;
+            }
             ImGui::Checkbox("Find only neighbors of selected atom", &m_findOnlySelectedAtomsNeighbors);
 
             ImGui::EndMenu();
@@ -840,21 +870,27 @@ int main()
 
     retrieveGPUInfos();
 
+    /*
+     * load proteins
+     */
     SimpleProtein* proteinA = m_proteinLoader.loadProtein("PDB/1a19.pdb");
     SimpleProtein* proteinB = m_proteinLoader.loadProtein("PDB/1crn.pdb");
-    //SimpleProtein* proteinC = m_proteinLoader.loadProtein("PDB/1mbn.pdb");
-
     proteinA->center();
     proteinB->center();
-    //proteinC->center();
     proteinB->move(glm::vec3(proteinA->extent().x/2 + proteinB->extent().x/2, 0, 0));
-    //proteinC->move(glm::vec3(-proteinA->extent().x/2 - proteinC->extent().x/2, 0, 0));
 
-
-    glm::vec3 gridResolution = glm::vec3(10, 10, 10);
+    /*
+     * initialize neighborhood search
+     */
+    m_gridRes = glm::vec3(10, 10, 10);
     m_searchRadius = 20;
-    initNeighborhoodSearch(gridResolution, m_searchRadius);
+    initNeighborhoodSearch(m_gridRes, m_searchRadius);
+    m_searchRadius = m_search.getMaxSearchRadius();
+    m_updateNeighborhoodSearch = true;
 
+    /*
+     * run application
+     */
     run();
 
     Logger::instance().tabOut(); Logger::instance().print("Exit Neighborhood search");

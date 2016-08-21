@@ -61,6 +61,10 @@ int NeighborhoodSearch::getNumberOfThreadsPerBlockForGridComputation()
 {
     return m_gridThreads;
 }
+float NeighborhoodSearch::getMaxSearchRadius()
+{
+    return m_maxSearchRadius;
+}
 
 
 
@@ -76,6 +80,20 @@ void NeighborhoodSearch::init(uint numElements, glm::fvec3 min, glm::fvec3 max, 
     allocateBuffers(numElements);
     //preallocBlockSumsInt(1);
     //deallocBlockSumsInt();
+    preallocBlockSumsInt(m_gridTotal);
+}
+
+
+
+void NeighborhoodSearch::update(uint numElements, glm::fvec3 min, glm::fvec3 max, glm::ivec3 resolution, float searchRadius)
+{
+    m_numElements = numElements;
+    freeGrid();
+    setupGrid(min, max, resolution, searchRadius);
+    calculateNumberOfBlocksAndThreads(numElements);
+    deallocateBuffers();
+    allocateBuffers(numElements);
+    deallocBlockSumsInt();
     preallocBlockSumsInt(m_gridTotal);
 }
 
@@ -263,13 +281,15 @@ void NeighborhoodSearch::setupGrid(glm::fvec3 min, glm::fvec3 max, glm::ivec3 re
      * r: search radius
      * w: cell width
      */
-    m_gridSearch = (int) 2*floor(searchRadius / m_cellSize) +1;
+    m_gridSearch = (int) 2*ceil(searchRadius / m_cellSize) +1;
     if (m_gridSearch < 3) m_gridSearch = 3;
     m_gridAdjCnt = m_gridSearch * m_gridSearch * m_gridSearch;
     if (m_gridSearch > 5) {
         Logger::instance().print("Warning: Neighbor search is n > 5, n is set to 5 instead", Logger::Mode::WARNING);
         m_gridSearch = 5;
     }
+    Logger::instance().print("grid search " + std::to_string(m_gridSearch));
+    m_maxSearchRadius = 5/2 * m_cellSize;
 
     /*
      * calculate scan reach
