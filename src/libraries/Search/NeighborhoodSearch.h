@@ -39,6 +39,7 @@ public:
      */
     void init(uint numElements, glm::fvec3 min, glm::fvec3 max, glm::ivec3 resolution, float searchRadius);
     void run();
+    void find(int selectedAtomIdx, bool findOnlyNeighborsOfSelectedAtom);
 
     /*
      * other functions
@@ -52,6 +53,7 @@ private:
     int         m_gridSearch;
     int         m_gridAdj[216];  // maximal size of the adjacency mask is 6x6x6
     int         m_gridAdjCnt;    // 3D search count =n^3 e.g. 2x2x2=8
+    int         m_gridAdjOff;    // adjacency mask offset of the upper left cell
     glm::fvec3  m_gridMin;
     glm::fvec3  m_gridMax;
     glm::ivec3  m_gridRes;       // 3D grid resolution
@@ -84,6 +86,7 @@ private:
     ShaderProgram m_fillTempDataShader;
     ShaderProgram m_countingSortShader;
 
+    ShaderProgram m_findSelectedAtomsNeighborsShader;
     ShaderProgram m_colorAtomsInRadiusShader;
 
 
@@ -118,6 +121,7 @@ private:
     /*
      * actual use of neighborhood
      */
+    void findSelectedAtomsNeighbors(int selectedAtomIdx);
     void colorAtomsInRadius();
 };
 

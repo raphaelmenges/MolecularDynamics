@@ -83,13 +83,15 @@ void NeighborhoodSearch::init(uint numElements, glm::fvec3 min, glm::fvec3 max, 
 
 void NeighborhoodSearch::setupComputeShaders()
 {
-    m_extractElementPositionsShader = ShaderProgram("/NeighborSearch/extractElementPositions.comp");
-    m_insertElementsShader          = ShaderProgram("/NeighborSearch/insertElements.comp");
-    m_prescanIntShader              = ShaderProgram("/NeighborSearch/prescanInt.comp");
-    m_uniformAddIntShader           = ShaderProgram("/NeighborSearch/uniformAddInt.comp");
-    m_fillTempDataShader            = ShaderProgram("/NeighborSearch/fillTempData.comp");
-    m_countingSortShader            = ShaderProgram("/NeighborSearch/countingSort.comp");
-    m_colorAtomsInRadiusShader      = ShaderProgram("/NeighborSearch/colorAtomsInRadius.comp");
+    m_extractElementPositionsShader     = ShaderProgram("/NeighborSearch/neighborhoodSearch/extractElementPositions.comp");
+    m_insertElementsShader              = ShaderProgram("/NeighborSearch/neighborhoodSearch/insertElements.comp");
+    m_prescanIntShader                  = ShaderProgram("/NeighborSearch/neighborhoodSearch/prescanInt.comp");
+    m_uniformAddIntShader               = ShaderProgram("/NeighborSearch/neighborhoodSearch/uniformAddInt.comp");
+    m_fillTempDataShader                = ShaderProgram("/NeighborSearch/neighborhoodSearch/fillTempData.comp");
+    m_countingSortShader                = ShaderProgram("/NeighborSearch/neighborhoodSearch/countingSort.comp");
+
+    m_findSelectedAtomsNeighborsShader  = ShaderProgram("/NeighborSearch/searchApplication/findSelectedAtomsNeighbors.comp");
+    m_colorAtomsInRadiusShader          = ShaderProgram("/NeighborSearch/searchApplication/colorAtomsInRadius.comp");
 }
 
 
@@ -264,9 +266,9 @@ void NeighborhoodSearch::setupGrid(glm::fvec3 min, glm::fvec3 max, glm::ivec3 re
     m_gridSearch = (int) 2*floor(searchRadius / m_cellSize) +1;
     if (m_gridSearch < 3) m_gridSearch = 3;
     m_gridAdjCnt = m_gridSearch * m_gridSearch * m_gridSearch;
-    if (m_gridSearch > 6) {
-        Logger::instance().print("Warning: Neighbor search is n > 6, n is set to 6 instead", Logger::Mode::WARNING);
-        m_gridSearch = 6;
+    if (m_gridSearch > 5) {
+        Logger::instance().print("Warning: Neighbor search is n > 5, n is set to 5 instead", Logger::Mode::WARNING);
+        m_gridSearch = 5;
     }
 
     /*
@@ -285,6 +287,15 @@ void NeighborhoodSearch::setupGrid(glm::fvec3 min, glm::fvec3 max, glm::ivec3 re
         }
     }
 
+    // setup adjacency grid offset for the upper left grid cell of the grid search
+    int totalOffset = ((m_gridSearch*m_gridSearch)-1)/2;
+    int localX = totalOffset % m_gridSearch;
+    int localZ = totalOffset / m_gridSearch;
+    int globalX = localX;
+    int globalY = ((m_gridSearch-1)/2) * (m_gridRes.x * m_gridRes.z);
+    int globalZ = localZ * m_gridRes.x;
+    m_gridAdjOff = globalX + globalY + globalZ;
+
     /*
      * set grid data for gpu
      */
@@ -292,23 +303,6 @@ void NeighborhoodSearch::setupGrid(glm::fvec3 min, glm::fvec3 max, glm::ivec3 re
     m_gridDataGPU.delta = m_gridDelta;
     m_gridDataGPU.res   = m_gridRes;
     m_gridDataGPU.scan  = gridScanMax;
-
-
-    /*
-     * printing debug information
-     */
-    /*
-    Logger::instance().print("Grid total: " + std::to_string(m_gridTotal));
-    Logger::instance().print("Grid adj cnt: " + std::to_string(m_gridAdjCnt));
-    Logger::instance().print("Adjacency table (CPU)"); Logger::instance().tabIn();
-    for (int n = 0; n < m_gridAdjCnt; n++) {
-        Logger::instance().print("ADJ: " + std::to_string(n) + ", " + std::to_string(m_gridAdj[n]));
-    }
-    Logger::instance().print("Grid scan max: "  + std::to_string(gridScanMax.x) +
-                                           ", " + std::to_string(gridScanMax.y) +
-                                           ", " + std::to_string(gridScanMax.z));
-    Logger::instance().tabOut(); Logger::instance().tabOut();
-    */
 }
 void NeighborhoodSearch::freeGrid()
 {
@@ -343,8 +337,6 @@ void NeighborhoodSearch::run()
     insertElementsInGridGPU();
     prefixSumCellsGPU();
     countingSort();
-
-    colorAtomsInRadius();
 }
 
 
@@ -682,17 +674,38 @@ void NeighborhoodSearch::countingSort()
 
 
 
+void NeighborhoodSearch::find(int selectedAtomIdx, bool findOnlyNeighborsOfSelectedAtom)
+{
+    if (findOnlyNeighborsOfSelectedAtom) {
+        findSelectedAtomsNeighbors(selectedAtomIdx);
+    } else {
+        colorAtomsInRadius();
+    }
+}
+
+void NeighborhoodSearch::findSelectedAtomsNeighbors(int selectedAtomIdx)
+{
+    // reset search results
+    m_gpuHandler.fillSSBOInt(m_gpuBuffers.dp_searchRes, m_numElements, 0);
+
+    m_findSelectedAtomsNeighborsShader.use();
+    m_findSelectedAtomsNeighborsShader.update("selectedAtomUndx", selectedAtomIdx);
+    m_findSelectedAtomsNeighborsShader.update("pnum",             m_numElements);
+    m_findSelectedAtomsNeighborsShader.update("radius2",          m_searchRadius*m_searchRadius);
+    m_findSelectedAtomsNeighborsShader.update("gridAdjCnt",       m_gridAdjCnt);
+    m_findSelectedAtomsNeighborsShader.update("searchCellOff",    m_gridAdjOff);
+    glUniform1iv(glGetUniformLocation(m_findSelectedAtomsNeighborsShader.getProgramHandle(),"gridAdj"), 216, m_gridAdj);
+    glDispatchCompute(m_numBlocks, 1, 1);
+    glMemoryBarrier (GL_ALL_BARRIER_BITS);
+}
+
 void NeighborhoodSearch::colorAtomsInRadius()
 {
-    // get offset to upper left grid cell of the adjacency cell block
-    int searchCellOffset = (m_gridAdjCnt-1)/2 + (m_gridRes.x - m_gridSearch) + (m_gridRes.x*m_gridRes.z - m_gridSearch*m_gridSearch);
-    //Logger::instance().print("Search cell offset: " + std::to_string(searchCellOffset));
-
     m_colorAtomsInRadiusShader.use();
-    m_colorAtomsInRadiusShader.update("pnum",       m_numElements);
-    m_colorAtomsInRadiusShader.update("radius2",    m_searchRadius*m_searchRadius);
-    m_colorAtomsInRadiusShader.update("gridAdjCnt", m_gridAdjCnt);
-    m_colorAtomsInRadiusShader.update("searchCellOff", searchCellOffset);
+    m_colorAtomsInRadiusShader.update("pnum",          m_numElements);
+    m_colorAtomsInRadiusShader.update("radius2",       m_searchRadius*m_searchRadius);
+    m_colorAtomsInRadiusShader.update("gridAdjCnt",    m_gridAdjCnt);
+    m_colorAtomsInRadiusShader.update("searchCellOff", m_gridAdjOff);
     glUniform1iv(glGetUniformLocation(m_colorAtomsInRadiusShader.getProgramHandle(),"gridAdj"), 216, m_gridAdj);
     glDispatchCompute(m_numBlocks, 1, 1);
     glMemoryBarrier (GL_ALL_BARRIER_BITS);

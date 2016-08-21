@@ -8,6 +8,7 @@
 #include <imgui/examples/opengl3_example/imgui_impl_glfw_gl3.h>
 #include <sstream>
 #include <iomanip>
+#include <Utils/PickingTexture.h>
 
 // framework includes
 #include "ShaderTools/Renderer.h"
@@ -18,7 +19,6 @@
 #include "ProteinLoader.h"
 #include "Utils/OrbitCamera.h"
 #include "Search/NeighborhoodSearch.h"
-#include "Search/GPUHandler.h"
 
 
 
@@ -41,24 +41,24 @@ std::unique_ptr<OrbitCamera> mp_camera;
 glm::vec2 m_CameraDeltaMovement;
 float m_CameraSmoothTime;
 bool m_rotateCamera = false;
+PickingTexture m_pickingTexture;
 
 // rendering
 glm::vec3 m_lightDirection;
-bool m_drawDebug = false;
 static bool m_drawGrid  = false;
 
 // protein
 ProteinLoader m_proteinLoader;
-int m_selectedAtom = 0;
+int m_selectedAtom = -1;
 int m_selectedProtein = 0;
 float m_proteinMoveSpeed = 2.f;
 
 // gpu
-GPUHandler m_gpuHandler;
 GLuint m_atomsSSBO;
 GLuint m_pointsVBO;
 int    m_numVBOEntries;
 GLuint m_pointsVAO;
+
 // imgui gpu
 GLint m_maxStorageBufferBindings = -1;
 GLint m_maxVertShaderStorageBlocks = -1;
@@ -69,6 +69,11 @@ int   m_work_grp_size[3];
 
 // neighborhood search
 NeighborhoodSearch m_search;
+float m_searchRadius;
+static bool  m_findOnlySelectedAtomsNeighbors = false;
+
+// for debug
+int m_debugOffset = 0;
 
 
 
@@ -79,7 +84,9 @@ void setup();
 void keyCallback(int key, int scancode, int action, int mods);
 void mouseButtonCallback(int button, int action, int mods);
 void scrollCallback(double xoffset, double yoffset);
+int  getAtomBeneathCursor();
 void moveProteinInsideGrid(glm::vec3 offset);
+
 void retrieveGPUInfos();
 void updateAtomsSSBO();
 void initNeighborhoodSearch(glm::vec3 gridResolution, float searchRadius);
@@ -87,6 +94,8 @@ void initNeighborhoodSearch(glm::vec3 gridResolution, float searchRadius);
 void run();
 void initBuffers();
 void drawGrid(ShaderProgram linesProgram);
+void drawSearchRadius(ShaderProgram searchRadiusProgram);
+void fillPickingTexture(ShaderProgram pickingProgram);
 void updateGUI();
 
 
@@ -155,6 +164,11 @@ void setup()
      * init protein loader
      */
     m_proteinLoader = ProteinLoader();
+
+    /*
+     * init picking buffer
+     */
+    m_pickingTexture.Init(WIDTH, HEIGHT);
 }
 
 
@@ -167,6 +181,11 @@ void keyCallback(int key, int scancode, int action, int mods)
     if (key == GLFW_KEY_P) {
         if (action == GLFW_PRESS) {
             m_selectedProtein = (m_selectedProtein+1) % m_proteinLoader.getNumberOfProteins();
+        }
+    }
+    if (key == GLFW_KEY_O) {
+        if (action == GLFW_PRESS) {
+            m_selectedAtom = (m_selectedAtom+1) % m_proteinLoader.getNumberOfAllAtoms();
         }
     }
     else if (key == GLFW_KEY_W) {
@@ -187,6 +206,16 @@ void keyCallback(int key, int scancode, int action, int mods)
     else if (key == GLFW_KEY_E) {
         moveProteinInsideGrid(glm::vec3(0, 0, m_proteinMoveSpeed));
     }
+    else if (key == GLFW_KEY_RIGHT) {
+        if (action == GLFW_PRESS) {
+            m_debugOffset++;
+        }
+    }
+    else if (key == GLFW_KEY_LEFT) {
+        if (action == GLFW_PRESS) {
+            m_debugOffset--;
+        }
+    }
 }
 
 void mouseButtonCallback(int button, int action, int mods)
@@ -199,11 +228,33 @@ void mouseButtonCallback(int button, int action, int mods)
     {
         m_rotateCamera = false;
     }
+
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+    {
+        int atomIdx = getAtomBeneathCursor();
+        m_selectedAtom = atomIdx;
+    }
 }
 
 void scrollCallback(double xoffset, double yoffset)
 {
     mp_camera->setRadius(mp_camera->getRadius() - 2.f * (float)yoffset);
+}
+
+int getAtomBeneathCursor()
+{
+    // Variables to collect results
+    int foundIndex = -1;
+
+    // extract atom id from pixel info
+    double cursorX, cursorY;
+    glfwGetCursorPos(mp_Window, &cursorX, &cursorY);
+    PickingTexture::PixelInfo pixel = m_pickingTexture.ReadPixel((uint)cursorX, HEIGHT - (uint)(cursorY) - 1);
+    if (pixel.ObjectID >= 1) {
+        foundIndex = (int)pixel.ObjectID;
+    }
+
+    return foundIndex;
 }
 
 void moveProteinInsideGrid(glm::vec3 offset)
@@ -215,13 +266,6 @@ void moveProteinInsideGrid(glm::vec3 offset)
     glm::vec3 gridMin, gridMax;
     m_search.getGridMinMax(gridMin, gridMax);
 
-    Logger::instance().print("Grid move:"); Logger::instance().tabIn();
-    Logger::instance().print("Min: " + std::to_string(min.x) + ", " + std::to_string(min.y) + ", " + std::to_string(min.z));
-    Logger::instance().print("Max: " + std::to_string(max.x) + ", " + std::to_string(max.y) + ", " + std::to_string(max.z));
-    Logger::instance().print("Gridmin: " + std::to_string(gridMin.x) + ", " + std::to_string(gridMin.y) + ", " + std::to_string(gridMin.z));
-    Logger::instance().print("Gridmax: " + std::to_string(gridMax.x) + ", " + std::to_string(gridMax.y) + ", " + std::to_string(gridMax.z));
-    Logger::instance().print("Offset before: " + std::to_string(offset.x) + ", " + std::to_string(offset.y) + ", " + std::to_string(offset.z));
-
     // checking lower bounds
     if (min.x < gridMin.x) offset.x += gridMin.x - min.x;
     if (min.y < gridMin.y) offset.y += gridMin.y - min.y;
@@ -231,9 +275,6 @@ void moveProteinInsideGrid(glm::vec3 offset)
     if (max.x > gridMax.x) offset.x -= max.x - gridMax.x;
     if (max.y > gridMax.y) offset.y -= max.y - gridMax.y;
     if (max.z > gridMax.z) offset.z -= max.z - gridMax.z;
-
-    Logger::instance().print("Offset after: " + std::to_string(offset.x) + ", " + std::to_string(offset.y) + ", " + std::to_string(offset.z));
-    Logger::instance().tabOut();
 
     protein->move(offset);
 }
@@ -301,9 +342,10 @@ void run()
     /*
      * setup shader programs
      */
-    ShaderProgram impostorProgram = ShaderProgram("/NeighborSearch/impostor.vert", "/NeighborSearch/impostor.geom", "/NeighborSearch/impostor.frag");
-    ShaderProgram debugProgram    = ShaderProgram("/NeighborSearch/dummy.vert", "/NeighborSearch/fullscreenQuad.geom", "/NeighborSearch/debug.frag");
-    ShaderProgram linesProgram    = ShaderProgram("/NeighborSearch/lines.vert", "/NeighborSearch/lines.frag");
+    ShaderProgram impostorProgram     = ShaderProgram("/NeighborSearch/renderAtoms/impostor.vert", "/NeighborSearch/renderAtoms/impostor.geom", "/NeighborSearch/renderAtoms/impostor.frag");
+    ShaderProgram linesProgram        = ShaderProgram("/NeighborSearch/renderLines/lines.vert", "/NeighborSearch/renderLines/lines.frag");
+    ShaderProgram searchRadiusProgram = ShaderProgram("/NeighborSearch/renderSearchRadius/radius.vert", "/NeighborSearch/renderSearchRadius/radius.geom", "/NeighborSearch/renderSearchRadius/radius.frag");
+    ShaderProgram pickingProgram      = ShaderProgram("/NeighborSearch/atomPicking/picking.vert", "/NeighborSearch/atomPicking/picking.geom", "/NeighborSearch/atomPicking/picking.frag");
     GLenum err = glGetError();
     if (err != GL_NO_ERROR) {
         //Logger::instance().print("GLerror after init shader programs: " + std::to_string(err), Logger::Mode::ERROR);
@@ -411,39 +453,28 @@ void run()
         updateAtomsSSBO();
 
         /*
-         * run neighborhood search
+         * setup neighborhood search
          */
         m_search.run();
 
         /*
-         * do the actual drawing
+         * find neighbors
          */
-        if (!m_drawDebug) {
-            /*
-             * draw proteins as impostor
-             */
-            impostorProgram.use();
-            impostorProgram.update("view", mp_camera->getViewMatrix());
-            impostorProgram.update("projection", mp_camera->getProjectionMatrix());
-            impostorProgram.update("cameraWorldPos", mp_camera->getPosition());
-            impostorProgram.update("probeRadius", 0.f);
-            impostorProgram.update("lightDir", m_lightDirection);
-            impostorProgram.update("selectedIndex", m_selectedAtom);
-            impostorProgram.update("proteinNum", (int)m_proteinLoader.getNumberOfProteins());
-            impostorProgram.update("selectedProtein", m_selectedProtein);
-            glDrawArrays(GL_POINTS, 0, (GLsizei)m_proteinLoader.getNumberOfAllAtoms());
-        } else {
-            /*
-             * draw debug view
-             */
-            Logger::instance().print("grid num: " + std::to_string(m_search.getTotalGridNum()));
-            debugProgram.use();
-            debugProgram.update("totalNumElements", (int)m_proteinLoader.getNumberOfAllAtoms());
-            debugProgram.update("numCells", m_search.getTotalGridNum());
-            debugProgram.update("width", WIDTH);
-            debugProgram.update("height", HEIGHT);
-            glDrawArrays(GL_POINTS, 0, 1);
-        }
+        m_search.find(m_selectedAtom, m_findOnlySelectedAtomsNeighbors);
+
+        /*
+         * draw proteins as impostor
+         */
+        impostorProgram.use();
+        impostorProgram.update("view", mp_camera->getViewMatrix());
+        impostorProgram.update("projection", mp_camera->getProjectionMatrix());
+        impostorProgram.update("cameraWorldPos", mp_camera->getPosition());
+        impostorProgram.update("probeRadius", 0.f);
+        impostorProgram.update("lightDir", m_lightDirection);
+        impostorProgram.update("selectedIndex", m_selectedAtom);
+        impostorProgram.update("proteinNum", (int)m_proteinLoader.getNumberOfProteins());
+        impostorProgram.update("selectedProtein", m_selectedProtein);
+        glDrawArrays(GL_POINTS, 0, (GLsizei)m_proteinLoader.getNumberOfAllAtoms());
 
         /*
          * draw the grid
@@ -451,6 +482,10 @@ void run()
         if (m_drawGrid) {
             drawGrid(linesProgram);
         }
+
+        drawSearchRadius(searchRadiusProgram);
+
+        fillPickingTexture(pickingProgram);
 
         /*
          * update gui
@@ -610,6 +645,39 @@ void drawGrid(ShaderProgram linesProgram)
     glDisable(GL_BLEND);
 }
 
+void drawSearchRadius(ShaderProgram searchRadiusProgram)
+{
+    // only draw when an atom is selected
+    if (m_selectedAtom >= 0) {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        searchRadiusProgram.use();
+        SimpleAtom selectedAtom = m_proteinLoader.getAllAtoms().at(m_selectedAtom);
+        searchRadiusProgram.update( "selectedAtomPosition", selectedAtom.pos                 );
+        searchRadiusProgram.update( "searchRadius",         m_searchRadius                   );
+        searchRadiusProgram.update( "view",                 mp_camera->getViewMatrix()       );
+        searchRadiusProgram.update( "projection",           mp_camera->getProjectionMatrix() );
+        glDrawArrays(GL_POINTS, 0, 1);
+        glBindVertexArray(0);
+
+        glDisable(GL_BLEND);
+    }
+}
+
+void fillPickingTexture(ShaderProgram pickingProgram)
+{
+    m_pickingTexture.EnableWriting();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    pickingProgram.use();
+    pickingProgram.update("view", mp_camera->getViewMatrix());
+    pickingProgram.update("projection", mp_camera->getProjectionMatrix());
+    glDrawArrays(GL_POINTS, 0, (GLsizei)m_proteinLoader.getNumberOfAllAtoms());
+
+    m_pickingTexture.DisableWriting();
+}
+
 void updateGUI()
 {
     // Main menu bar
@@ -630,6 +698,7 @@ void updateGUI()
         if (ImGui::BeginMenu("Shortcuts"))
         {
             ImGui::Text("P: Switch between proteins");
+            ImGui::Text("P: Switch between atoms");
             ImGui::Text("W: Move selected protein up");
             ImGui::Text("A: Move selected protein left");
             ImGui::Text("S: Move selected protein down");
@@ -699,7 +768,6 @@ void updateGUI()
         /*
          * Gpu infos
          */
-
         if (ImGui::BeginMenu("GPU"))
         {
             ImGui::Text("Limits");
@@ -730,6 +798,17 @@ void updateGUI()
 
             ImGui::EndMenu();
         }
+
+        /*
+         * debug infos
+         */
+        if (ImGui::BeginMenu("Neighborhood search"))
+        {
+            ImGui::Checkbox("Find only neighbors of selected atom", &m_findOnlySelectedAtomsNeighbors);
+
+            ImGui::EndMenu();
+        }
+
 
 
         /*
@@ -772,9 +851,9 @@ int main()
     //proteinC->move(glm::vec3(-proteinA->extent().x/2 - proteinC->extent().x/2, 0, 0));
 
 
-    glm::vec3 gridResolution = glm::vec3(20, 20, 20);
-    float searchRadius = 20;
-    initNeighborhoodSearch(gridResolution, searchRadius);
+    glm::vec3 gridResolution = glm::vec3(10, 10, 10);
+    m_searchRadius = 20;
+    initNeighborhoodSearch(gridResolution, m_searchRadius);
 
     run();
 
