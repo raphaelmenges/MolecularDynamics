@@ -34,13 +34,13 @@ void main() {
          * determine the sorted index location of the particle after sort
          * sort index is offset of the cell plus offset of the element inside the cell
          */
-        uint sort_ndx = uint(gridoff[icell]) + indx;
+        uint sort_ndx = gridoff[icell] + indx;
 
         // transfer data to sort location
         grid[sort_ndx]  = sort_ndx; // grid indexing becomes identity
         pos[sort_ndx]   = tempPos[i];
         gcell[sort_ndx] = icell;
         gndx[sort_ndx]  = indx;
-        undx[sort_ndx]  = i;
+        undx[sort_ndx]  = uint(i);
     }
 }

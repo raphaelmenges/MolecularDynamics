@@ -51,7 +51,7 @@ static bool m_drawGrid  = false;
 ProteinLoader m_proteinLoader;
 int m_selectedAtom = 0;
 int m_selectedProtein = 0;
-float m_proteinMoveSpeed = 5.f;
+float m_proteinMoveSpeed = 2.f;
 
 // gpu
 GPUHandler m_gpuHandler;
@@ -772,8 +772,8 @@ int main()
     //proteinC->move(glm::vec3(-proteinA->extent().x/2 - proteinC->extent().x/2, 0, 0));
 
 
-    glm::vec3 gridResolution = glm::vec3(5,5,5);
-    float searchRadius = 10;
+    glm::vec3 gridResolution = glm::vec3(20, 20, 20);
+    float searchRadius = 20;
     initNeighborhoodSearch(gridResolution, searchRadius);
 
     run();

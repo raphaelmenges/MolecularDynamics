@@ -41,6 +41,6 @@ struct Grid {
 #define NUM_BANKS  16    // if changed here, it also must be changed in prescanInt.comp
 #define LOG_NUM_BANKS 4  // if changed here, it also must be changed in prescanInt.comp
 
-#define NHS_DEBUG true
+#define NHS_DEBUG false
 
 #endif //OPENGL_FRAMEWORK_NEIGHBORHOODSEARCHDEFINES_H

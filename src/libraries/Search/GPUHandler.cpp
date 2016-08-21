@@ -76,7 +76,7 @@ void GPUHandler::initSSBOFloat4(GLuint* ssboHandler, int length)
 void GPUHandler::fillSSBOInt(GLuint* ssboHandler, int length, int value)
 {
     int* values = new int[length];
-    memset(values, value, sizeof(int)*length);
+    std::fill_n(values, length, value);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler);
     GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
@@ -93,8 +93,9 @@ void GPUHandler::fillSSBOInt(GLuint* ssboHandler, int length, int value)
 
 void GPUHandler::fillSSBOUInt(GLuint* ssboHandler, int length, uint value)
 {
+
     uint* values = new uint[length];
-    memset(values, value, sizeof(uint)*length);
+    std::fill_n(values, length, value);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler);
     GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
@@ -320,6 +321,28 @@ void GPUHandler::assertBelowLimit(GLuint* ssboHandler, int length, int limit)
     }
 }
 
+void GPUHandler::assertBelowLimit(GLuint* ssboHandler, int length, uint limit)
+{
+    int numOutlier = 0;
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler);
+    GLuint *ptr;
+    ptr = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    for (int i = 0; i < length; i++) {
+        uint val = *(((uint*)ptr)+i);
+        if (val >= limit) {
+            Logger::instance().print(std::to_string(val) + " not below " + std::to_string(limit), Logger::Mode::ERROR);
+            numOutlier++;
+        }
+    }
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    if (numOutlier > 0) {
+        Logger::instance().print("Assertion error: Number of values not below limit (" + std::to_string(limit) + "): " + std::to_string(numOutlier) + "/" + std::to_string(length), Logger::Mode::ERROR);
+        exit(-1);
+    }
+}
+
 void GPUHandler::assertAboveLimit(GLuint* ssboHandler, int length, int limit)
 {
     int numOutlier = 0;
@@ -373,7 +396,7 @@ void GPUHandler::assertAboveEqLimit(GLuint* ssboHandler, int length, int limit)
     for (int i = 0; i < length; i++) {
         int val = *(((int*)ptr)+i);
         if (val < limit) {
-            //Logger::instance().print(std::to_string(val) + " not above " + std::to_string(limit), Logger::Mode::ERROR);
+            Logger::instance().print(std::to_string(val) + " not above or equal " + std::to_string(limit), Logger::Mode::ERROR);
             numOutlier++;
         }
     }
@@ -381,7 +404,7 @@ void GPUHandler::assertAboveEqLimit(GLuint* ssboHandler, int length, int limit)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     if (numOutlier > 0) {
-        Logger::instance().print("Assertion error: Number of values not above limit (" + std::to_string(limit) + "): " + std::to_string(numOutlier) + "/" + std::to_string(length), Logger::Mode::ERROR);
+        Logger::instance().print("Assertion error: Number of values not above or equal to limit (" + std::to_string(limit) + "): " + std::to_string(numOutlier) + "/" + std::to_string(length), Logger::Mode::ERROR);
         exit(-1);
     }
 }
@@ -403,7 +426,7 @@ void GPUHandler::assertAboveEqLimit(GLuint* ssboHandler, int length, uint limit)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     if (numOutlier > 0) {
-        Logger::instance().print("Assertion error: Number of values not above limit (" + std::to_string(limit) + "): " + std::to_string(numOutlier) + "/" + std::to_string(length), Logger::Mode::ERROR);
+        Logger::instance().print("Assertion error: Number of values not above or equal to limit (" + std::to_string(limit) + "): " + std::to_string(numOutlier) + "/" + std::to_string(length), Logger::Mode::ERROR);
         exit(-1);
     }
 }
@@ -448,6 +471,130 @@ void GPUHandler::assertAllEqual(GLuint* ssboHandler, int length, uint value)
 
     if (numOutlier > 0) {
         Logger::instance().print("Assertion error: Number of values that don't equal (" + std::to_string(value) + "): " + std::to_string(numOutlier) + "/" + std::to_string(length), Logger::Mode::ERROR);
+        exit(-1);
+    }
+}
+
+void GPUHandler::assertArraysEqualInt(GLuint* ssboHandler1, GLuint* ssboHandler2, int length)
+{
+    int* tempData1 = new int[length];
+    memset(tempData1, 0, sizeof(int)*length);
+    int* tempData2 = new int[length];
+    memset(tempData2, 0, sizeof(int)*length);
+
+    /*
+     * fill first array
+     */
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler1);
+    GLuint *ptr1;
+    ptr1 = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    for (int i = 0; i < length; i++) {
+        int val = *(((int*)ptr1)+i);
+        tempData1[i] = val;
+    }
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    /*
+     * fill second array
+     */
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler2);
+    GLuint *ptr2;
+    ptr2 = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    for (int i = 0; i < length; i++) {
+        int val = *(((int*)ptr2)+i);
+        tempData2[i] = val;
+    }
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    /*
+     * compare data
+     */
+    int numOutlier = 0;
+    for (int i = 0; i < length; i++) {
+        if (tempData1[i] != tempData2[i]) {
+            Logger::instance().print(std::to_string(tempData1[i]) + " not equal to " + std::to_string(tempData2[i]), Logger::Mode::ERROR);
+            numOutlier++;
+        }
+    }
+
+    if (numOutlier > 0) {
+        Logger::instance().print("Assertion error: Number of values that don't match: " + std::to_string(numOutlier) + "/" + std::to_string(length), Logger::Mode::ERROR);
+        exit(-1);
+    }
+}
+
+void GPUHandler::assertArraysEqualUInt(GLuint* ssboHandler1, GLuint* ssboHandler2, int length)
+{
+    uint* tempData1 = new uint[length];
+    memset(tempData1, 0, sizeof(uint)*length);
+    uint* tempData2 = new uint[length];
+    memset(tempData2, 0, sizeof(uint)*length);
+
+    /*
+     * fill first array
+     */
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler1);
+    GLuint *ptr1;
+    ptr1 = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    for (int i = 0; i < length; i++) {
+        uint val = *(((uint*)ptr1)+i);
+        tempData1[i] = val;
+    }
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    /*
+     * fill second array
+     */
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler2);
+    GLuint *ptr2;
+    ptr2 = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    for (int i = 0; i < length; i++) {
+        uint val = *(((uint*)ptr2)+i);
+        tempData2[i] = val;
+    }
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    /*
+     * compare data
+     */
+    int numOutlier = 0;
+    for (int i = 0; i < length; i++) {
+        if (tempData1[i] != tempData2[i]) {
+            Logger::instance().print(std::to_string(tempData1[i]) + " not equal to " + std::to_string(tempData2[i]), Logger::Mode::ERROR);
+            numOutlier++;
+        }
+    }
+
+    if (numOutlier > 0) {
+        Logger::instance().print("Assertion error: Number of values that don't match: " + std::to_string(numOutlier) + "/" + std::to_string(length), Logger::Mode::ERROR);
+        exit(-1);
+    }
+}
+
+void GPUHandler::assertDataMonotInc(GLuint* ssboHandler, int length, int startValue)
+{
+    int numOutlier = 0;
+    int lastValue = startValue;
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler);
+    GLuint *ptr;
+    ptr = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    for (int i = 0; i < length; i++) {
+        int val = *(((int*)ptr)+i);
+        if (val < lastValue) {
+            Logger::instance().print(std::to_string(val) + " not greater or equal to " + std::to_string(lastValue), Logger::Mode::ERROR);
+            numOutlier++;
+        }
+        lastValue = val;
+    }
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    if (numOutlier > 0) {
+        Logger::instance().print("Assertion error: Number of values that are not monotonially increasing: " + std::to_string(numOutlier) + "/" + std::to_string(length), Logger::Mode::ERROR);
         exit(-1);
     }
 }

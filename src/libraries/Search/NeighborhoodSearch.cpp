@@ -133,6 +133,7 @@ void NeighborhoodSearch::allocateBuffers(uint numElements)
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, *m_gpuBuffers.dp_gcell);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, *m_gpuBuffers.dp_gndx);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, *m_gpuBuffers.dp_gridcnt);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, *m_gpuBuffers.dp_gridoff);
     // TODO: maybe bind some of the other buffers here
     // slots 5 to 7 are used for temporary buffers in unifromAddInt and prescanInt
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, *m_gpuBuffers.dp_grid);
@@ -149,10 +150,13 @@ void NeighborhoodSearch::deallocateBuffers()
     m_gpuHandler.deleteSSBO(m_gpuBuffers.dp_gndx);
     m_gpuHandler.deleteSSBO(m_gpuBuffers.dp_gridcnt);
     m_gpuHandler.deleteSSBO(m_gpuBuffers.dp_gridoff);
+
     m_gpuHandler.deleteSSBO(m_gpuBuffers.dp_grid);
     m_gpuHandler.deleteSSBO(m_gpuBuffers.dp_tempPos);
     m_gpuHandler.deleteSSBO(m_gpuBuffers.dp_tempGcell);
     m_gpuHandler.deleteSSBO(m_gpuBuffers.dp_tempGndx);
+    m_gpuHandler.deleteSSBO(m_gpuBuffers.dp_undx);
+    m_gpuHandler.deleteSSBO(m_gpuBuffers.dp_searchRes);
 }
 
 
@@ -247,8 +251,8 @@ void NeighborhoodSearch::setupGrid(glm::fvec3 min, glm::fvec3 max, glm::ivec3 re
     // allocate grid
     m_grid = (uint*) malloc(sizeof(uint*)* m_gridTotal);
     m_gridCnt = (uint*) malloc(sizeof(uint*)* m_gridTotal);
-    memset(m_grid, GRID_UNDEF, m_gridTotal*sizeof(uint));
-    memset(m_gridCnt, GRID_UNDEF, m_gridTotal*sizeof(uint));
+    memset(m_grid, (int)GRID_UNDEF, m_gridTotal*sizeof(uint));
+    memset(m_gridCnt, (int)GRID_UNDEF, m_gridTotal*sizeof(uint));
 
     // number of cells to search
     /*
@@ -293,7 +297,7 @@ void NeighborhoodSearch::setupGrid(glm::fvec3 min, glm::fvec3 max, glm::ivec3 re
     /*
      * printing debug information
      */
-
+    /*
     Logger::instance().print("Grid total: " + std::to_string(m_gridTotal));
     Logger::instance().print("Grid adj cnt: " + std::to_string(m_gridAdjCnt));
     Logger::instance().print("Adjacency table (CPU)"); Logger::instance().tabIn();
@@ -304,7 +308,7 @@ void NeighborhoodSearch::setupGrid(glm::fvec3 min, glm::fvec3 max, glm::ivec3 re
                                            ", " + std::to_string(gridScanMax.y) +
                                            ", " + std::to_string(gridScanMax.z));
     Logger::instance().tabOut(); Logger::instance().tabOut();
-
+    */
 }
 void NeighborhoodSearch::freeGrid()
 {
@@ -366,6 +370,7 @@ void NeighborhoodSearch::insertElementsInGridGPU()
     glMemoryBarrier (GL_ALL_BARRIER_BITS);
 
 
+
     /*
      * sanity check
      */
@@ -412,8 +417,9 @@ void NeighborhoodSearch::prefixSumCellsGPU()
         Logger::instance().print("Checking data for prefixSumCellsGPU:"); Logger::instance().tabIn();
 
         Logger::instance().print("Checking gridoff"); Logger::instance().tabIn();
-        m_gpuHandler.assertAboveLimit(m_gpuBuffers.dp_gridoff, m_gridTotal, -1);
+        m_gpuHandler.assertAboveEqLimit(m_gpuBuffers.dp_gridoff, m_gridTotal, 0);
         m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_gridoff, m_gridTotal, m_numElements+1);
+        m_gpuHandler.assertDataMonotInc(m_gpuBuffers.dp_gridoff, m_gridTotal, 0);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checks successful");
@@ -537,15 +543,13 @@ int NeighborhoodSearch::floorPow2(int n)
 
 void NeighborhoodSearch::countingSort()
 {
-    int n = m_numElements;
-
-
-
     // copy positions, cells and indices to temporary buffers
     m_fillTempDataShader.use();
-    m_fillTempDataShader.update("pnum", n);
+    m_fillTempDataShader.update("pnum", m_numElements);
     glDispatchCompute(m_numBlocks, 1, 1);
     glMemoryBarrier (GL_ALL_BARRIER_BITS);
+
+
 
     /*
      * sanity check
@@ -560,11 +564,13 @@ void NeighborhoodSearch::countingSort()
         Logger::instance().print("Checking tempGcell"); Logger::instance().tabIn();
         m_gpuHandler.assertAboveLimit(m_gpuBuffers.dp_tempGcell, m_numElements, -1);
         m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_tempGcell, m_numElements, m_gridTotal+1);
+        m_gpuHandler.assertArraysEqualUInt(m_gpuBuffers.dp_tempGcell, m_gpuBuffers.dp_gcell, m_numElements);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking tempGndx"); Logger::instance().tabIn();
         m_gpuHandler.assertAboveLimit(m_gpuBuffers.dp_tempGndx,  m_numElements, -1);
         m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_tempGndx,  m_numElements, m_numElements+1);
+        m_gpuHandler.assertArraysEqualUInt(m_gpuBuffers.dp_tempGndx, m_gpuBuffers.dp_gndx, m_numElements);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checks successful");
@@ -574,7 +580,11 @@ void NeighborhoodSearch::countingSort()
 
 
     // reset grid
-    m_gpuHandler.fillSSBOUInt(m_gpuBuffers.dp_grid, n, (uint)GRID_UNDEF);
+    m_gpuHandler.fillSSBOUInt(m_gpuBuffers.dp_gcell, m_numElements, (uint)GRID_UNDEF);
+    m_gpuHandler.fillSSBOUInt(m_gpuBuffers.dp_gndx, m_numElements,  (uint)GRID_UNDEF);
+    m_gpuHandler.fillSSBOUInt(m_gpuBuffers.dp_grid, m_numElements, (uint)GRID_UNDEF);
+    m_gpuHandler.fillSSBOUInt(m_gpuBuffers.dp_undx, m_numElements, (uint)GRID_UNDEF);
+
 
     // check all data before counting sort
     if (NHS_DEBUG) {
@@ -585,17 +595,15 @@ void NeighborhoodSearch::countingSort()
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking gcell"); Logger::instance().tabIn();
-        m_gpuHandler.assertAboveLimit(m_gpuBuffers.dp_gcell, m_numElements, -1);
-        m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_gcell, m_numElements, m_gridTotal+1);
+        m_gpuHandler.assertAllEqual(m_gpuBuffers.dp_gcell,  m_numElements, (uint)GRID_UNDEF);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking gndx"); Logger::instance().tabIn();
-        m_gpuHandler.assertAboveLimit(m_gpuBuffers.dp_gndx,  m_numElements, -1);
-        m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_gndx,  m_numElements, m_numElements+1);
+        m_gpuHandler.assertAllEqual(m_gpuBuffers.dp_gndx,  m_numElements, (uint)GRID_UNDEF);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking gridoff"); Logger::instance().tabIn();
-        m_gpuHandler.assertAboveLimit(m_gpuBuffers.dp_gridoff,  m_gridTotal, -1);
+        m_gpuHandler.assertAboveEqLimit(m_gpuBuffers.dp_gridoff,  m_gridTotal, 0);
         m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_gridoff,  m_gridTotal, m_numElements+1);
         Logger::instance().tabOut();
 
@@ -608,24 +616,31 @@ void NeighborhoodSearch::countingSort()
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking tempGcell"); Logger::instance().tabIn();
-        m_gpuHandler.assertAboveLimit(m_gpuBuffers.dp_tempGcell, m_numElements, -1);
+        m_gpuHandler.assertAboveEqLimit(m_gpuBuffers.dp_tempGcell, m_numElements, 0);
         m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_tempGcell, m_numElements, m_gridTotal+1);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking tempGndx"); Logger::instance().tabIn();
-        m_gpuHandler.assertAboveLimit(m_gpuBuffers.dp_tempGndx,  m_numElements, -1);
+        m_gpuHandler.assertAboveEqLimit(m_gpuBuffers.dp_tempGndx,  m_numElements, 0);
         m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_tempGndx,  m_numElements, m_numElements+1);
+        Logger::instance().tabOut();
+
+        Logger::instance().print("Checking undx"); Logger::instance().tabIn();
+        m_gpuHandler.assertAllEqual(m_gpuBuffers.dp_undx,  m_numElements, (uint)GRID_UNDEF);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checks successful");
         Logger::instance().tabOut();
     }
 
+
     // call shader countingSort
     m_countingSortShader.use();
-    m_countingSortShader.update("pnum", n);
+    m_countingSortShader.update("pnum", m_numElements);
     glDispatchCompute(m_numBlocks, 1, 1);
     glMemoryBarrier (GL_ALL_BARRIER_BITS);
+
+
 
     /*
      * sanity check
@@ -638,8 +653,8 @@ void NeighborhoodSearch::countingSort()
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking gcell"); Logger::instance().tabIn();
-        m_gpuHandler.assertAboveEqLimit(m_gpuBuffers.dp_gcell, m_numElements, 0);
-        m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_gcell, m_numElements, m_gridTotal+1);
+        m_gpuHandler.assertAboveEqLimit(m_gpuBuffers.dp_gcell, m_numElements, (uint)0);
+        m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_gcell, m_numElements, (uint)m_gridTotal+1);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking gndx"); Logger::instance().tabIn();
@@ -653,8 +668,8 @@ void NeighborhoodSearch::countingSort()
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking undx"); Logger::instance().tabIn();
-        m_gpuHandler.assertAboveEqLimit(m_gpuBuffers.dp_undx,  m_numElements, 0);
-        m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_undx,  m_numElements, m_numElements+1);
+        m_gpuHandler.assertAboveEqLimit(m_gpuBuffers.dp_undx,  m_numElements, (uint)0);
+        m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_undx,  m_numElements, (uint)(m_numElements+1));
         Logger::instance().tabOut();
 
         Logger::instance().print("Checks successful");
@@ -669,13 +684,13 @@ void NeighborhoodSearch::countingSort()
 
 void NeighborhoodSearch::colorAtomsInRadius()
 {
+    // get offset to upper left grid cell of the adjacency cell block
     int searchCellOffset = (m_gridAdjCnt-1)/2 + (m_gridRes.x - m_gridSearch) + (m_gridRes.x*m_gridRes.z - m_gridSearch*m_gridSearch);
     //Logger::instance().print("Search cell offset: " + std::to_string(searchCellOffset));
 
     m_colorAtomsInRadiusShader.use();
     m_colorAtomsInRadiusShader.update("pnum",       m_numElements);
     m_colorAtomsInRadiusShader.update("radius2",    m_searchRadius*m_searchRadius);
-    //m_colorAtomsInRadiusShader.update("gridRes",    m_gridRes);
     m_colorAtomsInRadiusShader.update("gridAdjCnt", m_gridAdjCnt);
     m_colorAtomsInRadiusShader.update("searchCellOff", searchCellOffset);
     glUniform1iv(glGetUniformLocation(m_colorAtomsInRadiusShader.getProgramHandle(),"gridAdj"), 216, m_gridAdj);

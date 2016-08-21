@@ -56,12 +56,16 @@ public:
     void assertAtomsAreInBounds(GLuint* ssboHandler, int length, glm::vec3 min, glm::vec3 max);
     void assertSum(GLuint* ssboHandler, int length, int sum);
     void assertBelowLimit(GLuint* ssboHandler, int length, int limit);
+    void assertBelowLimit(GLuint* ssboHandler, int length, uint limit);
     void assertAboveLimit(GLuint* ssboHandler, int length, int limit);
     void assertAboveLimit(GLuint* ssboHandler, int length, uint limit);
     void assertAboveEqLimit(GLuint* ssboHandler, int length, int limit);
     void assertAboveEqLimit(GLuint* ssboHandler, int length, uint limit);
     void assertAllEqual(GLuint* ssboHandler, int length, int value);
     void assertAllEqual(GLuint* ssboHandler, int length, uint value);
+    void assertArraysEqualInt(GLuint* ssboHandler1, GLuint* ssboHandler2, int length);
+    void assertArraysEqualUInt(GLuint* ssboHandler1, GLuint* ssboHandler2, int length);
+    void assertDataMonotInc(GLuint* ssboHandler, int length, int startValue);
     void assertCellContent(GLuint* cellHandler,GLuint* cellCntHandler, int length1, int length2);
 
     /*

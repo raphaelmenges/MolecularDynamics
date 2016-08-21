@@ -24,17 +24,17 @@ layout(std430, binding = 3) buffer GridindicesBuffer     { uint gndx[];      };
 layout(std430, binding = 4) buffer GridcountBuffer       { int  gridcnt[];   };
 layout(std430, binding = 5) buffer GridoffsetBuffer      { int  gridoff[];   };
 layout(std430, binding = 8) buffer GridBuffer            { uint grid[];      };
-layout(std430, binding =12) buffer UnsortedIndexBuffer   { uint  undx[];      };
+layout(std430, binding =12) buffer UnsortedIndexBuffer   { uint undx[];      };
 layout(std430, binding =13) buffer SearchResultBuffer    { int  searchRes[]; };
 
 
 
-uniform int pnum;
-uniform float radius2; // radius^2
-uniform ivec3 gridRes;
-uniform int gridAdjCnt;
-uniform int searchCellOff;
-uniform int gridAdj[216];
+uniform int     pnum;
+uniform float   radius2; // radius^2
+uniform ivec3   gridRes;
+uniform int     gridAdjCnt;
+uniform int     searchCellOff;
+uniform int     gridAdj[216];
 
 
 

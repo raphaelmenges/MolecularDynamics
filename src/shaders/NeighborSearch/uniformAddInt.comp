@@ -29,5 +29,5 @@ void main() {
 
     // two adds per thread
     data[address] += uni;
-    if ((thid + gl_WorkGroupSize.x) < n) data[address + gl_WorkGroupSize.x] = uni;
+    if ((thid + gl_WorkGroupSize.x) < n) data[address + gl_WorkGroupSize.x] += uni;
 }
