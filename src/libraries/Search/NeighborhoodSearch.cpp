@@ -66,6 +66,15 @@ float NeighborhoodSearch::getMaxSearchRadius()
     return m_maxSearchRadius;
 }
 
+double NeighborhoodSearch::getRunExecutionTime()
+{
+    return m_runTimer.getDuration();
+}
+double NeighborhoodSearch::getApplicationExecutionTime()
+{
+    return m_applicationTimer.getDuration();
+}
+
 
 
 //-----------------------------------------------------//
@@ -288,7 +297,6 @@ void NeighborhoodSearch::setupGrid(glm::fvec3 min, glm::fvec3 max, glm::ivec3 re
         Logger::instance().print("Warning: Neighbor search is n > 5, n is set to 5 instead", Logger::Mode::WARNING);
         m_gridSearch = 5;
     }
-    Logger::instance().print("grid search " + std::to_string(m_gridSearch));
     m_maxSearchRadius = 5/2 * m_cellSize;
 
     /*
@@ -354,9 +362,13 @@ void NeighborhoodSearch::computeNumBlocks(int numElements, int maxThreads, uint&
 //-----------------------------------------------------//
 void NeighborhoodSearch::run()
 {
+    m_runTimer.start();
+
     insertElementsInGridGPU();
     prefixSumCellsGPU();
     countingSort();
+
+    m_runTimer.stop();
 }
 
 
@@ -696,11 +708,15 @@ void NeighborhoodSearch::countingSort()
 
 void NeighborhoodSearch::find(int selectedAtomIdx, bool findOnlyNeighborsOfSelectedAtom)
 {
+    m_applicationTimer.start();
+
     if (findOnlyNeighborsOfSelectedAtom) {
         findSelectedAtomsNeighbors(selectedAtomIdx);
     } else {
         colorAtomsInRadius();
     }
+
+    m_applicationTimer.stop();
 }
 
 void NeighborhoodSearch::findSelectedAtomsNeighbors(int selectedAtomIdx)

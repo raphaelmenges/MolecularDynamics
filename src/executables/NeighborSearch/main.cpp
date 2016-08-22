@@ -373,7 +373,7 @@ void run()
     float cameraRadius = 0.0f;
     glm::vec3 globalMin;
     glm::vec3 globalMax;
-    m_proteinLoader.getBoundingBoxAroundProteins(globalMin, globalMax);
+    m_proteinLoader.getCenteredBoundingBoxAroundProteins(globalMin, globalMax);
     cameraCenter = (globalMax + globalMin) / 2;
     float radius = glm::length(globalMax - globalMin);
     cameraRadius = (radius > cameraRadius) ? radius : cameraRadius;
@@ -713,10 +713,12 @@ void updateGUI()
         /*
          * Shortcut infos
          */
-        if (ImGui::BeginMenu("Shortcuts"))
+        if (ImGui::BeginMenu("Controls"))
         {
+            ImGui::Text("Rotate the camera by holding left mouse button while moving the mouse");
+            ImGui::Text("Select an atom with right click");
             ImGui::Text("P: Switch between proteins");
-            ImGui::Text("P: Switch between atoms");
+            ImGui::Text("O: Switch between atoms");
             ImGui::Text("W: Move selected protein up");
             ImGui::Text("A: Move selected protein left");
             ImGui::Text("S: Move selected protein down");
@@ -834,6 +836,10 @@ void updateGUI()
                     m_gridRes.z != oldGridRes.z) {
                 m_updateNeighborhoodSearch = true;
             }
+            std::string setupTimeText = "Setup time: " + std::to_string(m_search.getRunExecutionTime()/1000.0) + " ms";
+            std::string searchTimeText = "Neighborhood search time: " + std::to_string(m_search.getApplicationExecutionTime()/1000.0) + " ms";
+            ImGui::Text(setupTimeText.c_str());
+            ImGui::Text(searchTimeText.c_str());
             ImGui::Checkbox("Find only neighbors of selected atom", &m_findOnlySelectedAtomsNeighbors);
 
             ImGui::EndMenu();
@@ -874,7 +880,7 @@ int main()
      * load proteins
      */
     SimpleProtein* proteinA = m_proteinLoader.loadProtein("PDB/1a19.pdb");
-    SimpleProtein* proteinB = m_proteinLoader.loadProtein("PDB/1crn.pdb");
+    SimpleProtein* proteinB = m_proteinLoader.loadProtein("PDB/5bs0.pdb");
     proteinA->center();
     proteinB->center();
     proteinB->move(glm::vec3(proteinA->extent().x/2 + proteinB->extent().x/2, 0, 0));
@@ -885,7 +891,7 @@ int main()
     m_gridRes = glm::vec3(10, 10, 10);
     m_searchRadius = 20;
     initNeighborhoodSearch(m_gridRes, m_searchRadius);
-    m_searchRadius = m_search.getMaxSearchRadius();
+    m_searchRadius = m_search.getMaxSearchRadius() - 0.01f;
     m_updateNeighborhoodSearch = true;
 
     /*

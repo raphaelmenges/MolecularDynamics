@@ -72,7 +72,10 @@ void main() {
 
     // get unsorted index
     uint uidx = undx[i];
-    if (uidx != selectedAtomUndx) return; // we only want the selected atom look for its neighbors
+    if (uidx != selectedAtomUndx) {
+        if (searchRes[uidx] == 0) searchRes[uidx] = 3;
+        return; // we only want the selected atom look for its neighbors
+    }
 
     // get cell for the corresponding atom
     uint icell = gcell[i];

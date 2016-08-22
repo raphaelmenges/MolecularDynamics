@@ -9,6 +9,7 @@
 #include <malloc.h>
 #include <string.h>
 #include <ShaderTools/ShaderProgram.h>
+#include <Utils/Timer.h>
 
 #include "Utils/Logger.h"
 #include "NeighborhoodSearchDefines.h"
@@ -34,6 +35,8 @@ public:
     int getNumberOfBlocksForGridComputation();
     int getNumberOfThreadsPerBlockForGridComputation();
     float getMaxSearchRadius();
+    double getRunExecutionTime();
+    double getApplicationExecutionTime();
 
     /*
      * neighbor search
@@ -92,6 +95,9 @@ private:
 
     ShaderProgram m_findSelectedAtomsNeighborsShader;
     ShaderProgram m_colorAtomsInRadiusShader;
+    // time
+    Timer m_runTimer;
+    Timer m_applicationTimer;
 
 
 

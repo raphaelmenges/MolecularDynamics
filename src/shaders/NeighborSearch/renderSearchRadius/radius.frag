@@ -22,5 +22,5 @@ void main()
     }
 
     // Output color
-    if(distance > 0.98) outColor = vec4(0, 0, 1, 1);
+    if(distance > 0.98) outColor = vec4(1, 1, 1, 1);
 }
