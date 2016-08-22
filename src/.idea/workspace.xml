@@ -52,13 +52,12 @@
       <file leaf-file-name="main.cpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/main.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="633">
-              <caret line="893" column="58" selection-start-line="893" selection-start-column="58" selection-end-line="893" selection-end-column="58" />
+            <state relative-caret-position="552">
+              <caret line="842" column="19" selection-start-line="842" selection-start-column="19" selection-end-line="842" selection-end-column="19" />
               <folding>
                 <element signature="e#64#84#0" expanded="true" />
                 <element signature="e#293#326#0" expanded="true" />
                 <element signature="e#411#437#0" expanded="true" />
-                <element signature="e#2192#3673#0" expanded="false" />
                 <element signature="e#3677#4996#0" expanded="false" />
                 <element signature="e#4998#5446#0" expanded="false" />
                 <element signature="e#5448#5576#0" expanded="false" />
@@ -71,8 +70,17 @@
                 <element signature="e#18448#18869#0" expanded="false" />
                 <element signature="e#18871#19700#0" expanded="false" />
                 <element signature="e#19702#20138#0" expanded="false" />
-                <element signature="e#20140#28144#0" expanded="false" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="glfw3.h" pinned="false" current-in-tab="false">
+        <entry file="file:///usr/include/GLFW/glfw3.h">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-113">
+              <caret line="721" column="26" selection-start-line="721" selection-start-column="26" selection-end-line="721" selection-end-column="26" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -130,6 +138,41 @@
                 <element signature="e#27154#28012#0" expanded="false" />
                 <element signature="e#28014#28597#0" expanded="false" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="findSelectedAtomsNeighbors.comp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/searchApplication/findSelectedAtomsNeighbors.comp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="615">
+              <caret line="53" column="17" selection-start-line="53" selection-start-column="17" selection-end-line="53" selection-end-column="17" />
+              <folding>
+                <marker date="1471899856572" expanded="true" signature="1259:2157" ph="{...}" />
+                <marker date="1471899856572" expanded="true" signature="1434:2151" ph="{...}" />
+                <marker date="1471899856572" expanded="true" signature="1768:2141" ph="{...}" />
+                <marker date="1471899856572" expanded="true" signature="1864:2127" ph="{...}" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="colorAtomsInRadius.comp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/searchApplication/colorAtomsInRadius.comp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="417">
+              <caret line="77" column="4" selection-start-line="77" selection-start-column="4" selection-end-line="77" selection-end-column="48" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="impostor.vert" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/renderAtoms/impostor.vert">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="611">
+              <caret line="66" column="30" selection-start-line="66" selection-start-column="30" selection-end-line="66" selection-end-column="30" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -212,12 +255,12 @@
         <option value="$PROJECT_DIR$/shaders/NeighborSearch/atomPicking/picking.frag" />
         <option value="$PROJECT_DIR$/shaders/NeighborSearch/atomPicking/picking.vert" />
         <option value="$PROJECT_DIR$/shaders/NeighborSearch/renderSearchRadius/radius.frag" />
-        <option value="$PROJECT_DIR$/shaders/NeighborSearch/searchApplication/findSelectedAtomsNeighbors.comp" />
-        <option value="$PROJECT_DIR$/shaders/NeighborSearch/renderAtoms/impostor.vert" />
         <option value="$PROJECT_DIR$/libraries/Utils/Timer.cpp" />
         <option value="$PROJECT_DIR$/libraries/Utils/Timer.h" />
         <option value="$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.h" />
         <option value="$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.cpp" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/renderAtoms/impostor.vert" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/searchApplication/findSelectedAtomsNeighbors.comp" />
         <option value="$PROJECT_DIR$/executables/NeighborSearch/main.cpp" />
       </list>
     </option>
@@ -344,6 +387,58 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="NeighborSearch" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="searchApplication" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="shaders" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="NeighborSearch" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="shaders" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="NeighborSearch" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="renderAtoms" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -822,13 +917,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/libraries/Molecule/MDtrajLoader/MdTraj/MdTrajWrapper.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="216">
-          <caret line="21" column="0" selection-start-line="21" selection-start-column="0" selection-end-line="21" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/libraries/Utils/Logger.cpp">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="398">
@@ -965,13 +1053,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/searchApplication/colorAtomsInRadius.comp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="470">
-          <caret line="90" column="4" selection-start-line="90" selection-start-column="4" selection-end-line="90" selection-end-column="33" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/renderAtoms/impostor.geom">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="774">
@@ -1090,20 +1171,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/searchApplication/findSelectedAtomsNeighbors.comp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="413">
-          <caret line="75" column="53" selection-start-line="75" selection-start-column="53" selection-end-line="75" selection-end-column="53" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/renderAtoms/impostor.vert">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1058">
-          <caret line="62" column="36" selection-start-line="62" selection-start-column="36" selection-end-line="62" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/renderSearchRadius/radius.frag">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="432">
@@ -1142,6 +1209,14 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="504">
           <caret line="28" column="1" selection-start-line="28" selection-start-column="1" selection-end-line="28" selection-end-column="1" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/include/GLFW/glfw3.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-113">
+          <caret line="721" column="26" selection-start-line="721" selection-start-column="26" selection-end-line="721" selection-end-column="26" />
           <folding />
         </state>
       </provider>
@@ -1189,15 +1264,43 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/renderAtoms/impostor.vert">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="611">
+          <caret line="66" column="30" selection-start-line="66" selection-start-column="30" selection-end-line="66" selection-end-column="30" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/searchApplication/colorAtomsInRadius.comp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="417">
+          <caret line="77" column="4" selection-start-line="77" selection-start-column="4" selection-end-line="77" selection-end-column="48" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/searchApplication/findSelectedAtomsNeighbors.comp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="615">
+          <caret line="53" column="17" selection-start-line="53" selection-start-column="17" selection-end-line="53" selection-end-column="17" />
+          <folding>
+            <marker date="1471899856572" expanded="true" signature="1259:2157" ph="{...}" />
+            <marker date="1471899856572" expanded="true" signature="1434:2151" ph="{...}" />
+            <marker date="1471899856572" expanded="true" signature="1768:2141" ph="{...}" />
+            <marker date="1471899856572" expanded="true" signature="1864:2127" ph="{...}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/main.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="633">
-          <caret line="893" column="58" selection-start-line="893" selection-start-column="58" selection-end-line="893" selection-end-column="58" />
+        <state relative-caret-position="552">
+          <caret line="842" column="19" selection-start-line="842" selection-start-column="19" selection-end-line="842" selection-end-column="19" />
           <folding>
             <element signature="e#64#84#0" expanded="true" />
             <element signature="e#293#326#0" expanded="true" />
             <element signature="e#411#437#0" expanded="true" />
-            <element signature="e#2192#3673#0" expanded="false" />
             <element signature="e#3677#4996#0" expanded="false" />
             <element signature="e#4998#5446#0" expanded="false" />
             <element signature="e#5448#5576#0" expanded="false" />
@@ -1210,7 +1313,6 @@
             <element signature="e#18448#18869#0" expanded="false" />
             <element signature="e#18871#19700#0" expanded="false" />
             <element signature="e#19702#20138#0" expanded="false" />
-            <element signature="e#20140#28144#0" expanded="false" />
           </folding>
         </state>
       </provider>

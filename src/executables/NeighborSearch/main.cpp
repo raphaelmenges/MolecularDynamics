@@ -840,6 +840,7 @@ void updateGUI()
             std::string searchTimeText = "Neighborhood search time: " + std::to_string(m_search.getApplicationExecutionTime()/1000.0) + " ms";
             ImGui::Text(setupTimeText.c_str());
             ImGui::Text(searchTimeText.c_str());
+            ImGui::
             ImGui::Checkbox("Find only neighbors of selected atom", &m_findOnlySelectedAtomsNeighbors);
 
             ImGui::EndMenu();

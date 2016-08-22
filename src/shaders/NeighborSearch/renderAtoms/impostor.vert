@@ -62,6 +62,10 @@ void main()
     {
         vertColor = vec3(0.6,0.6,0.6);
     }
+    else if (searchRes[index] == 4)
+    {
+        vertColor = vec3(1,1,0);
+    }
     else
     {
         float proteinIdx = atoms[index].proteinID.x;

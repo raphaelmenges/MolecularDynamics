@@ -39,7 +39,7 @@ uniform int     gridAdj[216];
 
 
 
-void checkIfAtomsAreInRadius(uint i, uint cell, vec4 position)
+void checkIfAtomsAreInRadius(int pID, uint i, uint cell, vec4 position)
 {
     if (gridcnt[cell] != 0) {
         uint cfirst = gridoff[cell];
@@ -58,7 +58,12 @@ void checkIfAtomsAreInRadius(uint i, uint cell, vec4 position)
 
                 // is the atom different from the selected atom?
                 if (i != j) {
-                    searchRes[uidx2] = 1;
+                    int  pID2 = int(atom[uidx2].proteinID.x);
+                    if (pID != pID2) {
+                        searchRes[uidx2] = 1;
+                    } else {
+                        searchRes[uidx2] = 4;
+                    }
                 }
             }
         }
@@ -85,6 +90,7 @@ void main() {
 
     // important informations for the compare
     vec4 position = pos[i];
+    int  pID      = int(atom[uidx].proteinID.x);
 
     /*
      * check for all adjacent grid cells within the search radius of this atom
@@ -92,6 +98,6 @@ void main() {
     uint startCell = icell - searchCellOff;
     for (int cellIdx = 0; cellIdx < gridAdjCnt; cellIdx++) {
         uint currentCell = startCell + gridAdj[cellIdx];
-        checkIfAtomsAreInRadius(i, currentCell, position);
+        checkIfAtomsAreInRadius(pID, i, currentCell, position);
     }
 }
