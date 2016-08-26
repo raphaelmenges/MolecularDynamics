@@ -1,0 +1,189 @@
+#version 430
+
+#define LOG_NUM_BANKS 4             // TODO: adapt it for my gpu or make it dynamic
+#define MAX_SHARED_SIZE 544         // TODO: calculate the right size
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+// SSBOs
+// TODO: check buffer
+layout(std430, binding = 0) buffer outDataBuffer   { int odata[];     };
+layout(std430, binding = 1) buffer inDataBuffer    { int idata[];     };
+layout(std430, binding = 2) buffer blockSumsBuffer { int blockSums[]; };
+
+uniform int blockIndex;
+uniform int baseIndex;
+uniform int n;
+uniform bool isNP2;
+uniform bool storeSum;
+
+shared int sharedData[MAX_SHARED_SIZE];
+
+
+
+void syncThreads()
+{
+    memoryBarrierShared();
+    barrier();
+}
+
+int calculateConflictFreeOffset(int index)
+{
+    return ((index) >> LOG_NUM_BANKS);
+}
+
+
+
+void loadSharedChunkFromMemInt(
+    out int ai,
+    out int bi,
+    out int mem_ai,
+    out int mem_bi,
+    out int bankOffsetA,
+    out int bankOffsetB)
+{
+    int tBaseIndex = (baseIndex == 0) ? int(gl_WorkGroupID.x * (gl_WorkGroupSize.x << 1)) : baseIndex;
+    int thid = int(gl_LocalInvocationID.x);
+    int workGroupSize = int(gl_WorkGroupSize.x);
+
+    mem_ai = tBaseIndex + thid;
+    mem_bi = mem_ai + workGroupSize;
+    ai = thid;
+    bi = thid + workGroupSize;
+
+    // calculate offset to avoid bank conflicts
+    bankOffsetA = calculateConflictFreeOffset(ai);
+    bankOffsetB = calculateConflictFreeOffset(bi);
+
+    /*
+     * cache the computational window in shared memory
+     * pad values beyond n with zeros
+     */
+    sharedData[ai + bankOffsetA] = idata[mem_ai];
+    if (isNP2) {
+        sharedData[bi + bankOffsetB] = (bi < n) ? idata[mem_bi] : 0;
+    } else {
+        sharedData[bi + bankOffsetB] = idata[mem_bi];
+    }
+}
+
+
+
+
+uint buildBlockSumInt()
+{
+    uint thid = int(gl_LocalInvocationID.x);
+    int workGroupSize = int(gl_WorkGroupSize.x);
+    uint stride = 1;
+
+    // build the sum in place up the tree
+    for (int d = workGroupSize; d > 0; d >>= 1) {
+        syncThreads();
+        if (thid < d) {
+            int i = int(2 * stride * thid);
+            int ai = int(i + stride - 1);
+            int bi = int(ai + stride);
+            ai += calculateConflictFreeOffset(ai);
+            bi += calculateConflictFreeOffset(bi);
+            sharedData[bi] += sharedData[ai];
+        }
+        stride *= 2;
+    }
+    return stride;
+}
+
+void clearLastElementInt()
+{
+    int workGroupId = int(gl_WorkGroupID.x);
+    int workGroupSize = int(gl_WorkGroupSize.x);
+    int tBlockIndex = (blockIndex == 0) ? workGroupId : blockIndex;
+
+    if (gl_LocalInvocationID.x == 0) {
+        int index = (workGroupSize << 1) - 1;
+        index += calculateConflictFreeOffset(index);
+        if(storeSum) {
+            /*
+             * write this block's total sum to the
+             * corresponding index in the blockSums array
+             */
+            blockSums[tBlockIndex] = sharedData[index];
+        }
+        /*
+         * zero the last element int the scan
+         * so it will propagate back to the front
+         */
+        sharedData[index] = 0;
+    }
+}
+
+void scanRootToLeavesInt(uint stride)
+{
+    int thid = int(gl_LocalInvocationID.x);
+    int workGroupSize = int(gl_WorkGroupSize.x);
+
+    /*
+     * traverse down the tree
+     * building the scan in place
+     */
+    for (int d = 1; d <= workGroupSize; d *= 2) {
+        stride >>= 1;
+        syncThreads();
+
+        if (thid < d) {
+            int i = int(2 * stride * thid);
+            int ai = int(i + stride - 1);
+            int bi = int(ai + stride);
+            ai += calculateConflictFreeOffset(ai);
+            bi += calculateConflictFreeOffset(bi);
+            int t = sharedData[ai];
+            sharedData[ai] = sharedData[bi];
+            sharedData[bi] += t;
+        }
+    }
+}
+
+void prescanBlockInt()
+{
+    uint stride = buildBlockSumInt();
+    clearLastElementInt();
+    scanRootToLeavesInt(stride);
+}
+
+
+
+
+void storeSharedChunkToMemInt(
+    int ai,
+    int bi,
+    int mem_ai,
+    int mem_bi,
+    int bankOffsetA,
+    int bankOffsetB)
+{
+    syncThreads();
+
+    // write results to global memory
+    odata[mem_ai] = sharedData[ai + bankOffsetA];
+    if (isNP2) {
+        if (bi < n) odata[mem_bi] = sharedData[bi + bankOffsetB];
+    } else {
+        odata[mem_bi] = sharedData[bi + bankOffsetB];
+    }
+}
+
+
+
+void main()
+{
+    /*
+     * setup variables
+     */
+    int ai, bi, mem_ai, mem_bi, bankOffsetA, bankOffsetB;
+
+    /*
+     * every work group processes a portion of the data
+     */
+    loadSharedChunkFromMemInt(ai, bi, mem_ai, mem_bi, bankOffsetA, bankOffsetB);
+    prescanBlockInt();
+    storeSharedChunkToMemInt(ai, bi, mem_ai, mem_bi, bankOffsetA, bankOffsetB);
+}
