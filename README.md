@@ -7,6 +7,7 @@ For more information visit [http://fluids3.com](http://fluids3.com).
 
 ## Ubuntu Installation guide:
 Following dependencies are required on ubuntu 15.10
+
     sudo apt-get install glew-utils libglew-dev 
     sudo apt-get install libglm-dev
     sudo apt-get install libglfw3-dev
