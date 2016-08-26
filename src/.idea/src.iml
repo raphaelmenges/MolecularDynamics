@@ -61,11 +61,11 @@
       <sourceFolder url="file://$MODULE_DIR$/libraries/Molecule/MDtrajLoader/MdTraj/MdTrajWrapper.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/libraries/Molecule/MDtrajLoader/MdTraj/MdTrajWrapper.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/libraries/Search/NeighborhoodSearchDefines.h" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/libraries/Search/GPUHandler.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/libraries/Search/CMakeLists.txt" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/libraries/Search/NeighborhoodSearch.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/libraries/Search/NeighborhoodSearch.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/libraries/Search/GPUHandler.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Search/AssertData.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/libraries/Utils/AtomicCounter.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/libraries/Utils/CMakeLists.txt" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/libraries/Utils/OrbitCamera.h" isTestSource="false" />

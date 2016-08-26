@@ -17,15 +17,14 @@ struct AtomStruct
 
 
 // SSBOs
-layout(std430, binding = 0) buffer AtomsBuffer           { AtomStruct atom[];};
-layout(std430, binding = 1) buffer PositionsBuffer       { vec4 pos[];       };
-layout(std430, binding = 2) buffer GridcellsBuffer       { uint gcell[];     };
-layout(std430, binding = 3) buffer GridindicesBuffer     { uint gndx[];      };
-layout(std430, binding = 4) buffer GridcountBuffer       { int  gridcnt[];   };
-layout(std430, binding = 5) buffer GridoffsetBuffer      { int  gridoff[];   };
-layout(std430, binding = 8) buffer GridBuffer            { uint grid[];      };
-layout(std430, binding =12) buffer UnsortedIndexBuffer   { uint undx[];      };
-layout(std430, binding =13) buffer SearchResultBuffer    { int  searchRes[]; };
+layout(std430, binding = 0) buffer AtomsBuffer           { AtomStruct atoms[];};
+layout(std430, binding = 1) buffer GridcellsBuffer       { uint gcell[];     };
+layout(std430, binding = 2) buffer GridindicesBuffer     { uint gndx[];      };
+layout(std430, binding = 3) buffer GridcountBuffer       { int  gridcnt[];   };
+layout(std430, binding = 4) buffer GridoffsetBuffer      { int  gridoff[];   };
+layout(std430, binding = 5) buffer GridBuffer            { uint grid[];      };
+layout(std430, binding = 6) buffer UnsortedIndexBuffer   { uint undx[];      };
+layout(std430, binding = 7) buffer SearchResultBuffer    { int  searchRes[]; };
 
 
 
@@ -39,7 +38,7 @@ uniform int     gridAdj[216];
 
 
 
-void checkIfAtomsAreInRadius(int pID, uint i, uint cell, vec4 position)
+void checkIfAtomsAreInRadius(int pID, uint i, uint cell, vec3 position)
 {
     if (gridcnt[cell] != 0) {
         uint cfirst = gridoff[cell];
@@ -52,13 +51,15 @@ void checkIfAtomsAreInRadius(int pID, uint i, uint cell, vec4 position)
             searchRes[uidx2] = 2;
 
             // is atom j within search radius?
-            vec4 distance = position - pos[j];
+            AtomStruct atom2 = atoms[uidx2];
+            vec3 position2 = atom2.center;
+            vec3 distance = position - position2;
             float d2 = (distance.x * distance.x) + (distance.y * distance.y) + (distance.z * distance.z);
             if (d2 < radius2) {
 
                 // is the atom different from the selected atom?
                 if (i != j) {
-                    int  pID2 = int(atom[uidx2].proteinID.x);
+                    int  pID2 = int(atom2.proteinID.x);
                     if (pID != pID2) {
                         searchRes[uidx2] = 1;
                     } else {
@@ -89,8 +90,9 @@ void main() {
 
 
     // important informations for the compare
-    vec4 position = pos[i];
-    int  pID      = int(atom[uidx].proteinID.x);
+    AtomStruct atom = atoms[uidx];
+    vec3 position = atom.center;
+    int  pID      = int(atom.proteinID.x);
 
     /*
      * check for all adjacent grid cells within the search radius of this atom

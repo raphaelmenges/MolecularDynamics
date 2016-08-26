@@ -15,7 +15,7 @@ struct AtomStruct
 
 // SSBOs
 layout(std430, binding = 0) restrict readonly buffer AtomBuffer { AtomStruct atoms[];     };
-layout(std430, binding =13) buffer SearchResultBuffer           { int        searchRes[]; };
+layout(std430, binding = 1) buffer SearchResultBuffer           { int        searchRes[]; };
 
 // Uniforms
 uniform vec3 cameraWorldPos;

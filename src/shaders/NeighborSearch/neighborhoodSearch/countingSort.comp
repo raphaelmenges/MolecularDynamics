@@ -5,17 +5,17 @@
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
 // SSBOs
-layout(std430, binding = 1) buffer PositionsBuffer       { vec4 pos[];       };
-layout(std430, binding = 2) buffer GridcellsBuffer       { uint gcell[];     };
-layout(std430, binding = 3) buffer GridindicesBuffer     { uint gndx[];      };
-layout(std430, binding = 5) buffer GridoffsetBuffer      { int  gridoff[];   };
+layout(std430, binding = 0) buffer PositionsBuffer       { vec4 pos[];       };
+layout(std430, binding = 1) buffer GridcellsBuffer       { uint gcell[];     };
+layout(std430, binding = 2) buffer GridindicesBuffer     { uint gndx[];      };
+layout(std430, binding = 3) buffer GridoffsetBuffer      { int  gridoff[];   };
 
-layout(std430, binding = 8) buffer GridBuffer            { uint grid[];      };
+layout(std430, binding = 4) buffer GridBuffer            { uint grid[];      };
 
-layout(std430, binding = 9) buffer TempPositionsBuffer   { vec4 tempPos[];   };
-layout(std430, binding =10) buffer TempGridcellsBuffer   { uint tempGcell[]; };
-layout(std430, binding =11) buffer TempGridindicesBuffer { uint tempGndx[];  };
-layout(std430, binding =12) buffer UnsortedIndexBuffer   { uint undx[];      };
+layout(std430, binding = 5) buffer TempPositionsBuffer   { vec4 tempPos[];   };
+layout(std430, binding = 6) buffer TempGridcellsBuffer   { uint tempGcell[]; };
+layout(std430, binding = 7) buffer TempGridindicesBuffer { uint tempGndx[];  };
+layout(std430, binding = 8) buffer UnsortedIndexBuffer   { uint undx[];      };
 
 uniform int pnum;
 

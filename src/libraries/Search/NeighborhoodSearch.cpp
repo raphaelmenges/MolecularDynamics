@@ -2,7 +2,6 @@
 // Created by ubundrian on 23.06.16.
 //
 
-#include <GL/glew.h>
 #include "NeighborhoodSearch.h"
 
 NeighborhoodSearch::~NeighborhoodSearch()
@@ -66,15 +65,6 @@ float NeighborhoodSearch::getMaxSearchRadius()
     return m_maxSearchRadius;
 }
 
-double NeighborhoodSearch::getRunExecutionTime()
-{
-    return m_runTimer.getDuration();
-}
-double NeighborhoodSearch::getApplicationExecutionTime()
-{
-    return m_applicationTimer.getDuration();
-}
-
 
 
 //-----------------------------------------------------//
@@ -110,15 +100,11 @@ void NeighborhoodSearch::update(uint numElements, glm::fvec3 min, glm::fvec3 max
 
 void NeighborhoodSearch::setupComputeShaders()
 {
-    m_extractElementPositionsShader     = ShaderProgram("/NeighborSearch/neighborhoodSearch/extractElementPositions.comp");
     m_insertElementsShader              = ShaderProgram("/NeighborSearch/neighborhoodSearch/insertElements.comp");
     m_prescanIntShader                  = ShaderProgram("/NeighborSearch/neighborhoodSearch/prescanInt.comp");
     m_uniformAddIntShader               = ShaderProgram("/NeighborSearch/neighborhoodSearch/uniformAddInt.comp");
     m_fillTempDataShader                = ShaderProgram("/NeighborSearch/neighborhoodSearch/fillTempData.comp");
     m_countingSortShader                = ShaderProgram("/NeighborSearch/neighborhoodSearch/countingSort.comp");
-
-    m_findSelectedAtomsNeighborsShader  = ShaderProgram("/NeighborSearch/searchApplication/findSelectedAtomsNeighbors.comp");
-    m_colorAtomsInRadiusShader          = ShaderProgram("/NeighborSearch/searchApplication/colorAtomsInRadius.comp");
 }
 
 
@@ -139,26 +125,23 @@ void NeighborhoodSearch::allocateBuffers(uint numElements)
     m_gpuBuffers.dp_tempGndx  = new GLuint;
     // final results
     m_gpuBuffers.dp_undx      = new GLuint;
-    m_gpuBuffers.dp_searchRes = new GLuint;
+
 
     // init ssbo's
-    // TODO: check if numElements is required for all elements
-    m_gpuHandler.initSSBOFloat4(m_gpuBuffers.dp_pos,       numElements);
-    m_gpuHandler.initSSBOUInt  (m_gpuBuffers.dp_gcell,     numElements);
-    m_gpuHandler.initSSBOUInt  (m_gpuBuffers.dp_gndx,      numElements);
+    GPUHandler::initSSBO<uint>     (m_gpuBuffers.dp_gcell,     numElements);
+    GPUHandler::initSSBO<uint>     (m_gpuBuffers.dp_gndx,      numElements);
 
-    m_gpuHandler.initSSBOInt   (m_gpuBuffers.dp_gridcnt,   m_gridTotal);
-    m_gpuHandler.initSSBOInt   (m_gpuBuffers.dp_gridoff,   m_gridTotal);
-    m_gpuHandler.initSSBOUInt  (m_gpuBuffers.dp_grid,      numElements);
+    GPUHandler::initSSBO<int>      (m_gpuBuffers.dp_gridcnt,   m_gridTotal);
+    GPUHandler::initSSBO<int>      (m_gpuBuffers.dp_gridoff,   m_gridTotal);
+    GPUHandler::initSSBO<uint>     (m_gpuBuffers.dp_grid,      numElements);
 
-    m_gpuHandler.initSSBOFloat4(m_gpuBuffers.dp_tempPos,   numElements);
-    m_gpuHandler.initSSBOUInt  (m_gpuBuffers.dp_tempGcell, numElements);
-    m_gpuHandler.initSSBOUInt  (m_gpuBuffers.dp_tempGndx,  numElements);
+    GPUHandler::initSSBO<glm::vec4>(m_gpuBuffers.dp_tempPos,   numElements);
+    GPUHandler::initSSBO<uint>     (m_gpuBuffers.dp_tempGcell, numElements);
+    GPUHandler::initSSBO<uint>     (m_gpuBuffers.dp_tempGndx,  numElements);
 
-    m_gpuHandler.initSSBOUInt  (m_gpuBuffers.dp_undx,      numElements);
-    m_gpuHandler.initSSBOInt   (m_gpuBuffers.dp_searchRes, numElements);
+    GPUHandler::initSSBO<uint>     (m_gpuBuffers.dp_undx,      numElements);
 
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, *m_gpuBuffers.dp_pos);
+
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, *m_gpuBuffers.dp_gcell);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, *m_gpuBuffers.dp_gndx);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, *m_gpuBuffers.dp_gridcnt);
@@ -170,29 +153,27 @@ void NeighborhoodSearch::allocateBuffers(uint numElements)
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER,10, *m_gpuBuffers.dp_tempGcell);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER,11, *m_gpuBuffers.dp_tempGndx);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER,12, *m_gpuBuffers.dp_undx);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER,13, *m_gpuBuffers.dp_searchRes);
+
 }
 void NeighborhoodSearch::deallocateBuffers()
 {
-    m_gpuHandler.deleteSSBO(m_gpuBuffers.dp_pos);
-    m_gpuHandler.deleteSSBO(m_gpuBuffers.dp_gcell);
-    m_gpuHandler.deleteSSBO(m_gpuBuffers.dp_gndx);
-    m_gpuHandler.deleteSSBO(m_gpuBuffers.dp_gridcnt);
-    m_gpuHandler.deleteSSBO(m_gpuBuffers.dp_gridoff);
+    GPUHandler::deleteSSBO(m_gpuBuffers.dp_pos);
+    GPUHandler::deleteSSBO(m_gpuBuffers.dp_gcell);
+    GPUHandler::deleteSSBO(m_gpuBuffers.dp_gndx);
+    GPUHandler::deleteSSBO(m_gpuBuffers.dp_gridcnt);
+    GPUHandler::deleteSSBO(m_gpuBuffers.dp_gridoff);
 
-    m_gpuHandler.deleteSSBO(m_gpuBuffers.dp_grid);
-    m_gpuHandler.deleteSSBO(m_gpuBuffers.dp_tempPos);
-    m_gpuHandler.deleteSSBO(m_gpuBuffers.dp_tempGcell);
-    m_gpuHandler.deleteSSBO(m_gpuBuffers.dp_tempGndx);
-    m_gpuHandler.deleteSSBO(m_gpuBuffers.dp_undx);
-    m_gpuHandler.deleteSSBO(m_gpuBuffers.dp_searchRes);
+    GPUHandler::deleteSSBO(m_gpuBuffers.dp_grid);
+    GPUHandler::deleteSSBO(m_gpuBuffers.dp_tempPos);
+    GPUHandler::deleteSSBO(m_gpuBuffers.dp_tempGcell);
+    GPUHandler::deleteSSBO(m_gpuBuffers.dp_tempGndx);
+    GPUHandler::deleteSSBO(m_gpuBuffers.dp_undx);
 }
 
 
 
 void NeighborhoodSearch::preallocBlockSumsInt(uint maxNumElements)
 {
-    m_numElementsAllocated = maxNumElements;
     uint blockSize = BLOCK_SIZE; // max size of the thread blocks
     uint numElements = maxNumElements;
     uint totalTempSpace = maxNumElements;    // space that is needed for block sums computation
@@ -217,7 +198,7 @@ void NeighborhoodSearch::preallocBlockSumsInt(uint maxNumElements)
      * scan block sums int contains device pointers for all steps of the reduction
      */
     m_scanBlockSumsInt = (GLuint**) malloc(level * sizeof(GLuint*));
-    m_numLevelsAllocated = level;
+    m_numLevelsAllocated = (uint)level;
 
     // reset value to do the same computation again
     numElements = maxNumElements;
@@ -234,12 +215,12 @@ void NeighborhoodSearch::preallocBlockSumsInt(uint maxNumElements)
         uint numBlocks = (uint)std::max(1, tceil);
         if (numBlocks > 1) {
             m_scanBlockSumsInt[level] = new GLuint;
-            m_gpuHandler.initSSBOInt(m_scanBlockSumsInt[level++], numBlocks);
+            GPUHandler::initSSBO<int>(m_scanBlockSumsInt[level++], numBlocks);
 
             // Sanity check
             if (NHS_DEBUG) {
                 Logger::instance().print("Checking scanBlockSumsInt[" + std::to_string(level-1) + "]:"); Logger::instance().tabIn();
-                m_gpuHandler.printSSBODataInt(m_scanBlockSumsInt[level-1], numBlocks);
+                GPUHandler::printSSBOData<int>(m_scanBlockSumsInt[level-1], numBlocks);
                 Logger::instance().tabOut();
             }
         }
@@ -250,7 +231,7 @@ void NeighborhoodSearch::deallocBlockSumsInt()
 {
     if (m_scanBlockSumsInt != 0x0) {
         for (uint i = 0; i < m_numLevelsAllocated; i++) {
-            m_gpuHandler.deleteSSBO(m_scanBlockSumsInt[i]);
+            GPUHandler::deleteSSBO(m_scanBlockSumsInt[i]);
         }
         free(m_scanBlockSumsInt);
     }
@@ -299,12 +280,6 @@ void NeighborhoodSearch::setupGrid(glm::fvec3 min, glm::fvec3 max, glm::ivec3 re
     }
     m_maxSearchRadius = 5/2 * m_cellSize;
 
-    /*
-     * calculate scan reach
-     */
-    glm::ivec3 gridScanMax = m_gridRes;
-    gridScanMax -= glm::ivec3(m_gridSearch, m_gridSearch, m_gridSearch);
-
     // setup adjacency grid
     int cell = 0;
     for (int y = 0; y < m_gridSearch; y++) {
@@ -330,7 +305,6 @@ void NeighborhoodSearch::setupGrid(glm::fvec3 min, glm::fvec3 max, glm::ivec3 re
     m_gridDataGPU.min   = m_gridMin;
     m_gridDataGPU.delta = m_gridDelta;
     m_gridDataGPU.res   = m_gridRes;
-    m_gridDataGPU.scan  = gridScanMax;
 }
 void NeighborhoodSearch::freeGrid()
 {
@@ -360,31 +334,43 @@ void NeighborhoodSearch::computeNumBlocks(int numElements, int maxThreads, uint&
 //-----------------------------------------------------//
 //                NEIGHBORHOODSEARCH                   //
 //-----------------------------------------------------//
-void NeighborhoodSearch::run()
+void NeighborhoodSearch::run(GLuint* positionsSSBO, Neighborhood& neighborhood)
 {
-    m_runTimer.start();
-
+    m_gpuBuffers.dp_pos = positionsSSBO;
     insertElementsInGridGPU();
     prefixSumCellsGPU();
     countingSort();
 
-    m_runTimer.stop();
+    // update neighborhood
+    neighborhood.dp_particleOriginalIndex   = m_gpuBuffers.dp_undx;
+    neighborhood.dp_particleCell            = m_gpuBuffers.dp_gcell;
+    neighborhood.dp_particleCellIndex       = m_gpuBuffers.dp_gndx;
+    neighborhood.dp_grid                    = m_gpuBuffers.dp_grid;
+    neighborhood.dp_gridCellCounts          = m_gpuBuffers.dp_gridcnt;
+    neighborhood.dp_gridCellOffsets         = m_gpuBuffers.dp_gridoff;
+    neighborhood.p_searchCellOffsets        = m_gridAdj;
+    neighborhood.startCellOffset            = m_gridAdjOff;
+    neighborhood.numberOfSearchCells        = m_gridAdjCnt;
+    neighborhood.searchRadius               = m_searchRadius;
 }
 
 
 
 void NeighborhoodSearch::insertElementsInGridGPU()
 {
-    // update element positions
-    m_extractElementPositionsShader.use();
-    m_extractElementPositionsShader.update("pnum", m_numElements);
-    glDispatchCompute(m_numBlocks, 1, 1);
-    glMemoryBarrier (GL_ALL_BARRIER_BITS);
 
-    // reset grid count
-    m_gpuHandler.fillSSBOInt(m_gpuBuffers.dp_gridcnt, m_gridTotal, 0);
+    /*
+     * reset grid count
+     */
+    GPUHandler::fillSSBO<int>(m_gpuBuffers.dp_gridcnt, m_gridTotal, 0);
 
-    // insert elements
+    /*
+     * insert elements
+     */
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, *m_gpuBuffers.dp_pos);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, *m_gpuBuffers.dp_gcell);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, *m_gpuBuffers.dp_gndx);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, *m_gpuBuffers.dp_gridcnt);
     m_insertElementsShader.use();
     m_insertElementsShader.update("grid.min",   glm::vec4(m_gridDataGPU.min, 0));
     m_insertElementsShader.update("grid.delta", glm::vec4(m_gridDataGPU.delta, 0));
@@ -392,6 +378,10 @@ void NeighborhoodSearch::insertElementsInGridGPU()
     m_insertElementsShader.update("pnum",       m_numElements);
     glDispatchCompute(m_numBlocks, 1, 1);
     glMemoryBarrier (GL_ALL_BARRIER_BITS);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, 0);
 
 
 
@@ -402,22 +392,22 @@ void NeighborhoodSearch::insertElementsInGridGPU()
         Logger::instance().print("Checking data for insertElementsInGridGPU:"); Logger::instance().tabIn();
 
         Logger::instance().print("Checking pos"); Logger::instance().tabIn();
-        m_gpuHandler.assertAtomsAreInBounds(m_gpuBuffers.dp_pos, m_numElements, m_gridMin, m_gridMax);
+        AssertData::assertAtomsAreInBounds(m_gpuBuffers.dp_pos, m_numElements, m_gridMin, m_gridMax);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking gridcnt"); Logger::instance().tabIn();
-        m_gpuHandler.assertSum(m_gpuBuffers.dp_gridcnt, m_gridTotal, m_numElements);
+        AssertData::assertSum<int>(m_gpuBuffers.dp_gridcnt, m_gridTotal, m_numElements);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking gcell"); Logger::instance().tabIn();
-        m_gpuHandler.assertAboveLimit(m_gpuBuffers.dp_gcell, m_numElements, -1);
-        m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_gcell, m_numElements, m_gridTotal+1);
-        m_gpuHandler.assertCellContent(m_gpuBuffers.dp_gcell, m_gpuBuffers.dp_gridcnt, m_numElements, m_gridTotal);
+        AssertData::assertAboveLimit<int>(m_gpuBuffers.dp_gcell, m_numElements, -1);
+        AssertData::assertBelowLimit<int>(m_gpuBuffers.dp_gcell, m_numElements, m_gridTotal+1);
+        AssertData::assertCellContent(m_gpuBuffers.dp_gcell, m_gpuBuffers.dp_gridcnt, m_numElements, m_gridTotal);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking gndx"); Logger::instance().tabIn();
-        m_gpuHandler.assertAboveLimit(m_gpuBuffers.dp_gndx, m_numElements, -1);
-        m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_gndx, m_numElements, m_numElements+1);
+        AssertData::assertAboveLimit<int>(m_gpuBuffers.dp_gndx, m_numElements, -1);
+        AssertData::assertBelowLimit<int>(m_gpuBuffers.dp_gndx, m_numElements, m_numElements+1);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checks successful");
@@ -441,9 +431,9 @@ void NeighborhoodSearch::prefixSumCellsGPU()
         Logger::instance().print("Checking data for prefixSumCellsGPU:"); Logger::instance().tabIn();
 
         Logger::instance().print("Checking gridoff"); Logger::instance().tabIn();
-        m_gpuHandler.assertAboveEqLimit(m_gpuBuffers.dp_gridoff, m_gridTotal, 0);
-        m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_gridoff, m_gridTotal, m_numElements+1);
-        m_gpuHandler.assertDataMonotInc(m_gpuBuffers.dp_gridoff, m_gridTotal, 0);
+        AssertData::assertAboveEqLimit<int>(m_gpuBuffers.dp_gridoff, m_gridTotal, 0);
+        AssertData::assertBelowLimit<int>(m_gpuBuffers.dp_gridoff, m_gridTotal, m_numElements+1);
+        AssertData::assertDataMonotInc<int>(m_gpuBuffers.dp_gridoff, m_gridTotal, 0);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checks successful");
@@ -529,30 +519,41 @@ void NeighborhoodSearch::prescanArrayRecursiveInt(GLuint* outArray, GLuint* inAr
 }
 void NeighborhoodSearch::prescanInt(int numThreads, int numBlocks, int sharedMemSize, bool storeSum, bool isNP2, GLuint* outArray, GLuint* inArray, int level, int n, int blockIndex, int baseIndex)
 {
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, *outArray);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, *inArray);
+    if (level >= 0) {
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, *(m_scanBlockSumsInt[level]));
+    }
+
     m_prescanIntShader.use();
     m_prescanIntShader.update("n", n);
     m_prescanIntShader.update("blockIndex", blockIndex);
     m_prescanIntShader.update("baseIndex", baseIndex);
     m_prescanIntShader.update("isNP2", isNP2);
     m_prescanIntShader.update("storeSum", storeSum);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, *outArray);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, *inArray);
-    if (level >= 0) {
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, *(m_scanBlockSumsInt[level]));
-    }
     glDispatchCompute(numBlocks, 1, 1);
     glMemoryBarrier (GL_ALL_BARRIER_BITS);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+    if (level >= 0) {
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, 0);
+    }
 }
 void NeighborhoodSearch::uniformAddInt(int numThreads, int numBlocks, GLuint* outArray, int level, int n, int blockOffset, int baseIndex)
 {
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, *outArray);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, *(m_scanBlockSumsInt[level]));
+
     m_uniformAddIntShader.use();
     m_uniformAddIntShader.update("n", n);
     m_uniformAddIntShader.update("blockOffset", blockOffset);
     m_uniformAddIntShader.update("baseIndex", baseIndex);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, *outArray);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, *(m_scanBlockSumsInt[level]));
     glDispatchCompute(numBlocks, 1, 1);
     glMemoryBarrier (GL_ALL_BARRIER_BITS);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
 }
 bool NeighborhoodSearch::isPowerOfTwo(int n)
 {
@@ -568,10 +569,24 @@ int NeighborhoodSearch::floorPow2(int n)
 void NeighborhoodSearch::countingSort()
 {
     // copy positions, cells and indices to temporary buffers
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, *m_gpuBuffers.dp_pos);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, *m_gpuBuffers.dp_gcell);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, *m_gpuBuffers.dp_gndx);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, *m_gpuBuffers.dp_tempPos);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, *m_gpuBuffers.dp_tempGcell);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, *m_gpuBuffers.dp_tempGndx);
+
     m_fillTempDataShader.use();
     m_fillTempDataShader.update("pnum", m_numElements);
     glDispatchCompute(m_numBlocks, 1, 1);
     glMemoryBarrier (GL_ALL_BARRIER_BITS);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, 0);
 
 
 
@@ -582,19 +597,19 @@ void NeighborhoodSearch::countingSort()
         Logger::instance().print("Checking data for fill temp data:"); Logger::instance().tabIn();
 
         Logger::instance().print("Checking tempPos"); Logger::instance().tabIn();
-        m_gpuHandler.assertAtomsAreInBounds(m_gpuBuffers.dp_tempPos, m_numElements, m_gridMin, m_gridMax);
+        AssertData::assertAtomsAreInBounds(m_gpuBuffers.dp_tempPos, m_numElements, m_gridMin, m_gridMax);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking tempGcell"); Logger::instance().tabIn();
-        m_gpuHandler.assertAboveLimit(m_gpuBuffers.dp_tempGcell, m_numElements, -1);
-        m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_tempGcell, m_numElements, m_gridTotal+1);
-        m_gpuHandler.assertArraysEqualUInt(m_gpuBuffers.dp_tempGcell, m_gpuBuffers.dp_gcell, m_numElements);
+        AssertData::assertAboveLimit<int>(m_gpuBuffers.dp_tempGcell, m_numElements, -1);
+        AssertData::assertBelowLimit<int>(m_gpuBuffers.dp_tempGcell, m_numElements, m_gridTotal+1);
+        AssertData::assertArraysEqual<uint>(m_gpuBuffers.dp_tempGcell, m_gpuBuffers.dp_gcell, m_numElements);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking tempGndx"); Logger::instance().tabIn();
-        m_gpuHandler.assertAboveLimit(m_gpuBuffers.dp_tempGndx,  m_numElements, -1);
-        m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_tempGndx,  m_numElements, m_numElements+1);
-        m_gpuHandler.assertArraysEqualUInt(m_gpuBuffers.dp_tempGndx, m_gpuBuffers.dp_gndx, m_numElements);
+        AssertData::assertAboveLimit<int>(m_gpuBuffers.dp_tempGndx,  m_numElements, -1);
+        AssertData::assertBelowLimit<int>(m_gpuBuffers.dp_tempGndx,  m_numElements, m_numElements+1);
+        AssertData::assertArraysEqual<uint>(m_gpuBuffers.dp_tempGndx, m_gpuBuffers.dp_gndx, m_numElements);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checks successful");
@@ -604,10 +619,10 @@ void NeighborhoodSearch::countingSort()
 
 
     // reset grid
-    m_gpuHandler.fillSSBOUInt(m_gpuBuffers.dp_gcell, m_numElements, (uint)GRID_UNDEF);
-    m_gpuHandler.fillSSBOUInt(m_gpuBuffers.dp_gndx, m_numElements,  (uint)GRID_UNDEF);
-    m_gpuHandler.fillSSBOUInt(m_gpuBuffers.dp_grid, m_numElements, (uint)GRID_UNDEF);
-    m_gpuHandler.fillSSBOUInt(m_gpuBuffers.dp_undx, m_numElements, (uint)GRID_UNDEF);
+    GPUHandler::fillSSBO<uint>(m_gpuBuffers.dp_gcell, m_numElements, (uint)GRID_UNDEF);
+    GPUHandler::fillSSBO<uint>(m_gpuBuffers.dp_gndx,  m_numElements, (uint)GRID_UNDEF);
+    GPUHandler::fillSSBO<uint>(m_gpuBuffers.dp_grid,  m_numElements, (uint)GRID_UNDEF);
+    GPUHandler::fillSSBO<uint>(m_gpuBuffers.dp_undx,  m_numElements, (uint)GRID_UNDEF);
 
 
     // check all data before counting sort
@@ -615,42 +630,42 @@ void NeighborhoodSearch::countingSort()
         Logger::instance().print("Checking all data before counting sort:"); Logger::instance().tabIn();
 
         Logger::instance().print("Checking pos"); Logger::instance().tabIn();
-        m_gpuHandler.assertAtomsAreInBounds(m_gpuBuffers.dp_pos, m_numElements, m_gridMin, m_gridMax);
+        AssertData::assertAtomsAreInBounds(m_gpuBuffers.dp_pos, m_numElements, m_gridMin, m_gridMax);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking gcell"); Logger::instance().tabIn();
-        m_gpuHandler.assertAllEqual(m_gpuBuffers.dp_gcell,  m_numElements, (uint)GRID_UNDEF);
+        AssertData::assertAllEqual<uint>(m_gpuBuffers.dp_gcell,  m_numElements, (uint)GRID_UNDEF);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking gndx"); Logger::instance().tabIn();
-        m_gpuHandler.assertAllEqual(m_gpuBuffers.dp_gndx,  m_numElements, (uint)GRID_UNDEF);
+        AssertData::assertAllEqual<uint>(m_gpuBuffers.dp_gndx,  m_numElements, (uint)GRID_UNDEF);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking gridoff"); Logger::instance().tabIn();
-        m_gpuHandler.assertAboveEqLimit(m_gpuBuffers.dp_gridoff,  m_gridTotal, 0);
-        m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_gridoff,  m_gridTotal, m_numElements+1);
+        AssertData::assertAboveEqLimit<int>(m_gpuBuffers.dp_gridoff,  m_gridTotal, 0);
+        AssertData::assertBelowLimit<int>(m_gpuBuffers.dp_gridoff,  m_gridTotal, m_numElements+1);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking grid"); Logger::instance().tabIn();
-        m_gpuHandler.assertAllEqual(m_gpuBuffers.dp_grid,  m_numElements, (uint)GRID_UNDEF);
+        AssertData::assertAllEqual<uint>(m_gpuBuffers.dp_grid,  m_numElements, (uint)GRID_UNDEF);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking tempPos"); Logger::instance().tabIn();
-        m_gpuHandler.assertAtomsAreInBounds(m_gpuBuffers.dp_tempPos, m_numElements, m_gridMin, m_gridMax);
+        AssertData::assertAtomsAreInBounds(m_gpuBuffers.dp_tempPos, m_numElements, m_gridMin, m_gridMax);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking tempGcell"); Logger::instance().tabIn();
-        m_gpuHandler.assertAboveEqLimit(m_gpuBuffers.dp_tempGcell, m_numElements, 0);
-        m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_tempGcell, m_numElements, m_gridTotal+1);
+        AssertData::assertAboveEqLimit<int>(m_gpuBuffers.dp_tempGcell, m_numElements, 0);
+        AssertData::assertBelowLimit<int>(m_gpuBuffers.dp_tempGcell, m_numElements, m_gridTotal+1);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking tempGndx"); Logger::instance().tabIn();
-        m_gpuHandler.assertAboveEqLimit(m_gpuBuffers.dp_tempGndx,  m_numElements, 0);
-        m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_tempGndx,  m_numElements, m_numElements+1);
+        AssertData::assertAboveEqLimit<int>(m_gpuBuffers.dp_tempGndx,  m_numElements, 0);
+        AssertData::assertBelowLimit<int>(m_gpuBuffers.dp_tempGndx,  m_numElements, m_numElements+1);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking undx"); Logger::instance().tabIn();
-        m_gpuHandler.assertAllEqual(m_gpuBuffers.dp_undx,  m_numElements, (uint)GRID_UNDEF);
+        AssertData::assertAllEqual<uint>(m_gpuBuffers.dp_undx,  m_numElements, (uint)GRID_UNDEF);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checks successful");
@@ -659,10 +674,30 @@ void NeighborhoodSearch::countingSort()
 
 
     // call shader countingSort
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, *m_gpuBuffers.dp_pos);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, *m_gpuBuffers.dp_gcell);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, *m_gpuBuffers.dp_gndx);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, *m_gpuBuffers.dp_gridoff);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, *m_gpuBuffers.dp_grid);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, *m_gpuBuffers.dp_tempPos);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, *m_gpuBuffers.dp_tempGcell);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, *m_gpuBuffers.dp_tempGndx);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, *m_gpuBuffers.dp_undx);
+
     m_countingSortShader.use();
     m_countingSortShader.update("pnum", m_numElements);
     glDispatchCompute(m_numBlocks, 1, 1);
     glMemoryBarrier (GL_ALL_BARRIER_BITS);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, 0);
 
 
 
@@ -673,76 +708,30 @@ void NeighborhoodSearch::countingSort()
         Logger::instance().print("Checking data for countingSort:"); Logger::instance().tabIn();
 
         Logger::instance().print("Checking pos"); Logger::instance().tabIn();
-        m_gpuHandler.assertAtomsAreInBounds(m_gpuBuffers.dp_pos, m_numElements, m_gridMin, m_gridMax);
+        AssertData::assertAtomsAreInBounds(m_gpuBuffers.dp_pos, m_numElements, m_gridMin, m_gridMax);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking gcell"); Logger::instance().tabIn();
-        m_gpuHandler.assertAboveEqLimit(m_gpuBuffers.dp_gcell, m_numElements, (uint)0);
-        m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_gcell, m_numElements, (uint)m_gridTotal+1);
+        AssertData::assertAboveEqLimit<int>(m_gpuBuffers.dp_gcell, m_numElements, (uint)0);
+        AssertData::assertBelowLimit<int>(m_gpuBuffers.dp_gcell, m_numElements, (uint)m_gridTotal+1);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking gndx"); Logger::instance().tabIn();
-        m_gpuHandler.assertAboveEqLimit(m_gpuBuffers.dp_gndx,  m_numElements, 0);
-        m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_gndx,  m_numElements, m_numElements+1);
+        AssertData::assertAboveEqLimit<int>(m_gpuBuffers.dp_gndx,  m_numElements, 0);
+        AssertData::assertBelowLimit<int>(m_gpuBuffers.dp_gndx,  m_numElements, m_numElements+1);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking grid"); Logger::instance().tabIn();
-        m_gpuHandler.assertAboveEqLimit(m_gpuBuffers.dp_grid,  m_numElements, (uint)0);
-        m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_grid,  m_numElements, m_numElements+1);
+        AssertData::assertAboveEqLimit<int>(m_gpuBuffers.dp_grid,  m_numElements, (uint)0);
+        AssertData::assertBelowLimit<int>(m_gpuBuffers.dp_grid,  m_numElements, m_numElements+1);
         Logger::instance().tabOut();
 
         Logger::instance().print("Checking undx"); Logger::instance().tabIn();
-        m_gpuHandler.assertAboveEqLimit(m_gpuBuffers.dp_undx,  m_numElements, (uint)0);
-        m_gpuHandler.assertBelowLimit(m_gpuBuffers.dp_undx,  m_numElements, (uint)(m_numElements+1));
+        AssertData::assertAboveEqLimit<int>(m_gpuBuffers.dp_undx,  m_numElements, (uint)0);
+        AssertData::assertBelowLimit<int>(m_gpuBuffers.dp_undx,  m_numElements, (uint)(m_numElements+1));
         Logger::instance().tabOut();
 
         Logger::instance().print("Checks successful");
         Logger::instance().tabOut();
     }
-}
-
-
-
-
-
-
-void NeighborhoodSearch::find(int selectedAtomIdx, bool findOnlyNeighborsOfSelectedAtom)
-{
-    m_applicationTimer.start();
-
-    if (findOnlyNeighborsOfSelectedAtom) {
-        findSelectedAtomsNeighbors(selectedAtomIdx);
-    } else {
-        colorAtomsInRadius();
-    }
-
-    m_applicationTimer.stop();
-}
-
-void NeighborhoodSearch::findSelectedAtomsNeighbors(int selectedAtomIdx)
-{
-    // reset search results
-    m_gpuHandler.fillSSBOInt(m_gpuBuffers.dp_searchRes, m_numElements, 0);
-
-    m_findSelectedAtomsNeighborsShader.use();
-    m_findSelectedAtomsNeighborsShader.update("selectedAtomUndx", selectedAtomIdx);
-    m_findSelectedAtomsNeighborsShader.update("pnum",             m_numElements);
-    m_findSelectedAtomsNeighborsShader.update("radius2",          m_searchRadius*m_searchRadius);
-    m_findSelectedAtomsNeighborsShader.update("gridAdjCnt",       m_gridAdjCnt);
-    m_findSelectedAtomsNeighborsShader.update("searchCellOff",    m_gridAdjOff);
-    glUniform1iv(glGetUniformLocation(m_findSelectedAtomsNeighborsShader.getProgramHandle(),"gridAdj"), 216, m_gridAdj);
-    glDispatchCompute(m_numBlocks, 1, 1);
-    glMemoryBarrier (GL_ALL_BARRIER_BITS);
-}
-
-void NeighborhoodSearch::colorAtomsInRadius()
-{
-    m_colorAtomsInRadiusShader.use();
-    m_colorAtomsInRadiusShader.update("pnum",          m_numElements);
-    m_colorAtomsInRadiusShader.update("radius2",       m_searchRadius*m_searchRadius);
-    m_colorAtomsInRadiusShader.update("gridAdjCnt",    m_gridAdjCnt);
-    m_colorAtomsInRadiusShader.update("searchCellOff", m_gridAdjOff);
-    glUniform1iv(glGetUniformLocation(m_colorAtomsInRadiusShader.getProgramHandle(),"gridAdj"), 216, m_gridAdj);
-    glDispatchCompute(m_numBlocks, 1, 1);
-    glMemoryBarrier (GL_ALL_BARRIER_BITS);
 }

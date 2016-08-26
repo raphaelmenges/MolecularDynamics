@@ -22,11 +22,17 @@
 
 
 
+
+
+
 /*
  * DEFINES
  */
 #define WIDTH 1280
 #define HEIGHT 720
+
+
+
 
 
 
@@ -36,28 +42,21 @@
 // window
 GLFWwindow* mp_Window;
 
-// interaction
-std::unique_ptr<OrbitCamera> mp_camera;
-glm::vec2 m_CameraDeltaMovement;
-float m_CameraSmoothTime;
-bool m_rotateCamera = false;
-PickingTexture m_pickingTexture;
 
-// rendering
-glm::vec3 m_lightDirection;
-static bool m_drawGrid  = true;
+// interaction
+std::unique_ptr<OrbitCamera>    mp_camera;
+glm::vec2                       m_CameraDeltaMovement;
+float                           m_CameraSmoothTime;
+bool                            m_rotateCamera = false;
+PickingTexture                  m_pickingTexture;
+
 
 // protein
-ProteinLoader m_proteinLoader;
-int m_selectedAtom = -1;
-int m_selectedProtein = 0;
-float m_proteinMoveSpeed = 2.f;
+ProteinLoader   m_proteinLoader;
+int             m_selectedAtom = -1;
+int             m_selectedProtein = 0;
+float           m_proteinMoveSpeed = 2.f;
 
-// gpu
-GLuint m_atomsSSBO;
-GLuint m_pointsVBO;
-int    m_numVBOEntries;
-GLuint m_pointsVAO;
 
 // imgui gpu
 GLint m_maxStorageBufferBindings = -1;
@@ -67,22 +66,53 @@ GLint m_maxComputeShaderStorageBlocks = -1;
 int   m_work_grp_cnt[3];
 int   m_work_grp_size[3];
 
+
+// rendering
+glm::vec3   m_lightDirection;
+static bool m_drawGrid  = true;
+ShaderProgram m_impostorProgram;
+ShaderProgram m_linesProgram;
+ShaderProgram m_searchRadiusProgram;
+ShaderProgram m_pickingProgram;
+GLuint m_pointsVBO;
+GLuint m_pointsVAO;
+int    m_numVBOEntries;
+
+
 // neighborhood search
-NeighborhoodSearch m_search;
-float m_searchRadius;
-glm::ivec3 m_gridRes;
-static bool  m_findOnlySelectedAtomsNeighbors = false;
-bool  m_updateNeighborhoodSearch = false;
+NeighborhoodSearch  m_search;
+float               m_searchRadius;
+glm::ivec3          m_gridRes;
+static bool         m_findOnlySelectedAtomsNeighbors = false;
+bool                m_updateNeighborhoodSearch = false;
+ShaderProgram       m_extractElementPositionsShader;
+ShaderProgram       m_findSelectedAtomsNeighborsShader;
+ShaderProgram       m_colorAtomsInRadiusShader;
+GLuint m_atomsSSBO;
+GLuint* m_positionsSSBO;
+GLuint* m_searchResultsSSBO;
+
+
+// time
+Timer m_runTimer;
+Timer m_applicationTimer;
+
 
 // for debug
 int m_debugOffset = 0;
 
 
 
+
+
+
 /*
- * forward declaration
+ * forward declarations
  */
 void setup();
+void compileShaderPrograms();
+void setupBuffers();
+
 void keyCallback(int key, int scancode, int action, int mods);
 void mouseButtonCallback(int button, int action, int mods);
 void scrollCallback(double xoffset, double yoffset);
@@ -97,8 +127,16 @@ void run();
 void setupLinesBuffer();
 void drawGrid(ShaderProgram linesProgram);
 void drawSearchRadius(ShaderProgram searchRadiusProgram);
+
+void findNeighbors(Neighborhood& neighborhood);
+void findSelectedAtomsNeighbors(Neighborhood& neighborhood, int selectedAtomIdx);
+void colorAtomsInRadius(Neighborhood& neighborhood);
+
 void fillPickingTexture(ShaderProgram pickingProgram);
 void updateGUI();
+
+
+
 
 
 
@@ -117,6 +155,13 @@ void setup()
      */
     ImGui_ImplGlfwGL3_Init(mp_Window, true);
     ImGuiIO& io = ImGui::GetIO();
+
+    /*
+     * setup opengl
+     */
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glEnable(GL_CULL_FACE);
 
     /*
      * register callbacks
@@ -171,6 +216,52 @@ void setup()
      * init picking buffer
      */
     m_pickingTexture.Init(WIDTH, HEIGHT);
+}
+void compileShaderPrograms()
+{
+    /*
+     * setup shader programs
+     */
+    m_impostorProgram     = ShaderProgram("/NeighborSearch/renderAtoms/impostor.vert", "/NeighborSearch/renderAtoms/impostor.geom", "/NeighborSearch/renderAtoms/impostor.frag");
+    m_linesProgram        = ShaderProgram("/NeighborSearch/renderLines/lines.vert", "/NeighborSearch/renderLines/lines.frag");
+    m_searchRadiusProgram = ShaderProgram("/NeighborSearch/renderSearchRadius/radius.vert", "/NeighborSearch/renderSearchRadius/radius.geom", "/NeighborSearch/renderSearchRadius/radius.frag");
+    m_pickingProgram      = ShaderProgram("/NeighborSearch/atomPicking/picking.vert", "/NeighborSearch/atomPicking/picking.geom", "/NeighborSearch/atomPicking/picking.frag");
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR) {
+        //Logger::instance().print("GLerror after init shader programs: " + std::to_string(err), Logger::Mode::ERROR);
+    }
+
+    /*
+     * setup compute shader
+     */
+    m_extractElementPositionsShader = ShaderProgram("/NeighborSearch/neighborhoodSearch/extractElementPositions.comp");
+    m_findSelectedAtomsNeighborsShader  = ShaderProgram("/NeighborSearch/searchApplication/findSelectedAtomsNeighbors.comp");
+    m_colorAtomsInRadiusShader          = ShaderProgram("/NeighborSearch/searchApplication/colorAtomsInRadius.comp");
+}
+
+void setupBuffers()
+{
+    /*
+     * generate, bind, fill and then unbind atom ssbo buffer
+     */
+    m_atomsSSBO;
+    glGenBuffers(1, &m_atomsSSBO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_atomsSSBO);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(SimpleAtom) * m_proteinLoader.getNumberOfAllAtoms(), m_proteinLoader.getAllAtoms().data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_atomsSSBO);
+
+    /*
+     * init positions ssbo
+     */
+    m_positionsSSBO = new GLuint;
+    GPUHandler::initSSBO<glm::vec4>(m_positionsSSBO, m_proteinLoader.getNumberOfAllAtoms());
+
+    /*
+     * init search results ssbo
+     */
+    m_searchResultsSSBO = new GLuint;
+    GPUHandler::initSSBO<int>(m_searchResultsSSBO, m_proteinLoader.getNumberOfAllAtoms());
 }
 
 
@@ -306,6 +397,17 @@ void updateAtomsSSBO()
     GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
     memcpy(p, m_proteinLoader.getAllAtoms().data(), sizeof(SimpleAtom)*m_proteinLoader.getNumberOfAllAtoms());
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+    int numBlocks = ceil((float)m_proteinLoader.getNumberOfAllAtoms() / BLOCK_SIZE);
+
+    // update element positions
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_atomsSSBO);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, *m_positionsSSBO);
+
+    m_extractElementPositionsShader.use();
+    m_extractElementPositionsShader.update("pnum", m_proteinLoader.getNumberOfAllAtoms());
+    glDispatchCompute(numBlocks, 1, 1);
+    glMemoryBarrier (GL_ALL_BARRIER_BITS);
 }
 
 void initNeighborhoodSearch(glm::vec3 gridResolution, float searchRadius)
@@ -333,38 +435,10 @@ void initNeighborhoodSearch(glm::vec3 gridResolution, float searchRadius)
  */
 void run()
 {
-
     /*
-     * setup opengl
+     * generate lines for the grid
      */
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-    glEnable(GL_CULL_FACE);
-
-    /*
-     * setup shader programs
-     */
-    ShaderProgram impostorProgram     = ShaderProgram("/NeighborSearch/renderAtoms/impostor.vert", "/NeighborSearch/renderAtoms/impostor.geom", "/NeighborSearch/renderAtoms/impostor.frag");
-    ShaderProgram linesProgram        = ShaderProgram("/NeighborSearch/renderLines/lines.vert", "/NeighborSearch/renderLines/lines.frag");
-    ShaderProgram searchRadiusProgram = ShaderProgram("/NeighborSearch/renderSearchRadius/radius.vert", "/NeighborSearch/renderSearchRadius/radius.geom", "/NeighborSearch/renderSearchRadius/radius.frag");
-    ShaderProgram pickingProgram      = ShaderProgram("/NeighborSearch/atomPicking/picking.vert", "/NeighborSearch/atomPicking/picking.geom", "/NeighborSearch/atomPicking/picking.frag");
-    GLenum err = glGetError();
-    if (err != GL_NO_ERROR) {
-        //Logger::instance().print("GLerror after init shader programs: " + std::to_string(err), Logger::Mode::ERROR);
-    }
-
-    /*
-     * generate, bind, fill and then unbind atom ssbo buffer
-     */
-    m_atomsSSBO;
-    glGenBuffers(1, &m_atomsSSBO);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_atomsSSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(SimpleAtom) * m_proteinLoader.getNumberOfAllAtoms(), m_proteinLoader.getAllAtoms().data(), GL_STATIC_DRAW);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_atomsSSBO);
-
     setupLinesBuffer();
-
 
     /*
      * setup camera
@@ -392,11 +466,18 @@ void run()
     );
 
 
+    /*
+     * setup neighborhood
+     */
+    Neighborhood neighborhood;
+
 
     /*
      * setup cursor position
      */
     float prevCursorX, prevCursorY = 0;
+
+
 
     /*
      * renderloop
@@ -471,37 +552,50 @@ void run()
         /*
          * setup neighborhood search
          */
-        m_search.run();
+        m_runTimer.start();
+        m_search.run(m_positionsSSBO, neighborhood);
+        m_runTimer.stop();
 
         /*
          * find neighbors
          */
-        m_search.find(m_selectedAtom, m_findOnlySelectedAtomsNeighbors);
+        m_applicationTimer.start();
+        findNeighbors(neighborhood);
+        m_applicationTimer.stop();
 
         /*
          * draw proteins as impostor
          */
-        impostorProgram.use();
-        impostorProgram.update("view", mp_camera->getViewMatrix());
-        impostorProgram.update("projection", mp_camera->getProjectionMatrix());
-        impostorProgram.update("cameraWorldPos", mp_camera->getPosition());
-        impostorProgram.update("probeRadius", 0.f);
-        impostorProgram.update("lightDir", m_lightDirection);
-        impostorProgram.update("selectedIndex", m_selectedAtom);
-        impostorProgram.update("proteinNum", (int)m_proteinLoader.getNumberOfProteins());
-        impostorProgram.update("selectedProtein", m_selectedProtein);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_atomsSSBO);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, *m_searchResultsSSBO);
+        m_impostorProgram.use();
+        m_impostorProgram.update("view", mp_camera->getViewMatrix());
+        m_impostorProgram.update("projection", mp_camera->getProjectionMatrix());
+        m_impostorProgram.update("cameraWorldPos", mp_camera->getPosition());
+        m_impostorProgram.update("probeRadius", 0.f);
+        m_impostorProgram.update("lightDir", m_lightDirection);
+        m_impostorProgram.update("selectedIndex", m_selectedAtom);
+        m_impostorProgram.update("proteinNum", (int)m_proteinLoader.getNumberOfProteins());
+        m_impostorProgram.update("selectedProtein", m_selectedProtein);
         glDrawArrays(GL_POINTS, 0, (GLsizei)m_proteinLoader.getNumberOfAllAtoms());
 
         /*
          * draw the grid
          */
         if (m_drawGrid) {
-            drawGrid(linesProgram);
+            drawGrid(m_linesProgram);
         }
 
-        drawSearchRadius(searchRadiusProgram);
+        /*
+         * drawing a circle around the selected atom
+         */
+        drawSearchRadius(m_searchRadiusProgram);
 
-        fillPickingTexture(pickingProgram);
+        /*
+         * filling the picking texture with the visible
+         * atom ids for every pixel
+         */
+        fillPickingTexture(m_pickingProgram);
 
         /*
          * update gui
@@ -683,6 +777,76 @@ void drawSearchRadius(ShaderProgram searchRadiusProgram)
     }
 }
 
+
+
+/*
+ * applying the neighborhood informations
+ */
+void findNeighbors(Neighborhood& neighborhood)
+{
+    m_applicationTimer.start();
+
+    if (m_findOnlySelectedAtomsNeighbors) {
+        findSelectedAtomsNeighbors(neighborhood, m_selectedAtom);
+    } else {
+        colorAtomsInRadius(neighborhood);
+    }
+
+    m_applicationTimer.stop();
+}
+
+void findSelectedAtomsNeighbors(Neighborhood& neighborhood, int selectedAtomIdx)
+{
+    // reset search results
+    GPUHandler::fillSSBO<int>(m_searchResultsSSBO, m_proteinLoader.getNumberOfAllAtoms(), 0);
+
+    int numBlocks = ceil((float)m_proteinLoader.getNumberOfAllAtoms() / BLOCK_SIZE);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_atomsSSBO);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, *neighborhood.dp_particleCell);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, *neighborhood.dp_particleCellIndex);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, *neighborhood.dp_gridCellCounts);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, *neighborhood.dp_gridCellOffsets);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, *neighborhood.dp_grid);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, *neighborhood.dp_particleOriginalIndex);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, *m_searchResultsSSBO);
+
+    m_findSelectedAtomsNeighborsShader.use();
+    m_findSelectedAtomsNeighborsShader.update("selectedAtomUndx", selectedAtomIdx);
+    m_findSelectedAtomsNeighborsShader.update("pnum",             m_proteinLoader.getNumberOfAllAtoms());
+    m_findSelectedAtomsNeighborsShader.update("radius2",          neighborhood.searchRadius * neighborhood.searchRadius);
+    m_findSelectedAtomsNeighborsShader.update("gridAdjCnt",       neighborhood.numberOfSearchCells);
+    m_findSelectedAtomsNeighborsShader.update("searchCellOff",    neighborhood.startCellOffset);
+    glUniform1iv(glGetUniformLocation(m_findSelectedAtomsNeighborsShader.getProgramHandle(),"gridAdj"), 216, neighborhood.p_searchCellOffsets);
+    glDispatchCompute(numBlocks, 1, 1);
+    glMemoryBarrier (GL_ALL_BARRIER_BITS);
+}
+
+void colorAtomsInRadius(Neighborhood& neighborhood)
+{
+    int numBlocks = ceil((float)m_proteinLoader.getNumberOfAllAtoms() / BLOCK_SIZE);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_atomsSSBO);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, *neighborhood.dp_particleCell);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, *neighborhood.dp_particleCellIndex);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, *neighborhood.dp_gridCellCounts);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, *neighborhood.dp_gridCellOffsets);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, *neighborhood.dp_grid);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, *neighborhood.dp_particleOriginalIndex);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, *m_searchResultsSSBO);
+
+    m_colorAtomsInRadiusShader.use();
+    m_colorAtomsInRadiusShader.update("pnum",             m_proteinLoader.getNumberOfAllAtoms());
+    m_colorAtomsInRadiusShader.update("radius2",          neighborhood.searchRadius * neighborhood.searchRadius);
+    m_colorAtomsInRadiusShader.update("gridAdjCnt",       neighborhood.numberOfSearchCells);
+    m_colorAtomsInRadiusShader.update("searchCellOff",    neighborhood.startCellOffset);
+    glUniform1iv(glGetUniformLocation(m_colorAtomsInRadiusShader.getProgramHandle(),"gridAdj"), 216, neighborhood.p_searchCellOffsets);
+    glDispatchCompute(numBlocks, 1, 1);
+    glMemoryBarrier (GL_ALL_BARRIER_BITS);
+}
+
+
+
 void fillPickingTexture(ShaderProgram pickingProgram)
 {
     m_pickingTexture.EnableWriting();
@@ -836,11 +1000,10 @@ void updateGUI()
                     m_gridRes.z != oldGridRes.z) {
                 m_updateNeighborhoodSearch = true;
             }
-            std::string setupTimeText = "Setup time: " + std::to_string(m_search.getRunExecutionTime()/1000.0) + " ms";
-            std::string searchTimeText = "Neighborhood search time: " + std::to_string(m_search.getApplicationExecutionTime()/1000.0) + " ms";
+            std::string setupTimeText = "Setup time: " + std::to_string(m_runTimer.getDuration()/1000.0) + " ms";
+            std::string searchTimeText = "Neighborhood search time: " + std::to_string(m_applicationTimer.getDuration()/1000.0) + " ms";
             ImGui::Text(setupTimeText.c_str());
             ImGui::Text(searchTimeText.c_str());
-            ImGui::
             ImGui::Checkbox("Find only neighbors of selected atom", &m_findOnlySelectedAtomsNeighbors);
 
             ImGui::EndMenu();
@@ -873,8 +1036,15 @@ int main()
     Logger::instance().changeTab("     ");
     Logger::instance().print("Start Neighborhood search"); Logger::instance().tabIn();
 
+    /*
+     * general setup
+     */
     setup();
+    compileShaderPrograms();
 
+    /*
+     * get gpu infos for imgui
+     */
     retrieveGPUInfos();
 
     /*
@@ -894,6 +1064,11 @@ int main()
     initNeighborhoodSearch(m_gridRes, m_searchRadius);
     m_searchRadius = m_search.getMaxSearchRadius() - 0.01f;
     m_updateNeighborhoodSearch = true;
+
+    /*
+     * some setups that require the number of atoms
+     */
+    setupBuffers();
 
     /*
      * run application

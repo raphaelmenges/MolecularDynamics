@@ -5,10 +5,10 @@
 #ifndef OPENGL_FRAMEWORK_GPUHANDLER_H
 #define OPENGL_FRAMEWORK_GPUHANDLER_H
 
+#include <vector>
 #include <cstring>
 #include <GL/glew.h>
 #include <Utils/Logger.h>
-#include <vector>
 
 #include "NeighborhoodSearchDefines.h"
 #include "../../executables/NeighborSearch/SimpleAtom.h"
@@ -18,61 +18,90 @@ public:
     /*
      * initialize ssbo of specified size
      */
-    void initSSBOInt(GLuint* ssboHandler, int length);
-    void initSSBOUInt(GLuint* ssboHandler, int length);
-    void initSSBOFloat(GLuint* ssboHandler, int length);
-    void initSSBOFloat3(GLuint* ssboHandler, int length);
-    void initSSBOFloat4(GLuint* ssboHandler, int length);
+    template<class T>
+    static void initSSBO(GLuint* ssboHandler, int length){
+        glGenBuffers(1, ssboHandler);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(T)*length, NULL, GL_DYNAMIC_COPY);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+        GLenum err = glGetError();
+        if (err != GL_NO_ERROR) {
+            Logger::instance().print("Error while initializing SSBO: " + std::to_string(err), Logger::Mode::ERROR);
+        }
+    }
 
     /*
      * fill every block of the ssbo with the provided value
      */
-    void fillSSBOInt(GLuint* ssboHandler, int length, int value);
-    void fillSSBOUInt(GLuint* ssboHandler, int length, uint value);
+    template<class T>
+    static void fillSSBO(GLuint* ssboHandler, int length, T value){
+        T* values = new T[length];
+        std::fill_n(values, length, value);
+
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler);
+        GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+        memcpy(p, values, sizeof(T)*length);
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+        GLenum err = glGetError();
+        if (err != GL_NO_ERROR) {
+            Logger::instance().print("Error while filling SSBO with ints: " + std::to_string(err), Logger::Mode::ERROR);
+        }
+
+        delete[] values;
+    }
 
     /*
-     * copy data to ssbo
+     * transfer data from or to the ssbo
      */
-    void copyDataToSSBOInt(GLuint* targetHandler, int* data, int length);
-    void copyDataToSSBOUInt(GLuint* targetHandler, uint* data, int length);
-    void copyDataToSSBOFloat(GLuint* targetHandler, float* data, int length);
-    void copyDataToSSBOFloat3(GLuint* targetHandler, glm::vec3* data, int length);
+    template<class T>
+    static void copyDataToSSBO(GLuint* targetHandler, T* data, int length){
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, *targetHandler);
+        GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+        memcpy(p, &data, sizeof(T)*length);
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    }
+    template<class T>
+    static T* getDataFromSSBO(GLuint* ssboHandler, int length)
+    {
+        T* data = new T[length];
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler);
+        GLuint *ptr;
+        ptr = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+        for (int i = 0; i < length; i++) {
+            data[i] = *(((T*)ptr)+i);
+        }
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+        return data;
+    }
 
     /*
-     * copy data from ssbo to ssbo
+     * prints the specified number of entries of the ssbo
      */
-    void copySSBOtoSSBOUInt(GLuint* targetHandler, GLuint* dataHandler, int length);
-    void copySSBOtoSSBOFloat4(GLuint* targetHandler, GLuint* dataHandler, int length);
-
-    /*
-     * for debugging
-     */
-    void printSSBODataInt(GLuint* ssboHandler, int length);
-    void printSSBODataUInt(GLuint* ssboHandler, int length);
-    void printSSBODataFloat(GLuint* ssboHandler, int length);
-    void printSSBODataFloat3(GLuint* ssboHandler, int length);
-    void printSSBODataFloat4(GLuint* ssboHandler, int length);
-
-    void assertAtomsAreInBounds(GLuint* ssboHandler, int length, glm::vec3 min, glm::vec3 max);
-    void assertSum(GLuint* ssboHandler, int length, int sum);
-    void assertBelowLimit(GLuint* ssboHandler, int length, int limit);
-    void assertBelowLimit(GLuint* ssboHandler, int length, uint limit);
-    void assertAboveLimit(GLuint* ssboHandler, int length, int limit);
-    void assertAboveLimit(GLuint* ssboHandler, int length, uint limit);
-    void assertAboveEqLimit(GLuint* ssboHandler, int length, int limit);
-    void assertAboveEqLimit(GLuint* ssboHandler, int length, uint limit);
-    void assertAllEqual(GLuint* ssboHandler, int length, int value);
-    void assertAllEqual(GLuint* ssboHandler, int length, uint value);
-    void assertArraysEqualInt(GLuint* ssboHandler1, GLuint* ssboHandler2, int length);
-    void assertArraysEqualUInt(GLuint* ssboHandler1, GLuint* ssboHandler2, int length);
-    void assertDataMonotInc(GLuint* ssboHandler, int length, int startValue);
-    void assertCellContent(GLuint* cellHandler,GLuint* cellCntHandler, int length1, int length2);
+    template<class T>
+    static void printSSBOData(GLuint* ssboHandler, int length){
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, *ssboHandler);
+        GLuint *ptr;
+        ptr = (GLuint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+        Logger::instance().print("SSBO:"); Logger::instance().tabIn();
+        for (int i = 0; i < length; i++) {
+            T val = *(((T*)ptr)+i);
+            Logger::instance().print(std::to_string(i) + ": " + std::to_string(val));
+        }
+        Logger::instance().tabOut();
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    }
 
     /*
      * deleting ssbo
      */
-    void deleteSSBO(GLuint* ssboHandler);
-
+    static void deleteSSBO(GLuint* ssboHandler)
+    {
+        glDeleteBuffers(1, ssboHandler);
+    }
 };
 
 
