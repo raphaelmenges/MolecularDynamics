@@ -52,7 +52,7 @@
       <file leaf-file-name="main.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/main.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="197">
+            <state relative-caret-position="7848">
               <caret line="436" column="0" selection-start-line="436" selection-start-column="0" selection-end-line="436" selection-end-column="0" />
               <folding>
                 <element signature="e#64#84#0" expanded="true" />
@@ -70,15 +70,6 @@
                 <element signature="e#22362#22697#0" expanded="false" />
                 <element signature="e#22699#24416#0" expanded="false" />
                 <element signature="e#24418#25851#0" expanded="false" />
-                <marker date="1472229483568" expanded="false" signature="8169:8558" ph="{...}" />
-                <marker date="1472229483568" expanded="false" signature="8612:8688" ph="{...}" />
-                <marker date="1472229483568" expanded="false" signature="8717:9117" ph="{...}" />
-                <marker date="1472229483568" expanded="false" signature="9164:9850" ph="{...}" />
-                <marker date="1472229483568" expanded="false" signature="9908:10736" ph="{...}" />
-                <marker date="1472229483568" expanded="false" signature="10761:11517" ph="{...}" />
-                <marker date="1472229483568" expanded="false" signature="25909:26291" ph="{...}" />
-                <marker date="1472229483568" expanded="false" signature="26310:34285" ph="{...}" />
-                <marker date="1472229483568" expanded="false" signature="34300:35417" ph="{...}" />
               </folding>
             </state>
           </provider>
@@ -87,7 +78,7 @@
       <file leaf-file-name="NeighborhoodSearch.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="631">
+            <state relative-caret-position="3150">
               <caret line="175" column="0" selection-start-line="175" selection-start-column="0" selection-end-line="175" selection-end-column="0" />
               <folding>
                 <element signature="e#77#230#0" expanded="false" />
@@ -131,7 +122,7 @@
       <file leaf-file-name="NeighborhoodSearch.h" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1116">
+            <state relative-caret-position="1314">
               <caret line="73" column="10" selection-start-line="73" selection-start-column="10" selection-end-line="73" selection-end-column="10" />
               <folding />
             </state>
@@ -158,7 +149,7 @@
       <file leaf-file-name="NeighborhoodSearchDefines.h" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/libraries/Search/NeighborhoodSearchDefines.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="502">
+            <state relative-caret-position="1404">
               <caret line="78" column="19" selection-start-line="78" selection-start-column="19" selection-end-line="78" selection-end-column="19" />
               <folding />
             </state>
@@ -789,12 +780,12 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="24" width="1920" height="1056" extended-state="6" />
-    <editor active="true" />
+    <editor active="false" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.16770834" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.16770834" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.28179044" sideWeight="0.49598286" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="CMake" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2909461" sideWeight="0.49598286" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="CMake" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.13733469" sideWeight="0.49598286" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.36012208" sideWeight="0.5040171" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.33062056" sideWeight="0.49598286" order="2" side_tool="false" content_ui="tabs" />
@@ -1060,7 +1051,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="180">
           <caret line="10" column="26" selection-start-line="10" selection-start-column="26" selection-end-line="10" selection-end-column="26" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1068,7 +1058,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="198">
           <caret line="11" column="26" selection-start-line="11" selection-start-column="26" selection-end-line="11" selection-end-column="26" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1097,7 +1086,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="521">
           <caret line="86" column="26" selection-start-line="86" selection-start-column="26" selection-end-line="86" selection-end-column="26" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1105,7 +1093,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="342">
           <caret line="19" column="75" selection-start-line="19" selection-start-column="75" selection-end-line="19" selection-end-column="75" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1113,7 +1100,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="306">
           <caret line="17" column="25" selection-start-line="17" selection-start-column="25" selection-end-line="17" selection-end-column="25" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1121,7 +1107,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="324">
           <caret line="18" column="31" selection-start-line="18" selection-start-column="31" selection-end-line="18" selection-end-column="31" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1129,7 +1114,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="270">
           <caret line="15" column="11" selection-start-line="15" selection-start-column="11" selection-end-line="15" selection-end-column="11" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1137,13 +1121,12 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="432">
           <caret line="24" column="52" selection-start-line="24" selection-start-column="52" selection-end-line="24" selection-end-column="52" />
-          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/libraries/Search/NeighborhoodSearchDefines.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="502">
+        <state relative-caret-position="1404">
           <caret line="78" column="19" selection-start-line="78" selection-start-column="19" selection-end-line="78" selection-end-column="19" />
           <folding />
         </state>
@@ -1151,7 +1134,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/main.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="197">
+        <state relative-caret-position="7848">
           <caret line="436" column="0" selection-start-line="436" selection-start-column="0" selection-end-line="436" selection-end-column="0" />
           <folding>
             <element signature="e#64#84#0" expanded="true" />
@@ -1169,22 +1152,13 @@
             <element signature="e#22362#22697#0" expanded="false" />
             <element signature="e#22699#24416#0" expanded="false" />
             <element signature="e#24418#25851#0" expanded="false" />
-            <marker date="1472229483568" expanded="false" signature="8169:8558" ph="{...}" />
-            <marker date="1472229483568" expanded="false" signature="8612:8688" ph="{...}" />
-            <marker date="1472229483568" expanded="false" signature="8717:9117" ph="{...}" />
-            <marker date="1472229483568" expanded="false" signature="9164:9850" ph="{...}" />
-            <marker date="1472229483568" expanded="false" signature="9908:10736" ph="{...}" />
-            <marker date="1472229483568" expanded="false" signature="10761:11517" ph="{...}" />
-            <marker date="1472229483568" expanded="false" signature="25909:26291" ph="{...}" />
-            <marker date="1472229483568" expanded="false" signature="26310:34285" ph="{...}" />
-            <marker date="1472229483568" expanded="false" signature="34300:35417" ph="{...}" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="631">
+        <state relative-caret-position="3150">
           <caret line="175" column="0" selection-start-line="175" selection-start-column="0" selection-end-line="175" selection-end-column="0" />
           <folding>
             <element signature="e#77#230#0" expanded="false" />
@@ -1226,7 +1200,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1116">
+        <state relative-caret-position="1314">
           <caret line="73" column="10" selection-start-line="73" selection-start-column="10" selection-end-line="73" selection-end-column="10" />
           <folding />
         </state>
