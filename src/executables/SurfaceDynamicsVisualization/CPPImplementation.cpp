@@ -1,121 +1,76 @@
-#version 430 core
+#include "CPPImplementation.h"
 
-// ## Workgroup layout (just linear of atoms)
-layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+#include <iostream>
 
-// ## Constant values
-const int neighborsMaxCount = 200;
-
-// ## Global variables
-
-// All cutting faces, also those who gets cut away by others
-int cuttingFaceCount = 0;
-vec4 cuttingFaces[neighborsMaxCount];
-vec3 cuttingFaceCenters[neighborsMaxCount];
-
-// Selection of cutting faces which get intersected pairwaise and produce endpoints
-int cuttingFaceIndicators[neighborsMaxCount]; // Indicator whether cutting face was cut away by other (1 == not cut away)
-int cuttingFaceIndicesCount = 0; // Count of not cut away cutting faces
-int cuttingFaceIndices[neighborsMaxCount]; // Indices of cutting faces which are not cut away by other
-
-// ## Uniforms
-uniform int atomCount;
-uniform float probeRadius;
-
-// ## Struct of atom
-struct AtomStruct
+void CPPImplementation::setup()
 {
-    vec3 center;
-    float radius;
-};
-
-// ## SSBO with atoms
-layout(std430, binding = 0) readonly restrict buffer AtomBuffer
-{
-    AtomStruct atoms[];
-};
-
-// ## Atomic counter for indices in image buffers
-layout(binding = 1) uniform atomic_uint InternalCount;
-layout(binding = 2) uniform atomic_uint SurfaceCount;
-
-// ## Image buffers with output indices of internal and surface atoms
-layout(binding = 3, r32ui) restrict writeonly uniform uimageBuffer InternalIndices;
-layout(binding = 4, r32ui) restrict writeonly uniform uimageBuffer SurfaceIndices;
-
-// ## Save as internal
-void saveAsInternal()
-{
-    // Increment atomic counter
-    uint idx = atomicCounterIncrement(InternalCount);
-
-    // Save index of atom at index of atomic counter in image
-    imageStore(InternalIndices, int(idx), uvec4(gl_GlobalInvocationID.x));
+    cuttingFaceCount = 0;
+    cuttingFaceIndicesCount = 0;
 }
 
-// ## Save as surface
-void saveAsSurface()
+// ## Check for parallelism
+bool CPPImplementation::checkParallelism(
+    glm::vec4 plane,
+    glm::vec4 otherPlane) const
 {
-    // Increment atomic counter
-    uint idx = atomicCounterIncrement(SurfaceCount);
-
-    // Save index of atom at index of atomic counter in image
-    imageStore(SurfaceIndices, int(idx), uvec4(gl_GlobalInvocationID.x));
+    return (1.0 <= glm::abs(glm::dot(glm::vec3(plane.x, plane.y, plane.z), glm::vec3(otherPlane.x, otherPlane.y, otherPlane.z))));
 }
 
-// ## Determines whether point lies in halfspace of plane direction
+// ## Determines whether point lies in halfspace of plane's normal direction
 // http://stackoverflow.com/questions/15688232/check-which-side-of-a-plane-points-are-on
-bool pointInHalfspaceOfPlane(
-    vec4 plane,
-    vec3 point)
+bool CPPImplementation::pointInHalfspaceOfPlane(
+    glm::vec4 plane,
+    glm::vec3 point) const
 {
-    // Use negative distance of plane
-    return 0 < dot(plane, vec4(point, -1));
+    // Use negative distance of plane to subtract it from distance between point and plane
+    return 0 < glm::dot(plane, glm::vec4(point, -1));
 }
 
-// ## Intersection line of two planes
+// ## Intersection line of two planes (Planes should not be parallel, which is impossible due to cutting face tests)
 // http://stackoverflow.com/questions/6408670/line-of-intersection-between-two-planes
-void intersectPlanes(
-    vec4 plane,
-    vec4 otherPlane,
-    inout vec3 linePoint,
-    inout vec3 lineDir)
+void CPPImplementation::intersectPlanes(
+    glm::vec4 plane,
+    glm::vec4 otherPlane,
+    glm::vec3 &linePoint,
+    glm::vec3 &lineDir) const
 {
     // Direction of line
-    lineDir = cross(plane.xyz, otherPlane.xyz);
+    lineDir = glm::cross(glm::vec3(plane.x, plane.y, plane.z), glm::vec3(otherPlane.x, otherPlane.y, otherPlane.z));
 
-    // Determinant (should no be zero since no parallel planes tested)
-    float determinant = length(lineDir);
+    // Determinant (should not be zero since no parallel planes tested)
+    float determinant = glm::length(lineDir);
     determinant = determinant * determinant;
 
     // Point on line
     linePoint =
-        (cross(lineDir, otherPlane.xyz) * -plane.w
-        + (cross(plane.xyz, lineDir) * -otherPlane.w))
+        (cross(lineDir, glm::vec3(otherPlane.x, otherPlane.y, otherPlane.z)) * (-plane.w)
+        + (cross(glm::vec3(plane.x, plane.y, plane.z), lineDir) * (-otherPlane.w)))
         / determinant;
 
     // Normalize direction of line
-    lineDir = normalize(lineDir);
+    lineDir = glm::normalize(lineDir);
 }
 
 // ## Part under square root of intersection line and sphere
 // https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
-float underSQRT(
-    vec3 linePoint,
-    vec3 lineDir,
-    vec3 sphereCenter,
-    float sphereRadius)
+float CPPImplementation::underSQRT(
+    glm::vec3 linePoint,
+    glm::vec3 lineDir,
+    glm::vec3 sphereCenter,
+    float sphereRadius) const
 {
-    float underSQRT1 = dot(lineDir, (linePoint - sphereCenter));
+    float underSQRT1 = glm::dot(lineDir, (linePoint - sphereCenter));
     underSQRT1 = underSQRT1 * underSQRT1;
-    float underSQRT2 = length(linePoint - sphereCenter);
+    float underSQRT2 = glm::length(linePoint - sphereCenter);
     underSQRT2 = underSQRT2 * underSQRT2;
     return (underSQRT1 - underSQRT2 + (sphereRadius * sphereRadius));
 }
 
-// ## Function to test whether endpoint is NOT cut away. Called after cutting face list is minimized
-bool testEndpoint(vec3 endpoint, int excludeA, int excludeB)
+// ## Function to test whether endpoint is NOT cut away. Called after cutting face list is optimized
+bool CPPImplementation::testEndpoint(glm::vec3 endpoint, int excludeA, int excludeB) const
 {
+    /* if(logging) { std::cout << "Testing an endpoint: " << endpoint.x << ", " << endpoint.y << ", " << endpoint.z << std::endl; } */
+
     // Iterate over cuttingFaceIndices entries
     for(int i = 0; i < cuttingFaceIndicesCount; i++)
     {
@@ -125,24 +80,39 @@ bool testEndpoint(vec3 endpoint, int excludeA, int excludeB)
         // Do not test against faces which created endpoint
         if(index == excludeA || index == excludeB) { continue; }
 
-        // Test whether endpoint is in halfspace of cut away part
+        // Test whether endpoint is in positive halfspace of cut away part
         if(pointInHalfspaceOfPlane(
             cuttingFaces[index],
             endpoint))
         {
+            /* if(logging) { std::cout << "Endpoint killed by cutting face" << std::endl; } */
             return false;
         }
     }
+    /* if(logging) { std::cout << "Endpoint survived" << std::endl; } */
     return true;
 }
-// ## Main function
-void main()
+
+// ## Execution function
+void CPPImplementation::execute(
+    int executionIndex,
+    int atomCount,
+    float probeRadius,
+    const std::vector<GPUAtom>& atoms,
+    std::vector<unsigned int>& internalIndices,
+    std::vector<unsigned int>& surfaceIndices)
 {
+    // Reset members for new execution
+    setup();
+
     // Index
-    int atomIndex = int(gl_GlobalInvocationID.x);
+    int atomIndex = executionIndex;
 
     // Check whether in range
-    if(atomIndex >= atomCount) { return; }
+    /* if(atomIndex >= atomCount) { return; } */
+
+    /* if(logging) { std::cout << std::endl; } */
+    /* if(logging) { std::cout << "### Execution for atom: " << atomIndex << std::endl; } */
 
     // When no endpoint was generated at all, atom is surface (value is false then)
     bool endpointGenerated = false;
@@ -150,13 +120,13 @@ void main()
     // When one endpoint survives cutting, atom is surface (value is true then)
     bool endpointSurvivesCut = false;
 
-    // ### OWN VALUES ###
+    // Own center
+    glm::vec3 atomCenter = atoms[atomIndex].center;
+    /* if(logging) { std::cout << "Atom center: " << atomCenter.x << ", " << atomCenter.y << ", " << atomCenter.z << std::endl; } */
 
     // Own extended radius
     float atomExtRadius = atoms[atomIndex].radius + probeRadius;
-
-    // Own center
-    vec3 atomCenter = atoms[atomIndex].center;
+    /* if(logging) { std::cout << "Atom extended radius: " << atomExtRadius << std::endl; } */
 
     // ### BUILD UP OF CUTTING FACE LIST ###
 
@@ -169,16 +139,16 @@ void main()
         // ### OTHER'S VALUES ###
 
         // Get values from other atom
-        vec3 otherAtomCenter = atoms[i].center;
+        glm::vec3 otherAtomCenter = atoms[i].center;
         float otherAtomExtRadius = atoms[i].radius + probeRadius;
 
         // ### INTERSECTION TEST ###
 
         // Vector from center to other's
-        vec3 connection = otherAtomCenter - atomCenter;
+        glm::vec3 connection = otherAtomCenter - atomCenter;
 
         // Distance between atoms
-        float atomsDistance = length(connection);
+        float atomsDistance = glm::length(connection);
 
         // Test atoms are either too far away or just touch each other (then continue)
         if(atomsDistance >= (atomExtRadius + otherAtomExtRadius)) { continue; }
@@ -193,7 +163,7 @@ void main()
         if((atomExtRadius + atomsDistance) <= otherAtomExtRadius)
         {
             // Since it is completely covered, it is internal
-            saveAsInternal(); return;
+            internalIndices.push_back((unsigned int) atomIndex); return;
         }
 
         // ### INTERSECTION WITH OTHER ATOMS ###
@@ -205,63 +175,80 @@ void main()
             + ((atomExtRadius * atomExtRadius)
             - (otherAtomExtRadius * otherAtomExtRadius))
             / (2.0 * (atomsDistance * atomsDistance));
+        /* if(logging) { std::cout << "h: " << h << std::endl; } */
 
         // ### CUTTING FACE LIST ###
 
+        // Calculate radius of intersection
+        //
+        //cuttingFaceRadii[cuttingFaceCount] =
+        //    sqrt((atomExtRadius * atomExtRadius)
+        //    - (h * h * atomsDistance * atomsDistance));
+        ///* if(logging) { std::cout << "Cutting face radius: " << cuttingFaceRadii[cuttingFaceCount] << std::endl; } */
+
         // Save center of face
-        vec3 faceCenter = atomCenter + (h * connection);
+        glm::vec3 faceCenter = atomCenter + (h * connection);
         cuttingFaceCenters[cuttingFaceCount] = faceCenter;
+        /* if(logging) { std::cout << "Cutting face center: " << faceCenter.x << ", " << faceCenter.y << ", " << faceCenter.z << std::endl; } */
 
         // Save plane equation of face
-        vec3 faceNormal = normalize(connection);
-        float faceDistance = dot(faceCenter, faceNormal);
-        cuttingFaces[cuttingFaceCount] = vec4(faceNormal, faceDistance);
+        glm::vec3 faceNormal = glm::normalize(connection);
+        float faceDistance = glm::dot(faceCenter, faceNormal);
+        cuttingFaces[cuttingFaceCount] = glm::vec4(faceNormal, faceDistance);
+        /* if(logging) { std::cout << "Cutting face distance: " << faceDistance << std::endl; } */
 
         // Initialize cutting face indicator with: 1 == was not cut away (yet)
         cuttingFaceIndicators[cuttingFaceCount] = 1;
 
         // Increment cutting face list index and break if max count of neighbors reached
         cuttingFaceCount++;
-        if(cuttingFaceCount == neighborsMaxCount) { break; }
+        if(cuttingFaceCount == neighborsMaxCount) { std::cout << "TOO MANY NEIGHBORS" << std::endl; break; }
     }
 
-    // FROM HERE ON: TEST INTERSECTION LINE STUFF (CAN BE DELETED LATER ON)
+    // CALCULATE WHICH CUTTING FACES ARE USED FOR ENDPOINT CALCULATION
     for(int i = 0; i < cuttingFaceCount - 1; i++)
     {
         // Already cut away
         if(cuttingFaceIndicators[i] == 0) { continue; }
 
         // Values of cutting face
-        vec4 face = cuttingFaces[i];
-        vec3 faceCenter = cuttingFaceCenters[i];
+        glm::vec4 face = cuttingFaces[i];
+        glm::vec3 faceCenter = cuttingFaceCenters[i];
 
         // Test every cutting face for intersection line with other
         for(int j = i+1; j < cuttingFaceCount; j++)
         {
+            /* if(logging) { std::cout << "Testing cutting faces: " << i << ", " << j << std::endl; } */
+
             // Already cut away
-            if((cuttingFaceIndicators[i] == 0) || (cuttingFaceIndicators[j] == 0)) { continue; }
+            if(cuttingFaceIndicators[j] == 0) { continue; }
 
             // Values of other cutting face
-            vec4 otherFace = cuttingFaces[j];
-            vec3 otherFaceCenter = cuttingFaceCenters[j];
+            glm::vec4 otherFace = cuttingFaces[j];
+            glm::vec3 otherFaceCenter = cuttingFaceCenters[j];
 
-            // Check for parallelity, first
-            bool notCutEachOther = (1.0 <= abs(dot(face.xyz, otherFace.xyz))); // If already parallel, they do not cut
+            // Check for parallelism, first
+            bool notCutEachOther = checkParallelism(face, otherFace); // If already parallel, they do not cut
 
             // Do further checking when not parallel
             if(!notCutEachOther)
             {
                 // Intersection of planes, resulting in line
-                vec3 linePoint; vec3 lineDir;
+                glm::vec3 linePoint; glm::vec3 lineDir;
                 intersectPlanes(
                     face,
                     otherFace,
                     linePoint,
                     lineDir);
 
+                /* if(logging) { std::cout << "Cutting faces " << i << " and " << j << " do intersect" << std::endl; } */
+                /* if(logging) { std::cout << "Line point: " << linePoint.x << ", " << linePoint.y << ", " << linePoint.z << std::endl; } */
+                /* if(logging) { std::cout << "Line direction: " << lineDir.x << ", " << lineDir.y << ", " << lineDir.z << std::endl; } */
+
                 // Intersection of line with sphere, resulting in two, one or no endpoints
                 // https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
                 float valueUnderSQRT = underSQRT(linePoint, lineDir, atomCenter, atomExtRadius);
+                /* if(logging) { std::cout << "Value under SQRT: " << valueUnderSQRT << std::endl; } */
 
                 // Only interesting case is for zero endpoints, because then there is no cut on atom's sphere
                 notCutEachOther = (valueUnderSQRT < 0);
@@ -272,13 +259,15 @@ void main()
             // Faces do not cut each other on sphere, so they produce not later endpoints. Check them now
             if(notCutEachOther)
             {
+                /* if(logging) { std::cout << "Following cutting faces do not cut each other on surface: " << i << ", " << j << std::endl; } */
+
                 // Connection between faces' center (vector from face to other face)
-                vec3 connection = otherFaceCenter - faceCenter;
+                glm::vec3 connection = otherFaceCenter - faceCenter;
 
                 // Test point
-                vec3 testPoint = faceCenter + 0.5 * connection;
+                glm::vec3 testPoint = faceCenter + 0.5f * connection;
 
-                if((dot(face.xyz, connection) > 0) == (dot(otherFace.xyz, connection) > 0))
+                if((glm::dot(glm::vec3(face.x, face.y, face.z), connection) > 0) == (glm::dot(glm::vec3(otherFace.x, otherFace.y, otherFace.z), connection) > 0))
                 {
                     // Inclusion
                     if(pointInHalfspaceOfPlane(face, testPoint))
@@ -295,10 +284,12 @@ void main()
                     // Maybe complete atom is cut away
                     if(pointInHalfspaceOfPlane(face, testPoint))
                     {
-                        saveAsInternal(); return;
+                        internalIndices.push_back((unsigned int) atomIndex); return;
                     }
                 }
             }
+
+            /* if(logging) { std::cout << std::endl; } */
         }
     }
 
@@ -317,23 +308,28 @@ void main()
         }
     }
 
-    // ### GO OVER MINIMIZED CUTTING FACE LIST AND TEST ENDPOINTS ###
+    /* if(logging) { std::cout << "Cutting face count: " << cuttingFaceCount << ". After optimization: " << cuttingFaceIndicesCount << std::endl; } */
 
-    for(int i = 0; i < cuttingFaceIndicesCount; i++)
+    // ### GO OVER OPTIMIZED CUTTING FACE LIST AND TEST ENDPOINTS ###
+
+    for(int i = 0; i < cuttingFaceIndicesCount - 1; i++)
     {
         // Values of cutting face
         int index = cuttingFaceIndices[i];
-        vec4 face = cuttingFaces[index];
+        glm::vec4 face = cuttingFaces[index];
 
         // Test every cutting face for intersection line with other
         for(int j = i+1; j < cuttingFaceIndicesCount; j++)
         {
             // Values of other cutting face
             int otherIndex = cuttingFaceIndices[j];
-            vec4 otherFace = cuttingFaces[otherIndex];
+            glm::vec4 otherFace = cuttingFaces[otherIndex];
+
+            // Check for parallelism
+            if(checkParallelism(face, otherFace)) { continue; }
 
             // Intersection of faces, resulting in line
-            vec3 lineDir; vec3 linePoint;
+            glm::vec3 lineDir; glm::vec3 linePoint;
             intersectPlanes(
                 face,
                 otherFace,
@@ -345,7 +341,7 @@ void main()
             float valueUnderSQRT = underSQRT(linePoint, lineDir, atomCenter, atomExtRadius);
 
             // Left part of equation
-            float left = -(dot(lineDir, (linePoint - atomCenter)));
+            float left = -(glm::dot(lineDir, (linePoint - atomCenter)));
 
             // Check value under square root
             if(valueUnderSQRT > 0)
@@ -354,7 +350,7 @@ void main()
                 endpointGenerated = true;
 
                 // Right part of equation
-                float right = sqrt(valueUnderSQRT);
+                float right = glm::sqrt(valueUnderSQRT);
 
                 // First endpoint
                 float d = left + right;
@@ -397,12 +393,12 @@ void main()
     // ### ATOM IS SURFACE ATOM ###
 
     // If no endpoint was generated at all or one or more survived cutting, add this atom to surface
-    if(!endpointGenerated || endpointSurvivesCut)
+    if((!endpointGenerated) || endpointSurvivesCut)
     {
-        saveAsSurface();
+        surfaceIndices.push_back((unsigned int) atomIndex);
     }
     else
     {
-        saveAsInternal();
+        internalIndices.push_back((unsigned int) atomIndex);
     }
 }

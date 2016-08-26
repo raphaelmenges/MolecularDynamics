@@ -9,15 +9,14 @@ flat out vec3 color;
 
 uniform mat4 projection;
 uniform mat4 view;
-uniform vec3 minPosition;
-uniform vec3 maxPosition;
+uniform float clippingPlane;
 
 void main()
 {
-    vec3 position = gl_in[0].gl_Position.xyz;
+    vec3 center = gl_in[0].gl_Position.xyz;
 
     // Decide whether to render point
-    if(all(greaterThanEqual(position, minPosition)) && all(lessThanEqual(position, maxPosition)))
+    if(-(view * gl_in[0].gl_Position).z >= clippingPlane)
     {
         // Color
         color = vertColor[0];
@@ -26,7 +25,7 @@ void main()
         mat4 M = projection * view;
 
         // Single point
-        gl_Position = M * vec4(position, 1);
+        gl_Position = M * vec4(center, 1);
         EmitVertex();
 
         EndPrimitive();

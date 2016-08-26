@@ -1,37 +1,32 @@
-#ifndef PERFECT_SURFACE_DETECTION_H
-#define PERFECT_SURFACE_DETECTION_H
+#ifndef SURFACE_DYNAMICS_VISUALIZATION_H
+#define SURFACE_DYNAMICS_VISUALIZATION_H
 
 #include <memory>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
 
 #include "ShaderTools/ShaderProgram.h"
-#include "Molecule/MDtrajLoader/Data/AtomLUT.h"
-#include "AtomStruct.h"
+#include "SurfaceExtraction/GPUProtein.h"
 
 // Notes:
 // - Calculations done in angstrom
 
-// TODO
-// - Delete OpenGL stuff after usage
-// - Work group size?
-// - Binding points ok? not sure whether atomic counter and image use the same
-// - Instead of direclty use ALL atoms as input, us index list InputIndices
-
 // Forward declaration
 class Protein;
+class GPUProtein;
 class OrbitCamera;
 
 // Class
-class PerfectSurfaceDetection
+class SurfaceDynamicsVisualization
 {
 public:
 
     // Constructor
-    PerfectSurfaceDetection();
+    SurfaceDynamicsVisualization();
 
     // Destructor
-    virtual ~PerfectSurfaceDetection();
+    virtual ~SurfaceDynamicsVisualization();
 
     // Render
     void renderLoop();
@@ -47,9 +42,17 @@ private:
     // Scroll callback for GLFW
     void scrollCallback(double xoffset, double yoffset);
 
-    // Atomic counter functions
-    GLuint readAtomicCounter(GLuint atomicCounter) const;
-    void resetAtomicCounter(GLuint atomicCounter) const;
+    // Read values from texture buffer
+    std::vector<GLuint> readTextureBuffer(GLuint buffer, int size) const;
+
+    // Reset input indices buffer
+    void resetInputIndicesBuffer();
+
+    // Update computation information
+    void updateComputationInformation(std::string device, float computationTime);
+
+    // Update GUI
+    void updateGUI();
 
     // Test for correctness of algorithm
     void testSurface();
@@ -59,6 +62,15 @@ private:
     const float mCameraSmoothDuration = 1.5f;
     const float mAtomPointSize = 15.f;
     const float mSamplePointSize = 2.f;
+    const float mMinDrawingExtentOffset = -5.f;
+    const float mMaxDrawingExtentOffset = 5.f;
+    const float mCameraDefaultAlpha = 90.f;
+    const float mCameraDefaultBeta = 45.f;
+    const glm::vec3 mInternalAtomColor = glm::vec3(0.75f, 0.75f, 0.75f);
+    const glm::vec3 mSurfaceAtomColor = glm::vec3(1.f, 0.25f, 0.f);
+    const glm::vec3 mSamplePointColor = glm::vec3(0.f, 1.0f, 0.25f);
+    const float mClippingPlaneMin = 0.f;
+    const float mClippingPlaneMax = 200.f;
 
     // Controllable parameters
     bool mRotateCamera = false;
@@ -66,43 +78,43 @@ private:
     int mSelectedAtom = 0;
     bool mRenderImpostor = true;
     bool mRenderWithProbeRadius = false;
-    bool mUsePerspectiveCamera = false;
+    bool mUsePerspectiveCamera = false; // removed from GUI since both spheres
+                                        // and cut of spheres is only correct
+                                        // for orthographic projection
     bool mShowInternal = true;
     bool mShowSurface = true;
-    bool mShowComputationWindow = true;
+    bool mShowSurfaceComputationWindow = true;
+    bool mShowCameraWindow = true;
     bool mShowDebuggingWindow = true;
-    float mMinXDraw = 0;
-    float mMinYDraw = 0;
-    float mMinZDraw = 0;
-    float mMaxXDraw = 0;
-    float mMaxYDraw = 0;
-    float mMaxZDraw = 0;
-    float mProbeRadius = 1.2f;
+    float mProbeRadius = 1.4f;
     int mCPPThreads = 8;
     int mSurfaceTestAtomSampleCount = 20;
     bool mShowSamplePoint = true;
+    int mLayerRemovalCount = 0;
+    float mClippingPlane = 0.f;
+    int mSurfaceTestSeed = 0;
+    bool mShowAxesGizmo = false;
 
     // Debugging output
     std::string mComputeInformation = "";
+    std::string mTestOutput = "";
 
     // Members
     GLFWwindow* mpWindow;
     std::unique_ptr<OrbitCamera> mupCamera; // camera for visualization
-    int mAtomCount;
-    AtomLUT mAtomLUT;
-    std::vector<AtomStruct> mAtomStructs;
     glm::vec2 mCameraDeltaMovement;
     float mCameraSmoothTime;
     glm::vec3 mLightDirection;
     glm::vec3 mProteinMinExtent;
     glm::vec3 mProteinMaxExtent;
-    GLint mInternalCount; // general count of internal atoms
-    GLint mSurfaceCount; // general count of surface atoms
-
-    // SSBO
-    GLuint mAtomsSSBO; // SSBO with struct of position and radius for each atom
+    GLint mInputCount; // count of input atoms
+    GLint mInternalCount; // count of internal atoms
+    GLint mSurfaceCount; // count of surface atoms
+    std::unique_ptr<GPUProtein> mupGPUProtein; // protein on GPU
 
     // Images
+    GLuint mInputIndicesTexture; // list of indices of input atoms encoded in uint32
+    GLuint mInputIndicesBuffer;
     GLuint mInternalIndicesTexture; // list of indices of internal output atoms encoded in uint32
     GLuint mInternalIndicesBuffer;
     GLuint mSurfaceIndicesTexture; // list of indices of surface output atoms encoded in uint32
@@ -123,12 +135,6 @@ private:
     // ### GLSL implementation of surface atoms detection ###
     void runGLSLImplementation();
 
-    // Update GUI
-    void updateGUI();
-
-    // Update computation information
-    void updateComputationInformation(std::string device, float computationTime);
-
 };
 
-#endif // PERFECT_SURFACE_DETECTION_H
+#endif // SURFACE_DYNAMICS_VISUALIZATION_H

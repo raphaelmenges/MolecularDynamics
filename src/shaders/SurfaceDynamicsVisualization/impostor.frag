@@ -2,7 +2,7 @@
 
 in vec2 uv;
 flat in float radius;
-flat in vec3 position;
+flat in vec3 center;
 flat in vec3 color;
 out vec4 outColor;
 layout (depth_less) out float gl_FragDepth; // Makes optimizations possible
@@ -11,6 +11,7 @@ uniform mat4 view;
 uniform mat4 projection;
 uniform vec3 cameraWorldPos;
 uniform vec3 lightDir;
+uniform float clippingPlane;
 
 void main()
 {
@@ -34,23 +35,60 @@ void main()
     vec3 relativeViewPos = normal * radius;
     vec3 relativeWorldPos = vec3(relativeViewPos.x * cameraRight + relativeViewPos.y * cameraUp + relativeViewPos.z * cameraDepth);
     vec3 worldNormal = normalize(relativeWorldPos);
-    vec3 worldPos = position + relativeWorldPos;
+    vec3 worldPos = center + relativeWorldPos;
+
+    // Cut at given clipping plane (could be optimized to use less ifs...)
+    vec4 viewPos = view * vec4(worldPos, 1);
+    float specularMultiplier = 1;
+    bool isClippingPlane = false;
+    if(-viewPos.z < clippingPlane)
+    {
+        // Check, whether back fragment on sphere is not inside clipping plane
+        vec4 viewCenter = view * vec4(center, 1);
+        if(-((2 * (viewCenter.z - viewPos.z)) + viewCenter.z) >= clippingPlane)
+        {
+            // Change view space normal
+            normal = vec3(0,0,1);
+
+            // Remember being clipping plane
+            isClippingPlane = true;
+        }
+        else
+        {
+            // It is inside clipping plane, so discard it completely since fragment is not used to visualize clipping plane
+            discard;
+        }
+    }
 
     // Set depth of pixel by projecting pixel position into clip space
-    vec4 projPos = projection * view * vec4(worldPos, 1.0);
-    float projDepth = projPos.z / projPos.w;
-    gl_FragDepth = (projDepth + 1.0) * 0.5; // gl_FragCoord.z is from 0..1. So go from clip space to viewport space
+    if(isClippingPlane)
+    {
+        gl_FragDepth = -0.5f;
+    }
+    else
+    {
+        vec4 projPos = projection * view * vec4(worldPos, 1.0);
+        float projDepth = projPos.z / projPos.w;
+        gl_FragDepth = (projDepth + 1.0) * 0.5; // gl_FragCoord.z is from 0..1. So go from clip space to viewport space
+    }
 
     // Diffuse lighting (hacked together, not correct)
     vec4 nrmLightDirection = normalize(vec4(lightDir, 0));
-    float lighting = max(0,dot(normal, vec3(view * -nrmLightDirection))); // Do it in view space (therefore is normal here ok)
+    float lighting = max(0,dot(normal, (view * -nrmLightDirection).xyz)); // Do it in view space (therefore is normal here ok)
 
     // Specular lighting (camera pos in view matrix last column is in view coordinates?)
     vec3 reflectionVector = reflect(nrmLightDirection.xyz, worldNormal);
     vec3 surfaceToCamera = normalize(cameraWorldPos - worldPos);
     float cosAngle = max(0.0, dot(surfaceToCamera, reflectionVector));
     float specular = pow(cosAngle, 10);
-    specular *= 0.5 * lighting;
+    if(isClippingPlane)
+    {
+        specular *= 0;
+    }
+    else
+    {
+        specular *= 0.5 * lighting;
+    }
 
     // Some "ambient" lighting combined with specular
     vec3 finalColor = mix(color * mix(vec3(0.4, 0.45, 0.5), vec3(1.0, 1.0, 1.0), lighting), vec3(1,1,1), specular);
