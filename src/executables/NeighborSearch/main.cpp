@@ -1060,7 +1060,7 @@ int main()
      * initialize neighborhood search
      */
     m_gridRes = glm::vec3(10, 10, 10);
-    m_searchRadius = 20;
+    m_searchRadius = 20.f;
     initNeighborhoodSearch(m_gridRes, m_searchRadius);
     m_searchRadius = m_search.getMaxSearchRadius() - 0.01f;
     m_updateNeighborhoodSearch = true;

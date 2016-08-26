@@ -1,6 +1,8 @@
 //
 // Created by ubundrian on 23.06.16.
 //
+// Copyright (C) 2012-2013. Rama Hoetzlein, http://fluids3.com
+//
 
 #ifndef OPENGL_FRAMEWORK_NEIGHBORHOODSEARCH_H
 #define OPENGL_FRAMEWORK_NEIGHBORHOODSEARCH_H
