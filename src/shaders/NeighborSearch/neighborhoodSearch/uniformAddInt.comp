@@ -1,0 +1,34 @@
+// Copyright (C) 2012-2013. Rama Hoetzlein, http://fluids3.com
+#version 430
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+// SSBOs
+layout(std430, binding = 0) buffer dataBuffer     { int data[];     };
+layout(std430, binding = 1) buffer uniformsBuffer { int uniforms[]; };
+
+uniform int n;
+uniform int blockOffset;
+uniform int baseIndex;
+
+shared int uni;
+
+
+
+void main() {
+    // get particle index
+    uint thid = gl_LocalInvocationID.x;
+
+    // first thread copies unifroms
+    if (thid == 0) uni = uniforms[gl_WorkGroupID.x + blockOffset];
+    uint address = (gl_WorkGroupID.x * (gl_WorkGroupSize.x << 1)) + baseIndex + thid;
+
+    // synchronize workitems and make shared memory visible
+    // to other workitems in the same workgroup
+    memoryBarrierShared();
+    barrier();
+
+    // two adds per thread
+    data[address] += uni;
+    if ((thid + gl_WorkGroupSize.x) < n) data[address + gl_WorkGroupSize.x] += uni;
+}

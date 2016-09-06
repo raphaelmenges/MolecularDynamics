@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="CPP_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$/../externals/imgui/examples/opengl3_example/imgui_impl_glfw_gl3.cpp">
+      <sourceFolder url="file://$MODULE_DIR$/../externals/imgui/examples/opengl3_example/imgui_impl_glfw_gl3.cpp" isTestSource="false" />
+    </content>
+    <content url="file://$MODULE_DIR$/../externals/imgui/imgui.cpp">
+      <sourceFolder url="file://$MODULE_DIR$/../externals/imgui/imgui.cpp" isTestSource="false" />
+    </content>
+    <content url="file://$MODULE_DIR$/../externals/imgui/imgui_draw.cpp">
+      <sourceFolder url="file://$MODULE_DIR$/../externals/imgui/imgui_draw.cpp" isTestSource="false" />
+    </content>
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/libraries/SurfaceExtraction/GPUProtein.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/SurfaceExtraction/GPUProtein.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/SurfaceExtraction/SurfaceExtraction.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/SurfaceExtraction/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/SurfaceExtraction/SurfaceExtraction.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/AssetTools/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/AssetTools/Texture.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/AssetTools/Mesh.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/AssetTools/Mesh.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/AssetTools/InstancedMeshExample.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/AssetTools/InstancedMeshExample.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/AssetTools/Texture.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/ComputeProgram.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/VertexArrayObject.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/ComputeProgram.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/ShaderProgram.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/FrameBufferObject.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/VertexArrayObjects/Cube.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/VertexArrayObjects/ImpostorSpheres.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/VertexArrayObjects/Cube.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/VertexArrayObjects/Quad.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/VertexArrayObjects/Tetrahedron.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/VertexArrayObjects/Grid.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/VertexArrayObjects/ImpostorSpheres.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/VertexArrayObjects/Grid.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/VertexArrayObjects/Tetrahedron.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/VertexArrayObjects/Quad.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/RenderPass.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/FrameBufferObject.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/VertexArrayObject.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/Renderer.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/ShaderProgram.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/DefaultRenderLoop.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/ShaderTools/RenderPass.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/RenderTechniques/Pyramid.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/RenderTechniques/HierarchicalHoleFilling.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/RenderTechniques/Pyramid.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/RenderTechniques/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/RenderTechniques/HierarchicalHoleFilling.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Molecule/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Molecule/MDtrajLoader/Data/Protein.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Molecule/MDtrajLoader/Data/AtomLUT.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Molecule/MDtrajLoader/Data/AtomLUT.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Molecule/MDtrajLoader/Data/Atom.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Molecule/MDtrajLoader/Data/Protein.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Molecule/MDtrajLoader/Data/Atom.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Molecule/MDtrajLoader/MdTraj/MdTrajWrapper.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Molecule/MDtrajLoader/MdTraj/MdTrajWrapper.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Search/NeighborhoodSearchDefines.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Search/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Search/NeighborhoodSearch.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Search/NeighborhoodSearch.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Search/GPUHandler.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Search/AssertData.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Utils/AtomicCounter.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Utils/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Utils/OrbitCamera.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Utils/PickingTexture.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Utils/Logger.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Utils/AtomicCounter.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Utils/Timer.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Utils/Timer.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Utils/Logger.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Utils/OrbitCamera.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libraries/Utils/PickingTexture.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cmake/macros.cmake" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cmake/LinkDevIL.cmake" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cmake/DefaultProject.cmake" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cmake/FindGLM.cmake" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cmake/LinkOpenGL3.cmake" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cmake/LinkGLM.cmake" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cmake/LinkGLEW.cmake" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cmake/doxygen.cmake" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cmake/DefaultExecutable.cmake" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cmake/DefaultLibrary.cmake" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cmake/FindOpenGL3.cmake" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cmake/FindASSIMP.cmake" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cmake/FindGLFW3.cmake" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cmake/LinkGLFW3.cmake" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cmake/LinkASSIMP.cmake" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/renderLines/lines.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/renderLines/lines.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/atomPicking/picking.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/atomPicking/picking.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/atomPicking/picking.geom" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/renderSearchRadius/radius.geom" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/renderSearchRadius/radius.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/renderSearchRadius/radius.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/renderAtoms/impostor.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/renderAtoms/impostor.geom" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/renderAtoms/impostor.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/neighborhoodSearch/prescanInt.comp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/neighborhoodSearch/countingSort.comp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/neighborhoodSearch/extractElementPositions.comp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/neighborhoodSearch/fillTempData.comp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/neighborhoodSearch/uniformAddInt.comp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/neighborhoodSearch/insertElements.comp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/searchApplication/colorAtomsInRadius.comp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/NeighborSearch/searchApplication/findSelectedAtomsNeighbors.comp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/SortVisibleIDList.comp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/toneMapperLinearInstanceCount.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/DetectVisibleInstanceIDs.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/CollectVisibleIDs.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/CreateVisibleIDList_fromIntervals.comp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/CollectVisibleIDs_frontOnly.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Detection/solidColorInstanceCount.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/impostorSpheres_InstancedUA.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/impostorSpheres_Instanced.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/impostorSpheres_Instanced.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/Impostor3DSphere_Ortho_StoreIntervals_2.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/impostorSpheres.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/Impostor3DSphereTetrahedron.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/Impostor3DTorus.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/Impostor3DSphere_Ortho.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/Impostor3DSphere_Ortho_StoreIntervals.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/impostorSpheres_discardFragments_Instanced.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/Impostor3DSphere.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Impostor/impostorSpheres.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Base/modelViewProjectionInstanced.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Base/fullscreen.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceAtomsDetection/Base/modelViewProjectionInstancedUA.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/VisibleAtomsDetection/Detection/toneMapperLinearInstanceCount.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/VisibleAtomsDetection/Detection/solidColorInstanceCount.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/VisibleAtomsDetection/Detection/DetectVisibleInstanceIDs.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/VisibleAtomsDetection/Detection/CreateVisibleIDList.comp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/VisibleAtomsDetection/Impostor/impostorSpheres_InstancedUA.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/VisibleAtomsDetection/Impostor/impostorSpheres_Instanced.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/VisibleAtomsDetection/Impostor/impostorSpheres.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/VisibleAtomsDetection/Impostor/impostorSpheres.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/VisibleAtomsDetection/Impostor/Impostor3DTorus.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/VisibleAtomsDetection/Impostor/Impostor3DSphere_Ortho.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/VisibleAtomsDetection/Impostor/impostorSpheres_Instanced.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/VisibleAtomsDetection/Impostor/impostorSpheres_discardFragments_Instanced.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/VisibleAtomsDetection/Impostor/Impostor3DSphere.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/VisibleAtomsDetection/Impostor/Impostor3DSphereTetrahedron.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/VisibleAtomsDetection/Base/modelViewProjectionInstanced.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/VisibleAtomsDetection/Base/fullscreen.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/VisibleAtomsDetection/Base/modelViewProjectionInstancedUA.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/sphere_patch_impostor__tetrahedron.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/sphere_patch_impostor__triangle.geom" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/atom_impostor__full_colored.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/toroidal_patch_impostor.geom" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/toroidal_patch_impostor__full.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/toroidal_patch_impostor__normal.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/atom_impostor__normal.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/toroidal_patch_impostor__full_colored.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/sphere_patch_impostor__triangle.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/atom_impostor__quad.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/toroidal_patch_impostor.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/atom_impostor__sphere.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/atom_impostor__full.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/sphere_patch_impostor.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/sphere_patch_impostor__full_colored.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/atom_impostor__sphere_raymarching.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/toroidal_patch_impostor__frustum.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/sphere_patch_impostor.geom" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/atom_impostor.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/sphere_patch_impostor__full.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/sphere_patch_impostor__normal.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/atom_impostor__circle.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SGROSS_Molecules/atom_impostor.geom" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/Filters/toneMapperLinear.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/Filters/fullscreen.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/Filters/phongStaticLight.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/Filters/boxBlur.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/Filters/solidColor.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/Impostor/impostorSpheres_Instanced.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/Impostor/impostorSpheres.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/Impostor/impostorSpheres.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/Impostor/Impostor3DTorus.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/Impostor/impostorSpheres_Instanced.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/Impostor/impostorSpheres_discardFragments_Instanced.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/Impostor/Impostor3DSphere.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/Impostor/Impostor3DSphereTetrahedron.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/impostor.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/impostor.geom" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/point.geom" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/surface.comp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/axis.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/impostor.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/point.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/axis.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/point.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/sample.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/SurfaceDynamicsVisualization/sample.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/3DObject/modelViewProjectionInstanced.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/3DObject/billboardBall.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/3DObject/billboard.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/3DObject/projector.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/3DObject/environmentMapping.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/3DObject/modelViewProjection.vert" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/3DObject/simpleColor.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/3DObject/equirectangularSky.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/RenderTechniques/Pyramid/hhfReduce.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/RenderTechniques/Pyramid/pushSimple.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/RenderTechniques/Pyramid/hhfFill.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/RenderTechniques/hhfReduce.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/RenderTechniques/hhfFill.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/RenderTechniques/DetectVisible/DetectVisibleInstanceIDs.frag" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shaders/RenderTechniques/DetectVisible/CreateVisibleIDList.comp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/NeighborSearch/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/NeighborSearch/main.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/NeighborSearch/SimpleProtein.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/NeighborSearch/ProteinLoader.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/NeighborSearch/SimpleAtom.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/NeighborSearch/ProteinLoader.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/Impostor_SES_visibility/impostorSES.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/Impostor_SES_visibility/MoleculeSESSpherePatchImpostor.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/Impostor_SES_visibility/MoleculeSESSpherePatchImpostor.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/Impostor_SES_visibility/MoleculeSESAtomImpostor.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/Impostor_SES_visibility/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/Impostor_SES_visibility/DynamicVertexArrayObject.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/Impostor_SES_visibility/impostorSES.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/Impostor_SES_visibility/MoleculeSESAtomImpostor.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/Impostor_SES_visibility/DynamicVertexArrayObject.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/Impostor_SES_visibility/MoleculeSESToroidalPatchImpostor.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/Impostor_SES_visibility/MoleculeSESToroidalPatchImpostor.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/VisibleAtomsDetection/visibilityextractiondemo.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/VisibleAtomsDetection/visibilityextractiondemo.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/VisibleAtomsDetection/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/VisibleAtomsDetection/demo.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/SurfaceAtomsDetection/surfaceExtraction.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/SurfaceAtomsDetection/surfaceExtraction.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/SurfaceAtomsDetection/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/Impostor_SES_surface/impostorSESsurface.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/Impostor_SES_surface/MoleculeSESSpherePatchImpostor.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/Impostor_SES_surface/MoleculeSESSpherePatchImpostor.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/Impostor_SES_surface/MoleculeSESAtomImpostor.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/Impostor_SES_surface/impostorSESsurface.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/Impostor_SES_surface/DynamicVertexArrayObject.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/Impostor_SES_surface/DynamicVertexArrayObject.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/Impostor_SES_surface/MoleculeSESAtomImpostor.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/Impostor_SES_surface/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/Impostor_SES_surface/MoleculeSESToroidalPatchImpostor.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/Impostor_SES_surface/MoleculeSESToroidalPatchImpostor.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/AtomDetection/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/SurfaceDynamicsVisualization/SurfaceDynamicsVisualization.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/SurfaceDynamicsVisualization/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/SurfaceDynamicsVisualization/SimpleLoader.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/SurfaceDynamicsVisualization/CPPImplementation.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/SurfaceDynamicsVisualization/CPPImplementation.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/SurfaceDynamicsVisualization/SurfaceDynamicsVisualization.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/SurfaceDynamicsVisualization/SimpleLoader.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/demo_MolSurf/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/demo_MolSurf/demo.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/Impostors/demo_Spheres_Geometry/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/Impostors/demo_Spheres_Geometry/demo.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/Impostors/demo_Spheres/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/Impostors/demo_Spheres/demo.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/Impostors/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/Impostors/demo_Spheres_Instanced/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/executables/Impostors/demo_Spheres_Instanced/demo.cpp" isTestSource="false" />
+    </content>
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library name="Header Search Paths">
+        <CLASSES>
+          <root url="file:///usr/include" />
+          <root url="file:///usr/lib/gcc/x86_64-linux-gnu/5/include-fixed" />
+          <root url="file:///usr/lib/gcc/x86_64-linux-gnu/5/include" />
+          <root url="file:///usr/local/include" />
+          <root url="file://$USER_HOME$/miniconda3/pkgs/python-3.5.1-0/include/python3.5m" />
+          <root url="file://$MODULE_DIR$/../externals" />
+        </CLASSES>
+        <SOURCES>
+          <root url="file:///usr/include" />
+          <root url="file:///usr/lib/gcc/x86_64-linux-gnu/5/include-fixed" />
+          <root url="file:///usr/lib/gcc/x86_64-linux-gnu/5/include" />
+          <root url="file:///usr/local/include" />
+          <root url="file://$USER_HOME$/miniconda3/pkgs/python-3.5.1-0/include/python3.5m" />
+          <root url="file://$MODULE_DIR$/../externals" />
+        </SOURCES>
+        <excluded>
+          <root url="file://$MODULE_DIR$/../externals/imgui/imgui_draw.cpp" />
+          <root url="file://$MODULE_DIR$/../externals/imgui/examples/opengl3_example/imgui_impl_glfw_gl3.cpp" />
+          <root url="file://$MODULE_DIR$/../externals/imgui/imgui.cpp" />
+        </excluded>
+      </library>
+    </orderEntry>
+  </component>
+</module>

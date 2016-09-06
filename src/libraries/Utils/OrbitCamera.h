@@ -17,14 +17,14 @@ public:
     // Constructor (Degrees!)
     // Orthographic projection takes max radius as position for camera
     OrbitCamera(
-        glm::vec3 center,
-        GLfloat alpha,
-        GLfloat beta,
-        GLfloat radius,
-        GLfloat minRadius,
-        GLfloat maxRadius,
-        GLfloat fov,
-        GLfloat orthoScale);
+            glm::vec3 center,
+            GLfloat alpha,
+            GLfloat beta,
+            GLfloat radius,
+            GLfloat minRadius,
+            GLfloat maxRadius,
+            GLfloat fov,
+            GLfloat orthoScale);
 
     // Destructor
     virtual ~OrbitCamera();

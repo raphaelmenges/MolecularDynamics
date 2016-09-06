@@ -1,0 +1,1175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CMakeRunConfigurationManager" shouldGenerate="true" assignedExecutableTargets="true" buildAllGenerated="true">
+    <generated>
+      <config projectName="OpenGL_Framework" targetName="SurfaceAtomsDetection" />
+      <config projectName="OpenGL_Framework" targetName="RenderTechniques" />
+      <config projectName="OpenGL_Framework" targetName="SHADERS" />
+      <config projectName="OpenGL_Framework" targetName="SurfaceDynamicsVisualization" />
+      <config projectName="OpenGL_Framework" targetName="demo_Spheres" />
+      <config projectName="OpenGL_Framework" targetName="VisibleAtomsDetection" />
+      <config projectName="OpenGL_Framework" targetName="demo_MolSurf" />
+      <config projectName="OpenGL_Framework" targetName="NeighborSearch" />
+      <config projectName="OpenGL_Framework" targetName="AssetTools" />
+      <config projectName="OpenGL_Framework" targetName="Utils" />
+      <config projectName="OpenGL_Framework" targetName="PerfectSurfaceDetection" />
+      <config projectName="OpenGL_Framework" targetName="Impostor_SES_visibility" />
+      <config projectName="OpenGL_Framework" targetName="SurfaceExtraction" />
+      <config projectName="OpenGL_Framework" targetName="ShaderTools" />
+      <config projectName="OpenGL_Framework" targetName="Search" />
+      <config projectName="OpenGL_Framework" targetName="demo_Spheres_Geometry" />
+      <config projectName="OpenGL_Framework" targetName="demo_Spheres_Instanced" />
+      <config projectName="OpenGL_Framework" targetName="Molecule" />
+      <config projectName="OpenGL_Framework" targetName="Impostor_SES_surface" />
+    </generated>
+  </component>
+  <component name="CMakeSettings" AUTO_RELOAD="false" GENERATION_OPTIONS="-Wsign-compare" GENERATION_PASS_SYSTEM_ENVIRONMENT="true">
+    <ADDITIONAL_GENERATION_ENVIRONMENT>
+      <envs />
+    </ADDITIONAL_GENERATION_ENVIRONMENT>
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="82e13c38-d31e-4eeb-83c6-b6b188909266" name="Default" comment="" />
+    <ignored path="src.iws" />
+    <ignored path=".idea/workspace.xml" />
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="TRACKING_ENABLED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ChangesViewManager" flattened_view="true" show_ignored="false" />
+  <component name="CreatePatchCommitExecutor">
+    <option name="PATCH_PATH" value="" />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
+  <component name="FavoritesManager">
+    <favorites_list name="src" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file leaf-file-name="main.cpp" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/main.cpp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-2153">
+              <caret line="412" column="5" selection-start-line="412" selection-start-column="5" selection-end-line="412" selection-end-column="5" />
+              <folding>
+                <element signature="e#64#84#0" expanded="true" />
+                <element signature="e#293#326#0" expanded="true" />
+                <element signature="e#411#437#0" expanded="true" />
+                <element signature="e#3015#4615#0" expanded="false" />
+                <element signature="e#4616#5959#0" expanded="false" />
+                <element signature="e#5961#6785#0" expanded="false" />
+                <element signature="e#6789#8108#0" expanded="false" />
+                <element signature="e#17097#21104#0" expanded="false" />
+                <element signature="e#21106#21527#0" expanded="false" />
+                <element signature="e#21529#22358#0" expanded="false" />
+                <element signature="e#22362#22697#0" expanded="false" />
+                <element signature="e#22699#24416#0" expanded="false" />
+                <element signature="e#24418#25851#0" expanded="false" />
+                <element signature="e#26293#34285#0" expanded="false" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="GLSL Shader" />
+      </list>
+    </option>
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/debug.frag" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/impostor.geom" />
+        <option value="$PROJECT_DIR$/executables/NeighborSearch/SimpleProtein.h" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/impostor.frag" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/extractElementPositions.comp" />
+        <option value="$PROJECT_DIR$/executables/NeighborSearch/ProteinLoader.h" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/lines.vert" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/lines.frag" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/countingSort.comp.glsl" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/insertElements.comp" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/fillTempData.comp" />
+        <option value="$PROJECT_DIR$/executables/NeighborSearch/SimpleAtom.h" />
+        <option value="$PROJECT_DIR$/libraries/ShaderTools/ShaderProgram.cpp" />
+        <option value="$PROJECT_DIR$/libraries/ShaderTools/ShaderProgram.h" />
+        <option value="$PROJECT_DIR$/executables/NeighborSearch/ProteinLoader.cpp" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/prescanInt.comp" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/impostor.vert" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/colorAtomsInRadius.comp" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/countingSort.comp" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/uniformAddInt.comp" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/findSelectedAtomsNeighbors.comp" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/renderSearchRadius/radius.geom" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/renderSearchRadius/radius.vert" />
+        <option value="$PROJECT_DIR$/libraries/Utils/OrbitCamera.cpp" />
+        <option value="$PROJECT_DIR$/libraries/Utils/OrbitCamera.h" />
+        <option value="$PROJECT_DIR$/shaders/Picking/picking.vert" />
+        <option value="$PROJECT_DIR$/shaders/Picking/picking.frag" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/atomPicking/picking.geom" />
+        <option value="$PROJECT_DIR$/libraries/Utils/PickingTexture.h" />
+        <option value="$PROJECT_DIR$/libraries/Utils/PickingTexture.cpp" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/atomPicking/picking.frag" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/atomPicking/picking.vert" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/renderSearchRadius/radius.frag" />
+        <option value="$PROJECT_DIR$/libraries/Utils/Timer.cpp" />
+        <option value="$PROJECT_DIR$/libraries/Utils/Timer.h" />
+        <option value="$PROJECT_DIR$/libraries/Search/GPUHandler.cpp" />
+        <option value="$PROJECT_DIR$/libraries/Search/GPUHandler.h" />
+        <option value="$PROJECT_DIR$/libraries/Search/AssertData.cpp" />
+        <option value="$PROJECT_DIR$/libraries/Search/AssertData.h" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/neighborhoodSearch/fillTempData.comp" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/searchApplication/colorAtomsInRadius.comp" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/renderAtoms/impostor.vert" />
+        <option value="$PROJECT_DIR$/libraries/Search/NeighborhoodSearchDefines.h" />
+        <option value="$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.cpp" />
+        <option value="$PROJECT_DIR$/executables/NeighborSearch/main.cpp" />
+        <option value="$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.h" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/searchApplication/findSelectedAtomsNeighbors.comp" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/neighborhoodSearch/countingSort.comp" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/neighborhoodSearch/insertElements.comp" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/neighborhoodSearch/prescanInt.comp" />
+        <option value="$PROJECT_DIR$/shaders/NeighborSearch/neighborhoodSearch/uniformAddInt.comp" />
+      </list>
+    </option>
+  </component>
+  <component name="JsBuildToolGruntFileManager" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsBuildToolPackageJson" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsGulpfileManager">
+    <detection-done>true</detection-done>
+    <sorting>DEFINITION_ORDER</sorting>
+  </component>
+  <component name="ProjectFrameBounds">
+    <option name="y" value="24" />
+    <option name="width" value="1920" />
+    <option name="height" value="1056" />
+  </component>
+  <component name="ProjectInspectionProfilesVisibleTreeState">
+    <entry key="Project Default">
+      <profile-state>
+        <expanded-state>
+          <State>
+            <id />
+          </State>
+        </expanded-state>
+        <selected-state>
+          <State>
+            <id>C/C++</id>
+          </State>
+        </selected-state>
+      </profile-state>
+    </entry>
+  </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="false">
+    <OptionsSetting value="true" id="Add" />
+    <OptionsSetting value="true" id="Remove" />
+    <OptionsSetting value="true" id="Checkout" />
+    <OptionsSetting value="true" id="Update" />
+    <OptionsSetting value="true" id="Status" />
+    <OptionsSetting value="true" id="Edit" />
+    <ConfirmationsSetting value="0" id="Add" />
+    <ConfirmationsSetting value="0" id="Remove" />
+  </component>
+  <component name="ProjectView">
+    <navigator currentView="ProjectPane" proportions="" version="1">
+      <flattenPackages />
+      <showMembers />
+      <showModules />
+      <showLibraryContents />
+      <hideEmptyPackages />
+      <abbreviatePackageNames />
+      <autoscrollToSource />
+      <autoscrollFromSource />
+      <sortByType />
+      <manualOrder />
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="ProjectPane">
+        <subPane>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="shaders" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="shaders" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="NeighborSearch" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="searchApplication" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="shaders" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="NeighborSearch" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="shaders" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="NeighborSearch" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="neighborhoodSearch" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="libraries" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="libraries" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Search" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="executables" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="executables" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="NeighborSearch" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+        </subPane>
+      </pane>
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="settings.editor.selected.configurable" value="preferences.fileTypes" />
+    <property name="settings.editor.splitter.proportion" value="0.2" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/shaders/NeighborSearch/searchApplication" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/shaders/NeighborSearch/searchApplication" />
+      <recent name="$PROJECT_DIR$/shaders/NeighborSearch/neighborhoodSearch" />
+      <recent name="$PROJECT_DIR$/shaders/NeighborSearch/renderLines" />
+      <recent name="$PROJECT_DIR$/shaders/NeighborSearch/renderAtoms" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/shaders/NeighborSearch/atomPicking" />
+      <recent name="$PROJECT_DIR$/shaders/NeighborSearch/renderSearchRadius" />
+      <recent name="$PROJECT_DIR$/libraries/Search" />
+      <recent name="$PROJECT_DIR$/executables/NeighborSearch" />
+      <recent name="$PROJECT_DIR$/shaders/NeighborSearch" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Application.NeighborSearch">
+    <configuration default="true" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" PASS_PARENT_ENVS_2="true" TEST_MODE="SUITE_TEST">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="OpenGL_Framework" TARGET_NAME="Impostor_SES_surface" CONFIG_NAME="Debug">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
+      <module name="" />
+      <working_directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <kind value="FILE" />
+      <method />
+    </configuration>
+    <configuration default="true" type="GoRunFileConfiguration" factoryName="Go Single File">
+      <module name="" />
+      <working_directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <method />
+    </configuration>
+    <configuration default="true" type="GoTestRunConfiguration" factoryName="Go Test">
+      <module name="" />
+      <working_directory value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <kind value="DIRECTORY" />
+      <method />
+    </configuration>
+    <configuration default="true" type="JavascriptDebugType" factoryName="JavaScript Debug">
+      <method />
+    </configuration>
+    <configuration default="true" type="PythonConfigurationType" factoryName="Python">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="src" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <method />
+    </configuration>
+    <configuration default="true" type="Tox" factoryName="Tox">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="src" />
+      <method />
+    </configuration>
+    <configuration default="true" type="js.build_tools.gulp" factoryName="Gulp.js">
+      <node-interpreter>project</node-interpreter>
+      <node-options />
+      <gulpfile />
+      <tasks />
+      <arguments />
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="true" type="js.build_tools.npm" factoryName="npm">
+      <command value="run-script" />
+      <scripts />
+      <node-interpreter value="project" />
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="true" type="tests" factoryName="Attests">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="src" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="CLASS_NAME" value="" />
+      <option name="METHOD_NAME" value="" />
+      <option name="FOLDER_NAME" value="" />
+      <option name="TEST_TYPE" value="TEST_SCRIPT" />
+      <option name="PATTERN" value="" />
+      <option name="USE_PATTERN" value="false" />
+      <method />
+    </configuration>
+    <configuration default="true" type="tests" factoryName="Doctests">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="src" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="CLASS_NAME" value="" />
+      <option name="METHOD_NAME" value="" />
+      <option name="FOLDER_NAME" value="" />
+      <option name="TEST_TYPE" value="TEST_SCRIPT" />
+      <option name="PATTERN" value="" />
+      <option name="USE_PATTERN" value="false" />
+      <method />
+    </configuration>
+    <configuration default="true" type="tests" factoryName="Nosetests">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="src" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="CLASS_NAME" value="" />
+      <option name="METHOD_NAME" value="" />
+      <option name="FOLDER_NAME" value="" />
+      <option name="TEST_TYPE" value="TEST_SCRIPT" />
+      <option name="PATTERN" value="" />
+      <option name="USE_PATTERN" value="false" />
+      <option name="PARAMS" value="" />
+      <option name="USE_PARAM" value="false" />
+      <method />
+    </configuration>
+    <configuration default="true" type="tests" factoryName="Unittests">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="src" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="CLASS_NAME" value="" />
+      <option name="METHOD_NAME" value="" />
+      <option name="FOLDER_NAME" value="" />
+      <option name="TEST_TYPE" value="TEST_SCRIPT" />
+      <option name="PATTERN" value="" />
+      <option name="USE_PATTERN" value="false" />
+      <option name="PUREUNITTEST" value="true" />
+      <option name="PARAMS" value="" />
+      <option name="USE_PARAM" value="false" />
+      <method />
+    </configuration>
+    <configuration default="true" type="tests" factoryName="py.test">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="src" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="CLASS_NAME" value="" />
+      <option name="METHOD_NAME" value="" />
+      <option name="FOLDER_NAME" value="" />
+      <option name="TEST_TYPE" value="TEST_SCRIPT" />
+      <option name="PATTERN" value="" />
+      <option name="USE_PATTERN" value="false" />
+      <option name="testToRun" value="" />
+      <option name="keywords" value="" />
+      <option name="params" value="" />
+      <option name="USE_PARAM" value="false" />
+      <option name="USE_KEYWORD" value="false" />
+      <method />
+    </configuration>
+    <configuration default="false" name="Build All" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" CONFIG_NAME="Debug" EXPLICIT_BUILD_TARGET_NAME="all">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="false" name="Impostor_SES_surface" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="OpenGL_Framework" TARGET_NAME="Impostor_SES_surface" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="OpenGL_Framework" RUN_TARGET_NAME="Impostor_SES_surface">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="false" name="Impostor_SES_visibility" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="OpenGL_Framework" TARGET_NAME="Impostor_SES_visibility" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="OpenGL_Framework" RUN_TARGET_NAME="Impostor_SES_visibility">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="false" name="SurfaceAtomsDetection" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="OpenGL_Framework" TARGET_NAME="SurfaceAtomsDetection" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="OpenGL_Framework" RUN_TARGET_NAME="SurfaceAtomsDetection">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="false" name="VisibleAtomsDetection" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="OpenGL_Framework" TARGET_NAME="VisibleAtomsDetection" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="OpenGL_Framework" RUN_TARGET_NAME="VisibleAtomsDetection">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="false" name="demo_MolSurf" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="OpenGL_Framework" TARGET_NAME="demo_MolSurf" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="OpenGL_Framework" RUN_TARGET_NAME="demo_MolSurf">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="false" name="demo_Spheres" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="OpenGL_Framework" TARGET_NAME="demo_Spheres" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="OpenGL_Framework" RUN_TARGET_NAME="demo_Spheres">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="false" name="demo_Spheres_Geometry" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="OpenGL_Framework" TARGET_NAME="demo_Spheres_Geometry" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="OpenGL_Framework" RUN_TARGET_NAME="demo_Spheres_Geometry">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="false" name="demo_Spheres_Instanced" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="OpenGL_Framework" TARGET_NAME="demo_Spheres_Instanced" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="OpenGL_Framework" RUN_TARGET_NAME="demo_Spheres_Instanced">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="false" name="PerfectSurfaceDetection" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="OpenGL_Framework" TARGET_NAME="PerfectSurfaceDetection" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="OpenGL_Framework" RUN_TARGET_NAME="PerfectSurfaceDetection">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="false" name="AssetTools" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="OpenGL_Framework" TARGET_NAME="AssetTools" CONFIG_NAME="Debug">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="false" name="Molecule" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="OpenGL_Framework" TARGET_NAME="Molecule" CONFIG_NAME="Debug">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="false" name="RenderTechniques" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="OpenGL_Framework" TARGET_NAME="RenderTechniques" CONFIG_NAME="Debug">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="false" name="ShaderTools" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="OpenGL_Framework" TARGET_NAME="ShaderTools" CONFIG_NAME="Debug">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="false" name="SHADERS" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="OpenGL_Framework" TARGET_NAME="SHADERS" CONFIG_NAME="Debug">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="false" name="NeighborSearch" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="OpenGL_Framework" TARGET_NAME="NeighborSearch" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="OpenGL_Framework" RUN_TARGET_NAME="NeighborSearch">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="false" name="SurfaceDynamicsVisualization" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="OpenGL_Framework" TARGET_NAME="SurfaceDynamicsVisualization" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="OpenGL_Framework" RUN_TARGET_NAME="SurfaceDynamicsVisualization">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="false" name="SurfaceExtraction" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="OpenGL_Framework" TARGET_NAME="SurfaceExtraction" CONFIG_NAME="Debug">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="false" name="Utils" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="OpenGL_Framework" TARGET_NAME="Utils" CONFIG_NAME="Debug">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="false" name="Search" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="OpenGL_Framework" TARGET_NAME="Search" CONFIG_NAME="Debug">
+      <envs />
+      <method />
+    </configuration>
+    <list size="20">
+      <item index="0" class="java.lang.String" itemvalue="Application.Build All" />
+      <item index="1" class="java.lang.String" itemvalue="Application.Impostor_SES_surface" />
+      <item index="2" class="java.lang.String" itemvalue="Application.Impostor_SES_visibility" />
+      <item index="3" class="java.lang.String" itemvalue="Application.SurfaceAtomsDetection" />
+      <item index="4" class="java.lang.String" itemvalue="Application.VisibleAtomsDetection" />
+      <item index="5" class="java.lang.String" itemvalue="Application.demo_MolSurf" />
+      <item index="6" class="java.lang.String" itemvalue="Application.demo_Spheres" />
+      <item index="7" class="java.lang.String" itemvalue="Application.demo_Spheres_Geometry" />
+      <item index="8" class="java.lang.String" itemvalue="Application.demo_Spheres_Instanced" />
+      <item index="9" class="java.lang.String" itemvalue="Application.PerfectSurfaceDetection" />
+      <item index="10" class="java.lang.String" itemvalue="Application.AssetTools" />
+      <item index="11" class="java.lang.String" itemvalue="Application.Molecule" />
+      <item index="12" class="java.lang.String" itemvalue="Application.RenderTechniques" />
+      <item index="13" class="java.lang.String" itemvalue="Application.ShaderTools" />
+      <item index="14" class="java.lang.String" itemvalue="Application.SHADERS" />
+      <item index="15" class="java.lang.String" itemvalue="Application.NeighborSearch" />
+      <item index="16" class="java.lang.String" itemvalue="Application.SurfaceDynamicsVisualization" />
+      <item index="17" class="java.lang.String" itemvalue="Application.SurfaceExtraction" />
+      <item index="18" class="java.lang.String" itemvalue="Application.Utils" />
+      <item index="19" class="java.lang.String" itemvalue="Application.Search" />
+    </list>
+  </component>
+  <component name="ShelveChangesManager" show_recycled="false">
+    <option name="remove_strategy" value="false" />
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="82e13c38-d31e-4eeb-83c6-b6b188909266" name="Default" comment="" />
+      <created>1464520448014</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1464520448014</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="0" y="24" width="1920" height="1056" extended-state="6" />
+    <editor active="true" />
+    <layout>
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.16770834" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.27365208" sideWeight="0.49598286" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="CMake" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.13733469" sideWeight="0.49598286" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.36012208" sideWeight="0.5040171" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3397762" sideWeight="0.49598286" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.60942405" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32670158" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+    </layout>
+  </component>
+  <component name="Vcs.Log.UiProperties">
+    <option name="RECENTLY_FILTERED_USER_GROUPS">
+      <collection />
+    </option>
+    <option name="RECENTLY_FILTERED_BRANCH_GROUPS">
+      <collection />
+    </option>
+  </component>
+  <component name="VcsContentAnnotationSettings">
+    <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <ignored-roots>
+      <path value="$PROJECT_DIR$/.." />
+    </ignored-roots>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <option name="time" value="50" />
+    </breakpoint-manager>
+    <watches-manager />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/shaders/3DObject/projector.frag">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-202">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/3DObject/simpleColor.frag">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/fullscreenQuad.geom" />
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/dummy.vert" />
+    <entry file="file://$PROJECT_DIR$/libraries/ShaderTools/Renderer.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="189">
+          <caret line="34" column="12" selection-start-line="34" selection-start-column="12" selection-end-line="34" selection-end-column="12" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/debug.frag" />
+    <entry file="file:///usr/include/c++/5/bits/stl_construct.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="216">
+          <caret line="74" column="0" selection-start-line="74" selection-start-column="0" selection-end-line="74" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/include/c++/5/bits/stl_vector.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="189">
+          <caret line="1210" column="6" selection-start-line="1210" selection-start-column="6" selection-end-line="1210" selection-end-column="6" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/ProteinLoader.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="666">
+          <caret line="37" column="9" selection-start-line="37" selection-start-column="9" selection-end-line="37" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/renderLines/lines.frag">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="108">
+          <caret line="6" column="55" selection-start-line="6" selection-start-column="55" selection-end-line="6" selection-end-column="55" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/SimpleProtein.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="263">
+          <caret line="42" column="9" selection-start-line="42" selection-start-column="9" selection-end-line="42" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/renderLines/lines.vert">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="126">
+          <caret line="7" column="0" selection-start-line="7" selection-start-column="0" selection-end-line="7" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/renderAtoms/impostor.geom">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="774">
+          <caret line="43" column="0" selection-start-line="43" selection-start-column="0" selection-end-line="43" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/ProteinLoader.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="54">
+          <caret line="34" column="20" selection-start-line="34" selection-start-column="20" selection-end-line="34" selection-end-column="20" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/SimpleAtom.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="162">
+          <caret line="9" column="6" selection-start-line="9" selection-start-column="6" selection-end-line="9" selection-end-column="6" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/renderAtoms/impostor.frag">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="269">
+          <caret line="44" column="74" selection-start-line="44" selection-start-column="74" selection-end-line="44" selection-end-column="74" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/libraries/Utils/OrbitCamera.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="324">
+          <caret line="18" column="25" selection-start-line="18" selection-start-column="25" selection-end-line="18" selection-end-column="25" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/libraries/ShaderTools/ShaderProgram.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2623">
+          <caret line="188" column="62" selection-start-line="188" selection-start-column="62" selection-end-line="188" selection-end-column="62" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/libraries/ShaderTools/ShaderProgram.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="94">
+          <caret line="124" column="1" selection-start-line="124" selection-start-column="1" selection-end-line="124" selection-end-column="1" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/libraries/Utils/OrbitCamera.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-844">
+          <caret line="32" column="18" selection-start-line="32" selection-start-column="18" selection-end-line="32" selection-end-column="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/Picking/picking.frag" />
+    <entry file="file://$PROJECT_DIR$/shaders/Picking/picking.vert" />
+    <entry file="file://$PROJECT_DIR$/libraries/Utils/PickingTexture.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="51">
+          <caret line="9" column="19" selection-start-line="9" selection-start-column="19" selection-end-line="9" selection-end-column="19" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/atomPicking/picking.frag">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="198">
+          <caret line="11" column="24" selection-start-line="11" selection-start-column="24" selection-end-line="11" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/libraries/Utils/PickingTexture.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="433">
+          <caret line="58" column="42" selection-start-line="58" selection-start-column="42" selection-end-line="58" selection-end-column="42" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/atomPicking/picking.vert">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="450">
+          <caret line="25" column="19" selection-start-line="25" selection-start-column="19" selection-end-line="25" selection-end-column="19" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/atomPicking/picking.geom">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="432">
+          <caret line="24" column="17" selection-start-line="24" selection-start-column="17" selection-end-line="24" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/libraries/Utils/AtomicCounter.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-324">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/libraries/Utils/Timer.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="360">
+          <caret line="20" column="10" selection-start-line="20" selection-start-column="10" selection-end-line="20" selection-end-column="10" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/libraries/Utils/Timer.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="504">
+          <caret line="28" column="1" selection-start-line="28" selection-start-column="1" selection-end-line="28" selection-end-column="1" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/include/GLFW/glfw3.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="12978">
+          <caret line="721" column="26" selection-start-line="721" selection-start-column="26" selection-end-line="721" selection-end-column="26" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/libraries/Search/GPUHandler.cpp" />
+    <entry file="file://$PROJECT_DIR$/libraries/Search/AssertData.cpp" />
+    <entry file="file://$PROJECT_DIR$/libraries/Search/AssertData.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="133">
+          <caret line="13" column="4" selection-start-line="13" selection-start-column="4" selection-end-line="13" selection-end-column="4" />
+          <folding>
+            <element signature="e#121#144#0" expanded="false" />
+            <element signature="e#200#1088#0" expanded="false" />
+            <element signature="e#1102#1111#0" expanded="false" />
+            <element signature="e#1094#1613#0" expanded="false" />
+            <element signature="e#1627#1636#0" expanded="false" />
+            <element signature="e#1619#2248#0" expanded="false" />
+            <element signature="e#2262#2271#0" expanded="false" />
+            <element signature="e#2254#2883#0" expanded="false" />
+            <element signature="e#2897#2906#0" expanded="false" />
+            <element signature="e#2889#3526#0" expanded="false" />
+            <element signature="e#3540#3549#0" expanded="false" />
+            <element signature="e#3532#4160#0" expanded="false" />
+            <element signature="e#4174#4183#0" expanded="false" />
+            <element signature="e#4166#4907#0" expanded="false" />
+            <element signature="e#4921#4930#0" expanded="false" />
+            <element signature="e#4913#5610#0" expanded="false" />
+            <element signature="e#5616#6579#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/searchApplication/colorAtomsInRadius.comp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="342">
+          <caret line="19" column="75" selection-start-line="19" selection-start-column="75" selection-end-line="19" selection-end-column="75" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/renderAtoms/impostor.vert">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="306">
+          <caret line="17" column="25" selection-start-line="17" selection-start-column="25" selection-end-line="17" selection-end-column="25" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/renderSearchRadius/radius.vert">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="324">
+          <caret line="18" column="31" selection-start-line="18" selection-start-column="31" selection-end-line="18" selection-end-column="31" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/renderSearchRadius/radius.geom">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="15" column="11" selection-start-line="15" selection-start-column="11" selection-end-line="15" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/renderSearchRadius/radius.frag">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="432">
+          <caret line="24" column="52" selection-start-line="24" selection-start-column="52" selection-end-line="24" selection-end-column="52" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/libraries/Search/GPUHandler.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-282">
+          <caret line="4" column="37" selection-start-line="4" selection-start-column="37" selection-end-line="4" selection-end-column="37" />
+          <folding>
+            <element signature="e#334#908#0" expanded="false" />
+            <element signature="e#914#1617#0" expanded="false" />
+            <element signature="e#1623#2009#0" expanded="false" />
+            <element signature="e#2014#2511#0" expanded="false" />
+            <element signature="e#2517#3220#0" expanded="false" />
+            <element signature="e#3226#3358#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-365">
+          <caret line="175" column="0" selection-start-line="175" selection-start-column="0" selection-end-line="175" selection-end-column="0" />
+          <folding>
+            <element signature="e#77#230#0" expanded="false" />
+            <element signature="e#233#335#0" expanded="false" />
+            <element signature="e#336#406#0" expanded="false" />
+            <element signature="e#407#483#0" expanded="false" />
+            <element signature="e#484#550#0" expanded="false" />
+            <element signature="e#551#667#0" expanded="false" />
+            <element signature="e#668#736#0" expanded="false" />
+            <element signature="e#737#806#0" expanded="false" />
+            <element signature="e#807#900#0" expanded="false" />
+            <element signature="e#901#1004#0" expanded="false" />
+            <element signature="e#1005#1095#0" expanded="false" />
+            <element signature="e#1096#1196#0" expanded="false" />
+            <element signature="e#1197#1277#0" expanded="false" />
+            <element signature="e#1281#1930#0" expanded="false" />
+            <element signature="e#1934#2339#0" expanded="false" />
+            <element signature="e#2343#2959#0" expanded="false" />
+            <element signature="e#2963#5108#0" expanded="false" />
+            <element signature="e#5109#5676#0" expanded="false" />
+            <element signature="e#5680#7650#0" expanded="false" />
+            <element signature="e#7651#7905#0" expanded="false" />
+            <element signature="e#7909#10296#0" expanded="false" />
+            <element signature="e#10297#10416#0" expanded="false" />
+            <element signature="e#10420#10698#0" expanded="false" />
+            <element signature="e#10699#10971#0" expanded="false" />
+            <element signature="e#10978#12034#0" expanded="false" />
+            <element signature="e#12038#14595#0" expanded="false" />
+            <element signature="e#14599#15435#0" expanded="false" />
+            <element signature="e#15436#18833#0" expanded="false" />
+            <element signature="e#18834#19830#0" expanded="false" />
+            <element signature="e#19831#20503#0" expanded="false" />
+            <element signature="e#20504#20581#0" expanded="false" />
+            <element signature="e#20582#20663#0" expanded="false" />
+            <element signature="e#20667#29015#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/libraries/Search/NeighborhoodSearchDefines.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="142">
+          <caret line="58" column="0" selection-start-line="58" selection-start-column="0" selection-end-line="73" selection-end-column="2" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/libraries/Search/NeighborhoodSearch.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="54">
+          <caret line="3" column="62" selection-start-line="3" selection-start-column="62" selection-end-line="3" selection-end-column="62" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/searchApplication/findSelectedAtomsNeighbors.comp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="62" selection-start-line="0" selection-start-column="62" selection-end-line="0" selection-end-column="62" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/neighborhoodSearch/countingSort.comp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="62" selection-start-line="0" selection-start-column="62" selection-end-line="0" selection-end-column="62" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/neighborhoodSearch/extractElementPositions.comp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/neighborhoodSearch/fillTempData.comp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="198">
+          <caret line="11" column="26" selection-start-line="11" selection-start-column="26" selection-end-line="11" selection-end-column="26" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/neighborhoodSearch/insertElements.comp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="62" selection-start-line="0" selection-start-column="62" selection-end-line="0" selection-end-column="62" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/neighborhoodSearch/prescanInt.comp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="62" selection-start-line="0" selection-start-column="62" selection-end-line="0" selection-end-column="62" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shaders/NeighborSearch/neighborhoodSearch/uniformAddInt.comp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="198">
+          <caret line="11" column="22" selection-start-line="11" selection-start-column="22" selection-end-line="11" selection-end-column="22" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/executables/NeighborSearch/main.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-2153">
+          <caret line="412" column="5" selection-start-line="412" selection-start-column="5" selection-end-line="412" selection-end-column="5" />
+          <folding>
+            <element signature="e#64#84#0" expanded="true" />
+            <element signature="e#293#326#0" expanded="true" />
+            <element signature="e#411#437#0" expanded="true" />
+            <element signature="e#3015#4615#0" expanded="false" />
+            <element signature="e#4616#5959#0" expanded="false" />
+            <element signature="e#5961#6785#0" expanded="false" />
+            <element signature="e#6789#8108#0" expanded="false" />
+            <element signature="e#17097#21104#0" expanded="false" />
+            <element signature="e#21106#21527#0" expanded="false" />
+            <element signature="e#21529#22358#0" expanded="false" />
+            <element signature="e#22362#22697#0" expanded="false" />
+            <element signature="e#22699#24416#0" expanded="false" />
+            <element signature="e#24418#25851#0" expanded="false" />
+            <element signature="e#26293#34285#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>

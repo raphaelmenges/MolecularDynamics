@@ -8,14 +8,14 @@
 const GLfloat CAMERA_BETA_BIAS = 0.0001f;
 
 OrbitCamera::OrbitCamera(
-    glm::vec3 center,
-    GLfloat alpha,
-    GLfloat beta,
-    GLfloat radius,
-    GLfloat minRadius,
-    GLfloat maxRadius,
-    GLfloat fov,
-    GLfloat orthoScale)
+        glm::vec3 center,
+        GLfloat alpha,
+        GLfloat beta,
+        GLfloat radius,
+        GLfloat minRadius,
+        GLfloat maxRadius,
+        GLfloat fov,
+        GLfloat orthoScale)
 {
     mCenter = center;
     mAlpha = alpha;
