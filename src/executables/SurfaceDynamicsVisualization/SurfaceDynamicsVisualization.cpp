@@ -666,6 +666,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 ascensionProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
                 ascensionProgram.update("ascensionColorOffsetAngle", mAscensionColorOffsetAngle);
                 ascensionProgram.update("selectionColor", mSelectionColor);
+                ascensionProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
                 glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
 
                 break;
@@ -1371,9 +1372,14 @@ void SurfaceDynamicsVisualization::renderGUI()
         if(frameComputed())
         {
             // ### Layer ###
-            if (ImGui::CollapsingHeader("Layer", "Layer##Visualization", true, true))
+            if(mSurfaceRendering == SurfaceRendering::HULL
+            || mSurfaceRendering == SurfaceRendering::ELEMENTS
+            || mSurfaceRendering == SurfaceRendering::AMINOACIDS)
             {
-                ImGui::SliderInt("Layer", &mLayer, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getLayerCount() - 1);
+                if (ImGui::CollapsingHeader("Layer", "Layer##Visualization", true, true))
+                {
+                    ImGui::SliderInt("Layer", &mLayer, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getLayerCount() - 1);
+                }
             }
 
             // ### Rendering ###
@@ -1452,6 +1458,13 @@ void SurfaceDynamicsVisualization::renderGUI()
                     {
                         mMarkSurfaceAtoms = true;
                     }
+                }
+
+                // Ascension change radius multiplier
+                if(mSurfaceRendering == SurfaceRendering::ASCENSION)
+                {
+                    ImGui::SliderFloat("Ascension Radius Multiplier", &mAscensionChangeRadiusMultiplier, 0.f, 1.f);
+                    if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Change of as- and descension is multiplied with radius."); }
                 }
             }
         }

@@ -4,6 +4,9 @@
 
 #version 430
 
+// Definitions
+const float TWO_PI = 2.0 * 3.14159265359;
+
 // Color and radius of impostor
 out vec3 vertColor;
 out float vertRadius;
@@ -28,7 +31,7 @@ layout(std430, binding = 1) restrict readonly buffer TrajectoryBuffer
    Position trajectory[];
 };
 
-// Ascension (angle in of hue)
+// Ascension (angle for determining hue)
 layout(std430, binding = 2) restrict readonly buffer AscensionBuffer
 {
    float ascension[];
@@ -45,6 +48,7 @@ uniform int frameCount;
 uniform int ascensionFrame;
 uniform float ascensionColorOffsetAngle;
 uniform vec3 selectionColor;
+uniform float ascensionChangeRadiusMultiplier;
 
 // Global
 int atomIndex;
@@ -99,8 +103,15 @@ void main()
     vec3 center = (accCenters + centerAtFrame) / (accCount + 1);
     gl_Position = vec4(center, 1);
 
+    // Extract ascension angle
+    float angle = ascension[(ascensionFrame * atomCount) + int(gl_VertexID)];
+
     // Extract radius
-    vertRadius = radii[atomIndex] + probeRadius;
+    float originalRadius = radii[atomIndex] + probeRadius;
+    vertRadius =
+    originalRadius
+        * (ascensionChangeRadiusMultiplier * abs(sin(angle))
+            + (1.f - ascensionChangeRadiusMultiplier));
 
     // Set color
     if(atomIndex == selectedIndex)
@@ -109,18 +120,14 @@ void main()
     }
     else
     {
-        // Definition of values
-        const float twoPi = 2.0 * 3.14159265359;
-
-        // Values
-        float angle = ascension[(ascensionFrame * atomCount) + int(gl_VertexID)];
-        angle += ascensionColorOffsetAngle;
-        float h = mod(angle, twoPi);
+        // Determine angle in hue by adding the given offset
+        float hueAngle = angle + ascensionColorOffsetAngle;
+        float h = mod(hueAngle, TWO_PI);
         float s = 1.0;
         float v = 1.0;
 
         // Get color from angle
-        float hDegree = (h / twoPi) * 360.0;
+        float hDegree = (h / TWO_PI) * 360.0;
         float c = v * s;
         float x = c * (1-abs(mod(hDegree / 60.0, 2.0) - 1.0));
         float m = v - c;

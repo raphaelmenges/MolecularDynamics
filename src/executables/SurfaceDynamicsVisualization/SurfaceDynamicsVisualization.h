@@ -196,6 +196,7 @@ private:
     float mAscensionBackToHotFrameCount = 10.f;
     float mAscensionUpToColdFrameCount = 10.f;
     float mAscensionBackToColdFrameCount = 10.f;
+    float mAscensionChangeRadiusMultiplier = 0.f;
     bool mMarkSurfaceAtoms = false;
     bool mRepeatOnlyComputed = false;
     bool mSuperSampling = true;
