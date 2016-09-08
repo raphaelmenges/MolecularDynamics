@@ -192,10 +192,10 @@ private:
     bool mRenderHullSamples = false;
     bool mRenderOutline = true;
     bool mShowTooltips = true;
-    float mAscensionUpToHotFrameCount = 10.f;
-    float mAscensionBackToHotFrameCount = 10.f;
-    float mAscensionUpToColdFrameCount = 10.f;
-    float mAscensionBackToColdFrameCount = 10.f;
+    float mAscensionUpToHotFrameCount = 100.f;
+    float mAscensionBackToHotFrameCount = 100.f;
+    float mAscensionUpToColdFrameCount = 100.f;
+    float mAscensionBackToColdFrameCount = 100.f;
     float mAscensionChangeRadiusMultiplier = 0.f;
     bool mMarkSurfaceAtoms = false;
     bool mRepeatOnlyComputed = false;

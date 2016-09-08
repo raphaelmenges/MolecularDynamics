@@ -1189,13 +1189,13 @@ void SurfaceDynamicsVisualization::renderGUI()
         // ### Ascension ###
         if (ImGui::CollapsingHeader("Ascension", "Ascension##Computation", true, true))
         {
-            ImGui::SliderFloat("Hot Up", &mAscensionUpToHotFrameCount, 1.f, 100.f, "%.0f");
+            ImGui::SliderFloat("Hot Up", &mAscensionUpToHotFrameCount, 1.f, 1000.f, "%.0f");
             if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until surface atom gets from cold to hot."); }
-            ImGui::SliderFloat("Hot Down", &mAscensionBackToHotFrameCount, 1.f, 100.f, "%.0f");
+            ImGui::SliderFloat("Hot Down", &mAscensionBackToHotFrameCount, 1.f, 1000.f, "%.0f");
             if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until surface atom falls back to hot while dropping."); }
-            ImGui::SliderFloat("Cool Up", &mAscensionUpToColdFrameCount, 1.f, 100.f, "%.0f");
+            ImGui::SliderFloat("Cool Up", &mAscensionUpToColdFrameCount, 1.f, 1000.f, "%.0f");
             if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until internal atom gets from hot to cold."); }
-            ImGui::SliderFloat("Cool Down", &mAscensionBackToColdFrameCount, 1.f, 100.f, "%.0f");
+            ImGui::SliderFloat("Cool Down", &mAscensionBackToColdFrameCount, 1.f, 1000.f, "%.0f");
             if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until internal atom falls back to cold while rising."); }
             if(ImGui::Button("\u2794 CPU##ascension")) { computeAscension(); }
             if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Compute ascension."); }
