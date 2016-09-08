@@ -1182,8 +1182,13 @@ void SurfaceDynamicsVisualization::renderGUI()
         {
             ImGui::SliderInt("Atom Sample Count", &mHullSampleCount, 0, 1000);
             if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Count of samples per atom used for analysis purposes, not surface extraction."); }
-            if(ImGui::Button("\u2794 GPGPU##hullsamples")) { computeHullSamples(); }
-            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Compute hull samples."); }
+
+            // Recomputation of hull samples only when there are frames with surface extracted
+            if(mComputedStartFrame >= 0)
+            {
+                if(ImGui::Button("\u2794 GPGPU##hullsamples")) { computeHullSamples(); }
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Compute hull samples."); }
+            }
         }
 
         // ### Ascension ###
@@ -1197,8 +1202,13 @@ void SurfaceDynamicsVisualization::renderGUI()
             if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until internal atom gets from hot to cold."); }
             ImGui::SliderFloat("Cool Down", &mAscensionBackToColdFrameCount, 1.f, 1000.f, "%.0f");
             if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until internal atom falls back to cold while rising."); }
-            if(ImGui::Button("\u2794 CPU##ascension")) { computeAscension(); }
-            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Compute ascension."); }
+
+            // Recomputation of ascension only when there are frames with surface extracted
+            if(mComputedStartFrame >= 0)
+            {
+                if(ImGui::Button("\u2794 CPU##ascension")) { computeAscension(); }
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Compute ascension."); }
+            }
         }
 
         ImGui::End();
@@ -1518,7 +1528,14 @@ void SurfaceDynamicsVisualization::renderGUI()
             ImGui::Text(std::string("Index: " + std::to_string(mSelectedAtom)).c_str());
             ImGui::Text(std::string("Element: " + mupGPUProtein->getElement(mSelectedAtom)).c_str());
             ImGui::Text(std::string("Aminoacid: " + mupGPUProtein->getAminoacid(mSelectedAtom)).c_str());
-            if(frameComputed()) { ImGui::Text(std::string("Layer: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getLayerOfAtom(mSelectedAtom))).c_str()); }
+            if(frameComputed())
+            {
+                // Layer
+                ImGui::Text(std::string("Layer: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getLayerOfAtom(mSelectedAtom))).c_str());
+
+                // Surface area
+                ImGui::Text(std::string("Surface Area: " + std::to_string(approximateSurfaceArea({ mSelectedAtom }, mFrame))).c_str());
+            }
 
             // Show / hide selection rendering
             if(mRenderSelection)
