@@ -46,6 +46,12 @@ public:
     // Get length of subpath
     float getLength(int startFrame, int endFrame) const;
 
+    // Get length of complete local path
+    float getCompleteLocalLength() const;
+
+    // Get length of local subpath
+    float getLocalLength(int startFrame, int endFrame) const;
+
     // Get count of vertices in path
     int getVertexCount() const { return mVertexCount; }
 
@@ -58,8 +64,9 @@ private:
     int mVertexCount = 0;
     std::unique_ptr<ShaderProgram> mupProgram;
     int mPositionAttribue = 0;
-    std::vector<float> mAccLengths; // saving accumulated lengths for easier computations. Size = mVertexCount - 1
-
+    std::vector<std::pair<double, double> > mAccLengths;    // saving accumulated lengths for easier computations.
+                                                            // Size = mVertexCount - 1. Pair is global and local lengths.
+                                                            // Local is global subtracted by protein's center in each frame
 };
 
 #endif // PATH_H

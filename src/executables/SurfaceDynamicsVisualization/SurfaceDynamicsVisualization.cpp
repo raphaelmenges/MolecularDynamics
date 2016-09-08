@@ -1789,7 +1789,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                     {
                         mSelectedAtom = atomIndex;
                     }
-                    if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Select atom."); } // tooltip
+                    if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Select atom."); }
                     ImGui::SameLine();
 
                     // Remove that atom from analysis atoms (use ## to add number for an unique button id)
@@ -1798,7 +1798,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                         toBeRemoved.push_back(atomIndex);
                         analysisAtomsChanged = true;
                     }
-                    if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Remove atom."); } // tooltip
+                    if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Remove atom."); }
                 }
 
                 // Remove atoms from analysis
@@ -1874,9 +1874,9 @@ void SurfaceDynamicsVisualization::renderGUI()
                 {
                     // ### Path ###
                     std::ostringstream stringPathLength;
-
-                    // Manual path length determination
                     int maxFrameIndex = mupGPUProtein->getFrameCount() - 1;
+
+                    // Manual global path length determination
                     ImGui::InputInt("Path Start Frame", &mPathLengthStartFrame);
                     if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Start frame used for path length calculation below."); }
                     ImGui::InputInt("Path End Frame", &mPathLengthEndFrame);
@@ -1886,9 +1886,17 @@ void SurfaceDynamicsVisualization::renderGUI()
                     mPathLengthStartFrame = glm::min(mPathLengthEndFrame, mPathLengthStartFrame);
                     mPathLengthEndFrame = glm::max(mPathLengthStartFrame, mPathLengthEndFrame);
 
+                    // Global path length
                     stringPathLength = std::ostringstream();
                     stringPathLength << std::fixed << std::setprecision(2) << mupPath->getLength(mPathLengthStartFrame, mPathLengthEndFrame);
-                    ImGui::Text(std::string("Path Length: " + stringPathLength.str() + " \u212b").c_str());
+                    ImGui::Text(std::string("Global Path Length: " + stringPathLength.str() + " \u212b").c_str());
+                    if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Global path length between set start and end frame."); }
+
+                    // Local path length
+                    stringPathLength = std::ostringstream();
+                    stringPathLength << std::fixed << std::setprecision(2) << mupPath->getLocalLength(mPathLengthStartFrame, mPathLengthEndFrame);
+                    ImGui::Text(std::string("Local Path Length: " + stringPathLength.str() + " \u212b").c_str());
+                    if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Local path length, for each position the molecule's center is subtracted."); }
                     ImGui::Separator();
 
                     // Radius of frames which are taken into account for path smoothing

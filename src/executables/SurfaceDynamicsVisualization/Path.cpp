@@ -42,41 +42,49 @@ void Path::update(
     mAccLengths.clear();
     mAccLengths.reserve(pGPUProtein->getFrameCount() - 1); // distance between path vertices
 
-    // Path
-    auto rTrajectoy = pGPUProtein->getTrajectory();
-
     // Go over frames and calculate average position of all used atoms
-    std::vector<glm::vec3> path;
+    std::vector<glm::vec3> path; // global position
     path.reserve(pGPUProtein->getFrameCount());
-    for(const auto& frame : *(rTrajectoy.get()))
+    std::vector<glm::vec3> localPath; // local position
+    localPath.reserve(pGPUProtein->getFrameCount());
+    bool first = true;
+    for(int frame = 0; frame < pGPUProtein->getFrameCount(); frame++)
     {
         // Go over analysed atoms and accumulate position in frame
         glm::vec3 accPosition(0,0,0);
         for(int atomIndex : atomIndices)
         {
-            accPosition += frame.at(atomIndex);
+            accPosition += pGPUProtein->getTrajectory()->at(frame).at(atomIndex);
         }
 
         // Calculate average
         glm::vec3 avgPosition = accPosition / atomIndices.size();
 
+        // Calculate local average position
+        glm::vec3 localAvgPosition = avgPosition - pGPUProtein->getCenterOfMass(frame);
+
         // Caluclate and accumulate distance
-        if(!path.empty())
+        if(!first)
         {
             // Save length
-            float length = glm::distance(avgPosition, path.back());
+            double length = (double)glm::distance(avgPosition, path.back());
+            double localLength = (double)glm::distance(localAvgPosition, localPath.back());
             if(mAccLengths.empty())
             {
-                mAccLengths.push_back(length);
+                mAccLengths.push_back(std::make_pair(length, localLength));
             }
             else
             {
-                mAccLengths.push_back(mAccLengths.back() + length);
+                mAccLengths.push_back(std::make_pair(
+                    mAccLengths.back().first + length,
+                    mAccLengths.back().second + localLength));
             }
         }
 
         // Push new average position value to vector after calculating distance
         path.push_back(avgPosition);
+        localPath.push_back(relativeAvgPosition);
+        first = false;
     }
 
     // Create VBO which is filled within next if clause
@@ -101,7 +109,7 @@ void Path::update(
             int endFrame = glm::min(pathVertexCount-1, i + smoothFrameRadius);
             for(int j = startFrame; j <= endFrame; j++)
             {
-                accPosition += path.at(j);
+                accPosition += path.at(j); // use global position for rendering
             }
             accPosition /= ((endFrame - startFrame) + 1);
 
@@ -175,7 +183,7 @@ float Path::getCompleteLength() const
     }
     else
     {
-        return mAccLengths.back();
+        return mAccLengths.back().first;
     }
 }
 
@@ -187,10 +195,38 @@ float Path::getLength(int startFrame, int endFrame) const
     }
     else if(startFrame == 0)
     {
-        return mAccLengths.at(endFrame - 1);
+        return mAccLengths.at(endFrame - 1).first;
     }
     else
     {
-        return (mAccLengths.at(endFrame - 1) - mAccLengths.at(startFrame - 1));
+        return (mAccLengths.at(endFrame - 1).first - mAccLengths.at(startFrame - 1).first);
+    }
+}
+
+float Path::getCompleteLocalLength() const
+{
+    if(mAccLengths.empty())
+    {
+        return 0.f;
+    }
+    else
+    {
+        return mAccLengths.back().second;
+    }
+}
+
+float Path::getLocalLength(int startFrame, int endFrame) const
+{
+    if(mAccLengths.empty() || startFrame >= endFrame)
+    {
+        return 0.f;
+    }
+    else if(startFrame == 0)
+    {
+        return mAccLengths.at(endFrame - 1).second;
+    }
+    else
+    {
+        return (mAccLengths.at(endFrame - 1).second - mAccLengths.at(startFrame - 1).second);
     }
 }
