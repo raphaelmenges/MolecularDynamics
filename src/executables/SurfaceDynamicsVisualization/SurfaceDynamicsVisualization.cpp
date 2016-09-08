@@ -814,27 +814,31 @@ void SurfaceDynamicsVisualization::renderLoop()
         mupSelectedAtomFramebuffer->resize(mWindowWidth, mWindowHeight, mSuperSampling);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Bind buffers of radii and trajectory for rendering molecule
-        mupGPUProtein->bind(0, 1);
+        // Only render it when enabled
+        if(mRenderSelection)
+        {
+            // Bind buffers of radii and trajectory for rendering molecule
+            mupGPUProtein->bind(0, 1);
 
-        // Prepare shader program
-        selectionProgram.use();
-        selectionProgram.update("view", mupCamera->getViewMatrix());
-        selectionProgram.update("projection", mupCamera->getProjectionMatrix());
-        selectionProgram.update("cameraWorldPos", mupCamera->getPosition());
-        selectionProgram.update("probeRadius", mRenderWithProbeRadius ? mComputedProbeRadius : 0.f);
-        selectionProgram.update("lightDir", mLightDirection);
-        selectionProgram.update("clippingPlane", mClippingPlane);
-        selectionProgram.update("frame", mFrame);
-        selectionProgram.update("atomCount", mupGPUProtein->getAtomCount());
-        selectionProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
-        selectionProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
-        selectionProgram.update("frameCount", mupGPUProtein->getFrameCount());
-        selectionProgram.update("depthDarkeningStart", mDepthDarkeningStart);
-        selectionProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
-        selectionProgram.update("color", mSelectionColor);
-        selectionProgram.update("atomIndex", mSelectedAtom);
-        glDrawArrays(GL_POINTS, 0, 1);
+            // Prepare shader program
+            selectionProgram.use();
+            selectionProgram.update("view", mupCamera->getViewMatrix());
+            selectionProgram.update("projection", mupCamera->getProjectionMatrix());
+            selectionProgram.update("cameraWorldPos", mupCamera->getPosition());
+            selectionProgram.update("probeRadius", mRenderWithProbeRadius ? mComputedProbeRadius : 0.f);
+            selectionProgram.update("lightDir", mLightDirection);
+            selectionProgram.update("clippingPlane", mClippingPlane);
+            selectionProgram.update("frame", mFrame);
+            selectionProgram.update("atomCount", mupGPUProtein->getAtomCount());
+            selectionProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+            selectionProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+            selectionProgram.update("frameCount", mupGPUProtein->getFrameCount());
+            selectionProgram.update("depthDarkeningStart", mDepthDarkeningStart);
+            selectionProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
+            selectionProgram.update("color", mSelectionColor);
+            selectionProgram.update("atomIndex", mSelectedAtom);
+            glDrawArrays(GL_POINTS, 0, 1);
+        }
 
         // Unbind selected atom framebuffer
         mupSelectedAtomFramebuffer->unbind();
@@ -1515,6 +1519,22 @@ void SurfaceDynamicsVisualization::renderGUI()
             ImGui::Text(std::string("Element: " + mupGPUProtein->getElement(mSelectedAtom)).c_str());
             ImGui::Text(std::string("Aminoacid: " + mupGPUProtein->getAminoacid(mSelectedAtom)).c_str());
             if(frameComputed()) { ImGui::Text(std::string("Layer: " + std::to_string(mGPUSurfaces.at(mFrame - mComputedStartFrame)->getLayerOfAtom(mSelectedAtom))).c_str()); }
+
+            // Show / hide selection rendering
+            if(mRenderSelection)
+            {
+                if(ImGui::Button("Hide Selection", ImVec2(208, 22)))
+                {
+                    mRenderSelection = false;
+                }
+            }
+            else
+            {
+                if(ImGui::Button("Show Selection", ImVec2(208, 22)))
+                {
+                    mRenderSelection = true;
+                }
+            }
         }
 
         // ### Hardware infos ###

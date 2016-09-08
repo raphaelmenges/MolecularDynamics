@@ -202,6 +202,7 @@ private:
     bool mSuperSampling = true;
     int mPathLengthStartFrame = 0;
     int mPathLengthEndFrame = 0;
+    bool mRenderSelection = true;
 
     // Report output
     std::string mComputeInformation = "No computation info available.";
