@@ -1263,17 +1263,8 @@ void SurfaceDynamicsVisualization::renderGUI()
             // Put center of camera in protein's center
             if(ImGui::Button("Center", ImVec2(100, 22)))
             {
-                // Smooth center by taking average of multiple centers at different times
-                int startFrame = glm::max(0, mFrame - mCameraAutoCenterSmoothFrameRadius);
-                int endFrame = glm::min(mupGPUProtein->getFrameCount() - 1, mFrame + mCameraAutoCenterSmoothFrameRadius);
-                glm::vec3 accCenter(0, 0, 0);
-                for(int i = startFrame; i <= endFrame; i++)
-                {
-                    accCenter += mupGPUProtein->getCenterOfMass(mFrame);
-                }
-
                 // Applied for next frame
-                mupCamera->setCenter(accCenter / (float)((endFrame - startFrame) + 1.f));
+                mupCamera->setCenter(mupGPUProtein->getCenterOfMass(mFrame));
             }
             if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Sets center of camera to center of molecule."); }
             ImGui::SameLine();
@@ -1286,6 +1277,24 @@ void SurfaceDynamicsVisualization::renderGUI()
                 mupCamera->setCenter(glm::vec3(0));
             }
             if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Reset angle and center of camera."); }
+
+            // Put center of camera in center of analysis group
+            if(frameComputed() && !mAnalyseGroup.empty())
+            {
+                if(ImGui::Button("Center Analysis Group", ImVec2(208, 22)))
+                {
+                    // Average centers of atoms in analysis group
+                    glm::vec3 avgCenter(0,0,0);
+                    for(GLuint atomIndex : mAnalyseGroup)
+                    {
+                        avgCenter += mupGPUProtein->getTrajectory()->at(mFrame).at(atomIndex);
+                    }
+
+                    // Applied for next frame
+                    mupCamera->setCenter(avgCenter / (float)(mAnalyseGroup.size()));
+                }
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Sets center of camera to center of current analysis group."); }
+            }
         }
 
         // ### Clipping ###
