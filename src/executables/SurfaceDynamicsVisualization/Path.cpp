@@ -83,7 +83,7 @@ void Path::update(
 
         // Push new average position value to vector after calculating distance
         path.push_back(avgPosition);
-        localPath.push_back(relativeAvgPosition);
+        localPath.push_back(localAvgPosition);
         first = false;
     }
 
