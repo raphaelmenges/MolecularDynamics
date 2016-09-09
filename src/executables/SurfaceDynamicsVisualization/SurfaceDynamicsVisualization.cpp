@@ -1195,13 +1195,13 @@ void SurfaceDynamicsVisualization::renderGUI()
         if (ImGui::CollapsingHeader("Ascension", "Ascension##Computation", true, true))
         {
             ImGui::SliderFloat("Hot Up", &mAscensionUpToHotFrameCount, 1.f, 1000.f, "%.0f");
-            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until surface atom gets from cold to hot."); }
-            ImGui::SliderFloat("Hot Down", &mAscensionBackToHotFrameCount, 1.f, 1000.f, "%.0f");
-            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until surface atom falls back to hot while dropping."); }
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until surface atom gets up from cold to hot."); }
+            ImGui::SliderFloat("Hot Down", &mAscensionDownToHotFrameCount, 1.f, 1000.f, "%.0f");
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until surface atom falls down to hot while dropping."); }
             ImGui::SliderFloat("Cool Up", &mAscensionUpToColdFrameCount, 1.f, 1000.f, "%.0f");
-            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until internal atom gets from hot to cold."); }
-            ImGui::SliderFloat("Cool Down", &mAscensionBackToColdFrameCount, 1.f, 1000.f, "%.0f");
-            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until internal atom falls back to cold while rising."); }
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until internal atom gets up from hot to cold."); }
+            ImGui::SliderFloat("Cool Down", &mAscensionDownToColdFrameCount, 1.f, 1000.f, "%.0f");
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Frame count until internal atom falls down to cold while rising."); }
 
             // Recomputation of ascension only when there are frames with surface extracted
             if(mComputedStartFrame >= 0)
@@ -2188,9 +2188,9 @@ void SurfaceDynamicsVisualization::computeAscension()
     GLuint frame = 0; // ascension frame, incremented in outer for loop
     float pi = glm::pi<float>();
     float upToHot = pi / mAscensionUpToHotFrameCount;
-    float backToHot = pi / mAscensionBackToHotFrameCount;
+    float downToHot = pi / mAscensionDownToHotFrameCount;
     float upToCold = pi / mAscensionUpToColdFrameCount;
-    float backToCold = pi / mAscensionBackToColdFrameCount;
+    float downToCold = pi / mAscensionDownToColdFrameCount;
 
     // Go over frames for which surface exist
     for(const auto& rupGPUSurface : mGPUSurfaces)
@@ -2245,7 +2245,7 @@ void SurfaceDynamicsVisualization::computeAscension()
                     else
                     {
                         // Getting hotter again, was already on its way to becoming cold
-                        value = glm::max(pi, previousValue - backToHot);
+                        value = glm::max(pi, previousValue - downToHot);
                     }
                 }
                 else // internal
@@ -2259,7 +2259,7 @@ void SurfaceDynamicsVisualization::computeAscension()
                     else if(previousValue < pi)
                     {
                         // A throwback on the way of getting hot
-                        value = glm::max(0.f, previousValue - backToCold);
+                        value = glm::max(0.f, previousValue - downToCold);
                     }
                     else
                     {

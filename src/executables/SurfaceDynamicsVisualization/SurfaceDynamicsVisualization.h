@@ -193,9 +193,9 @@ private:
     bool mRenderOutline = true;
     bool mShowTooltips = true;
     float mAscensionUpToHotFrameCount = 100.f;
-    float mAscensionBackToHotFrameCount = 100.f;
+    float mAscensionDownToHotFrameCount = 100.f;
     float mAscensionUpToColdFrameCount = 100.f;
-    float mAscensionBackToColdFrameCount = 100.f;
+    float mAscensionDownToColdFrameCount = 100.f;
     float mAscensionChangeRadiusMultiplier = 0.f;
     bool mMarkSurfaceAtoms = false;
     bool mRepeatOnlyComputed = false;
