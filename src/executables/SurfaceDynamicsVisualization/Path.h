@@ -63,7 +63,7 @@ private:
     GLuint mVAO = 0;
     int mVertexCount = 0;
     std::unique_ptr<ShaderProgram> mupProgram;
-    int mPositionAttribue = 0;
+    int mPositionAttribute = 0;
     std::vector<std::pair<double, double> > mAccLengths;    // saving accumulated lengths for easier computations.
                                                             // Size = mVertexCount - 1. Pair is global and local lengths.
                                                             // Local is global subtracted by protein's center in each frame

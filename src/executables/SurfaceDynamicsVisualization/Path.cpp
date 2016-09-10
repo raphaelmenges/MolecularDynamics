@@ -18,9 +18,9 @@ Path::Path()
     glBindBuffer(GL_ARRAY_BUFFER, mVBO);
 
     // Bind it to shader program
-    mPositionAttribue = glGetAttribLocation(mupProgram->getProgramHandle(), "position");
-    glEnableVertexAttribArray(mPositionAttribue);
-    glVertexAttribPointer(mPositionAttribue, 3, GL_FLOAT, GL_FALSE, 0, 0); // called again at path creation
+    mPositionAttribute = glGetAttribLocation(mupProgram->getProgramHandle(), "position");
+    glEnableVertexAttribArray(mPositionAttribute);
+    glVertexAttribPointer(mPositionAttribute, 3, GL_FLOAT, GL_FALSE, 0, 0); // called again at path creation
 
     // Unbind everything
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -152,7 +152,7 @@ void Path::draw(
 
         // Decide which path parts are rendered
         int offset = glm::clamp(frame - drawFrameRadius, 0, mVertexCount); // on which frame path starts
-        glVertexAttribPointer(mPositionAttribue, 3, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(GLfloat) * 3 * offset));
+        glVertexAttribPointer(mPositionAttribute, 3, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(GLfloat) * 3 * offset));
         int count = glm::min(((drawFrameRadius * 2) + 1), mVertexCount - offset);
 
         // General shader setup
