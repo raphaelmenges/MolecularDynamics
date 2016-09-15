@@ -192,8 +192,9 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     // Create path for analysis group
     mupPath = std::unique_ptr<Path>(new Path());
 
-    // Group for
-    mupGroupIndicators = std::unique_ptr<GPUBuffer<GLuint> >(new GPUBuffer<GLuint>);
+    // Group for highlighting
+    mupGroupIndicators = std::unique_ptr<GPUBuffer<GLfloat> >(new GPUBuffer<GLfloat>);
+    mupGroupIndicators->fill(std::vector<GLfloat>(mupGPUProtein->getAtomCount(), 0.f), GL_DYNAMIC_DRAW); // create buffer with zeros for startup since nothing is highlighted
 
     // Hull samples
     mupHullSamples = std::unique_ptr<GPUHullSamples>(new GPUHullSamples());
@@ -447,11 +448,13 @@ void SurfaceDynamicsVisualization::renderLoop()
                 // Bind buffers of radii and trajectory for rendering
                 mupGPUProtein->bind(0, 1);
 
+                // Slot 2 is not filled since GroupIndicatorBuffer ist not necessary
+
                 // Bind ascension
-                mupAscension->bind(2);
+                mupAscension->bind(3);
 
                 // Bind texture buffer with input atoms
-                mupOutlineAtomIndices->bindAsImage(3, GPUAccess::READ_ONLY);
+                mupOutlineAtomIndices->bindAsImage(4, GPUAccess::READ_ONLY);
 
                 // Probe radius
                 float probeRadius = mRenderWithProbeRadius ? mComputedProbeRadius : 0.f;
@@ -849,8 +852,12 @@ void SurfaceDynamicsVisualization::renderLoop()
             // Bind buffers of radii and trajectory for rendering molecule
             mupGPUProtein->bind(0, 1);
 
+            // Bind group indicator
+            mupGroupIndicators->bind(2);
+
             // Prepare shader program
             selectionProgram.use();
+            selectionProgram.update("time", mAccTime);
             selectionProgram.update("view", mupCamera->getViewMatrix());
             selectionProgram.update("projection", mupCamera->getProjectionMatrix());
             selectionProgram.update("cameraWorldPos", mupCamera->getPosition());
@@ -1858,10 +1865,10 @@ void SurfaceDynamicsVisualization::renderGUI()
                     updateGroupAnalysis();
 
                     // Indicators for highlighting
-                    std::vector<GLuint> groupIndicators(mupGPUProtein->getAtomCount(), 0);
+                    std::vector<float> groupIndicators(mupGPUProtein->getAtomCount(), 0.f);
                     for(GLuint index : analyseAtomVector)
                     {
-                        groupIndicators.at(index) = 1;
+                        groupIndicators.at(index) = 1.f;
                     }
                     mupGroupIndicators->fill(groupIndicators, GL_DYNAMIC_DRAW);
                 }

@@ -96,6 +96,6 @@ void main()
     // Set color
     vertColor = color;
 
-    // Set index (not used since framebuffer has no attachment for it)
+    // Set index (not used for pick index since framebuffer has no attachment for it)
     vertIndex = atomIndex;
 }

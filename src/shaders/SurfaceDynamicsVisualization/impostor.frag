@@ -17,7 +17,7 @@ layout (depth_less) out float gl_FragDepth; // Makes optimizations possible
 // Group indicator
 layout(std430, binding = 2) restrict readonly buffer GroupIndicatorBuffer
 {
-   unsigned int groupIndicator[];
+  float groupIndicator[];
 };
 
 // Uniforms
@@ -120,7 +120,7 @@ void main()
 
     // Highlight (TODO: is float precision enough to add time with frag coord?)
     float highlight = (sin((((gl_FragCoord.x + gl_FragCoord.y)* 3.14) / 8.0) +  (8.f * time)) + 1.0) / 2.0;
-    finalColor = mix(finalColor, vec3(1,1,0), float(groupIndicator[index]) * 0.5 * highlight);
+    finalColor = mix(finalColor, vec3(1,1,0), groupIndicator[index] * 0.5 * highlight);
 
     // Output color
     fragColor = vec4(finalColor, 1);

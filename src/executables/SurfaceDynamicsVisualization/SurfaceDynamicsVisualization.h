@@ -253,7 +253,7 @@ private:
     // Analysis
     std::unique_ptr<GPUHullSamples> mupHullSamples;
     std::set<GLuint> mAnalyseGroup;
-    std::unique_ptr<GPUBuffer<GLuint> > mupGroupIndicators; // zero for atoms which are not in group
+    std::unique_ptr<GPUBuffer<GLfloat> > mupGroupIndicators; // zero for atoms which are not in group
     int mNextAnalyseAtomIndex = 0;
     std::vector<float> mAnalysisSurfaceAmount;
     std::vector<float> mAnalysisSurfaceArea;
