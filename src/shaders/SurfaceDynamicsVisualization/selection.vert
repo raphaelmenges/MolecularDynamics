@@ -97,5 +97,5 @@ void main()
     vertColor = color;
 
     // Set index (not used since framebuffer has no attachment for it)
-    vertIndex = atomIndex + 1; // plus one to distinguish from nothing!
+    vertIndex = atomIndex;
 }

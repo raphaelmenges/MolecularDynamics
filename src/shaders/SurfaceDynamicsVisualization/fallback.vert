@@ -106,5 +106,5 @@ void main()
     }
 
     // Set index
-    vertIndex = atomIndex + 1; // plus one to distinguish from nothing!
+    vertIndex = atomIndex;
 }

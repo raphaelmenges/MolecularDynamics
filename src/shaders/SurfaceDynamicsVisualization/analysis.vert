@@ -28,8 +28,14 @@ layout(std430, binding = 1) restrict readonly buffer TrajectoryBuffer
    Position trajectory[];
 };
 
+// Ascension
+layout(std430, binding = 3) restrict readonly buffer AscensionBuffer
+{
+   float ascension[];
+};
+
 // Indices of group atoms
-layout(binding = 2, r32ui) readonly restrict uniform uimageBuffer GroupAtomsIndices;
+layout(binding = 4, r32ui) readonly restrict uniform uimageBuffer GroupAtomsIndices;
 
 // Uniforms
 uniform float probeRadius;
@@ -44,6 +50,8 @@ uniform float smoothAnimationMaxDeviation;
 uniform int frameCount;
 uniform int groupAtomCount;
 uniform vec3 selectionColor;
+uniform int ascensionFrame;
+uniform float ascensionChangeRadiusMultiplier;
 
 // Global
 int atomIndex;
@@ -98,8 +106,13 @@ void main()
     vec3 center = (accCenters + centerAtFrame) / (accCount + 1);
     gl_Position = vec4(center, 1);
 
-    // Extract radius
-    vertRadius = radii[atomIndex] + probeRadius;
+    // Extract radius inclusive visualization of ascension angle
+    float angle = ascension[(ascensionFrame * atomCount) + int(atomIndex)];
+    float originalRadius = radii[atomIndex] + probeRadius;
+    vertRadius =
+    originalRadius
+        * (ascensionChangeRadiusMultiplier * abs(sin(angle))
+            + (1.f - ascensionChangeRadiusMultiplier));
 
     // Determine whether this atom is in group
     bool inGroup = false;
@@ -127,5 +140,5 @@ void main()
     }
 
     // Set index
-    vertIndex = atomIndex + 1; // plus one to distinguish from nothing!
+    vertIndex = atomIndex;
 }

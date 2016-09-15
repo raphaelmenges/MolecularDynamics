@@ -192,6 +192,9 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     // Create path for analysis group
     mupPath = std::unique_ptr<Path>(new Path());
 
+    // Group for
+    mupGroupIndicators = std::unique_ptr<GPUBuffer<GLuint> >(new GPUBuffer<GLuint>);
+
     // Hull samples
     mupHullSamples = std::unique_ptr<GPUHullSamples>(new GPUHullSamples());
 
@@ -301,6 +304,10 @@ void SurfaceDynamicsVisualization::renderLoop()
     render(mpWindow, [&] (float deltaTime)
     {
         if(mFrameLogging) { std::cout << "### New Frame ###" << std::endl; }
+
+        // Time accumulation
+        mAccTime += deltaTime;
+        mAccTime = glm::mod(mAccTime, 60.f * 30.f); // reset time after 30 minutes. Otherwise float not precise enough
 
         // Viewport size
         glm::vec2 resolution = getResolution(mpWindow);
@@ -597,19 +604,23 @@ void SurfaceDynamicsVisualization::renderLoop()
         // Bind buffers of radii and trajectory for rendering molecule
         mupGPUProtein->bind(0, 1);
 
+        // Bind group indicator
+        mupGroupIndicators->bind(2);
+
         // Decide about surface rendering
         if(frameComputed())
         {
+            // Bind ascension
+            mupAscension->bind(3);
+
             // Frame is computed, decide how to render it
             switch(mSurfaceRendering)
             {
             case SurfaceRendering::HULL:
 
-                // Bind ascension buffer
-                mupAscension->bind(3);
-
                 // Prepare shader program
                 hullProgram.use();
+                hullProgram.update("time", mAccTime);
                 hullProgram.update("view", mupCamera->getViewMatrix());
                 hullProgram.update("projection", mupCamera->getProjectionMatrix());
                 hullProgram.update("cameraWorldPos", mupCamera->getPosition());
@@ -632,7 +643,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 // viewport depth which means internal are always in front of surface)
                 if(mShowInternal)
                 {
-                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndices(mLayer, 2);
+                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndices(mLayer, 4);
                     hullProgram.update("color", mInternalAtomColor);
                     glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
                 }
@@ -640,7 +651,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 // Draw surface
                 if(mShowSurface)
                 {
-                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 2);
+                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 4);
                     hullProgram.update("color", mSurfaceAtomColor);
                     glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
                 }
@@ -649,11 +660,9 @@ void SurfaceDynamicsVisualization::renderLoop()
 
             case SurfaceRendering::ASCENSION:
 
-                // Bind ascension buffer
-                mupAscension->bind(2);
-
                 // Prepare shader program
                 ascensionProgram.use();
+                ascensionProgram.update("time", mAccTime);
                 ascensionProgram.update("view", mupCamera->getViewMatrix());
                 ascensionProgram.update("projection", mupCamera->getProjectionMatrix());
                 ascensionProgram.update("cameraWorldPos", mupCamera->getPosition());
@@ -679,10 +688,11 @@ void SurfaceDynamicsVisualization::renderLoop()
             case SurfaceRendering::ELEMENTS:
 
                 // Bind coloring
-                mupGPUProtein->bindColorsElement(3);
+                mupGPUProtein->bindColorsElement(4);
 
                 // Prepare shader program
                 coloringProgram.use();
+                coloringProgram.update("time", mAccTime);
                 coloringProgram.update("view", mupCamera->getViewMatrix());
                 coloringProgram.update("projection", mupCamera->getProjectionMatrix());
                 coloringProgram.update("cameraWorldPos", mupCamera->getPosition());
@@ -698,6 +708,8 @@ void SurfaceDynamicsVisualization::renderLoop()
                 coloringProgram.update("depthDarkeningStart", mDepthDarkeningStart);
                 coloringProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
                 coloringProgram.update("selectionColor", mSelectionColor);
+                coloringProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
+                coloringProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
 
                 // Draw internal (first, because at clipping plane are all set to same
                 // viewport depth which means internal are always in front of surface)
@@ -719,10 +731,11 @@ void SurfaceDynamicsVisualization::renderLoop()
             case SurfaceRendering::AMINOACIDS:
 
                 // Bind coloring
-                mupGPUProtein->bindColorsAminoacid(3);
+                mupGPUProtein->bindColorsAminoacid(4);
 
                 // Prepare shader program
                 coloringProgram.use();
+                coloringProgram.update("time", mAccTime);
                 coloringProgram.update("view", mupCamera->getViewMatrix());
                 coloringProgram.update("projection", mupCamera->getProjectionMatrix());
                 coloringProgram.update("cameraWorldPos", mupCamera->getPosition());
@@ -738,6 +751,8 @@ void SurfaceDynamicsVisualization::renderLoop()
                 coloringProgram.update("depthDarkeningStart", mDepthDarkeningStart);
                 coloringProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
                 coloringProgram.update("selectionColor", mSelectionColor);
+                coloringProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
+                coloringProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
 
                 // Draw internal (first, because at clipping plane are all set to same
                 // viewport depth which means internal are always in front of surface)
@@ -759,10 +774,11 @@ void SurfaceDynamicsVisualization::renderLoop()
             case SurfaceRendering::ANALYSIS:
 
                 // Bind indices of analysis atoms
-                mupOutlineAtomIndices->bindAsImage(2, GPUAccess::READ_ONLY);
+                mupOutlineAtomIndices->bindAsImage(4, GPUAccess::READ_ONLY);
 
                 // Prepare shader program
                 analysisProgram.use();
+                analysisProgram.update("time", mAccTime);
                 analysisProgram.update("view", mupCamera->getViewMatrix());
                 analysisProgram.update("projection", mupCamera->getProjectionMatrix());
                 analysisProgram.update("cameraWorldPos", mupCamera->getPosition());
@@ -779,6 +795,8 @@ void SurfaceDynamicsVisualization::renderLoop()
                 analysisProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
                 analysisProgram.update("groupAtomCount", (int)mupOutlineAtomIndices->getSize());
                 analysisProgram.update("selectionColor", mSelectionColor);
+                analysisProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
+                analysisProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
                 glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
 
                 break;
@@ -788,6 +806,7 @@ void SurfaceDynamicsVisualization::renderLoop()
         {
             // Render it with fallback shader
             fallbackProgram.use();
+            fallbackProgram.update("time", mAccTime);
             fallbackProgram.update("view", mupCamera->getViewMatrix());
             fallbackProgram.update("projection", mupCamera->getProjectionMatrix());
             fallbackProgram.update("cameraWorldPos", mupCamera->getPosition());
@@ -1832,6 +1851,14 @@ void SurfaceDynamicsVisualization::renderGUI()
 
                     // Group analysis update
                     updateGroupAnalysis();
+
+                    // Indicators for highlighting
+                    std::vector<GLuint> groupIndicators(mupGPUProtein->getAtomCount(), 0);
+                    for(GLuint index : analyseAtomVector)
+                    {
+                        groupIndicators.at(index) = 1;
+                    }
+                    mupGroupIndicators->fill(groupIndicators, GL_DYNAMIC_DRAW);
                 }
                 ImGui::Separator();
 

@@ -14,7 +14,14 @@ layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec3 pickIndex;
 layout (depth_less) out float gl_FragDepth; // Makes optimizations possible
 
+// Group indicator
+layout(std430, binding = 2) restrict readonly buffer GroupIndicatorBuffer
+{
+   unsigned int groupIndicator[];
+};
+
 // Uniforms
+uniform float time;
 uniform mat4 view;
 uniform mat4 projection;
 uniform vec3 cameraWorldPos;
@@ -111,13 +118,18 @@ void main()
     // Rim lighting
     finalColor += ((0.75 * lighting) + 0.25) * pow(1.0 - dot(normal, vec3(0,0,1)), 3);
 
+    // Highlight (TODO: is float precision enough to add time with frag coord?)
+    float highlight = (sin((((gl_FragCoord.x + gl_FragCoord.y)* 3.14) / 8.0) +  (8.f * time)) + 1.0) / 2.0;
+    finalColor = mix(finalColor, vec3(1,1,0), float(groupIndicator[index]) * 0.5 * highlight);
+
     // Output color
     fragColor = vec4(finalColor, 1);
 
     // Output pickIndex
-    int r = (index & 0x000000FF) >>  0;
-    int g = (index & 0x0000FF00) >>  8;
-    int b = (index & 0x00FF0000) >> 16;
+    int rawPickIndex = index + 1; // add one to distinguish from nothing
+    int r = (rawPickIndex & 0x000000FF) >>  0;
+    int g = (rawPickIndex & 0x0000FF00) >>  8;
+    int b = (rawPickIndex & 0x00FF0000) >> 16;
     pickIndex = vec3(
         float(r) / 255.0,
         float(g) / 255.0,

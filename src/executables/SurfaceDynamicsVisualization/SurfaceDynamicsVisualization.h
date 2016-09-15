@@ -208,37 +208,52 @@ private:
     std::string mComputeInformation = "No computation info available.";
     std::string mValidationInformation = "No validation info available.";
 
-    // Members
-    GLFWwindow* mpWindow;
-    std::unique_ptr<OrbitCamera> mupCamera; // camera for visualization
-    glm::vec2 mCameraDeltaRotation;
-    float mCameraRotationSmoothTime;
-    glm::vec3 mLightDirection;
+    // Molecule and surface
     std::unique_ptr<GPUProtein> mupGPUProtein; // protein on GPU
     std::unique_ptr<GPUSurfaceExtraction> mupGPUSurfaceExtraction;  // factory for GPUSurfaces
                                                                     // (unique pointer because has to be constructed after OpenGL initialization)
     std::vector<std::unique_ptr<GPUSurface> > mGPUSurfaces; // vector with surfaces
+
+    // Camera
+    std::unique_ptr<OrbitCamera> mupCamera; // camera for visualization
+    glm::vec2 mCameraDeltaRotation;
+    float mCameraRotationSmoothTime;
+
+    // Lighting
+    glm::vec3 mLightDirection;
+
+    // State
     int mFrame = 0; // do not set it directly, let it be done by setFrame() method!
     int mLayer = 0;
     float mFramePlayTime = 0; // time of displaying a molecule state at playing the animation
     int mComputedStartFrame = -1;
     int mComputedEndFrame = -1;
     float mComputedProbeRadius = 0.f;
-    bool mFramebuffersExist = false;
+    float mAccTime = 0; // since only float precision, reset after a certain time
+
+    // Window
+    GLFWwindow* mpWindow;
     int mWindowWidth;
     int mWindowHeight;
+
+    // Ascension
+    std::unique_ptr<GPUBuffer<GLfloat> > mupAscension; // values have range [0..2Pi]
+
+    // Cubemaps
     GLuint mScientificCubemapTexture;
     GLuint mCVCubemapTexture;
     GLuint mBeachCubemapTexture;
+
+    // Framebuffer
     std::unique_ptr<Framebuffer> mupMoleculeFramebuffer;
     std::unique_ptr<Framebuffer> mupSelectedAtomFramebuffer;
     std::unique_ptr<Framebuffer> mupOverlayFramebuffer;
     std::unique_ptr<GPUTextureBuffer> mupOutlineAtomIndices;
-    std::unique_ptr<GPUBuffer<GLfloat> > mupAscension; // values have range [0..2Pi]
-    std::unique_ptr<GPUHullSamples> mupHullSamples;
 
     // Analysis
+    std::unique_ptr<GPUHullSamples> mupHullSamples;
     std::set<GLuint> mAnalyseGroup;
+    std::unique_ptr<GPUBuffer<GLuint> > mupGroupIndicators; // zero for atoms which are not in group
     int mNextAnalyseAtomIndex = 0;
     std::vector<float> mAnalysisSurfaceAmount;
     std::vector<float> mAnalysisSurfaceArea;

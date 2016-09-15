@@ -32,7 +32,7 @@ layout(std430, binding = 1) restrict readonly buffer TrajectoryBuffer
 };
 
 // Ascension (angle for determining hue)
-layout(std430, binding = 2) restrict readonly buffer AscensionBuffer
+layout(std430, binding = 3) restrict readonly buffer AscensionBuffer
 {
    float ascension[];
 };
@@ -161,5 +161,5 @@ void main()
     }
 
     // Set index
-    vertIndex = atomIndex + 1; // plus one to distinguish from nothing!
+    vertIndex = atomIndex;
 }
