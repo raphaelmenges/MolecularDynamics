@@ -605,6 +605,9 @@ void SurfaceDynamicsVisualization::renderLoop()
             {
             case SurfaceRendering::HULL:
 
+                // Bind ascension buffer
+                mupAscension->bind(3);
+
                 // Prepare shader program
                 hullProgram.use();
                 hullProgram.update("view", mupCamera->getViewMatrix());
@@ -622,6 +625,8 @@ void SurfaceDynamicsVisualization::renderLoop()
                 hullProgram.update("depthDarkeningStart", mDepthDarkeningStart);
                 hullProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
                 hullProgram.update("selectionColor", mSelectionColor);
+                hullProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
+                hullProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
 
                 // Draw internal (first, because at clipping plane are all set to same
                 // viewport depth which means internal are always in front of surface)
@@ -1373,22 +1378,6 @@ void SurfaceDynamicsVisualization::renderGUI()
             {
                 setFrame(frame);
             }
-
-            // Render / not render with probe radius
-            if(mRenderWithProbeRadius)
-            {
-                if(ImGui::Button("No Probe Radius", ImVec2(208, 22)))
-                {
-                    mRenderWithProbeRadius = false;
-                }
-            }
-            else
-            {
-                if(ImGui::Button("Add Probe Radius", ImVec2(208, 22)))
-                {
-                    mRenderWithProbeRadius = true;
-                }
-            }
         }
 
         // Stuff that is only possible on computed frames
@@ -1484,10 +1473,23 @@ void SurfaceDynamicsVisualization::renderGUI()
                 }
 
                 // Ascension change radius multiplier
-                if(mSurfaceRendering == SurfaceRendering::ASCENSION)
+                ImGui::SliderFloat("Ascension Radius Multiplier", &mAscensionChangeRadiusMultiplier, 0.f, 1.f);
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Change of as- and descension is multiplied with radius."); }
+
+                // Render / not render with probe radius
+                if(mRenderWithProbeRadius)
                 {
-                    ImGui::SliderFloat("Ascension Radius Multiplier", &mAscensionChangeRadiusMultiplier, 0.f, 1.f);
-                    if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Change of as- and descension is multiplied with radius."); }
+                    if(ImGui::Button("No Probe Radius", ImVec2(208, 22)))
+                    {
+                        mRenderWithProbeRadius = false;
+                    }
+                }
+                else
+                {
+                    if(ImGui::Button("Add Probe Radius", ImVec2(208, 22)))
+                    {
+                        mRenderWithProbeRadius = true;
+                    }
                 }
             }
         }

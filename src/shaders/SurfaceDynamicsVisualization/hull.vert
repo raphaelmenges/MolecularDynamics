@@ -31,6 +31,12 @@ layout(std430, binding = 1) restrict readonly buffer TrajectoryBuffer
 // Indices of atoms
 layout(binding = 2, r32ui) readonly restrict uniform uimageBuffer Indices;
 
+// Ascension
+layout(std430, binding = 3) restrict readonly buffer AscensionBuffer
+{
+   float ascension[];
+};
+
 // Uniforms
 uniform float probeRadius;
 uniform int selectedIndex = 0;
@@ -41,6 +47,8 @@ uniform int smoothAnimationRadius;
 uniform float smoothAnimationMaxDeviation;
 uniform int frameCount;
 uniform vec3 selectionColor;
+uniform int ascensionFrame;
+uniform float ascensionChangeRadiusMultiplier;
 
 // Global
 int atomIndex;
@@ -95,8 +103,13 @@ void main()
     vec3 center = (accCenters + centerAtFrame) / (accCount + 1);
     gl_Position = vec4(center, 1);
 
-    // Extract radius
-    vertRadius = radii[atomIndex] + probeRadius;
+    // Extract radius inclusive visualization of ascension angle
+    float angle = ascension[(ascensionFrame * atomCount) + int(atomIndex)];
+    float originalRadius = radii[atomIndex] + probeRadius;
+    vertRadius =
+    originalRadius
+        * (ascensionChangeRadiusMultiplier * abs(sin(angle))
+            + (1.f - ascensionChangeRadiusMultiplier));
 
     // Set color
     if(atomIndex == selectedIndex)
