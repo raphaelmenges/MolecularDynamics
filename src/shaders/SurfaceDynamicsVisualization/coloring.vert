@@ -28,9 +28,6 @@ layout(std430, binding = 1) restrict readonly buffer TrajectoryBuffer
    Position trajectory[];
 };
 
-// Indices of atoms
-layout(binding = 2, r32ui) readonly restrict uniform uimageBuffer Indices;
-
 // Ascension
 layout(std430, binding = 3) restrict readonly buffer AscensionBuffer
 {
@@ -47,6 +44,9 @@ layout(std430, binding = 4) restrict readonly buffer ColoringBuffer
 {
    Color coloring[];
 };
+
+// Indices of atoms
+layout(binding = 5, r32ui) readonly restrict uniform uimageBuffer Indices;
 
 // Uniforms
 uniform float probeRadius;

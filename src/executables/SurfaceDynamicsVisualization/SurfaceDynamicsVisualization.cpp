@@ -447,8 +447,11 @@ void SurfaceDynamicsVisualization::renderLoop()
                 // Bind buffers of radii and trajectory for rendering
                 mupGPUProtein->bind(0, 1);
 
+                // Bind ascension
+                mupAscension->bind(2);
+
                 // Bind texture buffer with input atoms
-                mupOutlineAtomIndices->bindAsImage(2, GPUAccess::READ_ONLY);
+                mupOutlineAtomIndices->bindAsImage(3, GPUAccess::READ_ONLY);
 
                 // Probe radius
                 float probeRadius = mRenderWithProbeRadius ? mComputedProbeRadius : 0.f;
@@ -466,6 +469,8 @@ void SurfaceDynamicsVisualization::renderLoop()
                 outlineProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
                 outlineProgram.update("frameCount", mupGPUProtein->getFrameCount());
                 outlineProgram.update("outlineColor", mOutlineColor);
+                outlineProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
+                outlineProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
 
                 // Create stencil
                 glStencilFunc(GL_ALWAYS, 1, 0xFF); // set reference value for new stencil values
@@ -715,14 +720,14 @@ void SurfaceDynamicsVisualization::renderLoop()
                 // viewport depth which means internal are always in front of surface)
                 if(mShowInternal)
                 {
-                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndices(mLayer, 2);
+                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndices(mLayer, 5);
                     glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
                 }
 
                 // Draw surface
                 if(mShowSurface)
                 {
-                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 2);
+                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 5);
                     glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
                 }
 
@@ -758,14 +763,14 @@ void SurfaceDynamicsVisualization::renderLoop()
                 // viewport depth which means internal are always in front of surface)
                 if(mShowInternal)
                 {
-                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndices(mLayer, 2);
+                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndices(mLayer, 5);
                     glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
                 }
 
                 // Draw surface
                 if(mShowSurface)
                 {
-                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 2);
+                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 5);
                     glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
                 }
 
