@@ -225,6 +225,8 @@ private:
     glm::vec3 mLightDirection;
 
     // State
+    std::string mPDBFilepath = "";
+    std::string mXTCFilepath = "";
     int mFrame = 0; // do not set it directly, let it be done by setFrame() method!
     int mLayer = 0;
     float mFramePlayTime = 0; // time of displaying a molecule state at playing the animation

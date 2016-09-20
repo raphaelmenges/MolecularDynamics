@@ -34,6 +34,8 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     mLightDirection = glm::normalize(glm::vec3(-0.5, -0.75, -0.3));
     mWindowWidth = mInitialWindowWidth;
     mWindowHeight = mInitialWindowHeight;
+    mPDBFilepath = filepathPDB;
+    mXTCFilepath = filepathXTC;
 
     // # Setup paths
     resetPath(mGlobalAnalysisFilePath, "/GlobalAnalysis.csv");
@@ -109,8 +111,8 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     std::cout << "Import molecule.." << std::endl;
     MdTrajWrapper mdwrap;
     std::vector<std::string> paths;
-    paths.push_back(filepathPDB);
-    if(!filepathXTC.empty()) { paths.push_back(filepathXTC); }
+    paths.push_back(mPDBFilepath);
+    if(!mXTCFilepath.empty()) { paths.push_back(mXTCFilepath); }
     std::unique_ptr<Protein> upProtein = std::move(mdwrap.load(paths));
     mupGPUProtein = std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()));
     std::cout << "..done" << std::endl;
@@ -1547,6 +1549,13 @@ void SurfaceDynamicsVisualization::renderGUI()
         // ### General infos ###
         if (ImGui::CollapsingHeader("General", "General##Information", true, true))
         {
+            // Files
+            ImGui::Text(std::string("PDB: " + mPDBFilepath.substr(mPDBFilepath.find_last_of("\\/") + 1)).c_str());
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip(mPDBFilepath.c_str()); }
+            ImGui::Text(std::string("XTC: " + mXTCFilepath.substr(mXTCFilepath.find_last_of("\\/") + 1)).c_str());
+            if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip(mXTCFilepath.c_str()); }
+
+            // Atom count
             ImGui::Text(std::string("Atom Count: " + std::to_string(mupGPUProtein->getAtomCount())).c_str());
         }
 
