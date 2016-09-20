@@ -1,4 +1,4 @@
-# No idea what here happens
+# Extract project id
 string(REPLACE "/" ";" p2list "${CMAKE_SOURCE_DIR}")
 string(REPLACE "\\" ";" p2list "${p2list}")
 list(REVERSE p2list)
@@ -22,17 +22,16 @@ link_dependency(GLFW3)
 link_dependency(GLM)
 link_dependency(DevIL)
 link_dependency(ASSIMP)
-# link_dependency(ZLIB) # Seems to be not necessary
 
 # Include externals folder
 include_directories(${EXTERNALS_PATH})
 
-# Python from miniconda TODO: be more version independend
+# Python from miniconda
 set(PYTHON_INCLUDE_DIRS "${MINICONDA3_PATH}/include/python3.5m")
 set(PYTHON_LIBRARIES "${MINICONDA3_PATH}/lib/libpython3.5m.so")
-set(PYTHON_PACKAGES_PATH "${MINICONDA3_PATH}/lib/python3.5/site-packages")
+set(PYTHON_PACKAGES_PATH "${SITE_PACKAGES_PATH}")
 
-# Include directories
+# Include directories of python
 include_directories(
     ${PYTHON_INCLUDE_DIRS}
 )
@@ -42,7 +41,7 @@ link_libraries(
      ${PYTHON_LIBRARIES}
 )
 
-# Link against XOrg libraries on Linux
+# Link against system libraries
 if("${CMAKE_SYSTEM}" MATCHES "Linux")
     find_package(X11)
     set(ALL_LIBRARIES ${ALL_LIBRARIES} ${X11_LIBRARIES} Xcursor Xinerama Xrandr Xxf86vm Xi pthread -ldl -llzma)
@@ -68,7 +67,7 @@ endif()
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 GENERATE_SUBDIRS(ALL_LIBRARIES ${LIBRARIES_PATH} ${PROJECT_BINARY_DIR}/libraries)
 
-# Set output paths for exetuables
+# Set output paths for executables
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 GENERATE_SUBDIRS(ALL_EXECUTABLES ${EXECUTABLES_PATH} ${PROJECT_BINARY_DIR}/executables)
 
