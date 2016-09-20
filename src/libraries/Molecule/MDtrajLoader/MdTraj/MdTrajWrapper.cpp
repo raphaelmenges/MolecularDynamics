@@ -4,35 +4,14 @@
 
 MdTrajWrapper::MdTrajWrapper()
 {
-
-    /*	FString ue_path = FPaths::GameDir();
-   //UE_LOG(LogTemp, Warning, TEXT("Path in MDTrajWrapper: %s"), *ue_path);
-    std::string updated_path(TCHAR_TO_UTF8(*ue_path));
-    updated_path += "Content/Include/mdtraj";
-
-    Py_Initialize();
-    PyObject* sys = PyImport_ImportModule("sys");
-
-    PyObject* path= PyObject_GetAttrString(sys, "path");
-    Py_DECREF(sys);
-    PyList_Append(path, PyUnicode_FromString(updated_path.c_str()));
-    Py_DECREF(path);
-    this->importMDTraj();*/
+    wchar_t* inputName = L"" PYTHON_PROGRAM_NAME;
+    Py_SetProgramName(inputName);
+    wchar_t* name = Py_GetProgramFullPath();
+    std::wcout << "Using python executable at " << name << std::endl;
 
     Py_Initialize();
     PySys_SetArgvEx(0, NULL, 0);
-    PyObject *sys = PyImport_ImportModule("sys");
-    PyObject *path = PyObject_GetAttrString(sys, "path");
-    //std::string s = "/home/nlichtenberg/miniconda/lib/python2.7/site-packages";
-    std::string s = MDTRAJ_PATH;
-    PyList_Append(path, PyUnicode_FromString(s.c_str())); // add location of the MDTraj package to python path
-    Py_DECREF(path);
     this->importMDTraj();
-
-    //    mdtraj = PyImport_ImportModule("mdtraj");
-    //    mdtraj_load = PyObject_GetAttrString(mdtraj, "load");
-
-    //    import_array();
 }
 
 MdTrajWrapper::~MdTrajWrapper()
@@ -41,8 +20,6 @@ MdTrajWrapper::~MdTrajWrapper()
     //Py_Finalize();
 
 }
-
-
 
 /*
 * @param vector of paths to xtc and/or pdb

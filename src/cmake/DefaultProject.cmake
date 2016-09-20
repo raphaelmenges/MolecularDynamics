@@ -28,10 +28,9 @@ link_dependency(ASSIMP)
 include_directories(${EXTERNALS_PATH})
 
 # Python from miniconda TODO: be more version independend
-set(PYTHON_INCLUDE_DIRS "$ENV{HOME}/miniconda3/include/python3.5m")
-set(PYTHON_LIBRARIES "$ENV{HOME}/miniconda3/lib/libpython3.5m.so")
-set(PYTHON_EXECUTABLE "$ENV{HOME}/miniconda3/bin")
-set(PYTHON_PACKAGES_PATH "$ENV{HOME}/miniconda3/lib/python3.*/site-packages")
+set(PYTHON_INCLUDE_DIRS "${MINICONDA3_PATH}/include/python3.5m")
+set(PYTHON_LIBRARIES "${MINICONDA3_PATH}/lib/libpython3.5m.so")
+set(PYTHON_PACKAGES_PATH "${MINICONDA3_PATH}/lib/python3.5/site-packages")
 
 # Include directories
 include_directories(
@@ -46,13 +45,13 @@ link_libraries(
 # Link against XOrg libraries on Linux
 if("${CMAKE_SYSTEM}" MATCHES "Linux")
     find_package(X11)
-    set(ALL_LIBRARIES ${ALL_LIBRARIES} ${X11_LIBRARIES} Xcursor Xinerama Xrandr Xxf86vm Xi pthread)
+    set(ALL_LIBRARIES ${ALL_LIBRARIES} ${X11_LIBRARIES} Xcursor Xinerama Xrandr Xxf86vm Xi pthread -ldl -llzma)
 endif()
 
 # Tell application about some paths
 add_definitions(-DSHADERS_PATH="${SHADERS_PATH}")
 add_definitions(-DRESOURCES_PATH="${RESOURCES_PATH}")
-add_definitions(-DMDTRAJ_PATH="${SIDE_PACKAGES_PATH}") # TODO: rename variable on C++ side
+add_definitions(-DPYTHON_PROGRAM_NAME="${MINICONDA3_PATH}/bin/python")
 
 # Compiler settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
