@@ -1,8 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 
-# Include cmake macros
-include(${CMAKE_MODULE_PATH}/doxygen.cmake)
-include(${CMAKE_MODULE_PATH}/macros.cmake)
+# Name of framework
+project(OpenGLFramework)
 
 # Prepare path finding
 set(MINICONDA3_PATH "$ENV{HOME}/miniconda3")
@@ -18,6 +17,9 @@ set(PYTHON_INCLUDE_DIRS "${MINICONDA3_PATH}/include/python3.5m" CACHE PATH "Path
 set(PYTHON_LIBRARIES "${MINICONDA3_PATH}/lib/libpython3.5m.so" CACHE PATH "Path of Python shared library.")
 set(PYTHON_PACKAGES_PATH "${MINICONDA3_PATH}/lib/python3.5/site-packages" CACHE PATH "Path to Python packages.")
 
+# Include cmake macros
+include(${CMAKE_MODULE_PATH}/doxygen.cmake)
+include(${CMAKE_MODULE_PATH}/macros.cmake)
 
 # Set output paths for libraries
 set(LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/lib")
