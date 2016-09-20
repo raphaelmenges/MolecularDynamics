@@ -203,6 +203,8 @@ private:
     int mPathLengthStartFrame = 0;
     int mPathLengthEndFrame = 0;
     bool mRenderSelection = true;
+    int mNewGroupAtomsStartIndex = 0;
+    int mNewGroupAtomsEndIndex = 0;
 
     // Report output
     std::string mComputeInformation = "No computation info available.";

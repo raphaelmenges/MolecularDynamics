@@ -1839,7 +1839,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                 ImGui::EndChild();
 
                 // Add new atoms to analyse
-                ImGui::InputInt("", &mNextAnalyseAtomIndex);
+                ImGui::InputInt("##nextanalysisatom", &mNextAnalyseAtomIndex);
                 if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Index of atom."); }
                 mNextAnalyseAtomIndex = glm::clamp(mNextAnalyseAtomIndex, 0, mupGPUProtein->getAtomCount());
                 ImGui::SameLine();
@@ -1849,6 +1849,32 @@ void SurfaceDynamicsVisualization::renderGUI()
                     mAnalyseGroup.insert((GLuint)mNextAnalyseAtomIndex);
                     analysisAtomsChanged = true;
                 }
+
+                // Range to add atoms
+                ImGui::InputInt("Start Index", &mNewGroupAtomsStartIndex, 0, mupGPUProtein->getAtomCount() - 1);
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Set start index of atoms which shall be added to group."); }
+                ImGui::InputInt("End Index", &mNewGroupAtomsEndIndex, 0, mupGPUProtein->getAtomCount() - 1);
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Set end index of atoms which shall be added to group."); }
+                if(ImGui::Button("Add Atom Range"))
+                {
+                    // Add atoms to list of analyse atoms
+                    for(int i = mNewGroupAtomsStartIndex; i <= mNewGroupAtomsEndIndex; i++)
+                    {
+                        mAnalyseGroup.insert((GLuint)i);
+                    }
+                    analysisAtomsChanged = true;
+
+                }
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Add all atoms from start to end index defined above."); }
+                ImGui::SameLine();
+
+                // Remove all atoms from group
+                if(ImGui::Button("Clear Group"))
+                {
+                    mAnalyseGroup.clear();
+                    analysisAtomsChanged = true;
+                }
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Remove all atoms from analysis group."); }
 
                 // Recreate outline atom indices, path visualization and group analysis
                 if(analysisAtomsChanged)
