@@ -1,16 +1,3 @@
-# Extract project id
-string(REPLACE "/" ";" p2list "${CMAKE_SOURCE_DIR}")
-string(REPLACE "\\" ";" p2list "${p2list}")
-list(REVERSE p2list)
-list(GET p2list 0 first)
-list(GET p2list 1 ProjectId)
-string(REPLACE " " "_" ProjectId ${ProjectId})
-project(${ProjectId})
-
-# Include cmake macros
-include(${CMAKE_MODULE_PATH}/doxygen.cmake)
-include(${CMAKE_MODULE_PATH}/macros.cmake)
-
 # CMake flags
 set(CMAKE_CONFIGURATION_TYPES Debug;Release)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
@@ -27,14 +14,10 @@ link_dependency(ASSIMP)
 include_directories(${EXTERNALS_PATH})
 
 # Include directories of python
-include_directories(
-    ${PYTHON_INCLUDE_DIRS}
-)
+include_directories(${PYTHON_INCLUDE_DIRS})
 
 # Link against python
-link_libraries(
-     ${PYTHON_LIBRARIES}
-)
+link_libraries(${PYTHON_LIBRARIES})
 
 # Link against system libraries
 if("${CMAKE_SYSTEM}" MATCHES "Linux")
@@ -49,27 +32,14 @@ add_definitions(-DPYTHON_PROGRAM_NAME="${MINICONDA3_PATH}/bin/python")
 
 # Compiler settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  # using Clang
+  # nothing to do
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   add_definitions(-Wall -Wextra)
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
-  # using Intel C++
+  # nothing to do
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   add_definitions(/W2)
 endif()
 
-# Set output paths for libraries
-set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
-GENERATE_SUBDIRS(ALL_LIBRARIES ${LIBRARIES_PATH} ${PROJECT_BINARY_DIR}/libraries)
-
-# Set output paths for executables
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
-GENERATE_SUBDIRS(ALL_EXECUTABLES ${EXECUTABLES_PATH} ${PROJECT_BINARY_DIR}/executables)
-
-# Add shader path as subdirectory to have it available in project tree
-if(EXISTS ${SHADERS_PATH})
-        add_subdirectory(${SHADERS_PATH})
-endif()
-
-# Printing of Python values
+# Printing of python values
 file (COPY "${CMAKE_MODULE_PATH}/gdb_prettyprinter.py" DESTINATION ${PROJECT_BINARY_DIR})

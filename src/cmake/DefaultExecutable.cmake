@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+include(${CMAKE_MODULE_PATH}/DefaultProject.cmake)
 
 # Extract project name from folder name
 get_filename_component(ProjectId ${CMAKE_CURRENT_SOURCE_DIR} NAME)
@@ -6,7 +6,6 @@ string(REPLACE " " "_" ProjectId ${ProjectId})
 project(${ProjectId})
 
 # ImGui
-message(STATUS ImGui)
 set(IM_GUI_DIR ${EXTERNALS_PATH}/imgui)
 file(GLOB IM_GUI
     ${IM_GUI_DIR}/imgui.cpp
