@@ -26,11 +26,6 @@ link_dependency(ASSIMP)
 # Include externals folder
 include_directories(${EXTERNALS_PATH})
 
-# Python from miniconda
-set(PYTHON_INCLUDE_DIRS "${MINICONDA3_PATH}/include/python3.5m")
-set(PYTHON_LIBRARIES "${MINICONDA3_PATH}/lib/libpython3.5m.so")
-set(PYTHON_PACKAGES_PATH "${SITE_PACKAGES_PATH}")
-
 # Include directories of python
 include_directories(
     ${PYTHON_INCLUDE_DIRS}
