@@ -55,7 +55,7 @@ private:
     // Enumeration for background cubemaps
     enum Background
     {
-        SCIENTIFIC, COMPUTERVISUALISTIK, BEACH
+        NONE, SCIENTIFIC, COMPUTERVISUALISTIK, BEACH
     };
 
     // Keyboard callback for GLFW

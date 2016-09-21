@@ -907,6 +907,9 @@ void SurfaceDynamicsVisualization::renderLoop()
 
         switch(mBackground)
         {
+        case Background::NONE:
+            glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+            break;
         case Background::SCIENTIFIC:
             glBindTexture(GL_TEXTURE_CUBE_MAP, mScientificCubemapTexture);
             break;
@@ -2105,7 +2108,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Begin("Rendering", NULL, 0);
 
         // Background
-        ImGui::Combo("Background", (int*)&mBackground, "Scientific\0Computervisualistik\0Beach\0");
+        ImGui::Combo("Background", (int*)&mBackground, "None\0Scientific\0Computervisualistik\0Beach\0");
         if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Choose cubemap used for background."); }
 
         // Lighting
