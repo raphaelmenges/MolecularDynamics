@@ -2031,7 +2031,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                         csv::csv_ostream csvs(fs);
 
                         // Create header
-                        csvs << "Frame" << "MinLayer" << "AvgLayer" << "SurfaceAmount" << "SurfaceArea" << "AccPath";
+                        csvs << "Frame" << "MinLayer" << "AvgLayer" << "SurfaceAmount" << "SurfaceArea" << "AccPath" << "LocalAccPath";
                         csvs << csv::endl;
 
                         // Fill data
@@ -2057,6 +2057,9 @@ void SurfaceDynamicsVisualization::renderGUI()
 
                             // Accumulated path length
                             csvs << std::to_string(mupPath->getLength(0, frame));
+
+                            // Accumulated local path length
+                            csvs << std::to_string(mupPath->getLocalLength(0, frame));
 
                             // End line
                             csvs << csv::endl;
