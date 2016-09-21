@@ -37,6 +37,7 @@ uniform float clippingPlane;
 uniform float depthDarkeningStart;
 uniform float depthDarkeningEnd;
 uniform float highlightMultiplier;
+uniform vec4 highlightColor;
 
 // Main function
 void main()
@@ -128,7 +129,7 @@ void main()
 
     // Highlight (TODO: is float precision enough to add time with frag coord?)
     float highlight = (sin((((gl_FragCoord.x + gl_FragCoord.y)* 3.14) / 8.0) +  (8.f * time)) + 1.0) / 2.0;
-    finalColor = mix(finalColor, vec3(1,1,0), groupIndicator[index] * 0.5 * highlight * highlightMultiplier);
+    finalColor = mix(finalColor, highlightColor.rgb, highlightColor.a * groupIndicator[index] * 0.5 * highlight * highlightMultiplier);
 
     // Output color
     fragColor = vec4(finalColor, 1);

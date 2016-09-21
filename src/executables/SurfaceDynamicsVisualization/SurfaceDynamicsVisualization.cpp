@@ -687,6 +687,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 hullProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
                 hullProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
                 hullProgram.update("highlightMultiplier", mRenderOutline ? 1.f : 0.f);
+                hullProgram.update("highlightColor", mOutlineColor);
 
                 // Draw internal (first, because at clipping plane are all set to same
                 // viewport depth which means internal are always in front of surface)
@@ -731,6 +732,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 ascensionProgram.update("selectionColor", mSelectionColor);
                 ascensionProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
                 ascensionProgram.update("highlightMultiplier", mRenderOutline ? 1.f : 0.f);
+                ascensionProgram.update("highlightColor", mOutlineColor);
                 glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
 
                 break;
@@ -761,6 +763,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 coloringProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
                 coloringProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
                 coloringProgram.update("highlightMultiplier", mRenderOutline ? 1.f : 0.f);
+                coloringProgram.update("highlightColor", mOutlineColor);
 
                 // Draw internal (first, because at clipping plane are all set to same
                 // viewport depth which means internal are always in front of surface)
@@ -805,6 +808,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 coloringProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
                 coloringProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
                 coloringProgram.update("highlightMultiplier", mRenderOutline ? 1.f : 0.f);
+                coloringProgram.update("highlightColor", mOutlineColor);
 
                 // Draw internal (first, because at clipping plane are all set to same
                 // viewport depth which means internal are always in front of surface)
@@ -850,6 +854,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 analysisProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
                 analysisProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
                 analysisProgram.update("highlightMultiplier", mRenderOutline ? 1.f : 0.f);
+                analysisProgram.update("highlightColor", mOutlineColor);
                 glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
 
                 break;
@@ -877,6 +882,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             fallbackProgram.update("color", mFallbackAtomColor);
             fallbackProgram.update("selectionColor", mSelectionColor);
             fallbackProgram.update("highlightMultiplier", mRenderOutline ? 1.f : 0.f);
+            fallbackProgram.update("highlightColor", mOutlineColor);
             glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
         }
 
@@ -920,6 +926,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             selectionProgram.update("color", mSelectionColor);
             selectionProgram.update("atomIndex", mSelectedAtom);
             selectionProgram.update("highlightMultiplier", 0.f);
+            selectionProgram.update("highlightColor", mOutlineColor);
             glDrawArrays(GL_POINTS, 0, 1);
         }
 
