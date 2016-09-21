@@ -12,13 +12,20 @@ flat in vec3 color;
 flat in int index;
 layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec3 pickIndex;
-layout (depth_less) out float gl_FragDepth; // Makes optimizations possible
+out float gl_FragDepth; // No information about less because may not be discared
+                        // before checked whether atom is part of analysis group
+                        // and whether fragment inserted in image for rendering
+                        // group atoms on top of molecule.
 
 // Group indicator
 layout(std430, binding = 2) restrict readonly buffer GroupIndicatorBuffer
 {
   float groupIndicator[];
 };
+
+
+// Group rendering texture as image
+layout(binding = 3, rgba8) restrict uniform image2D GroupRenderingImage;
 
 // Uniforms
 uniform float time;
@@ -82,7 +89,7 @@ void main()
     // Set depth of pixel by projecting pixel position into clip space
     if(isClippingPlane)
     {
-        gl_FragDepth = -0.5f;
+        gl_FragDepth = 0.0;
     }
     else
     {
@@ -135,4 +142,23 @@ void main()
         float(r) / 255.0,
         float(g) / 255.0,
         float(b) / 255.0);
+
+    // TODO: Use some uint image as semaphore for correct depth comparsion
+
+    // Output group rendering fragment
+    if(groupIndicator[index] > 0)
+    {
+        // Pixel coordinate of current fragment
+        ivec2 pixelCoordinate = ivec2(gl_FragCoord.x, gl_FragCoord.y);
+
+        // Depth of current fragment
+        float groupRenderingDepth = 1.0 - gl_FragDepth; // inverse depth since texture is initialized with zero and would be already at near plane
+
+        // Fetch current depth value from image and decide whether to go on
+        float prevGoupRenderingDepth = float(imageLoad(GroupRenderingImage, pixelCoordinate).a);
+        if(prevGoupRenderingDepth < groupRenderingDepth)
+        {
+           imageStore(GroupRenderingImage, pixelCoordinate, vec4(fragColor.rgb, groupRenderingDepth));
+        }
+    }
 }

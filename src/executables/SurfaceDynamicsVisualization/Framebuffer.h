@@ -33,9 +33,9 @@ public:
     // Unbind (binds default, as long as it is zero)
     void unbind() const;
 
-    // Resizing (needs bound framebuffer)
-    void resize(int width, int height);
-    void resize(int width, int height, bool superSampling);
+    // Resizing (needs bound framebuffer). Returns whether size changed
+    bool resize(int width, int height);
+    bool resize(int width, int height, bool superSampling);
 
     // Add attachment (needs bound framebuffer)
     void addAttachment(ColorFormat colorFormat);
@@ -48,6 +48,10 @@ public:
 
     // Get multiplier of super sampling
     int getSuperSamplingMultiplier() const { return mSuperSamplingMultiplier; }
+
+    // Get pixel width and height of framebuffer. Inclusive super sampling
+    int getWidth() const { return mWidth; }
+    int getHeight() const { return mHeight; }
 
 private:
 

@@ -206,6 +206,7 @@ private:
     int mNewGroupAtomsStartIndex = 0;
     int mNewGroupAtomsEndIndex = 0;
     float mNoneGroupOpacity = 1.f;
+    bool mRenderGroupOnTop = false;
 
     // Report output
     std::string mComputeInformation = "No computation info available.";
@@ -274,6 +275,9 @@ private:
     // Surface validation
     std::unique_ptr<SurfaceValidation> mupSurfaceValidation;
     int mSurfaceValidationSampleCount = 0;
+
+    // Texture for rendering group atoms on top of molecule
+    GLuint mGroupRenderingTexture;
 };
 
 #endif // SURFACE_DYNAMICS_VISUALIZATION_H

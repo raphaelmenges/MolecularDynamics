@@ -32,7 +32,7 @@ layout(std430, binding = 1) restrict readonly buffer TrajectoryBuffer
 };
 
 // Ascension (angle for determining hue)
-layout(std430, binding = 3) restrict readonly buffer AscensionBuffer
+layout(std430, binding = 4) restrict readonly buffer AscensionBuffer
 {
    float ascension[];
 };

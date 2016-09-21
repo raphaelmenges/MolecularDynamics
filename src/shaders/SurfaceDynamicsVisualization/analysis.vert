@@ -29,13 +29,13 @@ layout(std430, binding = 1) restrict readonly buffer TrajectoryBuffer
 };
 
 // Ascension
-layout(std430, binding = 3) restrict readonly buffer AscensionBuffer
+layout(std430, binding = 4) restrict readonly buffer AscensionBuffer
 {
    float ascension[];
 };
 
 // Indices of group atoms
-layout(binding = 4, r32ui) readonly restrict uniform uimageBuffer GroupAtomsIndices;
+layout(binding = 5, r32ui) readonly restrict uniform uimageBuffer GroupAtomsIndices;
 
 // Uniforms
 uniform float probeRadius;

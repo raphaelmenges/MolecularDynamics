@@ -42,7 +42,7 @@ void Framebuffer::unbind() const
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void Framebuffer::resize(int width, int height)
+bool Framebuffer::resize(int width, int height)
 {
     // Apply super sampling if indicated
     if(mSuperSampling)
@@ -66,7 +66,6 @@ void Framebuffer::resize(int width, int height)
         // (Re)Bind depth and stencil
         glFramebufferRenderbuffer(
             GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mDepthStencil);
-        }
 
         // Do it for all color attachments
         for(const auto& rPair : colorAttachments)
@@ -84,12 +83,19 @@ void Framebuffer::resize(int width, int height)
                 NULL);
             glBindTexture(GL_TEXTURE_2D, 0);
         }
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
-void Framebuffer::resize(int width, int height, bool superSampling)
+bool Framebuffer::resize(int width, int height, bool superSampling)
 {
     mSuperSampling = superSampling;
-    resize(width, height);
+    return resize(width, height);
 }
 
 void Framebuffer::addAttachment(ColorFormat colorFormat)
