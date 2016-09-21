@@ -1557,6 +1557,9 @@ void SurfaceDynamicsVisualization::renderGUI()
 
             // Atom count
             ImGui::Text(std::string("Atom Count: " + std::to_string(mupGPUProtein->getAtomCount())).c_str());
+
+            // Frame count
+            ImGui::Text(std::string("Frame Count: " + std::to_string(mupGPUProtein->getFrameCount())).c_str());
         }
 
         // ### Computation infos ###
