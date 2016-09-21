@@ -950,6 +950,7 @@ void SurfaceDynamicsVisualization::renderLoop()
         screenFillingProgram.update("molecule", 0); // tell shader which slot to use
         screenFillingProgram.update("selectedAtom", 1); // tell shader which slot to use
         screenFillingProgram.update("overlay", 2); // tell shader which slot to use
+        screenFillingProgram.update("moleculeAlpha", mNoneGroupOpacity); // alpha value of completely rendered molecule
         glDrawArrays(GL_POINTS, 0, 1);
         if(mFrameLogging) { std::cout << "..done" << std::endl; }
 
@@ -1515,10 +1516,6 @@ void SurfaceDynamicsVisualization::renderGUI()
                     }
                 }
 
-                // Ascension change radius multiplier
-                ImGui::SliderFloat("Ascension Radius Multiplier", &mAscensionChangeRadiusMultiplier, 0.f, 1.f);
-                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Change of as- and descension is multiplied with radius."); }
-
                 // Render / not render with probe radius
                 if(mRenderWithProbeRadius)
                 {
@@ -1534,6 +1531,15 @@ void SurfaceDynamicsVisualization::renderGUI()
                         mRenderWithProbeRadius = true;
                     }
                 }
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Add probe radius used for calculation of surface to rendered radius."); }
+
+                // Ascension change radius multiplier
+                ImGui::SliderFloat("Ascension Radius Multiplier", &mAscensionChangeRadiusMultiplier, 0.f, 1.f);
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Change of as- and descension is multiplied with radius."); }
+
+                // Opacity of none group atoms
+                ImGui::SliderFloat("None Group Opacity", &mNoneGroupOpacity, 0.f, 1.f);
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Opacity of molecule visualization."); }
             }
         }
 

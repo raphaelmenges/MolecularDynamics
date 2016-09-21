@@ -205,6 +205,7 @@ private:
     bool mRenderSelection = true;
     int mNewGroupAtomsStartIndex = 0;
     int mNewGroupAtomsEndIndex = 0;
+    float mNoneGroupOpacity = 1.f;
 
     // Report output
     std::string mComputeInformation = "No computation info available.";
