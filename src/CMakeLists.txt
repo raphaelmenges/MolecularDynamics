@@ -9,6 +9,7 @@ set(MINICONDA3_PATH "$ENV{HOME}/miniconda3")
 # Set paths
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" CACHE PATH "Path to custom CMake modules.")
 set(EXTERNALS_PATH "${CMAKE_SOURCE_DIR}/../externals" CACHE PATH "Path to external code.")
+set(SUBMODULESS_PATH "${CMAKE_SOURCE_DIR}/../submodules" CACHE PATH "Path to submodules.")
 set(RESOURCES_PATH "${CMAKE_SOURCE_DIR}/../resources" CACHE PATH "Path to resources.")
 set(EXECUTABLES_PATH "${CMAKE_SOURCE_DIR}/executables" CACHE PATH "Path to code of executables.")
 set(LIBRARIES_PATH "${CMAKE_SOURCE_DIR}/libraries" CACHE PATH "Path to code of libraries.")

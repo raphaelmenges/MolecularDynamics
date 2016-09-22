@@ -9,8 +9,6 @@ For more information visit [http://fluids3.com](http://fluids3.com).
 Following dependencies are required on ubuntu 15.10
 
     sudo apt-get install glew-utils libglew-dev 
-    sudo apt-get install libglm-dev
-    sudo apt-get install libglfw3-dev
     sudo apt-get install libassimp-dev
     sudo apt-get install libdevil-dev
     sudo apt-get install python-numpy

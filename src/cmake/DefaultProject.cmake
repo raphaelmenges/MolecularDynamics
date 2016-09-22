@@ -6,12 +6,14 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 link_dependency(OpenGL3)
 link_dependency(GLEW)
 link_dependency(GLFW3)
-link_dependency(GLM)
 link_dependency(DevIL)
 link_dependency(ASSIMP)
 
 # Include externals folder
 include_directories(${EXTERNALS_PATH})
+
+# Include GLM folder
+include_directories(${SUBMODULESS_PATH}/glm)
 
 # Include directories of python
 include_directories(${PYTHON_INCLUDE_DIRS})
