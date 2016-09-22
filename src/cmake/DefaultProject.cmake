@@ -5,7 +5,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 # Link dependencies using CMake modules
 link_dependency(OpenGL3)
 link_dependency(GLEW)
-link_dependency(GLFW3)
 link_dependency(DevIL)
 link_dependency(ASSIMP)
 
