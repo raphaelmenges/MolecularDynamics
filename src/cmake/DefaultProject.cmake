@@ -17,6 +17,9 @@ include_directories(${SUBMODULESS_PATH}/glm)
 # Include GLFW
 include_directories(${SUBMODULESS_PATH}/glfw/include)
 
+# Add GLFW to linking
+set(ALL_LIBRARIES ${ALL_LIBRARIES} glfw)
+
 # Include directories of python
 include_directories(${PYTHON_INCLUDE_DIRS})
 
