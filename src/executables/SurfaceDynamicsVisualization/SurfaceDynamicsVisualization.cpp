@@ -1256,10 +1256,23 @@ void SurfaceDynamicsVisualization::renderGUI()
             if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Radius of probe used for surface extraction."); }
             ImGui::Checkbox("Extract Layers", &mExtractLayers);
             if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Incremental usage of surface extraction."); }
+
+            if(ImGui::Button("-1##startframe")) { mComputationStartFrame--; }
+            ImGui::SameLine();
+            if(ImGui::Button("+1##startframe")) { mComputationStartFrame++; }
+            mComputationStartFrame = glm::clamp(mComputationStartFrame, mStartFrame, mComputationEndFrame);
+            ImGui::SameLine();
             ImGui::SliderInt("Start Frame", &mComputationStartFrame, mStartFrame, mComputationEndFrame);
             if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Start frame of computation."); }
+
+            if(ImGui::Button("-1##endframe")) { mComputationEndFrame--; }
+            ImGui::SameLine();
+            if(ImGui::Button("+1##endframe")) { mComputationEndFrame++; }
+            mComputationEndFrame = glm::clamp(mComputationEndFrame, mComputationStartFrame, mEndFrame);
+            ImGui::SameLine();
             ImGui::SliderInt("End Frame", &mComputationEndFrame, mComputationStartFrame, mEndFrame);
             if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("End frame of computation."); }
+
             ImGui::SliderInt("CPU Threads", &mCPUThreads, 1, 24);
             if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Count of threads utilized by CPU implementation."); }
             if(ImGui::Button("\u2794 GPGPU##surface")) { computeLayers(true); }
@@ -2106,6 +2119,11 @@ void SurfaceDynamicsVisualization::renderGUI()
                     ImGui::Text(std::string("Group Surface Area In Frame: " + std::to_string(mAnalysisGroupSurfaceArea.at(mFrame - mComputedStartFrame)) + " \u212b²").c_str());
                     ImGui::Separator();
 
+                    // ### Average Layers Delta Accumulation ###
+                    ImGui::Text(std::string("Average Layers Delta Accumulation: " + std::to_string(mAvgLayersDeltaAcc)).c_str());
+                    if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Accumulation of absolute delta of average layers over time."); }
+                    ImGui::Separator();
+
                     // ### Save group analysis to file ###
                     if(ImGui::Button("Save##groupanalysis"))
                     {
@@ -2580,6 +2598,13 @@ void SurfaceDynamicsVisualization::updateGroupAnalysis()
 
         // Save surface area
         mAnalysisGroupSurfaceArea.at(relativeFrame) = approximateSurfaceArea(std::vector<GLuint>(mAnalyseGroup.begin(), mAnalyseGroup.end()), frame);
+    }
+
+    // Average layers delta accumulation
+    mAvgLayersDeltaAcc = 0.f;
+    for(int i = 0; i < mAnalysisGroupAvgLayers.size() - 1; i++)
+    {
+        mAvgLayersDeltaAcc += glm::abs(mAnalysisGroupAvgLayers.at(i + 1) - mAnalysisGroupAvgLayers.at(i));
     }
 }
 

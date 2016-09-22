@@ -207,6 +207,7 @@ private:
     int mNewGroupAtomsEndIndex = 0;
     float mNoneGroupOpacity = 1.f;
     bool mRenderGroupOnTop = false;
+    float mAvgLayersDeltaAcc = 0.f;
 
     // Report output
     std::string mComputeInformation = "No computation info available.";
