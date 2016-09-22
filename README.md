@@ -8,14 +8,7 @@ For more information visit [http://fluids3.com](http://fluids3.com).
 ## Ubuntu Installation guide:
 Following dependencies are required on ubuntu 15.10
 
-    sudo apt-get install glew-utils libglew-dev 
-    sudo apt-get install libassimp-dev
-    sudo apt-get install libdevil-dev
-    sudo apt-get install python-numpy
-    sudo apt-get install libxcursor-dev
-    sudo apt-get install libxinerama-dev
-    sudo apt-get install libxrandr-dev
-    sudo apt-get install libxi-dev
+    sudo apt-get install glew-utils libglew-dev libassimp-dev libdevil-dev python-numpy libxcursor-dev libxinerama-dev libxrandr-dev libxi-dev
     conda install -c omnia mdtraj
     miniconda3: http://conda.pydata.org/miniconda.html
 
