@@ -12,8 +12,11 @@ link_dependency(ASSIMP)
 # Include externals folder
 include_directories(${EXTERNALS_PATH})
 
-# Include GLM folder
+# Include GLM
 include_directories(${SUBMODULESS_PATH}/glm)
+
+# Include GLFW
+include_directories(${SUBMODULESS_PATH}/glfw/include)
 
 # Include directories of python
 include_directories(${PYTHON_INCLUDE_DIRS})
