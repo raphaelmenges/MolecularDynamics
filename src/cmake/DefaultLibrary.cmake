@@ -1,11 +1,5 @@
 include(${CMAKE_MODULE_PATH}/DefaultProject.cmake)
 
-# Seems that all libraries get collected and are linked
-# against everything. Because CMake tells about not linking
-# to itself, set policy to old behavior to shut down any
-# warnings about it
-cmake_policy(SET CMP0038 OLD)
-
 # Extract project name from folder name
 get_filename_component(ProjectId ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 string(REPLACE " " "_" ProjectId ${ProjectId})
