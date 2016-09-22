@@ -2604,7 +2604,9 @@ void SurfaceDynamicsVisualization::updateGroupAnalysis()
     mAvgLayersDeltaAcc = 0.f;
     for(int i = 0; i < mAnalysisGroupAvgLayers.size() - 1; i++)
     {
-        mAvgLayersDeltaAcc += glm::abs(mAnalysisGroupAvgLayers.at(i + 1) - mAnalysisGroupAvgLayers.at(i));
+        float delta = mAnalysisGroupAvgLayers.at(i + 1) - mAnalysisGroupAvgLayers.at(i);
+        delta = delta < 0 ? -delta : delta;
+        mAvgLayersDeltaAcc += delta;
     }
 }
 
