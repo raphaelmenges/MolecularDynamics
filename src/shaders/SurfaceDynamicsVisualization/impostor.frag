@@ -23,7 +23,6 @@ layout(std430, binding = 2) restrict readonly buffer GroupIndicatorBuffer
   float groupIndicator[];
 };
 
-
 // Group rendering texture as image
 layout(binding = 3, rgba32f) restrict coherent uniform image2D GroupRenderingImage;
 
@@ -147,14 +146,11 @@ void main()
         // Get linear coordinate in semaphore
         int semaphoreCoordinate = (framebufferWidth * pixelCoordinate.y) + pixelCoordinate.x;
 
-        // TODO: fix semaphore
-
         // Lock current pixel using semaphore
-        /*
         int iterations = 0;
         const int maxIterations = 10;
         while(iterations < maxIterations // do it until iteration limit is reached
-            && 0 != imageAtomicCompSwap(
+            && 0 != imageAtomicCompSwap( // compare to original value
                 GroupRenderingSemaphore, // semaphore image
                 semaphoreCoordinate, // coordiante in image buffer
                 0, // value which is compared to
@@ -164,7 +160,7 @@ void main()
         }
 
         // Only proceed if locked
-        if(iterations < maxIterations) */
+        if(iterations < maxIterations)
         {
             // Fetch current depth value from image and decide whether to overwrite stored value
             float prevGoupRenderingDepth = float(imageLoad(GroupRenderingImage, pixelCoordinate).a);

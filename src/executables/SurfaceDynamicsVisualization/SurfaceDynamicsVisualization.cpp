@@ -220,7 +220,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     mupSurfaceValidation = std::unique_ptr<SurfaceValidation>(new SurfaceValidation());
     std::cout << "..done" << std::endl;
 
-    // # Group rendering texture
+    // # Group rendering texture and semaphore
     glGenTextures(1, &mGroupRenderingTexture);
     glBindTexture(GL_TEXTURE_2D, mGroupRenderingTexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -230,7 +230,8 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     std::vector<GLfloat> emptyData(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight() * 4, 0.f);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight(), 0, GL_RGBA, GL_FLOAT, &emptyData[0]);
     glBindTexture(GL_TEXTURE_2D, 0);
-    mupGroupRenderingSemaphore = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight()));
+    std::vector<GLuint> emptyDataSemaphore(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight(), 0.f);
+    mupGroupRenderingSemaphore = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(emptyDataSemaphore));
 
     // # Other
 
@@ -634,13 +635,15 @@ void SurfaceDynamicsVisualization::renderLoop()
             std::vector<GLfloat> emptyData(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight() * 4, 0);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight(), 0, GL_RGBA, GL_FLOAT, &emptyData[0]);
             glBindTexture(GL_TEXTURE_2D, 0);
-            mupGroupRenderingSemaphore = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight()));
         }
         else
         {
             // Clear group rendering texture
             glClearTexImage(mGroupRenderingTexture, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
         }
+
+        std::vector<GLuint> emptyDataSemaphore(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight(), 0.f);
+            mupGroupRenderingSemaphore = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(emptyDataSemaphore));
 
         // Bind buffers of radii and trajectory for rendering molecule
         mupGPUProtein->bind(0, 1);
