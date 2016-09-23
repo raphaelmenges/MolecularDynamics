@@ -135,19 +135,6 @@ void main()
     float highlight = (sin((((gl_FragCoord.x + gl_FragCoord.y)* 3.14) / 8.0) +  (8.f * time)) + 1.0) / 2.0;
     finalColor = mix(finalColor, highlightColor.rgb, highlightColor.a * groupIndicator[index] * 0.5 * highlight * highlightMultiplier);
 
-    // Output color
-    fragColor = vec4(finalColor, 1);
-
-    // Output pickIndex
-    int rawPickIndex = index + 1; // add one to distinguish from nothing
-    int r = (rawPickIndex & 0x000000FF) >>  0;
-    int g = (rawPickIndex & 0x0000FF00) >>  8;
-    int b = (rawPickIndex & 0x00FF0000) >> 16;
-    pickIndex = vec3(
-        float(r) / 255.0,
-        float(g) / 255.0,
-        float(b) / 255.0);
-
     // Output group rendering fragment
     if(groupIndicator[index] > 0)
     {
@@ -160,7 +147,10 @@ void main()
         // Get linear coordinate in semaphore
         int semaphoreCoordinate = (framebufferWidth * pixelCoordinate.y) + pixelCoordinate.x;
 
+        // TODO: fix semaphore
+
         // Lock current pixel using semaphore
+        /*
         int iterations = 0;
         const int maxIterations = 10;
         while(iterations < maxIterations // do it until iteration limit is reached
@@ -174,7 +164,7 @@ void main()
         }
 
         // Only proceed if locked
-        if(iterations < maxIterations)
+        if(iterations < maxIterations) */
         {
             // Fetch current depth value from image and decide whether to overwrite stored value
             float prevGoupRenderingDepth = float(imageLoad(GroupRenderingImage, pixelCoordinate).a);
@@ -192,4 +182,17 @@ void main()
                 0);
         }
     }
+
+    // Output color
+    fragColor = vec4(finalColor, 1);
+
+    // Output pickIndex
+    int rawPickIndex = index + 1; // add one to distinguish from nothing
+    int r = (rawPickIndex & 0x000000FF) >>  0;
+    int g = (rawPickIndex & 0x0000FF00) >>  8;
+    int b = (rawPickIndex & 0x00FF0000) >> 16;
+    pickIndex = vec3(
+        float(r) / 255.0,
+        float(g) / 255.0,
+        float(b) / 255.0);
 }
