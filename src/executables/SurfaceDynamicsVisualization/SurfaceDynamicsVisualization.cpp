@@ -656,6 +656,9 @@ void SurfaceDynamicsVisualization::renderLoop()
             GL_READ_WRITE,
             GL_RGBA8);
 
+        // Selected atom (is -1 if selection shall be hidden)
+        int selectedAtom = mRenderSelection ? mSelectedAtom : -1;
+
         // Decide about surface rendering
         if(frameComputed())
         {
@@ -675,7 +678,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 hullProgram.update("cameraWorldPos", mupCamera->getPosition());
                 hullProgram.update("probeRadius", mRenderWithProbeRadius ? mComputedProbeRadius : 0.f);
                 hullProgram.update("lightDir", mLightDirection);
-                hullProgram.update("selectedIndex", mSelectedAtom);
+                hullProgram.update("selectedIndex", selectedAtom);
                 hullProgram.update("clippingPlane", mClippingPlane);
                 hullProgram.update("frame", mFrame);
                 hullProgram.update("atomCount", mupGPUProtein->getAtomCount());
@@ -719,7 +722,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 ascensionProgram.update("cameraWorldPos", mupCamera->getPosition());
                 ascensionProgram.update("probeRadius", mRenderWithProbeRadius ? mComputedProbeRadius : 0.f);
                 ascensionProgram.update("lightDir", mLightDirection);
-                ascensionProgram.update("selectedIndex", mSelectedAtom);
+                ascensionProgram.update("selectedIndex", selectedAtom);
                 ascensionProgram.update("clippingPlane", mClippingPlane);
                 ascensionProgram.update("frame", mFrame);
                 ascensionProgram.update("atomCount", mupGPUProtein->getAtomCount());
@@ -751,7 +754,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 coloringProgram.update("cameraWorldPos", mupCamera->getPosition());
                 coloringProgram.update("probeRadius", mRenderWithProbeRadius ? mComputedProbeRadius : 0.f);
                 coloringProgram.update("lightDir", mLightDirection);
-                coloringProgram.update("selectedIndex", mSelectedAtom);
+                coloringProgram.update("selectedIndex", selectedAtom);
                 coloringProgram.update("clippingPlane", mClippingPlane);
                 coloringProgram.update("frame", mFrame);
                 coloringProgram.update("atomCount", mupGPUProtein->getAtomCount());
@@ -796,7 +799,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 coloringProgram.update("cameraWorldPos", mupCamera->getPosition());
                 coloringProgram.update("probeRadius", mRenderWithProbeRadius ? mComputedProbeRadius : 0.f);
                 coloringProgram.update("lightDir", mLightDirection);
-                coloringProgram.update("selectedIndex", mSelectedAtom);
+                coloringProgram.update("selectedIndex", selectedAtom);
                 coloringProgram.update("clippingPlane", mClippingPlane);
                 coloringProgram.update("frame", mFrame);
                 coloringProgram.update("atomCount", mupGPUProtein->getAtomCount());
@@ -841,7 +844,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 analysisProgram.update("cameraWorldPos", mupCamera->getPosition());
                 analysisProgram.update("probeRadius", mRenderWithProbeRadius ? mComputedProbeRadius : 0.f);
                 analysisProgram.update("lightDir", mLightDirection);
-                analysisProgram.update("selectedIndex", mSelectedAtom);
+                analysisProgram.update("selectedIndex", selectedAtom);
                 analysisProgram.update("clippingPlane", mClippingPlane);
                 analysisProgram.update("frame", mFrame);
                 analysisProgram.update("atomCount", mupGPUProtein->getAtomCount());
@@ -873,7 +876,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                     hullProgram.update("cameraWorldPos", mupCamera->getPosition());
                     hullProgram.update("probeRadius", mRenderWithProbeRadius ? mComputedProbeRadius : 0.f);
                     hullProgram.update("lightDir", mLightDirection);
-                    hullProgram.update("selectedIndex", mSelectedAtom);
+                    hullProgram.update("selectedIndex", selectedAtom);
                     hullProgram.update("clippingPlane", mClippingPlane);
                     hullProgram.update("frame", mFrame);
                     hullProgram.update("atomCount", mupGPUProtein->getAtomCount());
@@ -910,7 +913,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             fallbackProgram.update("cameraWorldPos", mupCamera->getPosition());
             fallbackProgram.update("probeRadius", mRenderWithProbeRadius ? mComputedProbeRadius : 0.f);
             fallbackProgram.update("lightDir", mLightDirection);
-            fallbackProgram.update("selectedIndex", mSelectedAtom);
+            fallbackProgram.update("selectedIndex", selectedAtom);
             fallbackProgram.update("clippingPlane", mClippingPlane);
             fallbackProgram.update("frame", mFrame);
             fallbackProgram.update("atomCount", mupGPUProtein->getAtomCount());
