@@ -1046,7 +1046,20 @@ void SurfaceDynamicsVisualization::keyCallback(int key, int scancode, int action
     {
         switch(key)
         {
-            case GLFW_KEY_ESCAPE: { glfwSetWindowShouldClose(mpWindow, GL_TRUE); break; }
+            case GLFW_KEY_ESCAPE:
+            {
+                // Try to escape from camera movement or rotation
+                if(mRotateCamera)
+                {
+                    glfwSetInputMode(mpWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                    mRotateCamera = false;
+                }
+                else if(mMoveCamera)
+                {
+                    glfwSetInputMode(mpWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                    mMoveCamera = false;
+                }
+            }
             case GLFW_KEY_1: { mSurfaceRendering = SurfaceRendering::HULL; break; }
             case GLFW_KEY_2: { mSurfaceRendering = SurfaceRendering::ASCENSION; break; }
             case GLFW_KEY_3: { mSurfaceRendering = SurfaceRendering::ELEMENTS; break; }
