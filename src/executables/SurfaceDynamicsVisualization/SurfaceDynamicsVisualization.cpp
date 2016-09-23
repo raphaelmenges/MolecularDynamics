@@ -2850,7 +2850,7 @@ std::pair<float,float> SurfaceDynamicsVisualization::averageLayersDeltaAccumulat
         avgLayersDeltaAcc += delta;
     }
 
-    // Inverse average layer calculation
+    // Inverse average delta accumulation
     float invAvgLayersDeltaAcc = 0.f;
     for(int i = 0; i < invAvgLayers.size() - 1; i++)
     {
