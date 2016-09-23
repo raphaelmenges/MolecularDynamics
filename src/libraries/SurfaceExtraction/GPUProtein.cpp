@@ -82,6 +82,25 @@ GPUProtein::GPUProtein(Protein * const pProtein)
 
     // Init SSBOs
     initSSBOs(atomCount, frameCount);
+
+    // Extract amino acids (here should be const pointers :( )
+    std::vector<std::string>* pAminoAcids = pProtein->getAminoNames();
+
+    // Assumption: index range with no missing indices
+    for(std::string name : *pAminoAcids)
+    {
+        std::vector<Atom*>* pAtoms  = pProtein->getAtomsFromAmino(name);
+        int minIndex = atomCount;
+        int maxIndex = 0;
+        for(Atom* pAtom : *pAtoms)
+        {
+            int index = pAtom->getIndex() - 1;
+            minIndex = minIndex > index ? index : minIndex;
+            maxIndex = maxIndex < index ? index : maxIndex;
+        }
+
+        mAminoAcids.push_back(AminoAcid(name, minIndex, maxIndex));
+    }
 }
 
 GPUProtein::GPUProtein(const std::vector<glm::vec4>& rAtoms)

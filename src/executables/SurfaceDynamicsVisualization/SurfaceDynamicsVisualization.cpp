@@ -39,6 +39,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
 
     // # Setup paths
     resetPath(mGlobalAnalysisFilePath, "/GlobalAnalysis.csv");
+    resetPath(mAminoAcidAnalysisFilePath, "/AminoAcidAnalysis.csv");
     resetPath(mGroupAnalysisFilePath, "/GroupAnalysis.csv");
     resetPath(mSurfaceIndicesFilePath, "/SurfaceIndices.csv");
 
@@ -1882,6 +1883,44 @@ void SurfaceDynamicsVisualization::renderGUI()
                 if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Save global analysis to file."); }
                 ImGui::SameLine();
                 ImGui::Text(mGlobalAnalysisFilePath.c_str());
+
+                // ### Save amino acid analysis to file ###
+                if(ImGui::Button("Save##aminoacidanalysis"))
+                {
+                    // Open file
+                    std::ofstream fs(mAminoAcidAnalysisFilePath, std::ios_base::out); // overwrite existing
+                    csv::csv_ostream csvs(fs);
+
+                    // Create header
+                    csvs << "AminoAcid" << "StartIndex" << "EndIndex" << "Average Layers Delta Accumulation";
+                    csvs << csv::endl;
+
+                    // Fill data
+                    std::vector<GPUProtein::AminoAcid> aminoAcids = mupGPUProtein->getAminoAcids();
+                    for(const GPUProtein::AminoAcid aminoAcid : aminoAcids)
+                    {
+                        // Name
+                        csvs << aminoAcid.name;
+
+                        // Start index
+                        csvs << std::to_string(aminoAcid.startIndex);
+
+                        // End index
+                        csvs << std::to_string(aminoAcid.endIndex);
+
+                        // Average layers delta accumulation
+                        csvs << std::to_string(averageLayersDeltaAccumulation(aminoAcid.startIndex, aminoAcid.endIndex));
+
+                        // End line
+                        csvs << csv::endl;
+                    }
+
+                    // Tell user
+                    std::cout << "Saved file: " << mAminoAcidAnalysisFilePath << std::endl;
+                }
+                if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Save amino acid analysis to file."); }
+                ImGui::SameLine();
+                ImGui::Text(mAminoAcidAnalysisFilePath.c_str());
             }
 
             // ### Analysis of group ###
@@ -2693,6 +2732,47 @@ void SurfaceDynamicsVisualization::resetPath(std::string& rPath, std::string app
 
     // Set reference
     rPath = path;
+}
+
+float SurfaceDynamicsVisualization::averageLayersDeltaAccumulation(int startIndex, int endIndex) const
+{
+    // Go over frames and extract average layer of atoms
+    std::vector<float> avgLayers = std::vector<float>(mGPUSurfaces.size(), -1.f); // minus one means no data
+    for(int frame = mComputedStartFrame; frame <= mComputedEndFrame; frame++)
+    {
+        // Relative frame
+        int relativeFrame = frame - mComputedStartFrame;
+
+        // Do it only when layers were extracted for this frame
+        if(mGPUSurfaces.at(relativeFrame)->layersExtracted())
+        {
+            // Calculate layer of atoms in rage for that frame
+            float avgLayer = 0;
+            for(int atomIndex = startIndex; atomIndex <= endIndex; atomIndex++)
+            {
+                // Get layer of that atom
+                int layer = mGPUSurfaces.at(relativeFrame)->getLayerOfAtom(atomIndex);
+
+                // Accumulate for average layer calculation
+                avgLayer += (float)layer;
+            }
+            avgLayers.at(relativeFrame) = avgLayer / (float)((endIndex - startIndex) + 1);
+        }
+    }
+
+    // Average layers delta accumulation
+    float avgLayersDeltaAcc = 0.f;
+    for(int i = 0; i < avgLayers.size() - 1; i++)
+    {
+        // Return -1 if any avg is not ok
+        if(avgLayers.at(i) < 0 || avgLayers.at(i+1) < 0) { return -1.f; }
+
+        float delta = avgLayers.at(i + 1) - avgLayers.at(i);
+        delta = delta < 0 ? -delta : delta;
+        avgLayersDeltaAcc += delta;
+    }
+
+    return avgLayersDeltaAcc;
 }
 
 // ### Main function ###

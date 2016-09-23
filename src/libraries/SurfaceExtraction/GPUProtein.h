@@ -20,6 +20,21 @@ class GPUProtein
 {
 public:
 
+    // Structure to hold aminoacid information
+    struct AminoAcid
+    {
+        AminoAcid(std::string name, int startIndex, int endIndex)
+        {
+            this->name = name;
+            this->startIndex = startIndex;
+            this->endIndex = endIndex;
+        }
+
+        std::string name;
+        int startIndex;
+        int endIndex;
+    };
+
     // Constructors
     GPUProtein(Protein * const pProtein);
     GPUProtein(const std::vector<glm::vec4>& rAtoms); // vec3 center + float radius
@@ -66,6 +81,9 @@ public:
     // Get maximum initial coordinates
     glm::vec3 getMaxCoordinates() const { return mMaxCoordinates; }
 
+    // Get amino acid information
+    std::vector<AminoAcid> getAminoAcids() const { return mAminoAcids; }
+
 private:
 
     // Initialize SSBOs
@@ -101,6 +119,9 @@ private:
     // Save mininum and maximum values of initial atom coordinate values
     glm::vec3 mMinCoordinates;
     glm::vec3 mMaxCoordinates;
+
+    // Vector with amino acids information
+    std::vector<AminoAcid> mAminoAcids;
 };
 
 #endif // GPU_PROTEIN_H

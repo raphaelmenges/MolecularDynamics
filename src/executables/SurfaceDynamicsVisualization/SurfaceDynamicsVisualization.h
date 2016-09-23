@@ -22,6 +22,10 @@
 // Notes:
 // - Calculations done in angstrom
 
+// TODO:
+// - averageLayersDeltaAccumulation and updateGroupAnalysis share functionality. Try to merge!
+
+
 // Forward declaration
 class Protein;
 class GPUProtein;
@@ -111,6 +115,9 @@ private:
         std::string filepathNegY,
         std::string filepathPosZ,
         std::string filepathNegZ) const;
+
+    // Average layers delta accumulation
+    float averageLayersDeltaAccumulation(int startIndex, int endIndex) const;
 
     // Setup
     const float mCameraSmoothDuration = 1.5f;
@@ -270,6 +277,7 @@ private:
     std::vector<float> mAnalysisGroupSurfaceArea;
     std::unique_ptr<Path> mupPath;
     std::string mSurfaceIndicesFilePath = "";
+    std::string mAminoAcidAnalysisFilePath = "";
     std::string mGlobalAnalysisFilePath = "";
     std::string mGroupAnalysisFilePath = "";
 
