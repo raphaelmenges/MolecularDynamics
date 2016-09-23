@@ -295,6 +295,7 @@ private:
 
     // Texture for rendering group atoms on top of molecule
     GLuint mGroupRenderingTexture;
+    std::unique_ptr<GPUTextureBuffer> mupGroupRenderingSemaphore;
 };
 
 #endif // SURFACE_DYNAMICS_VISUALIZATION_H

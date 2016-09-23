@@ -25,7 +25,10 @@ layout(std430, binding = 2) restrict readonly buffer GroupIndicatorBuffer
 
 
 // Group rendering texture as image
-layout(binding = 3, rgba8) restrict uniform image2D GroupRenderingImage;
+layout(binding = 3, rgba32f) restrict coherent uniform image2D GroupRenderingImage;
+
+// Semaphore for group rendering
+layout(binding = 4, r32ui) restrict coherent uniform uimageBuffer GroupRenderingSemaphore;
 
 // Uniforms
 uniform float time;
@@ -38,6 +41,7 @@ uniform float depthDarkeningStart;
 uniform float depthDarkeningEnd;
 uniform float highlightMultiplier;
 uniform vec4 highlightColor;
+uniform int framebufferWidth;
 
 // Main function
 void main()
@@ -144,8 +148,6 @@ void main()
         float(g) / 255.0,
         float(b) / 255.0);
 
-    // TODO: Use some uint image as semaphore for correct depth comparsion
-
     // Output group rendering fragment
     if(groupIndicator[index] > 0)
     {
@@ -155,11 +157,39 @@ void main()
         // Depth of current fragment
         float groupRenderingDepth = 1.0 - gl_FragDepth; // inverse depth since texture is initialized with zero and would be already at near plane
 
-        // Fetch current depth value from image and decide whether to go on
-        float prevGoupRenderingDepth = float(imageLoad(GroupRenderingImage, pixelCoordinate).a);
-        if(prevGoupRenderingDepth < groupRenderingDepth)
+        // Get linear coordinate in semaphore
+        int semaphoreCoordinate = (framebufferWidth * pixelCoordinate.y) + pixelCoordinate.x;
+
+        // Lock current pixel using semaphore
+        int iterations = 0;
+        const int maxIterations = 10;
+        while(iterations < maxIterations // do it until iteration limit is reached
+            && 0 != imageAtomicCompSwap(
+                GroupRenderingSemaphore, // semaphore image
+                semaphoreCoordinate, // coordiante in image buffer
+                0, // value which is compared to
+                1)) // value which is written if comparsion is successful
         {
-           imageStore(GroupRenderingImage, pixelCoordinate, vec4(fragColor.rgb, groupRenderingDepth));
+            iterations++;
+        }
+
+        // Only proceed if locked
+        if(iterations < maxIterations)
+        {
+            // Fetch current depth value from image and decide whether to overwrite stored value
+            float prevGoupRenderingDepth = float(imageLoad(GroupRenderingImage, pixelCoordinate).a);
+            if(prevGoupRenderingDepth < groupRenderingDepth)
+            {
+               imageStore(GroupRenderingImage, pixelCoordinate, vec4(finalColor.rgb, groupRenderingDepth));
+            }
+
+            memoryBarrier(); // guarantee that value is written to image
+
+            // Reset semaphore that next shader may access that pixel
+            imageAtomicExchange(
+                GroupRenderingSemaphore,
+                semaphoreCoordinate,
+                0);
         }
     }
 }

@@ -227,9 +227,10 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    std::vector<GLubyte> emptyData(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight() * 4, 0);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, &emptyData[0]);
+    std::vector<GLfloat> emptyData(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight() * 4, 0.f);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight(), 0, GL_RGBA, GL_FLOAT, &emptyData[0]);
     glBindTexture(GL_TEXTURE_2D, 0);
+    mupGroupRenderingSemaphore = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight()));
 
     // # Other
 
@@ -465,13 +466,13 @@ void SurfaceDynamicsVisualization::renderLoop()
                 // Bind buffers of radii and trajectory for rendering
                 mupGPUProtein->bind(0, 1);
 
-                // Slot 2 is not filled since GroupIndicatorBuffer ist not necessary
+                // Slot 2 and 3 are not filled since GroupIndicatorBuffer and semaphore is not necessary
 
                 // Bind ascension
-                mupAscension->bind(3);
+                mupAscension->bind(5);
 
                 // Bind texture buffer with input atoms
-                mupOutlineAtomIndices->bindAsImage(5, GPUAccess::READ_ONLY);
+                mupOutlineAtomIndices->bindAsImage(6, GPUAccess::READ_ONLY);
 
                 // Probe radius
                 float probeRadius = mRenderWithProbeRadius ? mComputedProbeRadius : 0.f;
@@ -630,9 +631,10 @@ void SurfaceDynamicsVisualization::renderLoop()
         if(wasResized)
         {
             glBindTexture(GL_TEXTURE_2D, mGroupRenderingTexture);
-            std::vector<GLubyte> emptyData(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight() * 4, 0);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, &emptyData[0]);
+            std::vector<GLfloat> emptyData(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight() * 4, 0);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight(), 0, GL_RGBA, GL_FLOAT, &emptyData[0]);
             glBindTexture(GL_TEXTURE_2D, 0);
+            mupGroupRenderingSemaphore = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight()));
         }
         else
         {
@@ -654,7 +656,10 @@ void SurfaceDynamicsVisualization::renderLoop()
             GL_TRUE,
             0,
             GL_READ_WRITE,
-            GL_RGBA8);
+            GL_RGBA32F);
+
+        // Bind semaphore image for group rendering
+        mupGroupRenderingSemaphore->bindAsImage(4, GPUAccess::READ_WRITE);
 
         // Selected atom (is -1 if selection shall be hidden)
         int selectedAtom = mRenderSelection ? mSelectedAtom : -1;
@@ -663,7 +668,7 @@ void SurfaceDynamicsVisualization::renderLoop()
         if(frameComputed())
         {
             // Bind ascension
-            mupAscension->bind(4);
+            mupAscension->bind(5);
 
             // Frame is computed, decide how to render it
             switch(mRendering)
@@ -692,12 +697,13 @@ void SurfaceDynamicsVisualization::renderLoop()
                 hullProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
                 hullProgram.update("highlightMultiplier", mRenderOutline ? 1.f : 0.f);
                 hullProgram.update("highlightColor", mOutlineColor);
+                hullProgram.update("framebufferWidth", mupMoleculeFramebuffer->getWidth());
 
                 // Draw internal (first, because at clipping plane are all set to same
                 // viewport depth which means internal are always in front of surface)
                 if(mShowInternal)
                 {
-                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndices(mLayer, 5);
+                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndices(mLayer, 6);
                     hullProgram.update("color", mInternalAtomColor);
                     glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
                 }
@@ -705,7 +711,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 // Draw surface
                 if(mShowSurface)
                 {
-                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 5);
+                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 6);
                     hullProgram.update("color", mSurfaceAtomColor);
                     glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
                 }
@@ -737,6 +743,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 ascensionProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
                 ascensionProgram.update("highlightMultiplier", mRenderOutline ? 1.f : 0.f);
                 ascensionProgram.update("highlightColor", mOutlineColor);
+                ascensionProgram.update("framebufferWidth", mupMoleculeFramebuffer->getWidth());
                 glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
 
                 break;
@@ -744,7 +751,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             case Rendering::ELEMENTS:
 
                 // Bind coloring
-                mupGPUProtein->bindColorsElement(5);
+                mupGPUProtein->bindColorsElement(6);
 
                 // Prepare shader program
                 coloringProgram.use();
@@ -768,19 +775,20 @@ void SurfaceDynamicsVisualization::renderLoop()
                 coloringProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
                 coloringProgram.update("highlightMultiplier", mRenderOutline ? 1.f : 0.f);
                 coloringProgram.update("highlightColor", mOutlineColor);
+                coloringProgram.update("framebufferWidth", mupMoleculeFramebuffer->getWidth());
 
                 // Draw internal (first, because at clipping plane are all set to same
                 // viewport depth which means internal are always in front of surface)
                 if(mShowInternal)
                 {
-                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndices(mLayer, 6);
+                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndices(mLayer, 7);
                     glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
                 }
 
                 // Draw surface
                 if(mShowSurface)
                 {
-                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 6);
+                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 7);
                     glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
                 }
 
@@ -789,7 +797,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             case Rendering::AMINOACIDS:
 
                 // Bind coloring
-                mupGPUProtein->bindColorsAminoacid(5);
+                mupGPUProtein->bindColorsAminoacid(6);
 
                 // Prepare shader program
                 coloringProgram.use();
@@ -813,19 +821,20 @@ void SurfaceDynamicsVisualization::renderLoop()
                 coloringProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
                 coloringProgram.update("highlightMultiplier", mRenderOutline ? 1.f : 0.f);
                 coloringProgram.update("highlightColor", mOutlineColor);
+                coloringProgram.update("framebufferWidth", mupMoleculeFramebuffer->getWidth());
 
                 // Draw internal (first, because at clipping plane are all set to same
                 // viewport depth which means internal are always in front of surface)
                 if(mShowInternal)
                 {
-                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndices(mLayer, 6);
+                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindInternalIndices(mLayer, 7);
                     glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfInternalAtoms(mLayer));
                 }
 
                 // Draw surface
                 if(mShowSurface)
                 {
-                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 6);
+                    mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(mLayer, 7);
                     glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(mLayer));
                 }
 
@@ -834,7 +843,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             case Rendering::ANALYSIS:
 
                 // Bind indices of analysis atoms
-                mupOutlineAtomIndices->bindAsImage(5, GPUAccess::READ_ONLY);
+                mupOutlineAtomIndices->bindAsImage(6, GPUAccess::READ_ONLY);
 
                 // Prepare shader program
                 analysisProgram.use();
@@ -859,6 +868,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 analysisProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
                 analysisProgram.update("highlightMultiplier", mRenderOutline ? 1.f : 0.f);
                 analysisProgram.update("highlightColor", mOutlineColor);
+                analysisProgram.update("framebufferWidth", mupMoleculeFramebuffer->getWidth());
                 glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
 
                 break;
@@ -890,12 +900,13 @@ void SurfaceDynamicsVisualization::renderLoop()
                     hullProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
                     hullProgram.update("highlightMultiplier", mRenderOutline ? 1.f : 0.f);
                     hullProgram.update("highlightColor", mOutlineColor);
+                    hullProgram.update("framebufferWidth", mupMoleculeFramebuffer->getWidth());
 
                     // Draw inner to outer layers in given colors
                     int layerCount = mGPUSurfaces.at(mFrame - mComputedStartFrame)->getLayerCount();
                     for(int i = layerCount - 1; i >= 0; i--)
                     {
-                        mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(i, 5);
+                        mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(i, 6);
                         hullProgram.update("color", mLayerColors.at(i % (int)mLayerColors.size()));
                         glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(i));
                     }
@@ -926,6 +937,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             fallbackProgram.update("selectionColor", mSelectionColor);
             fallbackProgram.update("highlightMultiplier", mRenderOutline ? 1.f : 0.f);
             fallbackProgram.update("highlightColor", mOutlineColor);
+            fallbackProgram.update("framebufferWidth", mupMoleculeFramebuffer->getWidth());
             glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
         }
 
@@ -950,6 +962,19 @@ void SurfaceDynamicsVisualization::renderLoop()
             // Bind group indicator
             mupGroupIndicators->bind(2);
 
+            // Bind image for group rendering
+            glBindImageTexture(
+                3,
+                mGroupRenderingTexture,
+                0,
+                GL_TRUE,
+                0,
+                GL_READ_WRITE,
+                GL_RGBA32F);
+
+            // Bind semaphore image for group rendering
+            mupGroupRenderingSemaphore->bindAsImage(4, GPUAccess::READ_WRITE);
+
             // Prepare shader program
             selectionProgram.use();
             selectionProgram.update("time", mAccTime);
@@ -970,6 +995,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             selectionProgram.update("atomIndex", mSelectedAtom);
             selectionProgram.update("highlightMultiplier", 0.f);
             selectionProgram.update("highlightColor", mOutlineColor);
+            selectionProgram.update("framebufferWidth", mupMoleculeFramebuffer->getWidth());
             glDrawArrays(GL_POINTS, 0, 1);
         }
 
