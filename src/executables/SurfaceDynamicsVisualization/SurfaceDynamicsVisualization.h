@@ -60,7 +60,7 @@ private:
     enum Background
     {
         NONE, SCIENTIFIC, COMPUTERVISUALISTIK, BEACH
-    };
+    };    
 
     // Keyboard callback for GLFW
     void keyCallback(int key, int scancode, int action, int mods);
@@ -150,6 +150,14 @@ private:
     const glm::vec3 mSelectionColor = glm::vec3(0.2f, 1.0f, 0.0f);
     const bool mFrameLogging = false;
     const std::string mNoComputedFrameMessage = "Frame was not computed.";
+
+    // Colors for rendering layers (outer to inner, repeating if too many)
+    const std::vector<glm::vec3> mLayerColors =
+    {
+        glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f)
+    };
 
     // Controllable parameters
     bool mShowCameraWindow = true;

@@ -859,6 +859,45 @@ void SurfaceDynamicsVisualization::renderLoop()
                 glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
 
                 break;
+
+            case Rendering::LAYERS:
+
+                // Only proceed when layers were extracted
+                if(mGPUSurfaces.at(mFrame - mComputedStartFrame)->layersExtracted())
+                {
+                    // Reuse hull proram for that purpose
+                    hullProgram.use();
+                    hullProgram.update("time", mAccTime);
+                    hullProgram.update("view", mupCamera->getViewMatrix());
+                    hullProgram.update("projection", mupCamera->getProjectionMatrix());
+                    hullProgram.update("cameraWorldPos", mupCamera->getPosition());
+                    hullProgram.update("probeRadius", mRenderWithProbeRadius ? mComputedProbeRadius : 0.f);
+                    hullProgram.update("lightDir", mLightDirection);
+                    hullProgram.update("selectedIndex", mSelectedAtom);
+                    hullProgram.update("clippingPlane", mClippingPlane);
+                    hullProgram.update("frame", mFrame);
+                    hullProgram.update("atomCount", mupGPUProtein->getAtomCount());
+                    hullProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+                    hullProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+                    hullProgram.update("frameCount", mupGPUProtein->getFrameCount());
+                    hullProgram.update("depthDarkeningStart", mDepthDarkeningStart);
+                    hullProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
+                    hullProgram.update("selectionColor", mSelectionColor);
+                    hullProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
+                    hullProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
+                    hullProgram.update("highlightMultiplier", mRenderOutline ? 1.f : 0.f);
+                    hullProgram.update("highlightColor", mOutlineColor);
+
+                    // Draw inner to outer layers in given colors
+                    int layerCount = mGPUSurfaces.at(mFrame - mComputedStartFrame)->getLayerCount();
+                    for(int i = layerCount - 1; i >= 0; i--)
+                    {
+                        mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(i, 5);
+                        hullProgram.update("color", mLayerColors.at(i % (int)mLayerColors.size()));
+                        glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(i));
+                    }
+                }
+                break;
             }
         }
         else
@@ -1066,6 +1105,7 @@ void SurfaceDynamicsVisualization::keyCallback(int key, int scancode, int action
             case GLFW_KEY_3: { mRendering = Rendering::ELEMENTS; break; }
             case GLFW_KEY_4: { mRendering = Rendering::AMINOACIDS; break; }
             case GLFW_KEY_5: { mRendering = Rendering::ANALYSIS; break; }
+            case GLFW_KEY_6: { mRendering = Rendering::LAYERS; break; }
         }
     }
 }
@@ -1520,7 +1560,7 @@ void SurfaceDynamicsVisualization::renderGUI()
             if (ImGui::CollapsingHeader("Rendering", "Rendering##Visualization", true, true))
             {
                 // Surface rendering
-                ImGui::Combo("##RenderingCombo", (int*)&mRendering, "[1] Hull\0[2] Ascension\0[3] Elements\0[4] Aminoacids\0[5] Analysis\0");
+                ImGui::Combo("##RenderingCombo", (int*)&mRendering, "[1] Hull\0[2] Ascension\0[3] Elements\0[4] Aminoacids\0[5] Analysis\0[6] Layers\0");
 
                 // Rendering of internal and surface atoms
                 if(mRendering == Rendering::HULL
