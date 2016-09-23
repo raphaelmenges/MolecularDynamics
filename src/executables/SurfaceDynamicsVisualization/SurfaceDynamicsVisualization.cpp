@@ -1961,7 +1961,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                     csv::csv_ostream csvs(fs);
 
                     // Create header
-                    csvs << "AminoAcid" << "StartIndex" << "EndIndex" << "Average Layers Delta Accumulation";
+                    csvs << "AminoAcid" << "StartIndex" << "EndIndex" << "Average Layers Delta Accumulation" << "Inverse Average Layers Delta Accumulation";
                     csvs << csv::endl;
 
                     // Fill data
@@ -1978,7 +1978,9 @@ void SurfaceDynamicsVisualization::renderGUI()
                         csvs << std::to_string(aminoAcid.endIndex);
 
                         // Average layers delta accumulation
-                        csvs << std::to_string(averageLayersDeltaAccumulation(aminoAcid.startIndex, aminoAcid.endIndex));
+                        auto alda = averageLayersDeltaAccumulation(aminoAcid.startIndex, aminoAcid.endIndex);
+                        csvs << std::to_string(alda.first);
+                        csvs << std::to_string(alda.second);
 
                         // End line
                         csvs << csv::endl;
@@ -2805,10 +2807,11 @@ void SurfaceDynamicsVisualization::resetPath(std::string& rPath, std::string app
     rPath = path;
 }
 
-float SurfaceDynamicsVisualization::averageLayersDeltaAccumulation(int startIndex, int endIndex) const
+std::pair<float,float> SurfaceDynamicsVisualization::averageLayersDeltaAccumulation(int startIndex, int endIndex) const
 {
     // Go over frames and extract average layer of atoms
     std::vector<float> avgLayers = std::vector<float>(mGPUSurfaces.size(), -1.f); // minus one means no data
+    std::vector<float> invAvgLayers = std::vector<float>(mGPUSurfaces.size(), -1.f); // minus one means no data
     for(int frame = mComputedStartFrame; frame <= mComputedEndFrame; frame++)
     {
         // Relative frame
@@ -2819,15 +2822,19 @@ float SurfaceDynamicsVisualization::averageLayersDeltaAccumulation(int startInde
         {
             // Calculate layer of atoms in rage for that frame
             float avgLayer = 0;
+            float invAvgLayer = 0;
             for(int atomIndex = startIndex; atomIndex <= endIndex; atomIndex++)
             {
                 // Get layer of that atom
                 int layer = mGPUSurfaces.at(relativeFrame)->getLayerOfAtom(atomIndex);
+                int invLayer = (mGPUSurfaces.at(relativeFrame)->getLayerCount() - 1) - layer;
 
                 // Accumulate for average layer calculation
                 avgLayer += (float)layer;
+                invAvgLayer += (float)invLayer;
             }
             avgLayers.at(relativeFrame) = avgLayer / (float)((endIndex - startIndex) + 1);
+            invAvgLayers.at(relativeFrame) = invAvgLayer / (float)((endIndex - startIndex) + 1);
         }
     }
 
@@ -2835,15 +2842,28 @@ float SurfaceDynamicsVisualization::averageLayersDeltaAccumulation(int startInde
     float avgLayersDeltaAcc = 0.f;
     for(int i = 0; i < avgLayers.size() - 1; i++)
     {
-        // Return -1 if any avg is not ok
-        if(avgLayers.at(i) < 0 || avgLayers.at(i+1) < 0) { return -1.f; }
+        // Return some -1 if any avg is not ok
+        if(avgLayers.at(i) < 0 || avgLayers.at(i+1) < 0) { return std::make_pair(-1.f, -1.f); }
 
         float delta = avgLayers.at(i + 1) - avgLayers.at(i);
         delta = delta < 0 ? -delta : delta;
         avgLayersDeltaAcc += delta;
     }
 
-    return avgLayersDeltaAcc;
+    // Inverse average layer calculation
+    float invAvgLayersDeltaAcc = 0.f;
+    for(int i = 0; i < invAvgLayers.size() - 1; i++)
+    {
+        // Return some -1 if any avg is not ok
+        if(invAvgLayers.at(i) < 0 || invAvgLayers.at(i+1) < 0) { return std::make_pair(-1.f, -1.f); }
+
+        float delta = invAvgLayers.at(i + 1) - invAvgLayers.at(i);
+        delta = delta < 0 ? -delta : delta;
+        invAvgLayersDeltaAcc += delta;
+    }
+
+    // Return result
+    return std::make_pair(avgLayersDeltaAcc, invAvgLayersDeltaAcc);
 }
 
 // ### Main function ###

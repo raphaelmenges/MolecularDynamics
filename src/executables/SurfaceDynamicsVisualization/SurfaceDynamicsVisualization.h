@@ -116,8 +116,8 @@ private:
         std::string filepathPosZ,
         std::string filepathNegZ) const;
 
-    // Average layers delta accumulation
-    float averageLayersDeltaAccumulation(int startIndex, int endIndex) const;
+    // Average layers delta accumulation, returns value with standard layer order and with inverse
+    std::pair<float,float> averageLayersDeltaAccumulation(int startIndex, int endIndex) const;
 
     // Setup
     const float mCameraSmoothDuration = 1.5f;
