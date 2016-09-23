@@ -1163,7 +1163,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         // General menu
         if (ImGui::BeginMenu("Menu"))
         {
-            if(ImGui::MenuItem("Quit", "Esc", false, true)) { glfwSetWindowShouldClose(mpWindow, GL_TRUE); }
+            if(ImGui::MenuItem("Quit", "", false, true)) { glfwSetWindowShouldClose(mpWindow, GL_TRUE); }
             ImGui::EndMenu();
         }
 
