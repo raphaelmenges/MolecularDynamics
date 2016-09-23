@@ -50,10 +50,10 @@ public:
 
 private:
 
-    // Enumeration for surface rendering
-    enum SurfaceRendering
+    // Enumeration for rendering
+    enum Rendering
     {
-        HULL, ASCENSION, ELEMENTS, AMINOACIDS, ANALYSIS
+        HULL, ASCENSION, ELEMENTS, AMINOACIDS, ANALYSIS, LAYERS
     };
 
     // Enumeration for background cubemaps
@@ -193,7 +193,7 @@ private:
     bool mShowPath = true;
     int mPathFrameRadius = 5; // radius of frames which are visualized
     int mPathSmoothRadius = 0; // radius of frames which are used for smoothing the path
-    SurfaceRendering mSurfaceRendering = HULL;
+    Rendering mRendering = HULL;
     Background mBackground = SCIENTIFIC;
     int mHullSampleCount = 250; // sample count per atom
     bool mRenderHullSamples = false;

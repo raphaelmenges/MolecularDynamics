@@ -663,9 +663,9 @@ void SurfaceDynamicsVisualization::renderLoop()
             mupAscension->bind(4);
 
             // Frame is computed, decide how to render it
-            switch(mSurfaceRendering)
+            switch(mRendering)
             {
-            case SurfaceRendering::HULL:
+            case Rendering::HULL:
 
                 // Prepare shader program
                 hullProgram.use();
@@ -709,7 +709,7 @@ void SurfaceDynamicsVisualization::renderLoop()
 
                 break;
 
-            case SurfaceRendering::ASCENSION:
+            case Rendering::ASCENSION:
 
                 // Prepare shader program
                 ascensionProgram.use();
@@ -738,7 +738,7 @@ void SurfaceDynamicsVisualization::renderLoop()
 
                 break;
 
-            case SurfaceRendering::ELEMENTS:
+            case Rendering::ELEMENTS:
 
                 // Bind coloring
                 mupGPUProtein->bindColorsElement(5);
@@ -783,7 +783,7 @@ void SurfaceDynamicsVisualization::renderLoop()
 
                 break;
 
-            case SurfaceRendering::AMINOACIDS:
+            case Rendering::AMINOACIDS:
 
                 // Bind coloring
                 mupGPUProtein->bindColorsAminoacid(5);
@@ -828,7 +828,7 @@ void SurfaceDynamicsVisualization::renderLoop()
 
                 break;
 
-            case SurfaceRendering::ANALYSIS:
+            case Rendering::ANALYSIS:
 
                 // Bind indices of analysis atoms
                 mupOutlineAtomIndices->bindAsImage(5, GPUAccess::READ_ONLY);
@@ -1061,11 +1061,11 @@ void SurfaceDynamicsVisualization::keyCallback(int key, int scancode, int action
                     mMoveCamera = false;
                 }
             }
-            case GLFW_KEY_1: { mSurfaceRendering = SurfaceRendering::HULL; break; }
-            case GLFW_KEY_2: { mSurfaceRendering = SurfaceRendering::ASCENSION; break; }
-            case GLFW_KEY_3: { mSurfaceRendering = SurfaceRendering::ELEMENTS; break; }
-            case GLFW_KEY_4: { mSurfaceRendering = SurfaceRendering::AMINOACIDS; break; }
-            case GLFW_KEY_5: { mSurfaceRendering = SurfaceRendering::ANALYSIS; break; }
+            case GLFW_KEY_1: { mRendering = Rendering::HULL; break; }
+            case GLFW_KEY_2: { mRendering = Rendering::ASCENSION; break; }
+            case GLFW_KEY_3: { mRendering = Rendering::ELEMENTS; break; }
+            case GLFW_KEY_4: { mRendering = Rendering::AMINOACIDS; break; }
+            case GLFW_KEY_5: { mRendering = Rendering::ANALYSIS; break; }
         }
     }
 }
@@ -1506,9 +1506,9 @@ void SurfaceDynamicsVisualization::renderGUI()
         if(frameComputed())
         {
             // ### Layer ###
-            if(mSurfaceRendering == SurfaceRendering::HULL
-            || mSurfaceRendering == SurfaceRendering::ELEMENTS
-            || mSurfaceRendering == SurfaceRendering::AMINOACIDS)
+            if(mRendering == Rendering::HULL
+            || mRendering == Rendering::ELEMENTS
+            || mRendering == Rendering::AMINOACIDS)
             {
                 if (ImGui::CollapsingHeader("Layer", "Layer##Visualization", true, true))
                 {
@@ -1520,12 +1520,12 @@ void SurfaceDynamicsVisualization::renderGUI()
             if (ImGui::CollapsingHeader("Rendering", "Rendering##Visualization", true, true))
             {
                 // Surface rendering
-                ImGui::Combo("##SurfaceRenderingCombo", (int*)&mSurfaceRendering, "[1] Hull\0[2] Ascension\0[3] Elements\0[4] Aminoacids\0[5] Analysis\0");
+                ImGui::Combo("##RenderingCombo", (int*)&mRendering, "[1] Hull\0[2] Ascension\0[3] Elements\0[4] Aminoacids\0[5] Analysis\0");
 
                 // Rendering of internal and surface atoms
-                if(mSurfaceRendering == SurfaceRendering::HULL
-                || mSurfaceRendering == SurfaceRendering::ELEMENTS
-                || mSurfaceRendering == SurfaceRendering::AMINOACIDS)
+                if(mRendering == Rendering::HULL
+                || mRendering == Rendering::ELEMENTS
+                || mRendering == Rendering::AMINOACIDS)
                 {
                     // Show / hide internal atoms
                     if(mShowInternal)
