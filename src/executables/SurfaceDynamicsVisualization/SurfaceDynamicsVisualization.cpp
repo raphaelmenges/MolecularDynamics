@@ -1995,9 +1995,11 @@ void SurfaceDynamicsVisualization::renderGUI()
                 }
 
                 // Range to add atoms
-                ImGui::InputInt("Start Index", &mNewGroupAtomsStartIndex, 0, mupGPUProtein->getAtomCount() - 1);
+                ImGui::InputInt("Start Index", &mNewGroupAtomsStartIndex);
+                mNewGroupAtomsStartIndex = glm::clamp(mNewGroupAtomsStartIndex, 0, mupGPUProtein->getAtomCount() - 1);
                 if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Set start index of atoms which shall be added to group."); }
-                ImGui::InputInt("End Index", &mNewGroupAtomsEndIndex, 0, mupGPUProtein->getAtomCount() - 1);
+                ImGui::InputInt("End Index", &mNewGroupAtomsEndIndex);
+                mNewGroupAtomsEndIndex = glm::clamp(mNewGroupAtomsEndIndex, 0, mupGPUProtein->getAtomCount() - 1);
                 if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Set end index of atoms which shall be added to group."); }
                 if(ImGui::Button("Add Atom Range"))
                 {
