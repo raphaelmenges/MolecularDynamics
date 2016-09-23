@@ -635,15 +635,14 @@ void SurfaceDynamicsVisualization::renderLoop()
             std::vector<GLfloat> emptyData(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight() * 4, 0);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight(), 0, GL_RGBA, GL_FLOAT, &emptyData[0]);
             glBindTexture(GL_TEXTURE_2D, 0);
+            std::vector<GLuint> emptyDataSemaphore(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight(), 0.f);
+            mupGroupRenderingSemaphore = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(emptyDataSemaphore));
         }
         else
         {
             // Clear group rendering texture
             glClearTexImage(mGroupRenderingTexture, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
         }
-
-        std::vector<GLuint> emptyDataSemaphore(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight(), 0.f);
-            mupGroupRenderingSemaphore = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(emptyDataSemaphore));
 
         // Bind buffers of radii and trajectory for rendering molecule
         mupGPUProtein->bind(0, 1);
