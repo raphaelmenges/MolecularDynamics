@@ -18,13 +18,13 @@ AtomLUT::radiiMap AtomLUT::vdW_radii_picometer = {
 };
 
 AtomLUT::colorMap AtomLUT::cpk_colorcode = {
-    {"hydrogen", AtomLUT::color{1,1,1}}, {"carbon", AtomLUT::color{0,0,0}},
-    {"nitrogen", AtomLUT::color{0.5,0.8,1}}, {"oxygen", AtomLUT::color{1,0,0}},
-    {"fluorine ", AtomLUT::color{0,1,0}}, {"chlorine", AtomLUT::color{0,1,0}},
-    {"bromine", AtomLUT::color{.6,.2,.2}}, {"iodine", AtomLUT::color{.7,.2,.9}},
-    {"phosphorus", AtomLUT::color{1,.5,0}}, {"sulfur", AtomLUT::color{1,1,0}},
-    {"boron", AtomLUT::color{1,.9,.7}}, {"titanium", AtomLUT::color{.7,.7,.7}},
-    {"iron", AtomLUT::color{.8,0.4,.1}}, {"other", AtomLUT::color{.9,.5,.9}}
+    {"hydrogen", AtomLUT::color{1.f, 1.f, 1.f}}, {"carbon", AtomLUT::color{200.f/255.f, 200.f/255.f, 200.f/255.f}},
+    {"nitrogen", AtomLUT::color{143.f/255.f, 143.f/255.f, 1.f}}, {"oxygen", AtomLUT::color{240.f/255.f, 0.f, 0.f}},
+    {"fluorine ", AtomLUT::color{0.f, 1.f, 0.f}}, {"chlorine", AtomLUT::color{0.f, 1.f, 0.f}},
+    {"bromine", AtomLUT::color{165.f/255.f, 42.f/255.f, 42.f/255.f}}, {"iodine", AtomLUT::color{0.7f, 0.2f, 0.9f}},
+    {"phosphorus", AtomLUT::color{1.f, 165.f/255.f, 0.f}}, {"sulfur", AtomLUT::color{1.f, 200.f/255.f, 50.f/255.f}},
+    {"boron", AtomLUT::color{1.f, 0.9f, 0.7f}}, {"titanium", AtomLUT::color{0.7f, 0.7f, 0.7f}},
+    {"iron", AtomLUT::color{1.f, 165.f/255.f, 0.f}}, {"other", AtomLUT::color{1.f, 20.f/255.f, 147.f/255.f}}
 };
 
 // Taken from here: http://acces.ens-lyon.fr/biotic/rastop/help/colour.htm
