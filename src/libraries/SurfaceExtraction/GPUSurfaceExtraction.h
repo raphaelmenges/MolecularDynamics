@@ -81,7 +81,7 @@ private:
             int excludeB) const;
 
         // Members
-        static const int mNeighborsMaxCount = 200;
+        static const int mNeighborsMaxCount = 2000;
         const bool mLogging = false; // one has to remove /* */ before activating logging
 
         // All cutting faces, also those who gets cut away by others
