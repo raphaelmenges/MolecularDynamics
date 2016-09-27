@@ -116,8 +116,15 @@ private:
         std::string filepathPosZ,
         std::string filepathNegZ) const;
 
-    // Average layers delta accumulation, returns value with standard layer order and with inverse
-    std::pair<float,float> averageLayersDeltaAccumulation(int startIndex, int endIndex) const;
+    // Atoms in range calculations. Returns whether successful
+    bool atomsInRangeCalculations(
+        int startIndex, // index of atom at start of range
+        int endIndex, // index of atom at end of range
+        float& rAcc, // average layers delta accumulation
+        float& rInverseAcc, // inverse average layers delta accumulation
+        std::vector<float>& rAvgLayers, // average layers
+        std::vector<float>& rInverseAvgLayers // inverse average layers
+        ) const;
 
     // Setup
     const float mCameraSmoothDuration = 1.5f;
@@ -285,9 +292,11 @@ private:
     std::vector<float> mAnalysisGroupSurfaceArea;
     std::unique_ptr<Path> mupPath;
     std::string mSurfaceIndicesFilePath = "";
-    std::string mAminoAcidAnalysisFilePath = "";
     std::string mGlobalAnalysisFilePath = "";
     std::string mGroupAnalysisFilePath = "";
+    std::string mAminoAcidAnalysisAccumulatedFilePath = "";
+    std::string mAminoAcidAnalysisAvgLayersFilePath = "";
+    std::string mAminoAcidAnalysisInverseAvgLayersFilePath = "";
 
     // Surface validation
     std::unique_ptr<SurfaceValidation> mupSurfaceValidation;
