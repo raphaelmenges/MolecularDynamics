@@ -3023,8 +3023,8 @@ bool SurfaceDynamicsVisualization::atomsInRangeCalculations(
                 avgLayer += (float)layer;
                 invAvgLayer += (float)invLayer;
             }
-            avgLayers.at(relativeFrame) = avgLayer / (float)((endIndex - startIndex) + 1);
-            invAvgLayers.at(relativeFrame) = invAvgLayer / (float)((endIndex - startIndex) + 1);
+            avgLayers.at(relativeFrame) = avgLayer / (float)((endIndex - startIndex) + 1); // divide through count of atoms
+            invAvgLayers.at(relativeFrame) = invAvgLayer / (float)((endIndex - startIndex) + 1); // divide through count of atoms
         }
     }
 
