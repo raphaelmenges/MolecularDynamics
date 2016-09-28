@@ -237,6 +237,25 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     std::vector<GLuint> emptyDataSemaphore(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight(), 0.f);
     mupGroupRenderingSemaphore = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(emptyDataSemaphore));
 
+    // # Ascension helper texture
+    glGenTextures(1, &mAscensionHelperTexture);
+    glBindTexture(GL_TEXTURE_2D, mAscensionHelperTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    // Load image from disk
+    int channelCount;
+    unsigned char* pData = stbi_load(std::string(std::string(RESOURCES_PATH) + "/surfaceDynamics/AscensionHelper.png").c_str(), &mAscensionHelperWidth, &mAscensionHelperHeight, &channelCount, 0);
+
+    // Set texture
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mAscensionHelperWidth, mAscensionHelperHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, pData);
+
+    // Delete raw image data
+    stbi_image_free(pData);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
     // # Other
 
     // Set endframe in GUI to maximum number
@@ -254,6 +273,9 @@ SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
 
     // Delete group rendering texture
     glDeleteTextures(1, &mGroupRenderingTexture);
+
+    // Delete ascension helper texture
+    glDeleteTextures(1, &mAscensionHelperTexture);
 
     std::cout << "..done" << std::endl;
 
@@ -1701,6 +1723,12 @@ void SurfaceDynamicsVisualization::renderGUI()
         {
             ImGui::SliderInt("Smooth Radius", &mSmoothAnimationRadius, 0, 10);
             ImGui::SliderFloat("Smooth Max Deviation", &mSmoothAnimationMaxDeviation, 0, 100, "%.1f");
+        }
+
+        // ### Ascension Help Image ###
+        if (ImGui::CollapsingHeader("Ascension Helper", "Ascension Helper##Visualization", true, true))
+        {
+            ImGui::Image((ImTextureID*)mAscensionHelperTexture, ImVec2(mAscensionHelperWidth, mAscensionHelperHeight));
         }
 
         ImGui::End();

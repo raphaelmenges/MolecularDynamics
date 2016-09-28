@@ -309,6 +309,11 @@ private:
     // Texture for rendering group atoms on top of molecule
     GLuint mGroupRenderingTexture;
     std::unique_ptr<GPUTextureBuffer> mupGroupRenderingSemaphore;
+
+    // Ascension helper texture
+    GLuint mAscensionHelperTexture;
+    int mAscensionHelperWidth = 0;
+    int mAscensionHelperHeight = 0;
 };
 
 #endif // SURFACE_DYNAMICS_VISUALIZATION_H
