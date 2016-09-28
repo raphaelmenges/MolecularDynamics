@@ -91,16 +91,14 @@ void main()
     }
 
     // Set depth of pixel by projecting pixel position into clip space
-    if(isClippingPlane)
-    {
-        gl_FragDepth = 0.0;
-    }
-    else
+    float customDepth = 0.0;
+    if(!isClippingPlane)
     {
         vec4 projPos = projection * view * vec4(worldPos, 1.0);
         float projDepth = projPos.z / projPos.w;
-        gl_FragDepth = (projDepth + 1.0) * 0.5; // gl_FragCoord.z is from 0..1. So go from clip space to viewport space
+        customDepth = (projDepth + 1.0) * 0.5; // gl_FragCoord.z is from 0..1. So go from clip space to viewport space
     }
+    gl_FragDepth = customDepth;
 
     // Depth darkening
     float depthDarkening = (-viewPos.z - depthDarkeningStart) / (depthDarkeningEnd - depthDarkeningStart);
@@ -141,7 +139,7 @@ void main()
         ivec2 pixelCoordinate = ivec2(gl_FragCoord.x, gl_FragCoord.y);
 
         // Depth of current fragment
-        float groupRenderingDepth = 1.0 - gl_FragDepth; // inverse depth since texture is initialized with zero and would be already at near plane
+        float groupRenderingDepth = 1.0 - customDepth; // inverse depth since texture is initialized with zero and would be already at near plane
 
         // Get linear coordinate in semaphore
         int semaphoreCoordinate = (framebufferWidth * pixelCoordinate.y) + pixelCoordinate.x;
