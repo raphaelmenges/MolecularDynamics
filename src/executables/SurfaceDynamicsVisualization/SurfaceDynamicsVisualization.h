@@ -123,7 +123,9 @@ private:
         float& rAcc, // average layers delta accumulation
         float& rInverseAcc, // inverse average layers delta accumulation
         std::vector<float>& rAvgLayers, // average layers
-        std::vector<float>& rInverseAvgLayers // inverse average layers
+        std::vector<float>& rInverseAvgLayers, // inverse average layers
+        std::vector<float>& rAvgLayersDelta, // average layers delta
+        std::vector<float>& rInverseAvgLayersDelta // inverse average layers delta
         ) const;
 
     // Setup
@@ -297,6 +299,8 @@ private:
     std::string mAminoAcidAnalysisAccumulatedFilePath = "";
     std::string mAminoAcidAnalysisAvgLayersFilePath = "";
     std::string mAminoAcidAnalysisInverseAvgLayersFilePath = "";
+    std::string mAminoAcidAnalysisAvgLayersDeltaFilePath = "";
+    std::string mAminoAcidAnalysisInverseAvgLayersDeltaFilePath = "";
 
     // Surface validation
     std::unique_ptr<SurfaceValidation> mupSurfaceValidation;
