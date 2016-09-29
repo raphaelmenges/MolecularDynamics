@@ -2371,7 +2371,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                 }
                 else
                 {
-                    if(ImGui::Button("Show Group on Top", ImVec2(173, 22)))
+                    if(ImGui::Button("Show Group On Top", ImVec2(173, 22)))
                     {
                         mRenderGroupOnTop = true;
                     }
