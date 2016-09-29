@@ -1713,7 +1713,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                 if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Change of as- and descension is multiplied with radius."); }
 
                 // Opacity of none group atoms
-                ImGui::SliderFloat("None Group Opacity", &mNoneGroupOpacity, 0.f, 1.f);
+                ImGui::SliderFloat("Molecule Opacity", &mNoneGroupOpacity, 0.f, 1.f);
                 if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Opacity of molecule visualization."); }
             }
         }
