@@ -4,7 +4,7 @@
 
 MdTrajWrapper::MdTrajWrapper()
 {
-    wchar_t* inputName = L"" PYTHON_PROGRAM_NAME;
+    wchar_t* inputName = L"" PYTHON_BINARY;
     Py_SetProgramName(inputName);
     wchar_t* name = Py_GetProgramFullPath();
     std::wcout << "Using python executable at " << name << std::endl;

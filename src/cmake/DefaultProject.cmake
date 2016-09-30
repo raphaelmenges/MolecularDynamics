@@ -35,7 +35,7 @@ endif()
 # Tell application about some paths
 add_definitions(-DSHADERS_PATH="${SHADERS_PATH}")
 add_definitions(-DRESOURCES_PATH="${RESOURCES_PATH}")
-add_definitions(-DPYTHON_PROGRAM_NAME="${MINICONDA3_PATH}/bin/python")
+add_definitions(-DPYTHON_BINARY="${MINICONDA3_PATH}/bin/python") # TODO: move to cmake GUI
 
 # Compiler settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
