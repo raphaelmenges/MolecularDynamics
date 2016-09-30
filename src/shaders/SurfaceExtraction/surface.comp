@@ -10,6 +10,9 @@ layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 // ## Constant values
 const int neighborsMaxCount = 200;
 
+// ## Defines
+#define GRID_UNDEF 4294967295
+
 // ## Global variables
 
 // All cutting faces, also those who gets cut away by others
@@ -25,38 +28,35 @@ int cuttingFaceIndices[neighborsMaxCount]; // Indices of cutting faces which are
 // ## Uniforms
 uniform int inputCount;
 uniform float probeRadius;
-uniform int frame;
-uniform int atomCount;
+uniform ivec3 gridResolution;
+uniform int numberOfSearchCells;
+uniform int startCellOffset;
+uniform int searchCellOffsets[216];
 
 // ## SSBOs
 
 // Radii
-layout(std430, binding = 0) restrict readonly buffer RadiiBuffer
-{
-   float radii[];
-};
-
-// Trajectory
-struct Position
-{
-    float x,y,z;
-};
-
-layout(std430, binding = 1) restrict readonly buffer TrajectoryBuffer
-{
-   Position trajectory[];
-};
+layout(std430, binding = 0) restrict readonly buffer RadiiBuffer { float radii[]; };
 
 // ## Atomic counter for indices in image buffers
-layout(binding = 2) uniform atomic_uint InternalCount;
-layout(binding = 3) uniform atomic_uint SurfaceCount;
+layout(binding = 1) uniform atomic_uint InternalCount;
+layout(binding = 2) uniform atomic_uint SurfaceCount;
 
 // ## Image buffer with input indices
-layout(binding = 4, r32ui) restrict readonly uniform uimageBuffer InputIndices;
+layout(binding = 3, r32ui) restrict readonly uniform uimageBuffer InputIndices;
 
 // ## Image buffers with output indices of internal and surface atoms
-layout(binding = 5, r32ui) restrict writeonly uniform uimageBuffer InternalIndices;
-layout(binding = 6, r32ui) restrict writeonly uniform uimageBuffer SurfaceIndices;
+layout(binding = 4, r32ui) restrict writeonly uniform uimageBuffer InternalIndices;
+layout(binding = 5, r32ui) restrict writeonly uniform uimageBuffer SurfaceIndices;
+
+// ## Neighbor hood search buffers
+layout(std430, binding = 6)  restrict readonly buffer PositionsBuffer           { vec4 positions[]; };
+layout(std430, binding = 7)  restrict readonly buffer ParticleCellsBuffer       { uint pcell[]; };
+layout(std430, binding = 8)  restrict readonly buffer ParticleCellIndicesBuffer { uint gndx[]; };
+layout(std430, binding = 9)  restrict readonly buffer GridCellCountBuffer       { int  gridCellCnt[]; };
+layout(std430, binding = 10) restrict readonly buffer GridCellOffsetBuffer      { int  gridCellOff[]; };
+layout(std430, binding = 11) restrict readonly buffer GridBuffer                { uint grid[]; };
+layout(std430, binding = 12) restrict readonly buffer OriginalIndexBuffer       { uint ondx[]; };
 
 // ## Save as internal
 void saveAsInternal(int atomIndex)
@@ -180,84 +180,105 @@ void main()
     // ### OWN VALUES ###
 
     // Own center
-    Position atomPosition = trajectory[(frame*atomCount) + atomIndex];
-    vec3 atomCenter = vec3(atomPosition.x, atomPosition.y, atomPosition.z);
+    vec3 atomCenter = positions[atomIndex].xyz;
 
     // Own extended radius
     float atomExtRadius = radii[atomIndex] + probeRadius;
 
     // ### BUILD UP OF CUTTING FACE LIST ###
 
-    // Go over other atoms and build cutting face list
-    for(int i = 0; i < inputCount; i++)
+    // Get sorted index of atom
+    uint sortedIndex = grid[atomIndex]; // TODO: probably not correct buffer used
+
+    // Get cell for atom by sorted index
+    uint cell = pcell[sortedIndex];
+    if (cell == GRID_UNDEF) return; // particle is outside of grid
+
+    // Go over cells to search for neighbors
+    uint startCell = cell - startCellOffset;
+    for (int cellIndex = 0; cellIndex < numberOfSearchCells; cellIndex++)
     {
-        // Read index of atom from input indices
-        int otherAtomIndex = int(imageLoad(InputIndices, i));
+        // Extract current cell
+        uint currentCell = startCell + searchCellOffsets[cellIndex];
 
-        // Do not cut with itself
-        if(otherAtomIndex == atomIndex) { continue; }
-
-        // ### OTHER'S VALUES ###
-
-        // Get values from other atom
-        Position otherAtomPosition = trajectory[(frame*atomCount) + otherAtomIndex];
-        vec3 otherAtomCenter = vec3(otherAtomPosition.x, otherAtomPosition.y, otherAtomPosition.z);
-        float otherAtomExtRadius = radii[otherAtomIndex] + probeRadius;
-
-        // ### INTERSECTION TEST ###
-
-        // Vector from center to other's
-        vec3 connection = otherAtomCenter - atomCenter;
-
-        // Distance between atoms
-        float atomsDistance = length(connection);
-
-        // Test atoms are either too far away or just touch each other (then continue)
-        if(atomsDistance >= (atomExtRadius + otherAtomExtRadius)) { continue; }
-
-        // Test atoms are either too far away (then continue)
-        // if(atomsDistance > (atomExtRadius + otherAtomExtRadius)) { continue; }
-
-        // Test whether atom is completely covering other
-        if(atomExtRadius >= (otherAtomExtRadius + atomsDistance)) { continue; }
-
-        // Test whether atom is completely covered by other
-        if((atomExtRadius + atomsDistance) <= otherAtomExtRadius)
+        // Proceed only if cell contains particles
+        if (gridCellCnt[currentCell] != 0)
         {
-            // Since it is completely covered, it is internal
-            saveAsInternal(atomIndex); return;
+            // Get first and last particle index
+            uint firstParticle = gridCellOff[currentCell];
+            uint lastParticle  = firstParticle + gridCellCnt[currentCell];
+
+            // Iterate over all particles inside cell
+            for (uint pIndex = firstParticle; pIndex < lastParticle; pIndex++)
+            {
+                // ### FETCHING VALUES ###
+
+                // Get the original index for the current particle
+                uint otherAtomIndex = ondx[grid[pIndex]];
+
+                // TODO: continue loop if index is not valid for this computation run
+
+                // Fetch position of other atom
+                vec3 otherAtomCenter = positions[otherAtomIndex].xyz;
+
+                // Vector from center to other's
+                vec3 connection = otherAtomCenter - atomCenter;
+
+                // Distance between both
+                float atomsDistance = length(connection);
+
+                // Extended radius of other atom
+                float otherAtomExtRadius = radii[otherAtomIndex] + probeRadius;
+
+                // Test atoms are either too far away or just touch each other (then continue)
+                if(atomsDistance >= (atomExtRadius + otherAtomExtRadius)) { continue; }
+
+                // Test atoms are either too far away (then continue)
+                // if(atomsDistance > (atomExtRadius + otherAtomExtRadius)) { continue; }
+
+                // Test whether atom is completely covering other
+                if(atomExtRadius >= (otherAtomExtRadius + atomsDistance)) { continue; }
+
+                // Test whether atom is completely covered by other
+                if((atomExtRadius + atomsDistance) <= otherAtomExtRadius)
+                {
+                    // Since it is completely covered, it is internal
+                    saveAsInternal(atomIndex); return;
+                }
+
+                // ### INTERSECTION WITH OTHER ATOMS ###
+
+                // Calculate center of intersection
+                // http://gamedev.stackexchange.com/questions/75756/sphere-sphere-intersection-and-circle-sphere-intersection
+                float h =
+                    0.5
+                    + ((atomExtRadius * atomExtRadius)
+                    - (otherAtomExtRadius * otherAtomExtRadius))
+                    / (2.0 * (atomsDistance * atomsDistance));
+
+                // ### CUTTING FACE LIST ###
+
+                // Save center of face
+                vec3 faceCenter = atomCenter + (h * connection);
+                cuttingFaceCenters[cuttingFaceCount] = faceCenter;
+
+                // Save plane equation of face
+                vec3 faceNormal = normalize(connection);
+                float faceDistance = dot(faceCenter, faceNormal);
+                cuttingFaces[cuttingFaceCount] = vec4(faceNormal, faceDistance);
+
+                // Initialize cutting face indicator with: 1 == was not cut away (yet)
+                cuttingFaceIndicators[cuttingFaceCount] = 1;
+
+                // Increment cutting face list index and break if max count of neighbors reached
+                cuttingFaceCount++;
+                if(cuttingFaceCount == neighborsMaxCount) { break; }
+            }
         }
-
-        // ### INTERSECTION WITH OTHER ATOMS ###
-
-        // Calculate center of intersection
-        // http://gamedev.stackexchange.com/questions/75756/sphere-sphere-intersection-and-circle-sphere-intersection
-        float h =
-            0.5
-            + ((atomExtRadius * atomExtRadius)
-            - (otherAtomExtRadius * otherAtomExtRadius))
-            / (2.0 * (atomsDistance * atomsDistance));
-
-        // ### CUTTING FACE LIST ###
-
-        // Save center of face
-        vec3 faceCenter = atomCenter + (h * connection);
-        cuttingFaceCenters[cuttingFaceCount] = faceCenter;
-
-        // Save plane equation of face
-        vec3 faceNormal = normalize(connection);
-        float faceDistance = dot(faceCenter, faceNormal);
-        cuttingFaces[cuttingFaceCount] = vec4(faceNormal, faceDistance);
-
-        // Initialize cutting face indicator with: 1 == was not cut away (yet)
-        cuttingFaceIndicators[cuttingFaceCount] = 1;
-
-        // Increment cutting face list index and break if max count of neighbors reached
-        cuttingFaceCount++;
-        if(cuttingFaceCount == neighborsMaxCount) { break; }
     }
 
-    // FROM HERE ON: TEST INTERSECTION LINE STUFF (CAN BE DELETED LATER ON)
+    // ### OPTIMIZE CUTTING FACE LIST ###
+
     for(int i = 0; i < cuttingFaceCount - 1; i++)
     {
         // Already cut away
@@ -299,7 +320,7 @@ void main()
                 notCutEachOther = (valueUnderSQRT < 0);
             }
 
-            // ### CHECK WHETHER CUTTING FACE CAN BE FORGOT ###
+            // ### CHECK WHETHER CUTTING FACE CAN BE FORGOTTEN ###
 
             // Faces do not cut each other on sphere, so they produce not later endpoints. Check them now
             if(notCutEachOther)

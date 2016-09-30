@@ -63,6 +63,12 @@ public:
         return result;
     }
 
+    // Get handle to buffer (handle carefully)
+    GLuint getHandle() const
+    {
+        return mBuffer;
+    }
+
 private:
 
     // Handle for buffer which holds the data

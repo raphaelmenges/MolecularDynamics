@@ -45,6 +45,9 @@ public:
     // Bind SSBOs with radii and trajectory
     void bind(GLuint radiiSlot, GLuint trajectorySlot) const;
 
+    // Bind radii SSBO
+    void bindRadii(GLuint slot) const;
+
     // Bind trjactory SSBO
     void bindTrajectory(GLuint slot) const;
 
@@ -75,14 +78,23 @@ public:
     // Get aminoacid
     std::string getAminoacid(int atomIndex) const { return mAminoacids.at(atomIndex); }
 
-    // Get minimum initial coordinates
+    // Get minimum coordinates of initial structure
     glm::vec3 getMinCoordinates() const { return mMinCoordinates; }
 
-    // Get maximum initial coordinates
+    // Get maximum coordinates of initial structure
     glm::vec3 getMaxCoordinates() const { return mMaxCoordinates; }
+
+    // Get minimum coordinates at a frame
+    glm::vec3 getMinCoordinates(int frame) const { return mMinCoordinatesAnimation.at(frame); }
+
+    // Get maximum coordinates at a frame
+    glm::vec3 getMaxCoordinates(int frame) const { return mMaxCoordinatesAnimation.at(frame); }
 
     // Get amino acid information
     std::vector<AminoAcid> getAminoAcids() const { return mAminoAcids; }
+
+    // Get radius of biggest atom
+    float getMaxRadius() const { return mMaxRadius; }
 
 private:
 
@@ -120,8 +132,15 @@ private:
     glm::vec3 mMinCoordinates;
     glm::vec3 mMaxCoordinates;
 
+    // Save minimum and maxmium postions per frame
+    std::vector<glm::vec3> mMinCoordinatesAnimation;
+    std::vector<glm::vec3> mMaxCoordinatesAnimation;
+
     // Vector with amino acids information
     std::vector<AminoAcid> mAminoAcids;
+
+    // Radius of biggest atom
+    float mMaxRadius;
 };
 
 #endif // GPU_PROTEIN_H

@@ -5,6 +5,7 @@
 #include "GPUSurfaceExtraction.h"
 #include "Utils/AtomicCounter.h"
 #include "Utils/Logger.h"
+#include "Search/NeighborhoodSearch.h"
 #include <GLFW/glfw3.h>
 #include <thread>
 #include <functional>
@@ -32,8 +33,11 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(
     bool useCPU,
     int CPUThreadCount) const
 {
+    // Atom count
+    int atomCount = pGPUProtein->getAtomCount();
+
     // Input count
-    int inputCount = pGPUProtein->getAtomCount(); // at first run, all are input
+    int inputCount = atomCount; // at first run, all are input
 
     // Create GPUSurface
     std::unique_ptr<GPUSurface> upGPUSurface = std::unique_ptr<GPUSurface>(new GPUSurface(inputCount));
@@ -42,7 +46,7 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(
     float computationTime = 0;
 
     // Decide which device to use for computation
-    if(useCPU)
+    if(useCPU) // ### CPU ###
     {
         // Start measuring time
         double time = glfwGetTime();
@@ -148,11 +152,46 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(
         // Save computation time
         computationTime = (float) (1000.0 * (glfwGetTime() - time)); // miliseconds
     }
-    else
+    else // ### GPU ###
     {
         // Prepare atomic counters for writing results to unique positions in images
         AtomicCounter internalCounter;
         AtomicCounter surfaceCounter;
+
+        // Start query for time measurement
+        glBeginQuery(GL_TIME_ELAPSED, mQuery);
+
+         // ### NEIGHBORHOOD SEARCH ###
+
+        // Extract necessary positions
+        auto spTrajectory = pGPUProtein->getTrajectory();
+        std::vector<glm::vec4> positions;
+        positions.reserve(atomCount);
+        for(GLuint index = 0; index < atomCount; index++)
+        {
+            glm::vec3 position = spTrajectory->at(frame).at(index);
+            positions.push_back(glm::vec4(position.x, position.y, position.z, 0));
+        }
+
+        // Fill positions into extra SSBO
+        GPUBuffer<glm::vec4> positionsBuffer;
+        positionsBuffer.fill(positions, GL_STATIC_DRAW);
+
+        // Build neighborhood structure
+        NeighborhoodSearch search;
+        search.init(
+            atomCount, // count of atoms
+            pGPUProtein->getMinCoordinates(frame), // min for bounding box
+            pGPUProtein->getMaxCoordinates(frame), // max for bounding box
+            glm::vec3(6, 6, 6), // must be static, otherwise compute shader has to be changed dynamically
+            2 * (pGPUProtein->getMaxRadius() + probeRadius)); // later search radius
+
+        // Run neighborhood search
+        GLuint positionBufferHandle = positionsBuffer.getHandle();
+        Neighborhood neighborhood;
+        search.run(&positionBufferHandle, neighborhood); // fills neighborhood structure
+
+        // ### SURFACE COMPUTATION ###
 
         // Use compute shader program
         mupComputeProgram->use();
@@ -160,21 +199,46 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(
         // Probe radius
         mupComputeProgram->update("probeRadius", probeRadius);
 
-        // Current frame
-        mupComputeProgram->update("frame", frame);
+        // Number of search cells
+        mupComputeProgram->update("numberOfSearchCells", neighborhood.numberOfSearchCells);
 
-        // Atom count
-        mupComputeProgram->update("atomCount", pGPUProtein->getAtomCount());
+        // Start cell offset
+        mupComputeProgram->update("startCellOffset", neighborhood.startCellOffset);
 
-        // Bind SSBO with atoms
-        pGPUProtein->bind(0, 1);
+        // Search cell offsets
+        glUniform1iv(
+            glGetUniformLocation(
+                mupComputeProgram->getProgramHandle(),"searchCellOffsets"),
+                216, // depending on grid size and hardcoded in compute shader, too
+                neighborhood.p_searchCellOffsets);
+
+        // Bind SSBO with radii
+        pGPUProtein->bindRadii(0);
 
         // Bind atomic counter
-        internalCounter.bind(2);
-        surfaceCounter.bind(3);
+        internalCounter.bind(1);
+        surfaceCounter.bind(2);
 
-        // Start query for time measurement
-        glBeginQuery(GL_TIME_ELAPSED, mQuery);
+        // Bind position buffer
+        positionsBuffer.bind(6);
+
+        // Bind particle cells buffer
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, *neighborhood.dp_particleCell);
+
+        // Bind particle cell indices buffer
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, *neighborhood.dp_particleCellIndex);
+
+        // Bind grid cell count buffer
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 9, *neighborhood.dp_gridCellCounts);
+
+        // Bind grid cell offset buffer
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 10, *neighborhood.dp_gridCellOffsets);
+
+        // Bind grid buffer
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 11, *neighborhood.dp_grid);
+
+        // Bind original index buffer
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 12, *neighborhood.dp_particleOriginalIndex);
 
         // Do it as often as indicated
         bool firstRun = true;
@@ -182,13 +246,6 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(
         {
             // Remember the first run
             firstRun = false;
-
-            // TODO neighboor hood stuff
-            // - Position SSBO
-            // - NeighborhoodSearch Object
-            // - Init and Run
-            // - Use in shader as indicated by Readme
-            // - Change neighbor structure of Adrian to avoid memory leak
 
             // Reset atomic counter
             internalCounter.reset();
@@ -202,7 +259,7 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(
             int layer = upGPUSurface->addLayer(inputCount) - 1;
 
             // Bind that layer
-            upGPUSurface->bindForComputation(layer, 4, 5, 6);
+            upGPUSurface->bindForComputation(layer, 3, 4, 5);
 
             // Dispatch
             glDispatchCompute((inputCount / 64) + 1, 1, 1);

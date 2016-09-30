@@ -31,6 +31,7 @@ GPUProtein::GPUProtein(Protein * const pProtein)
     mAminoacids.reserve(atomCount);
 
     // Fill radii, elements and aminoacids on CPU
+    mMaxRadius = std::numeric_limits<float>::min();
     mMinCoordinates = glm::vec3(
         std::numeric_limits<float>::max(),
         std::numeric_limits<float>::max(),
@@ -50,6 +51,9 @@ GPUProtein::GPUProtein(Protein * const pProtein)
         // Aminoacid
         mAminoacids.push_back(pProtein->getAtomAt(i)->getAmino());
 
+        // Update max radius
+        mMaxRadius = mMaxRadius < pProtein->getRadiusAt(i) ? pProtein->getRadiusAt(i) : mMaxRadius;
+
         // Update min / max coordinate values
         glm::vec3 position = pProtein->getAtomAt(i)->getPosition();
         mMinCoordinates.x = mMinCoordinates.x > position.x ? position.x : mMinCoordinates.x;
@@ -61,8 +65,18 @@ GPUProtein::GPUProtein(Protein * const pProtein)
     }
 
     // Fill trajectory on CPU
+    mMinCoordinatesAnimation.reserve(frameCount);
+    mMaxCoordinatesAnimation.reserve(frameCount);
     for(int i = 0; i < frameCount; i++) // go over frames
     {
+        glm::vec3 minCoords = glm::vec3(
+            std::numeric_limits<float>::max(),
+            std::numeric_limits<float>::max(),
+            std::numeric_limits<float>::max());
+        glm::vec3 maxCoords = glm::vec3(
+            std::numeric_limits<float>::min(),
+            std::numeric_limits<float>::min(),
+            std::numeric_limits<float>::min());
         glm::vec3 accPosition(0, 0, 0);
         for(int j = 0; j < atomCount; j++) // go over atoms
         {
@@ -74,7 +88,19 @@ GPUProtein::GPUProtein(Protein * const pProtein)
 
             // Accumulate position
             accPosition += position;
+
+            // Update min / max coordinate values
+            minCoords.x = minCoords.x > position.x ? position.x : minCoords.x;
+            minCoords.y = minCoords.y > position.y ? position.y : minCoords.y;
+            minCoords.z = minCoords.z > position.z ? position.z : minCoords.z;
+            maxCoords.x = maxCoords.x < position.x ? position.x : maxCoords.x;
+            maxCoords.y = maxCoords.y < position.y ? position.y : maxCoords.y;
+            maxCoords.z = maxCoords.z < position.z ? position.z : maxCoords.z;
         }
+
+        // Push back min and max coordinates
+        mMinCoordinatesAnimation.push_back(minCoords);
+        mMaxCoordinatesAnimation.push_back(maxCoords);
 
         // Save center
         mCentersOfMass.push_back(accPosition / atomCount);
@@ -141,6 +167,11 @@ void GPUProtein::bind(GLuint radiiSlot, GLuint trajectorySlot) const
 {
     mRadiiBuffer.bind(radiiSlot);
     mTrajectoryBuffer.bind(trajectorySlot);
+}
+
+void GPUProtein::bindRadii(GLuint slot) const
+{
+    mRadiiBuffer.bind(slot);
 }
 
 void GPUProtein::bindTrajectory(GLuint slot) const
