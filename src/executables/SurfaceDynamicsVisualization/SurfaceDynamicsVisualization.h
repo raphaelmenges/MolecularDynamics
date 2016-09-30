@@ -18,6 +18,7 @@
 #include "Framebuffer.h"
 #include "Path.h"
 #include "SurfaceExtraction/GPUHullSamples.h"
+#include "Utils/Logger.h"
 
 // Notes:
 // - Calculations done in angstrom

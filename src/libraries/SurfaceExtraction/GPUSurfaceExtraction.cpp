@@ -4,6 +4,7 @@
 
 #include "GPUSurfaceExtraction.h"
 #include "Utils/AtomicCounter.h"
+#include "Utils/Logger.h"
 #include <GLFW/glfw3.h>
 #include <thread>
 #include <functional>
@@ -182,6 +183,13 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(
             // Remember the first run
             firstRun = false;
 
+            // TODO neighboor hood stuff
+            // - Position SSBO
+            // - NeighborhoodSearch Object
+            // - Init and Run
+            // - Use in shader as indicated by Readme
+            // - Change neighbor structure of Adrian to avoid memory leak
+
             // Reset atomic counter
             internalCounter.reset();
             surfaceCounter.reset();
@@ -333,7 +341,7 @@ void GPUSurfaceExtraction::CPUSurfaceExtraction::execute(
         //cuttingFaceRadii[mCuttingFaceCount] =
         //    sqrt((atomExtRadius * atomExtRadius)
         //    - (h * h * atomsDistance * atomsDistance));
-        ///* if(mLogging) { std::cout << "Cutting face radius: " << cuttingFaceRadii[mCuttingFaceCount] << std::endl; } */
+        /* if(mLogging) { std::cout << "Cutting face radius: " << cuttingFaceRadii[mCuttingFaceCount] << std::endl; } */
 
         // Save center of face
         glm::vec3 faceCenter = atomCenter + (h * connection);
@@ -351,7 +359,11 @@ void GPUSurfaceExtraction::CPUSurfaceExtraction::execute(
 
         // Increment cutting face list index and break if max count of neighbors reached
         mCuttingFaceCount++;
-        if(mCuttingFaceCount == mNeighborsMaxCount) { std::cout << "Error: Too many neighbors for calculation!" << std::endl; break; } // TODO: Pipe cout to GUI
+        if(mCuttingFaceCount == mNeighborsMaxCount)
+        {
+            Logger::instance().print("Error: Too many neighbors for calculation!"); Logger::instance().tabIn();
+            break;
+        }
     }
 
     // CALCULATE WHICH CUTTING FACES ARE USED FOR ENDPOINT CALCULATION

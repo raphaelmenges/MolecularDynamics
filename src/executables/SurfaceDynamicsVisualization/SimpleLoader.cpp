@@ -3,6 +3,7 @@
 //============================================================================
 
 #include "SimpleLoader.h"
+#include "Utils/Logger.h"
 
 #include <fstream>
 #include <iostream>
@@ -34,7 +35,7 @@ std::unique_ptr<GPUProtein> parseSimplePDB(std::string filepath, glm::vec3& rMin
     // Check whether file was found
     if (!in)
     {
-        std::cout << "Could not open file: " << filepath << std::endl;
+        Logger::instance().print("Could not open file: " + filepath);
     }
     else
     {

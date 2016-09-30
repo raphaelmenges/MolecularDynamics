@@ -26,7 +26,7 @@ namespace csv = ::text::csv;
 
 SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathPDB, std::string filepathXTC)
 {
-    std::cout << "Welcome to Surface Dynamics Visualization!" << std::endl;
+    Logger::instance().print("Welcome to Surface Dynamics Visualization!");
 
     // # Setup members
     mCameraDeltaRotation = glm::vec2(0,0);
@@ -48,12 +48,12 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     resetPath(mAminoAcidAnalysisInverseAvgLayersDeltaFilePath, "/AminoAcidAnalysis-inverseAverageLayersDelta.csv");
 
     // Create window (which initializes OpenGL)
-    std::cout << "Create window.." << std::endl;
+    Logger::instance().print("Create window..");
     mpWindow = generateWindow(mWindowTitle, mWindowWidth, mWindowHeight);
-    std::cout << "..done" << std::endl;
+    Logger::instance().print("..done");
 
     // Init ImGui and load font
-    std::cout << "Load GUI.." << std::endl;
+    Logger::instance().print("Load GUI..");
     ImGui_ImplGlfwGL3_Init(mpWindow, true);
     ImGuiIO& io = ImGui::GetIO();
     std::string fontpath = std::string(RESOURCES_PATH) + "/fonts/dejavu-fonts-ttf-2.35/ttf/DejaVuSans.ttf";
@@ -73,7 +73,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
         0
     }; // has to be static to be available during run
     io.Fonts->AddFontFromFileTTF(fontpath.c_str(), 16, &config, ranges);
-    std::cout << "..done" << std::endl;
+    Logger::instance().print("..done");
 
     // Clear color (has to be zero for sake of framebuffers)
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -113,17 +113,17 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     // # Load molecule
 
     // Loading molecule
-    std::cout << "Import molecule.." << std::endl;
+    Logger::instance().print("Import molecule..");
     MdTrajWrapper mdwrap;
     std::vector<std::string> paths;
     paths.push_back(mPDBFilepath);
     if(!mXTCFilepath.empty()) { paths.push_back(mXTCFilepath); }
     std::unique_ptr<Protein> upProtein = std::move(mdwrap.load(paths));
     mupGPUProtein = std::unique_ptr<GPUProtein>(new GPUProtein(upProtein.get()));
-    std::cout << "..done" << std::endl;
+    Logger::instance().print("..done");
 
     // # Prepare framebuffers for rendering
-    std::cout << "Create framebuffer.." << std::endl;
+    Logger::instance().print("Create framebuffer..");
     mupMoleculeFramebuffer = std::unique_ptr<Framebuffer>(new Framebuffer(mWindowWidth, mWindowHeight, mSuperSampling));
     mupMoleculeFramebuffer->bind();
     mupMoleculeFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA); // color
@@ -137,10 +137,10 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     mupOverlayFramebuffer->bind();
     mupOverlayFramebuffer->addAttachment(Framebuffer::ColorFormat::RGBA);
     mupOverlayFramebuffer->unbind();
-    std::cout << "..done" << std::endl;
+    Logger::instance().print("..done");
 
     // # Prepare background cubemaps
-    std::cout << "Load cubemaps.." << std::endl;
+    Logger::instance().print("Load cubemaps..");
     mScientificCubemapTexture = createCubemapTexture(
         std::string(RESOURCES_PATH) + "/cubemaps/Scientific/posx.png",
         std::string(RESOURCES_PATH) + "/cubemaps/Scientific/negx.png",
@@ -164,10 +164,10 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
         std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negy.jpg",
         std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posz.jpg",
         std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negz.jpg");
-    std::cout << "..done" << std::endl;
+    Logger::instance().print("..done");
 
     // # Create camera
-    std::cout << "Create camera.." << std::endl;
+    Logger::instance().print("Create camera..");
     glm::vec3 cameraCenter = (mupGPUProtein->getMinCoordinates() + mupGPUProtein->getMaxCoordinates()) / 2.f;
     glm::vec3 maxAbsCoordinates(
         glm::max(glm::abs(mupGPUProtein->getMinCoordinates().x), glm::abs(mupGPUProtein->getMaxCoordinates().x)),
@@ -184,17 +184,17 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
             8.f * cameraRadius,
             45.f,
             0.1f));
-    std::cout << "..done" << std::endl;
+    Logger::instance().print("..done");
 
     // # Surface extraction
-    std::cout << "Prepare surface extraction.." << std::endl;
+    Logger::instance().print("Prepare surface extraction..");
 
     // Construct GPUSurfaceExtraction object after OpenGL has been initialized
     mupGPUSurfaceExtraction = std::unique_ptr<GPUSurfaceExtraction>(new GPUSurfaceExtraction);
-    std::cout << "..done" << std::endl;
+    Logger::instance().print("..done");
 
     // # Analysis
-    std::cout << "Prepare analysis.." << std::endl;
+    Logger::instance().print("Prepare analysis..");
 
     // Create path for analysis group
     mupPath = std::unique_ptr<Path>(new Path());
@@ -208,21 +208,21 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
 
     // Create empty outline atoms indices after OpenGL initialization
     mupOutlineAtomIndices = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(0)); // create empty outline atom indices buffer
-    std::cout << "..done" << std::endl;
+    Logger::instance().print("..done");
 
     // # Ascension
-    std::cout << "Prepare ascension.." << std::endl;
+    Logger::instance().print("Prepare ascension..");
 
     // Ascension
     mupAscension = std::unique_ptr<GPUBuffer<GLfloat> >(new GPUBuffer<GLfloat>);
-    std::cout << "..done" << std::endl;
+    Logger::instance().print("..done");
 
     // # Validation
-    std::cout << "Prepare validation.." << std::endl;
+    Logger::instance().print("Prepare validation..");
 
     // Prepare validation of the surface
     mupSurfaceValidation = std::unique_ptr<SurfaceValidation>(new SurfaceValidation());
-    std::cout << "..done" << std::endl;
+    Logger::instance().print("..done");
 
     // # Group rendering texture and semaphore
     glGenTextures(1, &mGroupRenderingTexture);
@@ -264,7 +264,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
 
 SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
 {
-    std::cout << "Clean up.." << std::endl;
+    Logger::instance().print("Clean up..");
 
     // Delete cubemaps
     glDeleteTextures(1, &mScientificCubemapTexture);
@@ -277,14 +277,14 @@ SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
     // Delete ascension helper texture
     glDeleteTextures(1, &mAscensionHelperTexture);
 
-    std::cout << "..done" << std::endl;
+    Logger::instance().print("..done");
 
-    std::cout << "Goodbye!" << std::endl;
+    Logger::instance().print("Goodbye!");
 }
 
 void SurfaceDynamicsVisualization::renderLoop()
 {
-    std::cout << "Prepare rendering loop.." << std::endl;
+    Logger::instance().print("Prepare rendering loop..");
 
     // Setup OpenGL
     glEnable(GL_DEPTH_TEST);
@@ -342,14 +342,14 @@ void SurfaceDynamicsVisualization::renderLoop()
     // Shader program for outline rendering
     ShaderProgram outlineProgram("/SurfaceDynamicsVisualization/hull.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/outline.frag");
 
-    std::cout << "..done" << std::endl;
+    Logger::instance().print("..done");
 
-    std::cout << "Enter render loop.." << std::endl;
+    Logger::instance().print("Enter render loop..");
 
     // Call render function of Rendering.h with lambda function
     render(mpWindow, [&] (float deltaTime)
     {
-        if(mFrameLogging) { std::cout << "### New Frame ###" << std::endl; }
+        if(mFrameLogging) { Logger::instance().print("### New Frame ###"); }
 
         // Time accumulation
         mAccTime += deltaTime;
@@ -363,7 +363,7 @@ void SurfaceDynamicsVisualization::renderLoop()
         // # Update everything before drawing
 
         // ### MOLECULE ANIMATION ##################################################################################
-        if(mFrameLogging) { std::cout << "Update animations.." << std::endl; }
+        if(mFrameLogging) { Logger::instance().print("Update animations.."); }
 
         // If playing, decide whether to switch to next frame of animation
         if(mPlayAnimation)
@@ -411,10 +411,10 @@ void SurfaceDynamicsVisualization::renderLoop()
                 }
             }
         }
-        if(mFrameLogging) { std::cout << "..done" << std::endl; }
+        if(mFrameLogging) { Logger::instance().print("..done"); }
 
         // ### CAMERA UPDATE #######################################################################################
-        if(mFrameLogging) { std::cout << "Update camera.." << std::endl; }
+        if(mFrameLogging) { Logger::instance().print("Update camera.."); }
 
         // Calculate cursor movement
         double cursorX, cursorY;
@@ -473,10 +473,10 @@ void SurfaceDynamicsVisualization::renderLoop()
             prevCursorX = cursorX;
             prevCursorY = cursorY;
         }
-        if(mFrameLogging) { std::cout << "..done" << std::endl; }
+        if(mFrameLogging) { Logger::instance().print("..done"); }
 
         // ### OVERLAY RENDERING ###################################################################################
-        if(mFrameLogging) { std::cout << "Render overlay.." << std::endl; }
+        if(mFrameLogging) { Logger::instance().print("Render overlay.."); }
 
         // # Fill overlay framebuffer
         mupOverlayFramebuffer->bind();
@@ -644,10 +644,10 @@ void SurfaceDynamicsVisualization::renderLoop()
 
         // Unbind framebuffer for overlay
         mupOverlayFramebuffer->unbind();
-        if(mFrameLogging) { std::cout << "..done" << std::endl; }
+        if(mFrameLogging) { Logger::instance().print("..done"); }
 
         // ### MOLECULE RENDERING ##################################################################################
-        if(mFrameLogging) { std::cout << "Render molecule.." << std::endl; }
+        if(mFrameLogging) { Logger::instance().print("Render molecule.."); }
 
         // # Fill molecule framebuffer
         mupMoleculeFramebuffer->bind();
@@ -971,10 +971,10 @@ void SurfaceDynamicsVisualization::renderLoop()
 
         // Unbind molecule framebuffer
         mupMoleculeFramebuffer->unbind();
-        if(mFrameLogging) { std::cout << "..done" << std::endl; }
+        if(mFrameLogging) { Logger::instance().print("..done"); }
 
         // ### SELCTED ATOM RENDERING ##############################################################################
-        if(mFrameLogging) { std::cout << "Render selected atom.." << std::endl; }
+        if(mFrameLogging) { Logger::instance().print("Render selected atom.."); }
 
         // # Fill selected atom framebuffer
         mupSelectedAtomFramebuffer->bind();
@@ -1029,10 +1029,10 @@ void SurfaceDynamicsVisualization::renderLoop()
 
         // Unbind selected atom framebuffer
         mupSelectedAtomFramebuffer->unbind();
-        if(mFrameLogging) { std::cout << "..done" << std::endl; }
+        if(mFrameLogging) { Logger::instance().print("..done"); }
 
         // ### COMPOSITING #########################################################################################
-        if(mFrameLogging) { std::cout << "Do compositing.." << std::endl; }
+        if(mFrameLogging) { Logger::instance().print("Do compositing.."); }
 
         // Prepare viewport
         glViewport(0, 0, mWindowWidth, mWindowHeight);
@@ -1100,7 +1100,7 @@ void SurfaceDynamicsVisualization::renderLoop()
         screenFillingProgram.update("moleculeAlpha", mNoneGroupOpacity); // alpha value of completely rendered molecule
         screenFillingProgram.update("groupAlpha", mRenderGroupOnTop ? 1.f : 0.f); // alpha value for group which rendered on top
         glDrawArrays(GL_POINTS, 0, 1);
-        if(mFrameLogging) { std::cout << "..done" << std::endl; }
+        if(mFrameLogging) { Logger::instance().print("..done"); }
 
         // Back to opaque rendering
         glDisable(GL_BLEND);
@@ -1110,13 +1110,13 @@ void SurfaceDynamicsVisualization::renderLoop()
         glEnable(GL_DEPTH_TEST);
 
         // Render GUI in standard frame buffer on top of everything
-        if(mFrameLogging) { std::cout << "Render user interface.." << std::endl; }
+        if(mFrameLogging) { Logger::instance().print("Render user interface.."); }
         ImGui_ImplGlfwGL3_NewFrame();
         renderGUI();
-        if(mFrameLogging) { std::cout << "..done" << std::endl; }
+        if(mFrameLogging) { Logger::instance().print("..done"); }
     });
 
-    std::cout << "..exit" << std::endl;
+    Logger::instance().print("..exit");
 
     // Delete OpenGL structures
     glDeleteVertexArrays(1, &axisGizmoVAO);
@@ -1211,7 +1211,7 @@ void SurfaceDynamicsVisualization::renderGUI()
     ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4(0.2f, 0.2f, 0.2f, 0.25f)); // menu bar background
 
     // Main menu bar
-    if(mFrameLogging) { std::cout << "Main menu bar.." << std::endl; }
+    if(mFrameLogging) { Logger::instance().print("Main menu bar.."); }
     if (ImGui::BeginMainMenuBar())
     {
         // General menu
@@ -1333,7 +1333,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         // End main menu bar
         ImGui::EndMainMenuBar();
     }
-    if(mFrameLogging) { std::cout << "..done" << std::endl; }
+    if(mFrameLogging) { Logger::instance().print("..done"); }
 
     // ###################################################################################################
     // ### WINDOWS #######################################################################################
@@ -1353,7 +1353,7 @@ void SurfaceDynamicsVisualization::renderGUI()
     ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(0.1f, 0.1f, 0.1f, 0.75f)); // slider grab active
 
     // ### COMPUTATION ###################################################################################
-    if(mFrameLogging) { std::cout << "Computation window.." << std::endl; }
+    if(mFrameLogging) { Logger::instance().print("Computation window.."); }
     if(mShowComputationWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.0f, 0.0f, 0.75f)); // window background
@@ -1438,10 +1438,10 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::End();
         ImGui::PopStyleColor(); // window background
     }
-    if(mFrameLogging) { std::cout << "..done" << std::endl; }
+    if(mFrameLogging) { Logger::instance().print("..done"); }
 
     // ### CAMERA ########################################################################################
-    if(mFrameLogging) { std::cout << "Camera window.." << std::endl; }
+    if(mFrameLogging) { Logger::instance().print("Camera window.."); }
     if(mShowCameraWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.5f, 0.75f)); // window background
@@ -1543,10 +1543,10 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::End();
         ImGui::PopStyleColor(); // window background
     }
-    if(mFrameLogging) { std::cout << "..done" << std::endl; }
+    if(mFrameLogging) { Logger::instance().print("..done"); }
 
     // ### VISUALIZATION #################################################################################
-    if(mFrameLogging) { std::cout << "Visualization window.." << std::endl; }
+    if(mFrameLogging) { Logger::instance().print("Visualization window.."); }
     if(mShowVisualizationWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.0f, 0.5f, 0.75f)); // window background
@@ -1734,10 +1734,10 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::End();
         ImGui::PopStyleColor(); // window background
     }
-    if(mFrameLogging) { std::cout << "..done" << std::endl; }
+    if(mFrameLogging) { Logger::instance().print("..done"); }
 
     // ### INFORMATION ###################################################################################
-    if(mFrameLogging) { std::cout << "Information window.." << std::endl; }
+    if(mFrameLogging) { Logger::instance().print("Information window.."); }
     if(mShowInformationWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.5f, 0.0f, 0.75f)); // window background
@@ -1819,10 +1819,10 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::End();
         ImGui::PopStyleColor(); // window background
     }
-    if(mFrameLogging) { std::cout << "..done" << std::endl; }
+    if(mFrameLogging) { Logger::instance().print("..done"); }
 
     // ### VALIDATION ####################################################################################
-    if(mFrameLogging) { std::cout << "Validation window.." << std::endl; }
+    if(mFrameLogging) { Logger::instance().print("Validation window.."); }
     if(mShowValidationWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.5f, 0.5f, 0.75f)); // window background
@@ -1894,10 +1894,10 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::End();
         ImGui::PopStyleColor(); // window background
     }
-    if(mFrameLogging) { std::cout << "..done" << std::endl; }
+    if(mFrameLogging) { Logger::instance().print("..done"); }
 
     // ### ANALYSIS ######################################################################################
-    if(mFrameLogging) { std::cout << "Analysis window.." << std::endl; }
+    if(mFrameLogging) { Logger::instance().print("Analysis window.."); }
     if(mShowAnalysisWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.5f, 0.0f, 0.75f)); // window background
@@ -1932,7 +1932,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                     }
 
                     // Tell user
-                    std::cout << "Saved file: " << mSurfaceIndicesFilePath << std::endl;
+                    Logger::instance().print("Saved file: " + mSurfaceIndicesFilePath);
                 }
                 if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Save surface indices of this frame to file."); }
                 ImGui::SameLine();
@@ -1981,7 +1981,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                     }
 
                     // Tell user
-                    std::cout << "Saved file: " << mGlobalAnalysisFilePath << std::endl;
+                    Logger::instance().print("Saved file: " + mGlobalAnalysisFilePath);
                 }
                 if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Save global analysis to file."); }
                 ImGui::SameLine();
@@ -2064,7 +2064,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                         }
 
                         // Tell user
-                        std::cout << "Saved file: " << mAminoAcidAnalysisAccumulatedFilePath << std::endl;
+                        Logger::instance().print("Saved file: " + mAminoAcidAnalysisAccumulatedFilePath);
                     }
 
                     // ### AVERAGE LAYERS ###
@@ -2097,7 +2097,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                         }
 
                         // Tell user
-                        std::cout << "Saved file: " << mAminoAcidAnalysisAvgLayersFilePath << std::endl;
+                        Logger::instance().print("Saved file: " + mAminoAcidAnalysisAvgLayersFilePath);
                     }
 
                     // ### INVERSE AVERAGE LAYERS ###
@@ -2130,7 +2130,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                         }
 
                         // Tell user
-                        std::cout << "Saved file: " << mAminoAcidAnalysisInverseAvgLayersFilePath << std::endl;
+                        Logger::instance().print("Saved file: "+ mAminoAcidAnalysisInverseAvgLayersFilePath);
                     }
 
                     // ### AVERAGE LAYERS DELTA ###
@@ -2163,7 +2163,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                         }
 
                         // Tell user
-                        std::cout << "Saved file: " << mAminoAcidAnalysisAvgLayersDeltaFilePath << std::endl;
+                        Logger::instance().print("Saved file: " + mAminoAcidAnalysisAvgLayersDeltaFilePath);
                     }
 
                     // ### INVERSE AVERAGE LAYERS DELTA ###
@@ -2196,7 +2196,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                         }
 
                         // Tell user
-                        std::cout << "Saved file: " << mAminoAcidAnalysisInverseAvgLayersDeltaFilePath << std::endl;
+                        Logger::instance().print("Saved file: " + mAminoAcidAnalysisInverseAvgLayersDeltaFilePath);
                     }
 
                 }
@@ -2501,7 +2501,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                         }
 
                         // Tell user
-                        std::cout << "Saved file: " << mGroupAnalysisFilePath << std::endl;
+                        Logger::instance().print("Saved file: " + mGroupAnalysisFilePath);
                     }
                     if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Save group analysis to file."); }
                     ImGui::SameLine();
@@ -2523,10 +2523,10 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::End();
         ImGui::PopStyleColor(); // window background
     }
-    if(mFrameLogging) { std::cout << "..done" << std::endl; }
+    if(mFrameLogging) { Logger::instance().print("..done"); }
 
     // ### RENDERING #####################################################################################
-    if(mFrameLogging) { std::cout << "Rendering window.." << std::endl; }
+    if(mFrameLogging) { Logger::instance().print("Rendering window.."); }
     if(mShowRenderingWindow)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.25f, 0.25f, 0.25f, 0.75f)); // window background
@@ -2572,7 +2572,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::End();
         ImGui::PopStyleColor(); // window background
     }
-    if(mFrameLogging) { std::cout << "..done" << std::endl; }
+    if(mFrameLogging) { Logger::instance().print("..done"); }
 
     ImGui::PopStyleColor(); // slider grab active
     ImGui::PopStyleColor(); // header active
@@ -2984,7 +2984,7 @@ GLuint SurfaceDynamicsVisualization::createCubemapTexture(
         // Check whether file was found and parsed
         if (pData == NULL)
         {
-            std::cout << "Image file not found or error at parsing: " << cubemapFullpaths.at(i) << std::endl;
+            Logger::instance().print("Image file not found or error at parsing: " + cubemapFullpaths.at(i));
             continue;
         }
 
@@ -3102,7 +3102,7 @@ int main(int argc, char* argv[])
 {
     if(argc < 2)
     {
-        std::cout << "Please give PDB and optional XTC file as argument" << std::endl;
+        Logger::instance().print("Please give PDB and optional XTC file as argument");
     }
     else
     {
