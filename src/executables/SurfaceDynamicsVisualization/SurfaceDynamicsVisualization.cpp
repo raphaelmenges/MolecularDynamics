@@ -1831,18 +1831,21 @@ void SurfaceDynamicsVisualization::renderGUI()
         // Do validation
         ImGui::SliderInt("Samples", &mSurfaceValidationAtomSampleCount, 1, 10000);
         ImGui::SliderInt("Seed", &mSurfaceValidationSeed, 0, 1337);
-        if(frameComputed() && ImGui::Button("Validate Surface"))
+        if(frameComputed())
         {
-            mupSurfaceValidation->validate(
-                mupGPUProtein.get(),
-                mGPUSurfaces.at(mFrame - mComputedStartFrame).get(),
-                mFrame,
-                mLayer,
-                mComputedProbeRadius,
-                mSurfaceValidationSeed,
-                mSurfaceValidationAtomSampleCount,
-                mValidationInformation,
-                std::vector<GLuint>());
+            if(ImGui::Button("Validate Surface"))
+            {
+                mupSurfaceValidation->validate(
+                    mupGPUProtein.get(),
+                    mGPUSurfaces.at(mFrame - mComputedStartFrame).get(),
+                    mFrame,
+                    mLayer,
+                    mComputedProbeRadius,
+                    mSurfaceValidationSeed,
+                    mSurfaceValidationAtomSampleCount,
+                    mValidationInformation,
+                    std::vector<GLuint>());
+            }
         }
         else
         {
