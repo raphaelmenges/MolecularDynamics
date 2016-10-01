@@ -2852,8 +2852,9 @@ float SurfaceDynamicsVisualization::approximateSurfaceArea(std::vector<GLuint> i
     for(int index : indices)
     {
         // Add surface
-        float radius = mupGPUProtein->getRadii()->at(index);
-        float atomSurface = 4.f * glm::pi<float>() * radius * radius;
+        const float radius = mupGPUProtein->getRadii()->at(index);
+        const float extendedRadius = radius + mComputedProbeRadius;
+        const float atomSurface = 4.f * glm::pi<float>() * extendedRadius * extendedRadius;
         surface += atomSurface * ((float)mupHullSamples->getSurfaceSampleCount(frame, index) / (float)mupHullSamples->getSampleCount());
     }
 
