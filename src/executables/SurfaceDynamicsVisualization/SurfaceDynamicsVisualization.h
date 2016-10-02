@@ -60,7 +60,7 @@ private:
     // Enumeration for background cubemaps
     enum Background
     {
-        NONE, SCIENTIFIC, COMPUTERVISUALISTIK, BEACH
+        NONE, SCIENTIFIC, COMPUTERVISUALISTIK, BEACH, WHITE
     };    
 
     // Keyboard callback for GLFW
@@ -275,6 +275,7 @@ private:
     GLuint mScientificCubemapTexture;
     GLuint mCVCubemapTexture;
     GLuint mBeachCubemapTexture;
+    GLuint mWhiteCubemapTexture;
 
     // Framebuffer
     std::unique_ptr<Framebuffer> mupMoleculeFramebuffer;
