@@ -1831,18 +1831,21 @@ void SurfaceDynamicsVisualization::renderGUI()
         // Do validation
         ImGui::SliderInt("Samples", &mSurfaceValidationAtomSampleCount, 1, 10000);
         ImGui::SliderInt("Seed", &mSurfaceValidationSeed, 0, 1337);
-        if(frameComputed() && ImGui::Button("Validate Surface"))
+        if(frameComputed())
         {
-            mupSurfaceValidation->validate(
-                mupGPUProtein.get(),
-                mGPUSurfaces.at(mFrame - mComputedStartFrame).get(),
-                mFrame,
-                mLayer,
-                mComputedProbeRadius,
-                mSurfaceValidationSeed,
-                mSurfaceValidationAtomSampleCount,
-                mValidationInformation,
-                std::vector<GLuint>());
+            if(ImGui::Button("Validate Surface"))
+            {
+                mupSurfaceValidation->validate(
+                    mupGPUProtein.get(),
+                    mGPUSurfaces.at(mFrame - mComputedStartFrame).get(),
+                    mFrame,
+                    mLayer,
+                    mComputedProbeRadius,
+                    mSurfaceValidationSeed,
+                    mSurfaceValidationAtomSampleCount,
+                    mValidationInformation,
+                    std::vector<GLuint>());
+            }
         }
         else
         {
@@ -2849,8 +2852,9 @@ float SurfaceDynamicsVisualization::approximateSurfaceArea(std::vector<GLuint> i
     for(int index : indices)
     {
         // Add surface
-        float radius = mupGPUProtein->getRadii()->at(index);
-        float atomSurface = 4.f * glm::pi<float>() * radius * radius;
+        const float radius = mupGPUProtein->getRadii()->at(index);
+        const float extendedRadius = radius + mComputedProbeRadius;
+        const float atomSurface = 4.f * glm::pi<float>() * extendedRadius * extendedRadius;
         surface += atomSurface * ((float)mupHullSamples->getSurfaceSampleCount(frame, index) / (float)mupHullSamples->getSampleCount());
     }
 
