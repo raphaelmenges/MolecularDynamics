@@ -491,8 +491,10 @@ void ShaderProgram::mapShaderProperties(GLenum interf, std::map<std::string, Inf
     std::vector<GLint> values(properties.size());
     for(int attrib = 0; attrib < numAttrib; ++attrib)
     {
+        if(glGetError() != GL_NO_ERROR) { std::cout << "Some GL error occured." << std::endl; }
         glGetProgramResourceiv(shaderProgramHandle, interf, attrib, properties.size(),
                                &properties[0], values.size(), NULL, &values[0]);
+        glGetError(); // hack to get rid of errors
 
         if (values[3] == -1) //invalid uniform name
             continue;
