@@ -10,7 +10,7 @@
 GPUHullSamples::GPUHullSamples()
 {
     // Create compute shader which is used to classify samples
-    mupComputeProgram = std::unique_ptr<ShaderProgram>(new ShaderProgram(GL_COMPUTE_SHADER, "/SurfaceExtraction/surfacesamples.comp"));
+    mupComputeProgram = std::unique_ptr<ShaderProgram>(new ShaderProgram("/SurfaceExtraction/surfacesamples.comp"));
 
     // Generate empty vertex buffer array for drawing
     glGenVertexArrays(1, &mVAO);

@@ -13,7 +13,7 @@
 GPUSurfaceExtraction::GPUSurfaceExtraction()
 {
     // Create shader program which is used
-    mupComputeProgram = std::unique_ptr<ShaderProgram>(new ShaderProgram(GL_COMPUTE_SHADER, "/SurfaceExtraction/surface.comp"));
+    mupComputeProgram = std::unique_ptr<ShaderProgram>(new ShaderProgram("/SurfaceExtraction/surface.comp"));
 
     // Create query object for time measurement
     glGenQueries(1, &mQuery);
