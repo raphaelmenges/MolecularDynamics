@@ -161,7 +161,7 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(
         // Start query for time measurement
         glBeginQuery(GL_TIME_ELAPSED, mQuery);
 
-         // ### NEIGHBORHOOD SEARCH ###
+        // ### NEIGHBORHOOD SEARCH ###
 
         // Extract necessary positions
         auto spTrajectory = pGPUProtein->getTrajectory();
