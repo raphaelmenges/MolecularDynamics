@@ -232,9 +232,6 @@ void main()
                 // Test atoms are either too far away or just touch each other (then continue)
                 if(atomsDistance >= (atomExtRadius + otherAtomExtRadius)) { continue; }
 
-                // Test atoms are either too far away (then continue)
-                // if(atomsDistance > (atomExtRadius + otherAtomExtRadius)) { continue; }
-
                 // Test whether atom is completely covering other
                 if(atomExtRadius >= (otherAtomExtRadius + atomsDistance)) { continue; }
 
@@ -269,9 +266,9 @@ void main()
                 // Initialize cutting face indicator with: 1 == was not cut away (yet)
                 cuttingFaceIndicators[cuttingFaceCount] = 1;
 
-                // Increment cutting face list index and break if max count of neighbors reached
+                // Increment cutting face list index and return if max count of neighbors reached
                 cuttingFaceCount++;
-                if(cuttingFaceCount == neighborsMaxCount) { break; }
+                if(cuttingFaceCount == neighborsMaxCount) { return; }
             }
         }
     }
