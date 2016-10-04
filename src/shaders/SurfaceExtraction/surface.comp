@@ -268,7 +268,7 @@ void main()
 
                 // Increment cutting face list index and return if max count of neighbors reached
                 cuttingFaceCount++;
-                if(cuttingFaceCount == neighborsMaxCount) { return; }
+                if(cuttingFaceCount >= neighborsMaxCount) { return; }
             }
         }
     }
