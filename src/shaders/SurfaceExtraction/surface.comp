@@ -28,7 +28,6 @@ int cuttingFaceIndices[neighborsMaxCount]; // Indices of cutting faces which are
 // ## Uniforms
 uniform int inputCount;
 uniform float probeRadius;
-uniform ivec3 gridResolution;
 uniform int numberOfSearchCells;
 uniform int startCellOffset;
 uniform int searchCellOffsets[216];
@@ -177,7 +176,7 @@ void main()
     // When one endpoint survives cutting, atom is surface (value is true then)
     bool endpointSurvivesCut = false;
 
-    // ### OWN VALUES ###
+    // ### ATOM VALUES ###
 
     // Own center
     vec3 atomCenter = positions[atomIndex].xyz;
@@ -188,7 +187,7 @@ void main()
     // ### BUILD UP OF CUTTING FACE LIST ###
 
     // Get sorted index of atom
-    uint sortedIndex = grid[atomIndex]; // TODO: probably not correct buffer used
+    uint sortedIndex = grid[atomIndex];
 
     // Get cell for atom by sorted index
     uint cell = pcell[sortedIndex];
@@ -214,7 +213,7 @@ void main()
                 // ### FETCHING VALUES ###
 
                 // Get the original index for the current particle
-                uint otherAtomIndex = ondx[grid[pIndex]];
+                uint otherAtomIndex = ondx[pIndex];
 
                 // TODO: continue loop if index is not valid for this computation run
 

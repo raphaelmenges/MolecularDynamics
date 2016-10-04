@@ -38,7 +38,7 @@ void main() {
         uint sort_ndx = gridoff[icell] + indx;
 
         // transfer data to sort location
-        grid[sort_ndx]  = sort_ndx; // grid indexing becomes identity
+        grid[i] = sort_ndx; // hack to have map from unsorted to sorted
         pos[sort_ndx]   = tempPos[i];
         gcell[sort_ndx] = icell;
         gndx[sort_ndx]  = indx;

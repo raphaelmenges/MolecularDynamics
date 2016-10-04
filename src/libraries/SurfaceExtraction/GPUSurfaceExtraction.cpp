@@ -190,6 +190,7 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(
         GLuint positionBufferHandle = positionsBuffer.getHandle();
         Neighborhood neighborhood;
         search.run(&positionBufferHandle, neighborhood); // fills neighborhood structure
+        glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
         // ### SURFACE COMPUTATION ###
 
