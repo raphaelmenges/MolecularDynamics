@@ -945,7 +945,12 @@ void SurfaceDynamicsVisualization::renderLoop()
                     for(int i = layerCount - 1; i >= 0; i--)
                     {
                         mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(i, 6);
-                        hullProgram.update("color", mLayerColors.at(i % (int)mLayerColors.size()));
+
+                        glm::vec3 layerColor = glm::vec3(glm::pow3(float(i)/(layerCount - 1)), float(i)/(layerCount - 1), 160.0f/255.0f);
+                        hullProgram.update("color", layerColor);
+
+                        // hullProgram.update("color", mLayerColors.at(i % (int)mLayerColors.size()));
+
                         glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(i));
                     }
                 }
