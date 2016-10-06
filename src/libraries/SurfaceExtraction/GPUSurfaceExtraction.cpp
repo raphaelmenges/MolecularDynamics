@@ -181,8 +181,8 @@ std::unique_ptr<GPUSurface> GPUSurfaceExtraction::calculateSurface(
         NeighborhoodSearch search;
         search.init(
             atomCount, // count of atoms
-            pGPUProtein->getMinCoordinates(frame), // min for bounding box
-            pGPUProtein->getMaxCoordinates(frame), // max for bounding box
+            pGPUProtein->getMinCoordinates(frame) - glm::vec3(1,1,1), // min for bounding box
+            pGPUProtein->getMaxCoordinates(frame) + glm::vec3(1,1,1), // max for bounding box
             glm::vec3(6, 6, 6), // must be static, otherwise compute shader has to be changed dynamically
             2 * (pGPUProtein->getMaxRadius() + probeRadius)); // later search radius
 
