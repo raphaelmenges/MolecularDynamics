@@ -202,6 +202,7 @@ void main()
     {
         // Extract current cell
         uint currentCell = startCell + searchCellOffsets[cellIndex];
+        if (currentCell == GRID_UNDEF) continue; // particle is outside of grid
 
         // Proceed only if cell contains particles
         if (gridCellCnt[currentCell] != 0)
