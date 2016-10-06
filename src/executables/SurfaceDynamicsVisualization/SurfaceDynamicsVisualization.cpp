@@ -164,6 +164,15 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
         std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negy.jpg",
         std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/posz.jpg",
         std::string(RESOURCES_PATH) + "/cubemaps/NissiBeach/negz.jpg");
+
+    mWhiteCubemapTexture = createCubemapTexture(
+        std::string(RESOURCES_PATH) + "/textures/white.png",
+        std::string(RESOURCES_PATH) + "/textures/white.png",
+        std::string(RESOURCES_PATH) + "/textures/white.png",
+        std::string(RESOURCES_PATH) + "/textures/white.png",
+        std::string(RESOURCES_PATH) + "/textures/white.png",
+        std::string(RESOURCES_PATH) + "/textures/white.png");
+
     Logger::instance().print("..done");
 
     // # Create camera
@@ -270,6 +279,7 @@ SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
     glDeleteTextures(1, &mScientificCubemapTexture);
     glDeleteTextures(1, &mCVCubemapTexture);
     glDeleteTextures(1, &mBeachCubemapTexture);
+    glDeleteTextures(1, &mWhiteCubemapTexture);
 
     // Delete group rendering texture
     glDeleteTextures(1, &mGroupRenderingTexture);
@@ -935,7 +945,12 @@ void SurfaceDynamicsVisualization::renderLoop()
                     for(int i = layerCount - 1; i >= 0; i--)
                     {
                         mGPUSurfaces.at(mFrame - mComputedStartFrame)->bindSurfaceIndices(i, 6);
-                        hullProgram.update("color", mLayerColors.at(i % (int)mLayerColors.size()));
+
+                        glm::vec3 layerColor = glm::vec3(glm::pow3(float(i)/(layerCount - 1)), float(i)/(layerCount - 1), 160.0f/255.0f);
+                        hullProgram.update("color", layerColor);
+
+                        // hullProgram.update("color", mLayerColors.at(i % (int)mLayerColors.size()));
+
                         glDrawArrays(GL_POINTS, 0, mGPUSurfaces.at(mFrame - mComputedStartFrame)->getCountOfSurfaceAtoms(i));
                     }
                 }
@@ -1060,6 +1075,9 @@ void SurfaceDynamicsVisualization::renderLoop()
             break;
         case Background::BEACH:
             glBindTexture(GL_TEXTURE_CUBE_MAP, mBeachCubemapTexture);
+            break;
+        case Background::WHITE:
+            glBindTexture(GL_TEXTURE_CUBE_MAP, mWhiteCubemapTexture);
             break;
         }
 
@@ -2536,7 +2554,7 @@ void SurfaceDynamicsVisualization::renderGUI()
         ImGui::Begin("Rendering", NULL, 0);
 
         // Background
-        ImGui::Combo("Background", (int*)&mBackground, "None\0Scientific\0Computervisualistik\0Beach\0");
+        ImGui::Combo("Background", (int*)&mBackground, "None\0Scientific\0Computervisualistik\0Beach\0White\0");
         if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Choose cubemap used for background."); }
 
         // Lighting
