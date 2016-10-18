@@ -11,7 +11,7 @@
 #include <Utils/Logger.h>
 
 #include "NeighborhoodSearchDefines.h"
-#include "../../executables/NeighborSearch/SimpleAtom.h"
+#include "../../executables/NeighborSearchTest/SimpleAtom.h"
 
 class GPUHandler {
 public:

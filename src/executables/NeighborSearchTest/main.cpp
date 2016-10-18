@@ -18,7 +18,7 @@
 // local includes
 #include "ProteinLoader.h"
 #include "Utils/OrbitCamera.h"
-#include "Search/NeighborhoodSearch.h"
+#include "NeighborSearch/NeighborhoodSearch.h"
 
 
 
