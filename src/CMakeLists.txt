@@ -19,7 +19,6 @@ set(PYTHON_LIBRARIES "${MINICONDA3_PATH}/lib/libpython3.5m.so" CACHE PATH "Path 
 set(PYTHON_PACKAGES_PATH "${MINICONDA3_PATH}/lib/python3.5/site-packages" CACHE PATH "Path to Python packages.")
 
 # Include cmake macros
-include(${CMAKE_MODULE_PATH}/doxygen.cmake)
 include(${CMAKE_MODULE_PATH}/macros.cmake)
 
 # Set output paths for libraries
@@ -32,7 +31,7 @@ GENERATE_SUBDIRS(ALL_EXECUTABLES "${EXECUTABLES_PATH}" "${PROJECT_BINARY_DIR}/ex
 
 # Add shader path as subdirectory to have it available in project tree
 if(EXISTS "${SHADERS_PATH}")
-        add_subdirectory("${SHADERS_PATH}")
+    add_subdirectory("${SHADERS_PATH}")
 endif()
 
 # Build own version of GLFW

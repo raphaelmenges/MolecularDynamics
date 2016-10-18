@@ -39,13 +39,13 @@ add_definitions(-DPYTHON_BINARY="${MINICONDA3_PATH}/bin/python") # TODO: move to
 
 # Compiler settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  # nothing to do
+    # nothing to do
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  add_definitions(-Wall -Wextra)
+    add_definitions(-Wall -Wextra)
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
-  # nothing to do
+    # nothing to do
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-  add_definitions(/W2)
+    add_definitions(/W2)
 endif()
 
 # Printing of python values
