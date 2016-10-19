@@ -1,28 +1,21 @@
-# Fast neighborhood search 
+# Fast neighbor search
+By Adrian Derstroff
 
 ## Acknowledgement
-Fast fixed radius neighborhood search is based on *fluids v3* from *Rama C. Hoetzlein*. 
-Only the neighborhood search has been extracted from *fluids v3*, while the code itself has been rewritten to use compute shaders instead of CUDA.
-For more information visit [http://fluids3.com](http://fluids3.com).
-
-## Ubuntu Installation guide:
-Following dependencies are required on ubuntu 15.10
-
-    sudo apt-get install glew-utils libglew-dev libassimp-dev libdevil-dev python-numpy libxcursor-dev libxinerama-dev libxrandr-dev libxi-dev
-    conda install -c omnia mdtraj
-    miniconda3: http://conda.pydata.org/miniconda.html
+Fast fixed radius neighbor search is based on *fluids v3* from *Rama C. Hoetzlein*. 
+Only the neighbor search has been extracted from *fluids v3*, while the code itself has been rewritten to use compute shaders instead of CUDA. For more information visit [fluids3.com](http://fluids3.com).
 
 ## Algorithm
 ### Overview
 Basically the neighborhood search consists of three stages.
-Namely the insertion of the particles into the grid, sorting the particles based
-on the cell they are in and the actual search.
+1. Insertion of the particles into the grid
+2. Sorting the particles based on their cell
+3. Search of neighbor aka usage of the built up structures
 
 ### Insertion
-Insertion takes place on the gpu. Only the position of the particle is required in 
-this stage. The relative position of the particle to the origin of the grid (lower left corner) is calculated with respect to the size and resolution of the grid.
+Insertion takes place on the GPU. Only the position of the particle is required in this stage. The relative position of the particle to the origin of the grid (lower left corner) is calculated with respect to the size and resolution of the grid.
 
-The result of the insertion are three buffers. The first buffer stores for every particle the respectice cell it is in, the second buffer remembers at which position the particle was inserted inside the cell. So if the cell had been empty before than the first cell will be inserted at the first position, the next particle that will be inserted in this cell will be inserted at the second position within this cell and so on. The third buffer counts the number of elements for every cell. 
+Result of the insertion are three buffers. The first buffer stores the mapping from each particle to its voxel cell. The second buffer saves the position where the particle has been inserted to the cell. So if the cell had been empty before than the first cell will be inserted at the first position, the next particle that will be inserted in this cell will be inserted at the second position within this cell and so on. The third buffer counts the number of elements for every cell. 
 
 In addition with the given fixed search radius and the size of the grid cells, the number of gridcells that had to be searched for are calculated by *(2searchRadius/cellSize + 1)^3*.
 
@@ -33,8 +26,10 @@ The advantage of using counting sort is a time consumption of *O(n + k)*, where 
 The core of counting sort is a prefix sum or scan. It consists of two sums that can be parallelized on the gpu. For every cell index the prefix sum adds up the number of all elements in those cells up to this cell. We basically end up with the offset of every cell.
 
 Together with the particle's cell index and the cell offsets the sort index can be calculated with:
-    
+
+```
     uint sortedIndex = cellOffset[cell[i]] + cellIndex[i];
+```
 
 We then sort all particle informations and additionally save the previous index for every sorted particle index.
 
@@ -43,8 +38,9 @@ With the sorted particles for every particle the corresponding cell is determine
 For every cell all particles then need to be checked if they are inside the search radius of the corresponding particle.
 
 ## Usage
-In the main code should look like this
+In the main code should look like the following.
 
+```C++
     Neighborhoodsearch search;
 
     // initialization
@@ -59,14 +55,17 @@ In the main code should look like this
     
     // sorting
     GLuint* atomPositionsSSBO;
-    ... (fill atom position ssbo)
+    ... (fill atom positions ssbo)
     Neighborhood neighborhood;
  
     search.run(atomPositionsSSBO, neighborhood);
+```
 
-The neighborhood looks as follows:
+The filled neighborhood structure stores all important information.
 
+```C++
     struct Neighborhood {
+    
         // GPU
         GLuint* dp_particleOriginalIndex;   // uint     particles original index before the counting sort
         GLuint* dp_particleCell;            // uint     cell index the particle is in
@@ -74,18 +73,20 @@ The neighborhood looks as follows:
         GLuint* dp_grid;                    // uint     index of the particle after sorting
         GLuint* dp_gridCellCounts;          // int      number of particles that are in the respective cell
         GLuint* dp_gridCellOffsets;         // int      total offset of the starting point of the respective cell
+        
         // CPU
         int*     p_searchCellOffsets;       // int[]    stores the offsets for all cells that have to be searched
         int        startCellOffset;         // int      since  the particle is always in the center of the search cells
-                                        //          we need the offset of the cell with the lowest index within those
-                                        //          search cells
+                                        		//          we need the offset of the cell with the lowest index within those
+                                        		//          search cells
         int        numberOfSearchCells;     // int      number of cells within the search radius
         float      searchRadius;            // float    adjusted search radius
     };
+```
 
 With the neighborhood one can implement the actual neighborhood search. This had not been encapsulated inside the neighborhood search class to make it more flexible by the developer.
-However a possible neighborhood search could be:
 
+```GLSL
     #version 430
     #define GRID_UNDEF 4294967295
 
@@ -154,7 +155,8 @@ However a possible neighborhood search could be:
         // iterate over all search cells
         uint startCell = cell - firstSearchCellOffset;
         for (int cellIndex = 0; cellIndex < numberOfSearchcells; cellIndex++) {
-	    uint currentCell = startCell + searchCellsOffset[cellIndex];
-	    checkIfParticlesAreInRadius(currentCell, position);
+					uint currentCell = startCell + searchCellsOffset[cellIndex];
+					checkIfParticlesAreInRadius(currentCell, position);
         }
     }
+```
