@@ -2,7 +2,7 @@
 
 Framework for molecular dynamics visualization developed by Computer Graphics institute at University of Koblenz. 
 
-## How to
+## HowTo
 Since some dependencies are integrated as git submodules, use _git clone --recursive_ to clone the repository to your local machine.
 
 Compilation and execution only works on Ubuntu 15.10 or higher. Follwing packages are required to be installed via apt-get:
