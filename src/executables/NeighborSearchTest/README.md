@@ -64,7 +64,6 @@ The filled neighborhood structure stores all important information.
 
 ```C++
 struct Neighborhood {
-
 	// GPU
 	GLuint* dp_particleOriginalIndex;   // uint     particles original index before the counting sort
 	GLuint* dp_particleCell;            // uint     cell index the particle is in
@@ -76,8 +75,8 @@ struct Neighborhood {
 	// CPU
 	int*     p_searchCellOffsets;       // int[]    stores the offsets for all cells that have to be searched
 	int        startCellOffset;         // int      since  the particle is always in the center of the search cells
-		                              		//          we need the offset of the cell with the lowest index within those
-		                              		//          search cells
+		                              	//          we need the offset of the cell with the lowest index within those
+		                              	//          search cells
 	int        numberOfSearchCells;     // int      number of cells within the search radius
 	float      searchRadius;            // float    adjusted search radius
 };
@@ -138,14 +137,14 @@ void checkIfParticlesAreInRadius(uint currentCell, vec4 position)
 void main() {
   // get particle index
   uint i = gl_GlobalInvocationID.x;
-  if (i >= numberOfParticles) return; // 
+  if (i >= numberOfParticles) return; 
 
   // get unsorted index
   uint oidx = uondx[i];
 
   // get cell for the corresponding atom
   uint cell = pcell[i];
-  if (icell == GRID_UNDEF) return;    // particle is outside the grid
+  if (icell == GRID_UNDEF) return; // particle is outside the grid
 
   // get position of the atom
   AtomStruct atom = atoms[uidx];
