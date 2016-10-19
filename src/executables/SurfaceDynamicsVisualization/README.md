@@ -14,10 +14,11 @@ Compile complete framework as indicated in root folder of repository. Execute bi
 ## Features
 
 * High quality impostor rendering
-* Playback functionality for trajectory data
+* Playback functionality for trajectory data including animation smoothing
 * Surface extraction in terms of _Surface Accessible Surface_ definition
 * As- and descension visualization of atoms
 * Atom layer extraction
+* Molecule analysis
 * Atom group analysis including path visualization
 
 
