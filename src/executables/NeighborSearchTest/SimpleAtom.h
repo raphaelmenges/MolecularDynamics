@@ -1,6 +1,6 @@
-//
-// Created by ubundrian on 09.06.16.
-//
+//============================================================================
+// Distributed under the MIT License. Author: Adrian Derstroff
+//============================================================================
 
 #ifndef OPENGL_FRAMEWORK_SIMPLEATOM_H
 #define OPENGL_FRAMEWORK_SIMPLEATOM_H

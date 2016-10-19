@@ -1,6 +1,6 @@
-//
-// Created by ubundrian on 22.08.16.
-//
+//============================================================================
+// Distributed under the MIT License. Author: Adrian Derstroff
+//============================================================================
 
 #ifndef OPENGL_FRAMEWORK_TIMER_H
 #define OPENGL_FRAMEWORK_TIMER_H

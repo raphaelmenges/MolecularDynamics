@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 
 # Name of framework
-project(OpenGLFramework)
+project(MolecularDynamicsVisualization)
 
 # Prepare path finding
 set(MINICONDA3_PATH "$ENV{HOME}/miniconda3")

@@ -1,6 +1,7 @@
-//
-// Created by ubundrian on 12.08.16.
-//
+//============================================================================
+// Distributed under the MIT License. Author: Adrian Derstroff
+//============================================================================
+
 // external includes
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>

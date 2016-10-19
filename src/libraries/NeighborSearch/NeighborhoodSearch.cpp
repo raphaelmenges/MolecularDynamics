@@ -1,6 +1,6 @@
-//
-// Created by ubundrian on 23.06.16.
-//
+//============================================================================
+// Distributed under the MIT License. Author: Adrian Derstroff
+//============================================================================
 
 #include "NeighborhoodSearch.h"
 

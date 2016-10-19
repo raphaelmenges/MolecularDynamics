@@ -1,6 +1,6 @@
-//
-// Created by ubundrian on 21.08.16.
-//
+//============================================================================
+// Distributed under the MIT License. Author: Adrian Derstroff
+//============================================================================
 
 #include "PickingTexture.h"
 

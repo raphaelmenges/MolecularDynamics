@@ -16,7 +16,6 @@ MdTrajWrapper::MdTrajWrapper()
 
 MdTrajWrapper::~MdTrajWrapper()
 {
-    //UE_LOG(LogTemp, Warning, TEXT("MdTrajWrapper: delete"));
     //Py_Finalize();
 
 }
@@ -121,8 +120,6 @@ void MdTrajWrapper::getAllAtomProperties(std::vector<std::string> &paths, std::v
                                          std::vector<int> &indices, std::vector<std::string> &bonds, std::vector<std::string> &distinctResidue, std::vector<std::vector<glm::vec3>> &positions, std::vector<float> &radii, int &numAtoms)
 {
     if (paths.size() > 2) {
-//       //UE_LOG(LogTemp, Error, TEXT("Anzahl der zu ladenden Dateien ist > 3"));
-//       //UE_LOG(LogTemp, Error, TEXT("Einfach nein. Hier sollte man eig. bisher nicht hinkommen, weil .pdbs einzeln geladen werden und .xtc brauchen nur noch eine weitere pdb."));
         return;
     }
 
@@ -130,7 +127,6 @@ void MdTrajWrapper::getAllAtomProperties(std::vector<std::string> &paths, std::v
 
     if (paths.size() == 1) {
         if (paths[0].substr((paths[0].length() - 3), 3) != "pdb") {
-            //UE_LOG(LogTemp, Error, TEXT("BOAH MAN EY, wir k?nnen bisher nur .pdb und .xtc laden!!"));
             return;
         }
     }
@@ -149,7 +145,7 @@ void MdTrajWrapper::getAllAtomProperties(std::vector<std::string> &paths, std::v
     PyObject* atom_iterator_py = PyObject_GetIter(atom_py);
     Py_DECREF(atom_py);
     if (atom_iterator_py == NULL) {
-        //UE_LOG(LogTemp, Warning, TEXT("ITERATOR EMPTY"));
+        // not good
     }
 
 

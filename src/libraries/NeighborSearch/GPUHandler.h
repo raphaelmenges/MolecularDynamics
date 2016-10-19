@@ -1,6 +1,6 @@
-//
-// Created by ubundrian on 12.08.16.
-//
+//============================================================================
+// Distributed under the MIT License. Author: Adrian Derstroff
+//============================================================================
 
 #ifndef OPENGL_FRAMEWORK_GPUHANDLER_H
 #define OPENGL_FRAMEWORK_GPUHANDLER_H

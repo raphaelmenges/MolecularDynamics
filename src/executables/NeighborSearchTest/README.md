@@ -1,4 +1,4 @@
-# Fast neighbor search
+# Fast Neighbor Search
 By Adrian Derstroff
 
 ## Acknowledgement
@@ -8,6 +8,7 @@ Only the neighbor search has been extracted from *fluids v3*, while the code its
 ## Algorithm
 ### Overview
 Basically the neighborhood search consists of three stages.
+
 1. Insertion of the particles into the grid
 2. Sorting the particles based on their cell
 3. Search of neighbor aka usage of the built up structures
