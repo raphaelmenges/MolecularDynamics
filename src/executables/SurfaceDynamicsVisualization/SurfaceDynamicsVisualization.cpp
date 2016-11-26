@@ -955,6 +955,17 @@ void SurfaceDynamicsVisualization::renderLoop()
                     }
                 }
                 break;
+
+            case Rendering::RESIDUE_SURFACE_PROXIMITY:
+
+                // Only proceed when layers were extracted
+                if(mGPUSurfaces.at(mFrame - mComputedStartFrame)->layersExtracted())
+                {
+                    // Render into k-Buffer
+
+                    // Render into molecule framebuffer
+                }
+                break;
             }
         }
         else
@@ -1174,6 +1185,7 @@ void SurfaceDynamicsVisualization::keyCallback(int key, int scancode, int action
                     glfwSetInputMode(mpWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
                     mMoveCamera = false;
                 }
+                break;
             }
             case GLFW_KEY_1: { mRendering = Rendering::HULL; break; }
             case GLFW_KEY_2: { mRendering = Rendering::ASCENSION; break; }
@@ -1181,6 +1193,7 @@ void SurfaceDynamicsVisualization::keyCallback(int key, int scancode, int action
             case GLFW_KEY_4: { mRendering = Rendering::AMINOACIDS; break; }
             case GLFW_KEY_5: { mRendering = Rendering::ANALYSIS; break; }
             case GLFW_KEY_6: { mRendering = Rendering::LAYERS; break; }
+            case GLFW_KEY_7: { mRendering = Rendering::RESIDUE_SURFACE_PROXIMITY; break; }
         }
     }
 }
@@ -1635,7 +1648,7 @@ void SurfaceDynamicsVisualization::renderGUI()
             if (ImGui::CollapsingHeader("Rendering", "Rendering##Visualization", true, true))
             {
                 // Surface rendering
-                ImGui::Combo("##RenderingCombo", (int*)&mRendering, "[1] Hull\0[2] Ascension\0[3] Elements\0[4] Aminoacids\0[5] Analysis\0[6] Layers\0");
+                ImGui::Combo("##RenderingCombo", (int*)&mRendering, "[1] Hull\0[2] Ascension\0[3] Elements\0[4] Aminoacids\0[5] Analysis\0[6] Layers\0[7] Residue Surface Proximity");
 
                 // Rendering of internal and surface atoms
                 if(mRendering == Rendering::HULL
