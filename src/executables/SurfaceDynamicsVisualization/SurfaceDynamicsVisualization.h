@@ -61,7 +61,7 @@ private:
     enum Background
     {
         NONE, SCIENTIFIC, COMPUTERVISUALISTIK, BEACH, WHITE
-    };    
+    };
 
     // Keyboard callback for GLFW
     void keyCallback(int key, int scancode, int action, int mods);
@@ -160,6 +160,7 @@ private:
     const glm::vec3 mSelectionColor = glm::vec3(0.2f, 1.0f, 0.0f);
     const bool mFrameLogging = false;
     const std::string mNoComputedFrameMessage = "Frame was not computed.";
+    const GLuint mKBufferLayerCount = 8; // remember to adapt value in shaders as well
 
     // Colors for rendering layers (outer to inner, repeating if too many)
     const std::vector<glm::vec3> mLayerColors =
@@ -224,7 +225,7 @@ private:
     float mAscensionChangeRadiusMultiplier = 0.f;
     bool mMarkSurfaceAtoms = false;
     bool mRepeatOnlyComputed = false;
-    bool mSuperSampling = true;
+    bool mSuperSampling = false;
     int mPathLengthStartFrame = 0;
     int mPathLengthEndFrame = 0;
     bool mRenderSelection = true;
@@ -311,6 +312,10 @@ private:
     // Texture for rendering group atoms on top of molecule
     GLuint mGroupRenderingTexture;
     std::unique_ptr<GPUTextureBuffer> mupGroupRenderingSemaphore;
+
+    // Residue surface proximity rendering buffers
+    GLuint mKBufferTexture;
+    std::unique_ptr<GPUTextureBuffer> mupKBufferPixelCounter;
 
     // Ascension helper texture
     GLuint mAscensionHelperTexture;

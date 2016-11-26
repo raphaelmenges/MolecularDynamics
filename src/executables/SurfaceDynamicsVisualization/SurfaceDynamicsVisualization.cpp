@@ -254,6 +254,15 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
+    // # Prepare k-Buffer (TODO: what to do at change of screen resolution?)
+    std::vector<GLfloat> emptyKBufferData(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight() * 2, 0.f);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, mKBufferTexture);
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RG32F, mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight(), mKBufferLayerCount);
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight(), mKBufferLayerCount, GL_RG, GL_FLOAT, &emptyKBufferData[0]);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+    std::vector<GLuint> emptyKBufferPixelCounter(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight(), 0.f);
+    mupKBufferPixelCounter = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(emptyKBufferPixelCounter));
+
     // Load image from disk
     int channelCount;
     unsigned char* pData = stbi_load(std::string(std::string(RESOURCES_PATH) + "/surfaceDynamics/AscensionHelper.png").c_str(), &mAscensionHelperWidth, &mAscensionHelperHeight, &channelCount, 0);
@@ -286,6 +295,8 @@ SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
 
     // Delete ascension helper texture
     glDeleteTextures(1, &mAscensionHelperTexture);
+
+    // TODO delete k-Buffer!!!
 
     Logger::instance().print("..done");
 
@@ -339,6 +350,7 @@ void SurfaceDynamicsVisualization::renderLoop()
     ShaderProgram analysisProgram("/SurfaceDynamicsVisualization/analysis.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
     ShaderProgram fallbackProgram("/SurfaceDynamicsVisualization/fallback.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
     ShaderProgram selectionProgram("/SurfaceDynamicsVisualization/selection.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
+    ShaderProgram residueSurfaceProximityProgram("/SurfaceDynamicsVisualization/rsp-peel.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/rsp-peel.frag");
 
     // Shader program to mark surface atoms
     ShaderProgram surfaceMarksProgram("/SurfaceDynamicsVisualization/point.vert", "/SurfaceDynamicsVisualization/point.geom", "/SurfaceDynamicsVisualization/point.frag");
@@ -961,9 +973,54 @@ void SurfaceDynamicsVisualization::renderLoop()
                 // Only proceed when layers were extracted
                 if(mGPUSurfaces.at(mFrame - mComputedStartFrame)->layersExtracted())
                 {
-                    // Render into k-Buffer
+                    // # Render into k-Buffer
 
-                    // Render into molecule framebuffer
+                    // Disable depth test
+                    glDisable(GL_DEPTH_TEST);
+
+                    // Bind program and fill uniforms
+                    residueSurfaceProximityProgram.use();
+                    residueSurfaceProximityProgram.update("view", mupCamera->getViewMatrix());
+                    residueSurfaceProximityProgram.update("projection", mupCamera->getProjectionMatrix());
+                    residueSurfaceProximityProgram.update("cameraWorldPos", mupCamera->getPosition());
+                    residueSurfaceProximityProgram.update("probeRadius", mRenderWithProbeRadius ? mComputedProbeRadius : 0.f);
+                    residueSurfaceProximityProgram.update("lightDir", mLightDirection);
+                    residueSurfaceProximityProgram.update("selectedIndex", selectedAtom);
+                    residueSurfaceProximityProgram.update("clippingPlane", mClippingPlane);
+                    residueSurfaceProximityProgram.update("frame", mFrame);
+                    residueSurfaceProximityProgram.update("atomCount", mupGPUProtein->getAtomCount());
+                    residueSurfaceProximityProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+                    residueSurfaceProximityProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+                    residueSurfaceProximityProgram.update("frameCount", mupGPUProtein->getFrameCount());
+                    residueSurfaceProximityProgram.update("depthDarkeningStart", mDepthDarkeningStart);
+                    residueSurfaceProximityProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
+                    residueSurfaceProximityProgram.update("selectionColor", mSelectionColor);
+                    residueSurfaceProximityProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
+                    residueSurfaceProximityProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
+
+                    // Following image binding overwrites binding in scope outside this case. But group rendering stuff
+                    // is not used here...
+
+                    // Bind counter for pixels in k-Buffer at processed fragment
+                    mupKBufferPixelCounter->bindAsImage(2, GPUAccess::READ_WRITE);
+
+                    // Bind output images aka k-Buffer
+                    glBindImageTexture(
+                        3,
+                        mKBufferTexture,
+                        0,
+                        GL_TRUE,
+                        0,
+                        GL_WRITE_ONLY,
+                        GL_RG32F);
+
+                    // Execute drawing aka peeling generated pixels into k-Buffer
+                    glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
+
+                    // Enable depth test
+                    glEnable(GL_DEPTH_TEST);
+
+                    // # Render result of blending into molecule framebuffer
                 }
                 break;
             }
