@@ -63,8 +63,8 @@
 #define Packed_1f               4294967295U // 0xFFFFFFFFU
 
 // Output images
-layout(binding = 2, r32ui) restrict coherent uniform uimage2D image_counter;
-layout(binding = 3, rg32f) writeonly restrict uniform image2DArray image_peel;
+layout(binding = 2, r32ui) restrict coherent uniform uimage2D KBufferCounter;
+layout(binding = 3, rg32f) writeonly restrict uniform image2DArray KBuffer;
 
 // In / out
 in vec2 uv;
@@ -87,25 +87,25 @@ uniform float depthDarkeningEnd;
 // Incremention of counter which counts pixels in k-Buffer
 uint addPixelFragCounter()
 {
-    return imageAtomicAdd(image_counter, ivec2(gl_FragCoord.xy), 1U);
+    return imageAtomicAdd(KBufferCounter, ivec2(gl_FragCoord.xy), 1U);
 }
 
 // Sets fragment in key buffer
 void setPixelFragValue(const int coord_z, const vec4 val)
 {
     // Image array interpeted as 3D structure
-    imageStore(image_peel, ivec3(gl_FragCoord.xy, coord_z), val);
+    imageStore(KBuffer, ivec3(gl_FragCoord.xy, coord_z), val);
 }
 
 // Submit pixel value to k-Buffer
 void submitPixelFragValueToOIT(vec4 val, float zValue)
 {
-    // float C = uintBitsToFloat(packUnorm4x8(vec4(val))); // pack 32bit RGBA into single float
+    float C = uintBitsToFloat(packUnorm4x8(vec4(val))); // pack 32bit RGBA into single float
     int index = int(addPixelFragCounter()); // increment pixel counter for processed fragment and get valid k-Buffer index for current value
-    // setPixelFragValue(index, vec4(C, zValue, 0.0f, 0.0f)); // add value to k-Buffer
+    setPixelFragValue(index, vec4(C, zValue, 0.0f, 0.0f)); // add value to k-Buffer
 
     // TODO: Testing
-    fragColor = vec4(float((index+1) * 30) / 255.0, 0.0, 0.0, 1.0);
+    fragColor = vec4(float((index) * 10) / 255.0, 0.0, 0.0, 1.0);
 }
 
 // Main function
