@@ -315,7 +315,7 @@ private:
 
     // Residue surface proximity rendering buffers
     GLuint mKBufferTexture;
-    std::unique_ptr<GPUTextureBuffer> mupKBufferPixelCounter;
+    GLuint mKBufferPixelCounterTexture;
 
     // Ascension helper texture
     GLuint mAscensionHelperTexture;

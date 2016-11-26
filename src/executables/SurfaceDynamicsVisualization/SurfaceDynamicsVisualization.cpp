@@ -246,6 +246,27 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     std::vector<GLuint> emptyDataSemaphore(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight(), 0.f);
     mupGroupRenderingSemaphore = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(emptyDataSemaphore));
 
+    // # Prepare k-Buffer (TODO: what to do at change of screen resolution?)
+    std::vector<GLfloat> emptyKBufferData(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight() * 2 * mKBufferLayerCount, 0.f);
+    glGenTextures(1, &mKBufferTexture);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, mKBufferTexture);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RG32F, mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight(), mKBufferLayerCount);
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight(), mKBufferLayerCount, GL_RG, GL_FLOAT, &emptyKBufferData[0]); // necessary?
+    glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+    std::vector<GLuint> emptyKBufferPixelCounter(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight(), 0.f);
+    glGenTextures(1, &mKBufferPixelCounterTexture);
+    glBindTexture(GL_TEXTURE_2D, mKBufferPixelCounterTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32UI, mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight(), 0, GL_RED, GL_UNSIGNED_INT, &emptyKBufferPixelCounter[0]); // use texstorage instead?
+    glBindTexture(GL_TEXTURE_2D, 0);
+
     // # Ascension helper texture
     glGenTextures(1, &mAscensionHelperTexture);
     glBindTexture(GL_TEXTURE_2D, mAscensionHelperTexture);
@@ -253,15 +274,6 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    // # Prepare k-Buffer (TODO: what to do at change of screen resolution?)
-    std::vector<GLfloat> emptyKBufferData(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight() * 2, 0.f);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, mKBufferTexture);
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RG32F, mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight(), mKBufferLayerCount);
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight(), mKBufferLayerCount, GL_RG, GL_FLOAT, &emptyKBufferData[0]);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
-    std::vector<GLuint> emptyKBufferPixelCounter(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight(), 0.f);
-    mupKBufferPixelCounter = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(emptyKBufferPixelCounter));
 
     // Load image from disk
     int channelCount;
@@ -970,58 +982,66 @@ void SurfaceDynamicsVisualization::renderLoop()
 
             case Rendering::RESIDUE_SURFACE_PROXIMITY:
 
-                // Only proceed when layers were extracted
-                if(mGPUSurfaces.at(mFrame - mComputedStartFrame)->layersExtracted())
-                {
-                    // # Render into k-Buffer
+                // # Render into k-Buffer
 
-                    // Disable depth test
-                    glDisable(GL_DEPTH_TEST);
+                // Disable depth test
+                glDisable(GL_DEPTH_TEST);
 
-                    // Bind program and fill uniforms
-                    residueSurfaceProximityProgram.use();
-                    residueSurfaceProximityProgram.update("view", mupCamera->getViewMatrix());
-                    residueSurfaceProximityProgram.update("projection", mupCamera->getProjectionMatrix());
-                    residueSurfaceProximityProgram.update("cameraWorldPos", mupCamera->getPosition());
-                    residueSurfaceProximityProgram.update("probeRadius", mRenderWithProbeRadius ? mComputedProbeRadius : 0.f);
-                    residueSurfaceProximityProgram.update("lightDir", mLightDirection);
-                    residueSurfaceProximityProgram.update("selectedIndex", selectedAtom);
-                    residueSurfaceProximityProgram.update("clippingPlane", mClippingPlane);
-                    residueSurfaceProximityProgram.update("frame", mFrame);
-                    residueSurfaceProximityProgram.update("atomCount", mupGPUProtein->getAtomCount());
-                    residueSurfaceProximityProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
-                    residueSurfaceProximityProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
-                    residueSurfaceProximityProgram.update("frameCount", mupGPUProtein->getFrameCount());
-                    residueSurfaceProximityProgram.update("depthDarkeningStart", mDepthDarkeningStart);
-                    residueSurfaceProximityProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
-                    residueSurfaceProximityProgram.update("selectionColor", mSelectionColor);
-                    residueSurfaceProximityProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
-                    residueSurfaceProximityProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
+                // Bind program and fill uniforms
+                residueSurfaceProximityProgram.use();
+                residueSurfaceProximityProgram.update("view", mupCamera->getViewMatrix());
+                residueSurfaceProximityProgram.update("projection", mupCamera->getProjectionMatrix());
+                residueSurfaceProximityProgram.update("cameraWorldPos", mupCamera->getPosition());
+                residueSurfaceProximityProgram.update("probeRadius", mRenderWithProbeRadius ? mComputedProbeRadius : 0.f);
+                residueSurfaceProximityProgram.update("lightDir", mLightDirection);
+                residueSurfaceProximityProgram.update("selectedIndex", selectedAtom);
+                residueSurfaceProximityProgram.update("clippingPlane", mClippingPlane);
+                residueSurfaceProximityProgram.update("frame", mFrame);
+                residueSurfaceProximityProgram.update("atomCount", mupGPUProtein->getAtomCount());
+                residueSurfaceProximityProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+                residueSurfaceProximityProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+                residueSurfaceProximityProgram.update("frameCount", mupGPUProtein->getFrameCount());
+                residueSurfaceProximityProgram.update("depthDarkeningStart", mDepthDarkeningStart);
+                residueSurfaceProximityProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
+                residueSurfaceProximityProgram.update("selectionColor", mSelectionColor);
+                residueSurfaceProximityProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
+                residueSurfaceProximityProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
 
-                    // Following image binding overwrites binding in scope outside this case. But group rendering stuff
-                    // is not used here...
+                // Following image binding overwrites binding in scope outside of this case. But group rendering stuff
+                // is not used here...
 
-                    // Bind counter for pixels in k-Buffer at processed fragment
-                    mupKBufferPixelCounter->bindAsImage(2, GPUAccess::READ_WRITE);
+                // Clear both used images before usage
+                glClearTexImage(mKBufferPixelCounterTexture, 0, GL_R32UI, GL_UNSIGNED_INT, NULL);
+                glClearTexImage(mKBufferTexture, 0, GL_RG32F, GL_FLOAT, NULL);
 
-                    // Bind output images aka k-Buffer
-                    glBindImageTexture(
-                        3,
-                        mKBufferTexture,
-                        0,
-                        GL_TRUE,
-                        0,
-                        GL_WRITE_ONLY,
-                        GL_RG32F);
+                // Bind counter for pixels in k-Buffer at processed fragment
+                glBindImageTexture(
+                    2,
+                    mKBufferPixelCounterTexture,
+                    0,
+                    GL_TRUE,
+                    0,
+                    GL_READ_WRITE,
+                    GL_R32UI);
 
-                    // Execute drawing aka peeling generated pixels into k-Buffer
-                    glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
+                // Bind output images aka k-Buffer
+                glBindImageTexture(
+                    3,
+                    mKBufferTexture,
+                    0,
+                    GL_TRUE,
+                    0,
+                    GL_WRITE_ONLY,
+                    GL_RG32F);
 
-                    // Enable depth test
-                    glEnable(GL_DEPTH_TEST);
+                // Execute drawing aka peeling generated pixels into k-Buffer
+                glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
 
-                    // # Render result of blending into molecule framebuffer
-                }
+                // Enable depth test
+                glEnable(GL_DEPTH_TEST);
+
+                // # Render result of blending into molecule framebuffer
+
                 break;
             }
         }
