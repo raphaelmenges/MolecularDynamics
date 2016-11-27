@@ -234,6 +234,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     Logger::instance().print("..done");
 
     // # Group rendering texture and semaphore
+    Logger::instance().print("Prepare group rendering..");
     mupGroupRenderingTexture = std::unique_ptr<GPURenderTexture>(
         new GPURenderTexture(
             mupMoleculeFramebuffer->getWidth(),
@@ -241,22 +242,25 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
             GPURenderTexture::Type::RGBA32F));
     std::vector<GLuint> emptyDataSemaphore(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight(), 0.f);
     mupGroupRenderingSemaphore = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(emptyDataSemaphore));
+    Logger::instance().print("..done");
 
     // # Prepare k-Buffer
+    Logger::instance().print("Prepare k-Buffer..");
     mupKBufferTexture = std::unique_ptr<GPURenderTexture>(
         new GPURenderTexture(
             mupMoleculeFramebuffer->getWidth(),
             mupMoleculeFramebuffer->getHeight(),
             GPURenderTexture::Type::RG32F,
             mKBufferLayerCount));
-
     mupKBufferCounter = std::unique_ptr<GPURenderTexture>(
         new GPURenderTexture(
             mupMoleculeFramebuffer->getWidth(),
             mupMoleculeFramebuffer->getHeight(),
             GPURenderTexture::Type::R32UI));
+    Logger::instance().print("..done");
 
     // # Ascension helper texture
+    Logger::instance().print("Prepare ascension helper..");
     glGenTextures(1, &mAscensionHelperTexture);
     glBindTexture(GL_TEXTURE_2D, mAscensionHelperTexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -274,6 +278,8 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     // Delete raw image data
     stbi_image_free(pData);
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    Logger::instance().print("..done");
 
     // # Other
 
@@ -991,7 +997,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 residueRSPPeelProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
 
                 // Following image binding overwrites binding in scope outside of this case. But group rendering stuff
-                // is not used here...
+                // is not used here, there seems to be good practice to use those slots.
 
                 // Bind counter for pixels in k-Buffer at processed fragment
                 mupKBufferCounter->bindAsImage(2, GPUAccess::READ_WRITE);
@@ -1009,7 +1015,7 @@ void SurfaceDynamicsVisualization::renderLoop()
 
                 // Bind input images
                 mupKBufferCounter->bindAsImage(0, GPUAccess::READ_ONLY);
-                mupKBufferTexture->bindAsImage(3, GPUAccess::READ_ONLY);
+                mupKBufferTexture->bindAsImage(1, GPUAccess::READ_ONLY);
 
                 // Render screenfilling quad with results from k-Buffer
                 residueRSPResolveProgram.use();
