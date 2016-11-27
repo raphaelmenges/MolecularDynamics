@@ -1008,6 +1008,12 @@ void SurfaceDynamicsVisualization::renderLoop()
                 // Bind output images aka k-Buffer
                 mupKBufferTexture->bindAsImage(4, GPUAccess::WRITE_ONLY);
 
+                // TODO
+                // - encode averageLayersDelta as buffer (atoms would have to know which amino acid it belongs to)
+                //  - amino acid mapping
+                //  - average layers delta for an amino acid per frame (some smoothing would be nice)
+                //  - color of amino acid for...color of atoms
+
                 // Execute drawing aka peeling generated pixels into k-Buffer
                 glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
 
