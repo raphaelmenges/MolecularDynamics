@@ -46,8 +46,6 @@ flat in float radius;
 flat in vec3 center;
 flat in vec3 color;
 flat in int index;
-layout(location = 0) out vec4 fragColor;
-layout(location = 1) out vec3 pickIndex;
 
 // Uniforms
 uniform mat4 view;
@@ -166,9 +164,5 @@ void main()
 
     // Output color into k-Buffer
     submitPixelFragValueToOIT(vec4(finalColor, 0.5), customDepth);
-    fragColor = vec4(finalColor, 1); // rendering it to framebuffer, too (TODO: delete)
-
-    // Set pick index to nothing
-    pickIndex = vec3(0, 0, 0);
 }
 
