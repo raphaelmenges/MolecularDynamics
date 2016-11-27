@@ -19,8 +19,8 @@ public:
     // Enumeration of available types
     enum class Type { R32UI, RG32F, RGBA32F };
 
-    // Constructor
-    GPURenderTexture(GLuint width, GLuint height, Type type);
+    // Constructor (if depth is greater than one, texture array is generated)
+    GPURenderTexture(GLuint width, GLuint height, Type type, GLuint depth = 1);
 
     // Destructor
     virtual ~GPURenderTexture();
@@ -50,6 +50,9 @@ private:
 
     // Height of texture
     GLuint mHeight = 0;
+
+    // Depth of texture
+    GLuint mDepth = 0;
 };
 
 #endif // GPU_RENDER_TEXTURE_H

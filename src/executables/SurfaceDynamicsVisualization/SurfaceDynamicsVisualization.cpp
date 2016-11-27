@@ -243,14 +243,12 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     mupGroupRenderingSemaphore = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(emptyDataSemaphore));
 
     // # Prepare k-Buffer
-    glGenTextures(1, &mKBufferTexture);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, mKBufferTexture);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RG32F, mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight(), mKBufferLayerCount);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+    mupKBufferTexture = std::unique_ptr<GPURenderTexture>(
+        new GPURenderTexture(
+            mupMoleculeFramebuffer->getWidth(),
+            mupMoleculeFramebuffer->getHeight(),
+            GPURenderTexture::Type::RG32F,
+            mKBufferLayerCount));
 
     mupKBufferCounter = std::unique_ptr<GPURenderTexture>(
         new GPURenderTexture(
@@ -295,9 +293,6 @@ SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
 
     // Delete ascension helper texture
     glDeleteTextures(1, &mAscensionHelperTexture);
-
-    // Delete k-Buffer
-    glDeleteTextures(1, &mKBufferTexture);
 
     Logger::instance().print("..done");
 
@@ -687,9 +682,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             mupGroupRenderingSemaphore = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(emptyDataSemaphore));
 
             // K-Buffer
-            glBindTexture(GL_TEXTURE_2D_ARRAY, mKBufferTexture);
-            glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RG32F, mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight(), mKBufferLayerCount);
-            glBindTexture(GL_TEXTURE_2D, 0);
+            mupKBufferTexture->resize(mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight());
             mupKBufferCounter->resize(mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight());
         }
         else
@@ -1004,14 +997,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 mupKBufferCounter->bindAsImage(2, GPUAccess::READ_WRITE);
 
                 // Bind output images aka k-Buffer
-                glBindImageTexture(
-                    3,
-                    mKBufferTexture,
-                    0,
-                    GL_TRUE,
-                    0,
-                    GL_WRITE_ONLY,
-                    GL_RG32F);
+                mupKBufferTexture->bindAsImage(3, GPUAccess::WRITE_ONLY);
 
                 // Execute drawing aka peeling generated pixels into k-Buffer
                 glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
@@ -1023,14 +1009,7 @@ void SurfaceDynamicsVisualization::renderLoop()
 
                 // Bind input images
                 mupKBufferCounter->bindAsImage(0, GPUAccess::READ_ONLY);
-                glBindImageTexture(
-                    1,
-                    mKBufferTexture,
-                    0,
-                    GL_TRUE,
-                    0,
-                    GL_READ_ONLY,
-                    GL_RG32F);
+                mupKBufferTexture->bindAsImage(3, GPUAccess::READ_ONLY);
 
                 // Render screenfilling quad with results from k-Buffer
                 residueRSPResolveProgram.use();

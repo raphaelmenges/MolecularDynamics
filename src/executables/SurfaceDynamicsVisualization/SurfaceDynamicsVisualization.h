@@ -316,7 +316,7 @@ private:
 
     // Residue surface proximity rendering buffers
     std::unique_ptr<GPURenderTexture> mupKBufferCounter;
-    GLuint mKBufferTexture; // TODO: extend GPURenderTexture to hold texture array
+    std::unique_ptr<GPURenderTexture> mupKBufferTexture;
 
     // Ascension helper texture
     GLuint mAscensionHelperTexture;
