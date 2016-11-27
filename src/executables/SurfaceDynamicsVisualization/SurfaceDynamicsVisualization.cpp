@@ -2080,47 +2080,8 @@ void SurfaceDynamicsVisualization::renderGUI()
                 // ### Save amino acid analysis to file ###
                 if(ImGui::Button("Save Amino Acids Analysis##aminoacidsanalysis"))
                 {
-                    // Fetch values for all amino acids
-                    struct AminoAcidAnalysis
-                    {
-                        std::string name;
-                        int startIndex;
-                        int endIndex;
-                        float averageLayersDeltaAccumulation;
-                        float inverseAverageLayersDeltaAccumulation;
-                        std::vector<float> averageLayers;
-                        std::vector<float> inverseAverageLayers;
-                        std::vector<float> averageLayersDelta;
-                        std::vector<float> inverseAverageLayersDelta;
-                    };
-
-                    // Go over all amino acids
-                    std::vector<GPUProtein::AminoAcid> aminoAcids = mupGPUProtein->getAminoAcids();
-                    std::vector<AminoAcidAnalysis> aminoAcidAnalysis; // vector to fill
-                    for(const GPUProtein::AminoAcid& rAminoAcid : aminoAcids)
-                    {
-                        // Do calculations
-                        AminoAcidAnalysis current;
-                        current.name = rAminoAcid.name;
-                        current.startIndex = rAminoAcid.startIndex;
-                        current.endIndex = rAminoAcid.endIndex;
-                        if(atomsInRangeCalculations(
-                            current.startIndex,
-                            current.endIndex,
-                            current.averageLayersDeltaAccumulation,
-                            current.inverseAverageLayersDeltaAccumulation,
-                            current.averageLayers,
-                            current.inverseAverageLayers,
-                            current.averageLayersDelta,
-                            current.inverseAverageLayersDelta))
-                        {
-                            // Only push back when successful
-                            aminoAcidAnalysis.push_back(current);
-                        }
-                    }
-
                     // ### ACCUMULATED VALUES ###
-                    if(!aminoAcidAnalysis.empty())
+                    if(!mAminoAcidAnalysis.empty())
                     {
                         // Open file
                         std::ofstream fs(mAminoAcidAnalysisAccumulatedFilePath, std::ios_base::out); // overwrite existing
@@ -2131,7 +2092,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                         csvs << csv::endl;
 
                         // Fill data
-                        for(const AminoAcidAnalysis& rAnalysis : aminoAcidAnalysis)
+                        for(const AminoAcidAnalysis& rAnalysis : mAminoAcidAnalysis)
                         {
                             // Name
                             csvs << rAnalysis.name;
@@ -2157,7 +2118,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                     }
 
                     // ### AVERAGE LAYERS ###
-                    if(!aminoAcidAnalysis.empty())
+                    if(!mAminoAcidAnalysis.empty())
                     {
                         // Open file
                         std::ofstream fs(mAminoAcidAnalysisAvgLayersFilePath, std::ios_base::out); // overwrite existing
@@ -2165,20 +2126,20 @@ void SurfaceDynamicsVisualization::renderGUI()
 
                         // Create header
                         csvs << "Computed Frame";
-                        for(const AminoAcidAnalysis& rAnalysis : aminoAcidAnalysis)
+                        for(const AminoAcidAnalysis& rAnalysis : mAminoAcidAnalysis)
                         {
                             csvs << rAnalysis.name;
                         }
                         csvs << csv::endl;
 
                         // Go over computed frames
-                        for(int computedFrame = 0; computedFrame < aminoAcidAnalysis.back().averageLayers.size(); computedFrame++) // assume that all average layers vectors have same size
+                        for(int computedFrame = 0; computedFrame < mAminoAcidAnalysis.back().averageLayers.size(); computedFrame++) // assume that all average layers vectors have same size
                         {
                             // Computed frame
                             csvs << computedFrame;
 
                             // Average layer of amino acids in computed frame
-                            for(const AminoAcidAnalysis& rAnalysis : aminoAcidAnalysis)
+                            for(const AminoAcidAnalysis& rAnalysis : mAminoAcidAnalysis)
                             {
                                 csvs << rAnalysis.averageLayers.at(computedFrame);
                             }
@@ -2190,7 +2151,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                     }
 
                     // ### INVERSE AVERAGE LAYERS ###
-                    if(!aminoAcidAnalysis.empty())
+                    if(!mAminoAcidAnalysis.empty())
                     {
                         // Open file
                         std::ofstream fs(mAminoAcidAnalysisInverseAvgLayersFilePath, std::ios_base::out); // overwrite existing
@@ -2198,20 +2159,20 @@ void SurfaceDynamicsVisualization::renderGUI()
 
                         // Create header
                         csvs << "Computed Frame";
-                        for(const AminoAcidAnalysis& rAnalysis : aminoAcidAnalysis)
+                        for(const AminoAcidAnalysis& rAnalysis : mAminoAcidAnalysis)
                         {
                             csvs << rAnalysis.name;
                         }
                         csvs << csv::endl;
 
                         // Go over computed frames
-                        for(int computedFrame = 0; computedFrame < aminoAcidAnalysis.back().inverseAverageLayers.size(); computedFrame++) // assume that all inverse average layers vectors have same size
+                        for(int computedFrame = 0; computedFrame < mAminoAcidAnalysis.back().inverseAverageLayers.size(); computedFrame++) // assume that all inverse average layers vectors have same size
                         {
                             // Computed frame
                             csvs << computedFrame;
 
                             // Inverse average layer of amino acids in computed frame
-                            for(const AminoAcidAnalysis& rAnalysis : aminoAcidAnalysis)
+                            for(const AminoAcidAnalysis& rAnalysis : mAminoAcidAnalysis)
                             {
                                 csvs << rAnalysis.inverseAverageLayers.at(computedFrame);
                             }
@@ -2223,7 +2184,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                     }
 
                     // ### AVERAGE LAYERS DELTA ###
-                    if(!aminoAcidAnalysis.empty())
+                    if(!mAminoAcidAnalysis.empty())
                     {
                         // Open file
                         std::ofstream fs(mAminoAcidAnalysisAvgLayersDeltaFilePath, std::ios_base::out); // overwrite existing
@@ -2231,20 +2192,20 @@ void SurfaceDynamicsVisualization::renderGUI()
 
                         // Create header
                         csvs << "Computed Frame";
-                        for(const AminoAcidAnalysis& rAnalysis : aminoAcidAnalysis)
+                        for(const AminoAcidAnalysis& rAnalysis : mAminoAcidAnalysis)
                         {
                             csvs << rAnalysis.name;
                         }
                         csvs << csv::endl;
 
                         // Go over computed frames
-                        for(int computedFrame = 0; computedFrame < aminoAcidAnalysis.back().averageLayersDelta.size(); computedFrame++) // assume that all average layers delta vectors have same size
+                        for(int computedFrame = 0; computedFrame < mAminoAcidAnalysis.back().averageLayersDelta.size(); computedFrame++) // assume that all average layers delta vectors have same size
                         {
                             // Computed frame
                             csvs << computedFrame;
 
                             // Average layer of amino acids in computed frame
-                            for(const AminoAcidAnalysis& rAnalysis : aminoAcidAnalysis)
+                            for(const AminoAcidAnalysis& rAnalysis : mAminoAcidAnalysis)
                             {
                                 csvs << rAnalysis.averageLayersDelta.at(computedFrame);
                             }
@@ -2256,7 +2217,7 @@ void SurfaceDynamicsVisualization::renderGUI()
                     }
 
                     // ### INVERSE AVERAGE LAYERS DELTA ###
-                    if(!aminoAcidAnalysis.empty())
+                    if(!mAminoAcidAnalysis.empty())
                     {
                         // Open file
                         std::ofstream fs(mAminoAcidAnalysisInverseAvgLayersDeltaFilePath, std::ios_base::out); // overwrite existing
@@ -2264,20 +2225,20 @@ void SurfaceDynamicsVisualization::renderGUI()
 
                         // Create header
                         csvs << "Computed Frame";
-                        for(const AminoAcidAnalysis& rAnalysis : aminoAcidAnalysis)
+                        for(const AminoAcidAnalysis& rAnalysis : mAminoAcidAnalysis)
                         {
                             csvs << rAnalysis.name;
                         }
                         csvs << csv::endl;
 
                         // Go over computed frames
-                        for(int computedFrame = 0; computedFrame < aminoAcidAnalysis.back().inverseAverageLayersDelta.size(); computedFrame++) // assume that all inverse average layers delta vectors have same size
+                        for(int computedFrame = 0; computedFrame < mAminoAcidAnalysis.back().inverseAverageLayersDelta.size(); computedFrame++) // assume that all inverse average layers delta vectors have same size
                         {
                             // Computed frame
                             csvs << computedFrame;
 
                             // Average layer of amino acids in computed frame
-                            for(const AminoAcidAnalysis& rAnalysis : aminoAcidAnalysis)
+                            for(const AminoAcidAnalysis& rAnalysis : mAminoAcidAnalysis)
                             {
                                 csvs << rAnalysis.inverseAverageLayersDelta.at(computedFrame);
                             }
@@ -2761,6 +2722,9 @@ void SurfaceDynamicsVisualization::computeLayers(bool useGPU)
     // Ascension computation
     computeAscension();
 
+    // Update amino acids analysis
+    updateAminoAcidsAnaylsis();
+
     // Set to first computed frame
     setFrame(mComputedStartFrame);
 }
@@ -3034,6 +2998,95 @@ void SurfaceDynamicsVisualization::updateGroupAnalysis()
     }
 }
 
+// TODO check for CORRECTNESS!!!
+void SurfaceDynamicsVisualization::updateAminoAcidsAnaylsis()
+{
+    // Clear result vector
+    mAminoAcidAnalysis.clear();
+
+    // Get amino acids out of protein
+    std::vector<GPUProtein::AminoAcid> aminoAcids = mupGPUProtein->getAminoAcids();
+    for(const GPUProtein::AminoAcid& rAminoAcid : aminoAcids)
+    {
+        // Do calculations for each amino acid
+        AminoAcidAnalysis current;
+        current.name = rAminoAcid.name;
+        current.startIndex = rAminoAcid.startIndex;
+        current.endIndex = rAminoAcid.endIndex;
+
+        // Go over frames and extract average layer of atoms
+        current.averageLayers = std::vector<float>(mGPUSurfaces.size(), -1.f); // minus one means no data
+        current.inverseAverageLayers = std::vector<float>(mGPUSurfaces.size(), -1.f); // minus one means no data
+
+        for(int frame = mComputedStartFrame; frame <= mComputedEndFrame; frame++)
+        {
+            // Relative frame
+            int relativeFrame = frame - mComputedStartFrame;
+
+            // Do it only when layers were extracted for this frame
+            if(mGPUSurfaces.at(relativeFrame)->layersExtracted())
+            {
+                // Calculate layer of atoms in rage for that frame
+                float avgLayer = 0;
+                float invAvgLayer = 0;
+                for(int atomIndex = current.startIndex; atomIndex <= current.endIndex; atomIndex++)
+                {
+                    // Get layer of that atom
+                    int layer = mGPUSurfaces.at(relativeFrame)->getLayerOfAtom(atomIndex);
+                    int invLayer = (mGPUSurfaces.at(relativeFrame)->getLayerCount() - 1) - layer;
+
+                    // Accumulate for average layer calculation
+                    avgLayer += (float)layer;
+                    invAvgLayer += (float)invLayer;
+                }
+                current.averageLayers.at(relativeFrame) = avgLayer / (float)((current.endIndex - current.startIndex) + 1); // divide through count of atoms
+                current.inverseAverageLayers.at(relativeFrame) = invAvgLayer / (float)((current.endIndex - current.startIndex) + 1); // divide through count of atoms
+            }
+        }
+
+        // Store deltas to vectors
+        current.averageLayersDelta = std::vector<float>(current.averageLayers.size() - 1, -1.f); // minus one means no data
+        current.inverseAverageLayersDelta = std::vector<float>(current.inverseAverageLayers.size() - 1, -1.f); // minus one means no data
+
+        // Average layers delta accumulation
+        current.averageLayersDeltaAccumulation = 0.f;
+        for(int i = 0; i < current.averageLayers.size() - 1; i++)
+        {
+            // Continue if any avg is not ok
+            if(current.averageLayers.at(i) < 0 || current.averageLayers.at(i+1) < 0)
+            {
+                mAminoAcidAnalysis.push_back(AminoAcidAnalysis());
+                continue;
+            }
+
+            float delta = current.averageLayers.at(i + 1) - current.averageLayers.at(i);
+            delta = delta < 0 ? -delta : delta;
+            current.averageLayersDelta.at(i) = delta;
+            current.averageLayersDeltaAccumulation += delta;
+        }
+
+        // Inverse average delta accumulation
+        current.inverseAverageLayersDeltaAccumulation = 0.f;
+        for(int i = 0; i < current.inverseAverageLayers.size() - 1; i++)
+        {
+            // Continue if any invAvg is not ok
+            if(current.inverseAverageLayers.at(i) < 0 || current.inverseAverageLayers.at(i+1) < 0)
+            {
+                mAminoAcidAnalysis.push_back(AminoAcidAnalysis());
+                continue;
+            }
+
+            float delta = current.inverseAverageLayers.at(i + 1) - current.inverseAverageLayers.at(i);
+            delta = delta < 0 ? -delta : delta;
+            current.inverseAverageLayersDelta.at(i) = delta;
+            current.inverseAverageLayersDeltaAccumulation += delta;
+        }
+
+        // Push back result
+        mAminoAcidAnalysis.push_back(current);
+    }
+}
+
 GLuint SurfaceDynamicsVisualization::createCubemapTexture(
         std::string filepathPosX,
         std::string filepathNegX,
@@ -3106,88 +3159,7 @@ void SurfaceDynamicsVisualization::resetPath(std::string& rPath, std::string app
     rPath = path;
 }
 
-bool SurfaceDynamicsVisualization::atomsInRangeCalculations(
-    int startIndex,
-    int endIndex,
-    float& rAcc,
-    float& rInverseAcc,
-    std::vector<float>& rAvgLayers,
-    std::vector<float>& rInverseAvgLayers,
-    std::vector<float>& rAvgLayersDelta,
-    std::vector<float>& rInverseAvgLayersDelta) const
-{
-    // Go over frames and extract average layer of atoms
-    std::vector<float> avgLayers = std::vector<float>(mGPUSurfaces.size(), -1.f); // minus one means no data
-    std::vector<float> invAvgLayers = std::vector<float>(mGPUSurfaces.size(), -1.f); // minus one means no data
-
-    for(int frame = mComputedStartFrame; frame <= mComputedEndFrame; frame++)
-    {
-        // Relative frame
-        int relativeFrame = frame - mComputedStartFrame;
-
-        // Do it only when layers were extracted for this frame
-        if(mGPUSurfaces.at(relativeFrame)->layersExtracted())
-        {
-            // Calculate layer of atoms in rage for that frame
-            float avgLayer = 0;
-            float invAvgLayer = 0;
-            for(int atomIndex = startIndex; atomIndex <= endIndex; atomIndex++)
-            {
-                // Get layer of that atom
-                int layer = mGPUSurfaces.at(relativeFrame)->getLayerOfAtom(atomIndex);
-                int invLayer = (mGPUSurfaces.at(relativeFrame)->getLayerCount() - 1) - layer;
-
-                // Accumulate for average layer calculation
-                avgLayer += (float)layer;
-                invAvgLayer += (float)invLayer;
-            }
-            avgLayers.at(relativeFrame) = avgLayer / (float)((endIndex - startIndex) + 1); // divide through count of atoms
-            invAvgLayers.at(relativeFrame) = invAvgLayer / (float)((endIndex - startIndex) + 1); // divide through count of atoms
-        }
-    }
-
-    // Store deltas to vectors
-    std::vector<float> avgLayersDelta = std::vector<float>(avgLayers.size() - 1, -1.f); // minus one means no data
-    std::vector<float> invAvgLayersDelta = std::vector<float>(invAvgLayers.size() - 1, -1.f); // minus one means no data
-
-    // Average layers delta accumulation
-    float avgLayersDeltaAcc = 0.f;
-    for(int i = 0; i < avgLayers.size() - 1; i++)
-    {
-        // Return false if any avg is not ok
-        if(avgLayers.at(i) < 0 || avgLayers.at(i+1) < 0) { return false; }
-
-        float delta = avgLayers.at(i + 1) - avgLayers.at(i);
-        delta = delta < 0 ? -delta : delta;
-        avgLayersDelta.at(i) = delta;
-        avgLayersDeltaAcc += delta;
-    }
-
-    // Inverse average delta accumulation
-    float invAvgLayersDeltaAcc = 0.f;
-    for(int i = 0; i < invAvgLayers.size() - 1; i++)
-    {
-        // Return false if any invAvg is not ok
-        if(invAvgLayers.at(i) < 0 || invAvgLayers.at(i+1) < 0) { return false; }
-
-        float delta = invAvgLayers.at(i + 1) - invAvgLayers.at(i);
-        delta = delta < 0 ? -delta : delta;
-        invAvgLayersDelta.at(i) = delta;
-        invAvgLayersDeltaAcc += delta;
-    }
-
-    // Return results
-    rAcc = avgLayersDeltaAcc;
-    rInverseAcc = invAvgLayersDeltaAcc;
-    rAvgLayers = avgLayers;
-    rInverseAvgLayers = invAvgLayers;
-    rAvgLayersDelta = avgLayersDelta;
-    rInverseAvgLayersDelta = invAvgLayersDelta;
-    return true;
-}
-
 // ### Main function ###
-
 int main(int argc, char* argv[])
 {
     if(argc < 2)

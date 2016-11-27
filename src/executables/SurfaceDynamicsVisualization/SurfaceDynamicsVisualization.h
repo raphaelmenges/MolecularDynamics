@@ -23,6 +23,7 @@
 
 // Notes:
 // - Calculations done in angstrom
+// - Some shaders do not need mesh data and do not bind a VAO. The currently bound VAO is left bound and not used
 
 // TODO:
 // - averageLayersDeltaAccumulation and updateGroupAnalysis share functionality. Try to merge!
@@ -103,6 +104,9 @@ private:
     // Update group analysis
     void updateGroupAnalysis();
 
+    // Update amino acids analysis
+    void updateAminoAcidsAnaylsis();
+
     // Get whether frame was computed (otherwise prohibit doing thing which would go wrong)
     bool frameComputed() const { return (mFrame >= mComputedStartFrame) && (mFrame <= mComputedEndFrame); }
 
@@ -117,18 +121,6 @@ private:
         std::string filepathNegY,
         std::string filepathPosZ,
         std::string filepathNegZ) const;
-
-    // Atoms in range calculations. Returns whether successful
-    bool atomsInRangeCalculations(
-        int startIndex, // index of atom at start of range
-        int endIndex, // index of atom at end of range
-        float& rAcc, // average layers delta accumulation
-        float& rInverseAcc, // inverse average layers delta accumulation
-        std::vector<float>& rAvgLayers, // average layers
-        std::vector<float>& rInverseAvgLayers, // inverse average layers
-        std::vector<float>& rAvgLayersDelta, // average layers delta
-        std::vector<float>& rInverseAvgLayersDelta // inverse average layers delta
-        ) const;
 
     // Setup
     const float mCameraSmoothDuration = 1.5f;
@@ -214,7 +206,7 @@ private:
     int mPathFrameRadius = 5; // radius of frames which are visualized
     int mPathSmoothRadius = 0; // radius of frames which are used for smoothing the path
     Rendering mRendering = HULL;
-    Background mBackground = SCIENTIFIC;
+    Background mBackground = WHITE;
     int mHullSampleCount = 250; // sample count per atom
     bool mRenderHullSamples = false;
     bool mRenderOutline = true;
@@ -322,6 +314,22 @@ private:
     GLuint mAscensionHelperTexture;
     int mAscensionHelperWidth = 0;
     int mAscensionHelperHeight = 0;
+
+    // Amino acid calculations
+    struct AminoAcidAnalysis
+    {
+        std::string name = "";
+        int startIndex = -1;
+        int endIndex = -1;
+        float averageLayersDeltaAccumulation = -1;
+        float inverseAverageLayersDeltaAccumulation = -1;
+        std::vector<float> averageLayers;
+        std::vector<float> inverseAverageLayers;
+        std::vector<float> averageLayersDelta;
+        std::vector<float> inverseAverageLayersDelta;
+    };
+    std::vector<AminoAcidAnalysis> mAminoAcidAnalysis;
+
 };
 
 #endif // SURFACE_DYNAMICS_VISUALIZATION_H
