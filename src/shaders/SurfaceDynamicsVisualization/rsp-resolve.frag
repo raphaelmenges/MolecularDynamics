@@ -36,8 +36,6 @@
 const int LAYER_COUNT = 32;
 const int LAYER_COUNT_MINUS_ONE = LAYER_COUNT - 1;
 const int INSERTION_VS_SHELL = 16;
-const int HEAP_SIZE = LAYER_COUNT;
-const int HEAP_SIZE_MINUS_ONE = HEAP_SIZE -1;
 
 // Helper for sorting methods. Holds data to sort
 vec2 fragments [LAYER_COUNT];
