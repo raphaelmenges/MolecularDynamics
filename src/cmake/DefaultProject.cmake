@@ -17,6 +17,9 @@ include_directories(${SUBMODULESS_PATH}/glm)
 # Include GLFW
 include_directories(${SUBMODULESS_PATH}/glfw/include)
 
+# Include Simple-FFT
+include_directories(${SUBMODULESS_PATH}/Simple-FFT/include)
+
 # Add GLFW to linking
 set(ALL_LIBRARIES ${ALL_LIBRARIES} glfw)
 

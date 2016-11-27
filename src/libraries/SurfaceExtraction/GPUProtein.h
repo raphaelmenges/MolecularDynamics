@@ -20,7 +20,7 @@ class GPUProtein
 {
 public:
 
-    // Structure to hold aminoacid information
+    // Structure to hold amino acid information
     struct AminoAcid
     {
         AminoAcid(std::string name, int startIndex, int endIndex)
@@ -52,7 +52,10 @@ public:
     void bindColorsElement(GLuint slot) const;
 
     // Bind SSBO with colors according to aminoacid
-    void bindColorsAminoacid(GLuint slot) const;
+    void bindColorsAminoAcid(GLuint slot) const;
+
+    // Bind SSBO with amino acid mapping
+    void bindAminoAcidMapping(GLuint slot) const;
 
     // Get count of atoms in protein
     int getAtomCount() const { return mspRadii->size(); }
@@ -70,10 +73,10 @@ public:
     glm::vec3 getCenterOfMass(int frame) const { return mCentersOfMass.at(frame); }
 
     // Get element
-    std::string getElement(int atomIndex) const { return mElements.at(atomIndex); }
+    std::string getElement(int atomIndex) const { return mElementNames.at(atomIndex); }
 
-    // Get aminoacid
-    std::string getAminoacid(int atomIndex) const { return mAminoacids.at(atomIndex); }
+    // Get amino acid
+    std::string getAminoAcid(int atomIndex) const { return mAminoAcidsNames.at(atomIndex); }
 
     // Get minimum initial coordinates
     glm::vec3 getMinCoordinates() const { return mMinCoordinates; }
@@ -105,16 +108,19 @@ private:
     std::vector<glm::vec3> mCentersOfMass;
 
     // Strings which hold element of atoms
-    std::vector<std::string> mElements;
+    std::vector<std::string> mElementNames;
 
     // Strings which hold aminoacid of atoms
-    std::vector<std::string> mAminoacids;
+    std::vector<std::string> mAminoAcidsNames;
 
     // SSBO with colors for atoms according to element
     GPUBuffer<glm::vec3> mColorsElementBuffer;
 
-    // SSBO with colors for atoms according to aminoacid
+    // SSBO with colors for atoms according to amino acid
     GPUBuffer<glm::vec3> mColorsAminoacidBuffer;
+
+    // SSBO with mapping of atom index to amino acid index
+    GPUBuffer<GLuint> mAminoAcidMappingBuffer;
 
     // Save mininum and maximum values of initial atom coordinate values
     glm::vec3 mMinCoordinates;

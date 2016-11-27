@@ -34,6 +34,23 @@ layout(std430, binding = 5) restrict readonly buffer AscensionBuffer
    float ascension[];
 };
 
+// Coloring
+struct Color
+{
+    float r,g,b;
+};
+
+layout(std430, binding = 6) restrict readonly buffer ColoringBuffer
+{
+   Color coloring[];
+};
+
+// Amino acid mapping
+layout(std430, binding = 7) restrict readonly buffer MappingBuffer
+{
+   unsigned int mapping[];
+};
+
 // Uniforms
 uniform float probeRadius;
 uniform int selectedIndex = 0;
@@ -43,7 +60,7 @@ uniform int smoothAnimationRadius;
 uniform float smoothAnimationMaxDeviation;
 uniform int frameCount;
 uniform vec3 selectionColor;
-uniform int ascensionFrame;
+uniform int localFrame;
 uniform float ascensionChangeRadiusMultiplier;
 
 // Global
@@ -101,7 +118,7 @@ void main()
     gl_Position = vec4(center, 1);
 
     // Extract radius inclusive visualization of ascension angle
-    float angle = ascension[(ascensionFrame * atomCount) + int(atomIndex)];
+    float angle = ascension[(localFrame * atomCount) + int(atomIndex)];
     float originalRadius = radii[atomIndex] + probeRadius;
     vertRadius =
     originalRadius
@@ -115,7 +132,7 @@ void main()
     }
     else
     {
-        vertColor = vec3(1,0,0);
+        vertColor = vec3(coloring[atomIndex].r, coloring[atomIndex].g, coloring[atomIndex].b);
     }
 
     // Set index

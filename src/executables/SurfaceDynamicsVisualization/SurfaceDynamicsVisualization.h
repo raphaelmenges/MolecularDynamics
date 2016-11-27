@@ -309,6 +309,7 @@ private:
     // Residue surface proximity rendering buffers
     std::unique_ptr<GPURenderTexture> mupKBufferCounter;
     std::unique_ptr<GPURenderTexture> mupKBufferTexture;
+    std::unique_ptr<GPUBuffer<GLfloat> > mupLayersDeltaBuffer;
 
     // Ascension helper texture
     GLuint mAscensionHelperTexture;

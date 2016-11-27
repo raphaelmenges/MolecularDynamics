@@ -244,8 +244,8 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     mupGroupRenderingSemaphore = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(emptyDataSemaphore));
     Logger::instance().print("..done");
 
-    // # Prepare k-Buffer
-    Logger::instance().print("Prepare k-Buffer..");
+    // # Prepare residue proximity rendering
+    Logger::instance().print("Prepare residue proximity rendering..");
     mupKBufferTexture = std::unique_ptr<GPURenderTexture>(
         new GPURenderTexture(
             mupMoleculeFramebuffer->getWidth(),
@@ -257,6 +257,7 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
             mupMoleculeFramebuffer->getWidth(),
             mupMoleculeFramebuffer->getHeight(),
             GPURenderTexture::Type::R32UI));
+    mupLayersDeltaBuffer = std::unique_ptr<GPUBuffer<GLfloat> >(new GPUBuffer<GLfloat>());
     Logger::instance().print("..done");
 
     // # Ascension helper texture
@@ -542,7 +543,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 outlineProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
                 outlineProgram.update("frameCount", mupGPUProtein->getFrameCount());
                 outlineProgram.update("outlineColor", mOutlineColor);
-                outlineProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
+                outlineProgram.update("localFrame", mFrame - mComputedStartFrame);
                 outlineProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
 
                 // Create stencil
@@ -744,7 +745,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 hullProgram.update("depthDarkeningStart", mDepthDarkeningStart);
                 hullProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
                 hullProgram.update("selectionColor", mSelectionColor);
-                hullProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
+                hullProgram.update("localFrame", mFrame - mComputedStartFrame);
                 hullProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
                 hullProgram.update("highlightMultiplier", mRenderOutline ? 1.f : 0.f);
                 hullProgram.update("highlightColor", mOutlineColor);
@@ -788,7 +789,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 ascensionProgram.update("frameCount", mupGPUProtein->getFrameCount());
                 ascensionProgram.update("depthDarkeningStart", mDepthDarkeningStart);
                 ascensionProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
-                ascensionProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
+                ascensionProgram.update("localFrame", mFrame - mComputedStartFrame);
                 ascensionProgram.update("ascensionColorOffsetAngle", mAscensionColorOffsetAngle);
                 ascensionProgram.update("selectionColor", mSelectionColor);
                 ascensionProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
@@ -822,7 +823,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 coloringProgram.update("depthDarkeningStart", mDepthDarkeningStart);
                 coloringProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
                 coloringProgram.update("selectionColor", mSelectionColor);
-                coloringProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
+                coloringProgram.update("localFrame", mFrame - mComputedStartFrame);
                 coloringProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
                 coloringProgram.update("highlightMultiplier", mRenderOutline ? 1.f : 0.f);
                 coloringProgram.update("highlightColor", mOutlineColor);
@@ -848,7 +849,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             case Rendering::AMINOACIDS:
 
                 // Bind coloring
-                mupGPUProtein->bindColorsAminoacid(6);
+                mupGPUProtein->bindColorsAminoAcid(6);
 
                 // Prepare shader program
                 coloringProgram.use();
@@ -868,7 +869,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 coloringProgram.update("depthDarkeningStart", mDepthDarkeningStart);
                 coloringProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
                 coloringProgram.update("selectionColor", mSelectionColor);
-                coloringProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
+                coloringProgram.update("localFrame", mFrame - mComputedStartFrame);
                 coloringProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
                 coloringProgram.update("highlightMultiplier", mRenderOutline ? 1.f : 0.f);
                 coloringProgram.update("highlightColor", mOutlineColor);
@@ -915,7 +916,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 analysisProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
                 analysisProgram.update("groupAtomCount", (int)mupOutlineAtomIndices->getSize());
                 analysisProgram.update("selectionColor", mSelectionColor);
-                analysisProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
+                analysisProgram.update("localFrame", mFrame - mComputedStartFrame);
                 analysisProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
                 analysisProgram.update("highlightMultiplier", mRenderOutline ? 1.f : 0.f);
                 analysisProgram.update("highlightColor", mOutlineColor);
@@ -947,7 +948,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                     hullProgram.update("depthDarkeningStart", mDepthDarkeningStart);
                     hullProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
                     hullProgram.update("selectionColor", mSelectionColor);
-                    hullProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
+                    hullProgram.update("localFrame", mFrame - mComputedStartFrame);
                     hullProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
                     hullProgram.update("highlightMultiplier", mRenderOutline ? 1.f : 0.f);
                     hullProgram.update("highlightColor", mOutlineColor);
@@ -994,7 +995,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 residueRSPPeelProgram.update("depthDarkeningStart", mDepthDarkeningStart);
                 residueRSPPeelProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
                 residueRSPPeelProgram.update("selectionColor", mSelectionColor);
-                residueRSPPeelProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
+                residueRSPPeelProgram.update("localFrame", mFrame - mComputedStartFrame);
                 residueRSPPeelProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
                 residueRSPPeelProgram.update("highlightMultiplier", mRenderOutline ? 1.f : 0.f);
                 residueRSPPeelProgram.update("highlightColor", mOutlineColor);
@@ -1008,11 +1009,14 @@ void SurfaceDynamicsVisualization::renderLoop()
                 // Bind output images aka k-Buffer
                 mupKBufferTexture->bindAsImage(4, GPUAccess::WRITE_ONLY);
 
-                // TODO
-                // - encode averageLayersDelta as buffer (atoms would have to know which amino acid it belongs to)
-                //  - amino acid mapping
-                //  - average layers delta for an amino acid per frame (some smoothing would be nice)
-                //  - color of amino acid for...color of atoms
+                // Bind coloring
+                mupGPUProtein->bindColorsAminoAcid(6);
+
+                // Bind buffer with amion acid mapping
+                mupGPUProtein->bindAminoAcidMapping(7);
+
+                // Bind buffer with smoothed layers delta
+                mupLayersDeltaBuffer->bind(8);
 
                 // Execute drawing aka peeling generated pixels into k-Buffer
                 glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
@@ -1870,7 +1874,7 @@ void SurfaceDynamicsVisualization::renderGUI()
             mSelectedAtom = glm::clamp(mSelectedAtom, 0, mupGPUProtein->getAtomCount() - 1);
             ImGui::Text(std::string("Index: " + std::to_string(mSelectedAtom)).c_str());
             ImGui::Text(std::string("Element: " + mupGPUProtein->getElement(mSelectedAtom)).c_str());
-            ImGui::Text(std::string("Aminoacid: " + mupGPUProtein->getAminoacid(mSelectedAtom)).c_str());
+            ImGui::Text(std::string("Aminoacid: " + mupGPUProtein->getAminoAcid(mSelectedAtom)).c_str());
             if(frameComputed())
             {
                 // Layer
@@ -2293,8 +2297,8 @@ void SurfaceDynamicsVisualization::renderGUI()
                     ImGui::Text(mupGPUProtein->getElement(atomIndex).c_str());
                     ImGui::SameLine();
 
-                    // Aminoacid of atom
-                    ImGui::Text(mupGPUProtein->getAminoacid(atomIndex).c_str());
+                    // Amino acid of atom
+                    ImGui::Text(mupGPUProtein->getAminoAcid(atomIndex).c_str());
                     ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 60);
 
                     // Select that atom (use ## to add number for an unique button id)
@@ -3004,7 +3008,7 @@ void SurfaceDynamicsVisualization::updateGroupAnalysis()
     }
 }
 
-// TODO check for CORRECTNESS!!!
+// TODO check for CORRECTNESS!!! AND OPTIMIZE! (especially .size stuff)
 void SurfaceDynamicsVisualization::updateAminoAcidsAnaylsis()
 {
     // Clear result vector
@@ -3091,6 +3095,46 @@ void SurfaceDynamicsVisualization::updateAminoAcidsAnaylsis()
         // Push back result
         mAminoAcidAnalysis.push_back(current);
     }
+
+    // Fill buffer for residue surface proximity rendering with smoothed delta values
+    int aminoAcidCount = aminoAcids.size();
+    std::vector<GLfloat> smoothLayerDelta;
+    smoothLayerDelta.reserve(aminoAcidCount * (mComputedEndFrame - mComputedStartFrame + 1)); // amino acid count times count of computed frames
+
+    // Gaussian kernel
+    const GLfloat gaussian[] = { 0.06136f, 0.24477f, 0.38774f, 0.24477f, 0.06136f };
+
+    // Do it for each amino acid
+    for(int i = 0; i < aminoAcidCount; i++)
+    {
+        // Count of indices
+        int count = mAminoAcidAnalysis.at(i).averageLayersDelta.size();
+
+        // Go over frames for each amino acid
+        for(int j = 0; j < count; j++)
+        {
+            // Smooth delta (hardcoded for given gaussian kernel)
+            float value = 0;
+            for(int k = -2; k <= 2; k++)
+            {
+                // Check ranges
+                int index = j + k;
+                if(index < 0 || index >= count)
+                {
+                    continue;
+                }
+
+                // Add up value
+                value += mAminoAcidAnalysis.at(i).averageLayersDelta.at(index) * gaussian[k + 2];
+            }
+
+            // Push back value to smoothed vector
+            smoothLayerDelta.push_back(value);
+        }
+    }
+
+    // Fill values into GPUBuffer
+    mupLayersDeltaBuffer->fill(smoothLayerDelta, GL_DYNAMIC_DRAW);
 }
 
 GLuint SurfaceDynamicsVisualization::createCubemapTexture(

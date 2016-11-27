@@ -47,7 +47,7 @@ uniform int smoothAnimationRadius;
 uniform float smoothAnimationMaxDeviation;
 uniform int frameCount;
 uniform vec3 selectionColor;
-uniform int ascensionFrame;
+uniform int localFrame;
 uniform float ascensionChangeRadiusMultiplier;
 
 // Global
@@ -104,7 +104,7 @@ void main()
     gl_Position = vec4(center, 1);
 
     // Extract radius inclusive visualization of ascension angle
-    float angle = ascension[(ascensionFrame * atomCount) + int(atomIndex)];
+    float angle = ascension[(localFrame * atomCount) + int(atomIndex)];
     float originalRadius = radii[atomIndex] + probeRadius;
     vertRadius =
     originalRadius
