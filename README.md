@@ -17,7 +17,7 @@ conda install -c omnia mdtraj
 ```
 
 ## Requirements
-OpenGL 4.3 compatible hardware and driver.
+OpenGL 4.5 compatible hardware and driver.
     
 ## Projects
 Multiple projects base on this framework. One can find them within the subfolders of this repository.
