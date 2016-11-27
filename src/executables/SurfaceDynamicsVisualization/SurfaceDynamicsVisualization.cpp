@@ -234,19 +234,15 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     Logger::instance().print("..done");
 
     // # Group rendering texture and semaphore
-    glGenTextures(1, &mGroupRenderingTexture);
-    glBindTexture(GL_TEXTURE_2D, mGroupRenderingTexture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    std::vector<GLfloat> emptyData(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight() * 4, 0.f);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight(), 0, GL_RGBA, GL_FLOAT, &emptyData[0]);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    mupGroupRenderingTexture = std::unique_ptr<GPURenderTexture>(
+        new GPURenderTexture(
+            mupMoleculeFramebuffer->getWidth(),
+            mupMoleculeFramebuffer->getHeight(),
+            GPURenderTexture::Type::RGBA32F));
     std::vector<GLuint> emptyDataSemaphore(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight(), 0.f);
     mupGroupRenderingSemaphore = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(emptyDataSemaphore));
 
-    // # Prepare k-Buffer (TODO: what to do at change of screen resolution?)
+    // # Prepare k-Buffer
     glGenTextures(1, &mKBufferTexture);
     glBindTexture(GL_TEXTURE_2D_ARRAY, mKBufferTexture);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -256,14 +252,11 @@ SurfaceDynamicsVisualization::SurfaceDynamicsVisualization(std::string filepathP
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RG32F, mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight(), mKBufferLayerCount);
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 
-    glGenTextures(1, &mKBufferPixelCounterTexture);
-    glBindTexture(GL_TEXTURE_2D, mKBufferPixelCounterTexture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexStorage2D(GL_TEXTURE_2D, 1, GL_R32UI, mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight());
-    glBindTexture(GL_TEXTURE_2D, 0);
+    mupKBufferCounter = std::unique_ptr<GPURenderTexture>(
+        new GPURenderTexture(
+            mupMoleculeFramebuffer->getWidth(),
+            mupMoleculeFramebuffer->getHeight(),
+            GPURenderTexture::Type::R32UI));
 
     // # Ascension helper texture
     glGenTextures(1, &mAscensionHelperTexture);
@@ -300,13 +293,11 @@ SurfaceDynamicsVisualization::~SurfaceDynamicsVisualization()
     glDeleteTextures(1, &mBeachCubemapTexture);
     glDeleteTextures(1, &mWhiteCubemapTexture);
 
-    // Delete group rendering texture
-    glDeleteTextures(1, &mGroupRenderingTexture);
-
     // Delete ascension helper texture
     glDeleteTextures(1, &mAscensionHelperTexture);
 
-    // TODO delete k-Buffer!!!
+    // Delete k-Buffer
+    glDeleteTextures(1, &mKBufferTexture);
 
     Logger::instance().print("..done");
 
@@ -686,20 +677,28 @@ void SurfaceDynamicsVisualization::renderLoop()
         bool wasResized = mupMoleculeFramebuffer->resize(mWindowWidth, mWindowHeight, mSuperSampling);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // When molecule framebuffer has been resized, do so for group rendering texture, too
+        // When molecule framebuffer has been resized, do so for other buffers too
         if(wasResized)
         {
-            glBindTexture(GL_TEXTURE_2D, mGroupRenderingTexture);
-            std::vector<GLfloat> emptyData(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight() * 4, 0);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight(), 0, GL_RGBA, GL_FLOAT, &emptyData[0]);
-            glBindTexture(GL_TEXTURE_2D, 0);
+            // Group rendering texture
+            mupGroupRenderingTexture->resize(mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight());
             std::vector<GLuint> emptyDataSemaphore(mupMoleculeFramebuffer->getWidth() * mupMoleculeFramebuffer->getHeight(), 0.f);
             mupGroupRenderingSemaphore = std::unique_ptr<GPUTextureBuffer>(new GPUTextureBuffer(emptyDataSemaphore));
+
+            // K-Buffer
+            glBindTexture(GL_TEXTURE_2D_ARRAY, mKBufferTexture);
+            glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RG32F, mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight(), mKBufferLayerCount);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            mupKBufferCounter->resize(mupMoleculeFramebuffer->getWidth(), mupMoleculeFramebuffer->getHeight());
         }
         else
         {
             // Clear group rendering texture
-            glClearTexImage(mGroupRenderingTexture, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+            mupGroupRenderingTexture->clear();
+
+            // Clear k-Buffer
+            mupKBufferCounter->clear();
+            glClearTexImage(mKBufferTexture, 0, GL_RG, GL_FLOAT, NULL); // todo: Each level within a loop?
         }
 
         // Bind buffers of radii and trajectory for rendering molecule
@@ -709,14 +708,7 @@ void SurfaceDynamicsVisualization::renderLoop()
         mupGroupIndicators->bind(2);
 
         // Bind image for group rendering
-        glBindImageTexture(
-            3,
-            mGroupRenderingTexture,
-            0,
-            GL_TRUE,
-            0,
-            GL_READ_WRITE,
-            GL_RGBA32F);
+        mupGroupRenderingTexture->bindAsImage(3, GPUAccess::READ_WRITE);
 
         // Bind semaphore image for group rendering
         mupGroupRenderingSemaphore->bindAsImage(4, GPUAccess::READ_WRITE);
@@ -980,10 +972,6 @@ void SurfaceDynamicsVisualization::renderLoop()
 
             case Rendering::RESIDUE_SURFACE_PROXIMITY:
 
-                // Clear both used images before usage
-                glClearTexImage(mKBufferTexture, 0, GL_RG, GL_FLOAT, NULL); // todo: Each level within a loop?
-                glClearTexImage(mKBufferPixelCounterTexture, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, NULL);
-
                 // # Render into k-Buffer
 
                 // Disable depth test
@@ -1013,14 +1001,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 // is not used here...
 
                 // Bind counter for pixels in k-Buffer at processed fragment
-                glBindImageTexture(
-                    2,
-                    mKBufferPixelCounterTexture,
-                    0,
-                    GL_TRUE,
-                    0,
-                    GL_READ_WRITE,
-                    GL_R32UI);
+                mupKBufferCounter->bindAsImage(2, GPUAccess::READ_WRITE);
 
                 // Bind output images aka k-Buffer
                 glBindImageTexture(
@@ -1092,14 +1073,7 @@ void SurfaceDynamicsVisualization::renderLoop()
             mupGroupIndicators->bind(2);
 
             // Bind image for group rendering
-            glBindImageTexture(
-                3,
-                mGroupRenderingTexture,
-                0,
-                GL_TRUE,
-                0,
-                GL_READ_WRITE,
-                GL_RGBA32F);
+            mupGroupRenderingTexture->bindAsImage(3, GPUAccess::READ_WRITE);
 
             // Bind semaphore image for group rendering
             mupGroupRenderingSemaphore->bindAsImage(4, GPUAccess::READ_WRITE);
@@ -1193,7 +1167,7 @@ void SurfaceDynamicsVisualization::renderLoop()
 
         // Bind group rendering texture
         glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_2D, mGroupRenderingTexture);
+        glBindTexture(GL_TEXTURE_2D, mupGroupRenderingTexture->getTexture());
 
         // Draw screenfilling quad
         screenFillingProgram.use();

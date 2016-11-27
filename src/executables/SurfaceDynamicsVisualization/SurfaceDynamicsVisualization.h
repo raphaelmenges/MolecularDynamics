@@ -19,6 +19,7 @@
 #include "Path.h"
 #include "SurfaceExtraction/GPUHullSamples.h"
 #include "Utils/Logger.h"
+#include "SurfaceExtraction/GPURenderTexture.h"
 
 // Notes:
 // - Calculations done in angstrom
@@ -310,12 +311,12 @@ private:
     int mSurfaceValidationSampleCount = 0;
 
     // Texture for rendering group atoms on top of molecule
-    GLuint mGroupRenderingTexture;
+    std::unique_ptr<GPURenderTexture> mupGroupRenderingTexture;
     std::unique_ptr<GPUTextureBuffer> mupGroupRenderingSemaphore;
 
     // Residue surface proximity rendering buffers
-    GLuint mKBufferTexture;
-    GLuint mKBufferPixelCounterTexture;
+    std::unique_ptr<GPURenderTexture> mupKBufferCounter;
+    GLuint mKBufferTexture; // TODO: extend GPURenderTexture to hold texture array
 
     // Ascension helper texture
     GLuint mAscensionHelperTexture;
