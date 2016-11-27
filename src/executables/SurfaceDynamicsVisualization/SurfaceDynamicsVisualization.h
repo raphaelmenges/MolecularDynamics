@@ -226,7 +226,7 @@ private:
     float mAscensionChangeRadiusMultiplier = 0.f;
     bool mMarkSurfaceAtoms = false;
     bool mRepeatOnlyComputed = false;
-    bool mSuperSampling = false;
+    bool mSuperSampling = true;
     int mPathLengthStartFrame = 0;
     int mPathLengthEndFrame = 0;
     bool mRenderSelection = true;

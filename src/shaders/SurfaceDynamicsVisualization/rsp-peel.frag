@@ -36,9 +36,15 @@
 
 #version 450
 
-// Output images
-layout(binding = 2, r32ui) restrict coherent uniform uimage2D KBufferCounter;
-layout(binding = 3, rg32f) writeonly restrict uniform image2DArray KBuffer;
+// Group indicator
+layout(std430, binding = 2) restrict readonly buffer GroupIndicatorBuffer
+{
+  float groupIndicator[];
+};
+
+// Output images for k-Buffer
+layout(binding = 3, r32ui) restrict coherent uniform uimage2D KBufferCounter;
+layout(binding = 4, rg32f) writeonly restrict uniform image2DArray KBuffer;
 
 // In / out
 in vec2 uv;
@@ -48,6 +54,7 @@ flat in vec3 color;
 flat in int index;
 
 // Uniforms
+uniform float time;
 uniform mat4 view;
 uniform mat4 projection;
 uniform vec3 cameraWorldPos;
@@ -55,6 +62,8 @@ uniform vec3 lightDir;
 uniform float clippingPlane;
 uniform float depthDarkeningStart;
 uniform float depthDarkeningEnd;
+uniform float highlightMultiplier;
+uniform vec4 highlightColor;
 
 // Incremention of counter which counts pixels in k-Buffer
 uint addPixelFragCounter()
@@ -162,7 +171,11 @@ void main()
     // Rim lighting
     finalColor += ((0.75 * lighting) + 0.25) * pow(1.0 - dot(normal, vec3(0,0,1)), 3);
 
+    // Highlight (TODO: is float precision enough to add time with frag coord?)
+    float highlight = (sin((((gl_FragCoord.x + gl_FragCoord.y)* 3.14) / 8.0) +  (8.f * time)) + 1.0) / 2.0;
+    finalColor = mix(finalColor, highlightColor.rgb, highlightColor.a * groupIndicator[index] * 0.5 * highlight * highlightMultiplier);
+
     // Output color into k-Buffer
-    submitPixelFragValueToOIT(vec4(finalColor, 0.5), customDepth);
+    submitPixelFragValueToOIT(vec4(finalColor, 0.75), customDepth);
 }
 

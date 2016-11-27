@@ -978,6 +978,7 @@ void SurfaceDynamicsVisualization::renderLoop()
 
                 // Bind program and fill uniforms
                 residueRSPPeelProgram.use();
+                residueRSPPeelProgram.update("time", mAccTime);
                 residueRSPPeelProgram.update("view", mupCamera->getViewMatrix());
                 residueRSPPeelProgram.update("projection", mupCamera->getProjectionMatrix());
                 residueRSPPeelProgram.update("cameraWorldPos", mupCamera->getPosition());
@@ -995,15 +996,17 @@ void SurfaceDynamicsVisualization::renderLoop()
                 residueRSPPeelProgram.update("selectionColor", mSelectionColor);
                 residueRSPPeelProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
                 residueRSPPeelProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
+                residueRSPPeelProgram.update("highlightMultiplier", mRenderOutline ? 1.f : 0.f);
+                residueRSPPeelProgram.update("highlightColor", mOutlineColor);
 
                 // Following image binding overwrites binding in scope outside of this case. But group rendering stuff
-                // is not used here, there seems to be good practice to use those slots.
+                // is not used here, there seems to be a good idea to use those slots.
 
                 // Bind counter for pixels in k-Buffer at processed fragment
-                mupKBufferCounter->bindAsImage(2, GPUAccess::READ_WRITE);
+                mupKBufferCounter->bindAsImage(3, GPUAccess::READ_WRITE);
 
                 // Bind output images aka k-Buffer
-                mupKBufferTexture->bindAsImage(3, GPUAccess::WRITE_ONLY);
+                mupKBufferTexture->bindAsImage(4, GPUAccess::WRITE_ONLY);
 
                 // Execute drawing aka peeling generated pixels into k-Buffer
                 glDrawArrays(GL_POINTS, 0, mupGPUProtein->getAtomCount());
@@ -1271,9 +1274,12 @@ void SurfaceDynamicsVisualization::mouseButtonCallback(int button, int action, i
     }
     else if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
-        int atomIndex = getAtomBeneathCursor();
-        mSelectedAtom = atomIndex >= 0 ? atomIndex : mSelectedAtom;
-        mNextAnalyseAtomIndex = mSelectedAtom;
+        if(mRendering != Rendering::RESIDUE_SURFACE_PROXIMITY) // only rendering mode where pick index is not set
+        {
+            int atomIndex = getAtomBeneathCursor();
+            mSelectedAtom = atomIndex >= 0 ? atomIndex : mSelectedAtom;
+            mNextAnalyseAtomIndex = mSelectedAtom;
+        }
     }
 }
 
