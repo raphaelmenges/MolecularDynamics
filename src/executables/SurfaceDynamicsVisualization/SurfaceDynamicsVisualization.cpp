@@ -351,7 +351,8 @@ void SurfaceDynamicsVisualization::renderLoop()
     ShaderProgram analysisProgram("/SurfaceDynamicsVisualization/analysis.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
     ShaderProgram fallbackProgram("/SurfaceDynamicsVisualization/fallback.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
     ShaderProgram selectionProgram("/SurfaceDynamicsVisualization/selection.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/impostor.frag");
-    ShaderProgram residueSurfaceProximityProgram("/SurfaceDynamicsVisualization/rsp-peel.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/rsp-peel.frag");
+    ShaderProgram residueRSPPeelProgram("/SurfaceDynamicsVisualization/rsp-peel.vert", "/SurfaceDynamicsVisualization/impostor.geom", "/SurfaceDynamicsVisualization/rsp-peel.frag");
+    ShaderProgram residueRSPResolveProgram("/SurfaceDynamicsVisualization/screenfilling.vert", "/SurfaceDynamicsVisualization/screenfilling.geom", "/SurfaceDynamicsVisualization/rsp-resolve.frag");
 
     // Shader program to mark surface atoms
     ShaderProgram surfaceMarksProgram("/SurfaceDynamicsVisualization/point.vert", "/SurfaceDynamicsVisualization/point.geom", "/SurfaceDynamicsVisualization/point.frag");
@@ -696,9 +697,8 @@ void SurfaceDynamicsVisualization::renderLoop()
             // Clear group rendering texture
             mupGroupRenderingTexture->clear();
 
-            // Clear k-Buffer
+            // Clear k-Buffer (only counter must be cleared, not buffer itself)
             mupKBufferCounter->clear();
-            glClearTexImage(mKBufferTexture, 0, GL_RG, GL_FLOAT, NULL); // todo: Each level within a loop?
         }
 
         // Bind buffers of radii and trajectory for rendering molecule
@@ -978,24 +978,24 @@ void SurfaceDynamicsVisualization::renderLoop()
                 glDisable(GL_DEPTH_TEST);
 
                 // Bind program and fill uniforms
-                residueSurfaceProximityProgram.use();
-                residueSurfaceProximityProgram.update("view", mupCamera->getViewMatrix());
-                residueSurfaceProximityProgram.update("projection", mupCamera->getProjectionMatrix());
-                residueSurfaceProximityProgram.update("cameraWorldPos", mupCamera->getPosition());
-                residueSurfaceProximityProgram.update("probeRadius", mRenderWithProbeRadius ? mComputedProbeRadius : 0.f);
-                residueSurfaceProximityProgram.update("lightDir", mLightDirection);
-                residueSurfaceProximityProgram.update("selectedIndex", selectedAtom);
-                residueSurfaceProximityProgram.update("clippingPlane", mClippingPlane);
-                residueSurfaceProximityProgram.update("frame", mFrame);
-                residueSurfaceProximityProgram.update("atomCount", mupGPUProtein->getAtomCount());
-                residueSurfaceProximityProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
-                residueSurfaceProximityProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
-                residueSurfaceProximityProgram.update("frameCount", mupGPUProtein->getFrameCount());
-                residueSurfaceProximityProgram.update("depthDarkeningStart", mDepthDarkeningStart);
-                residueSurfaceProximityProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
-                residueSurfaceProximityProgram.update("selectionColor", mSelectionColor);
-                residueSurfaceProximityProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
-                residueSurfaceProximityProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
+                residueRSPPeelProgram.use();
+                residueRSPPeelProgram.update("view", mupCamera->getViewMatrix());
+                residueRSPPeelProgram.update("projection", mupCamera->getProjectionMatrix());
+                residueRSPPeelProgram.update("cameraWorldPos", mupCamera->getPosition());
+                residueRSPPeelProgram.update("probeRadius", mRenderWithProbeRadius ? mComputedProbeRadius : 0.f);
+                residueRSPPeelProgram.update("lightDir", mLightDirection);
+                residueRSPPeelProgram.update("selectedIndex", selectedAtom);
+                residueRSPPeelProgram.update("clippingPlane", mClippingPlane);
+                residueRSPPeelProgram.update("frame", mFrame);
+                residueRSPPeelProgram.update("atomCount", mupGPUProtein->getAtomCount());
+                residueRSPPeelProgram.update("smoothAnimationRadius", mSmoothAnimationRadius);
+                residueRSPPeelProgram.update("smoothAnimationMaxDeviation", mSmoothAnimationMaxDeviation);
+                residueRSPPeelProgram.update("frameCount", mupGPUProtein->getFrameCount());
+                residueRSPPeelProgram.update("depthDarkeningStart", mDepthDarkeningStart);
+                residueRSPPeelProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
+                residueRSPPeelProgram.update("selectionColor", mSelectionColor);
+                residueRSPPeelProgram.update("ascensionFrame", mFrame - mComputedStartFrame);
+                residueRSPPeelProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
 
                 // Following image binding overwrites binding in scope outside of this case. But group rendering stuff
                 // is not used here...
@@ -1020,6 +1020,21 @@ void SurfaceDynamicsVisualization::renderLoop()
                 glEnable(GL_DEPTH_TEST);
 
                 // # Render result of blending into molecule framebuffer
+
+                // Bind input images
+                mupKBufferCounter->bindAsImage(0, GPUAccess::READ_ONLY);
+                glBindImageTexture(
+                    1,
+                    mKBufferTexture,
+                    0,
+                    GL_TRUE,
+                    0,
+                    GL_READ_ONLY,
+                    GL_RG32F);
+
+                // Render screenfilling quad with results from k-Buffer
+                residueRSPResolveProgram.use();
+                glDrawArrays(GL_POINTS, 0, 1);
 
                 break;
             }

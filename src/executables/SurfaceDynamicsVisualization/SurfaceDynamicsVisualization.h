@@ -161,7 +161,7 @@ private:
     const glm::vec3 mSelectionColor = glm::vec3(0.2f, 1.0f, 0.0f);
     const bool mFrameLogging = false;
     const std::string mNoComputedFrameMessage = "Frame was not computed.";
-    const GLuint mKBufferLayerCount = 8; // remember to adapt value in shaders as well
+    const GLuint mKBufferLayerCount = 30; // remember to adapt value in shaders as well
 
     // Colors for rendering layers (outer to inner, repeating if too many)
     const std::vector<glm::vec3> mLayerColors =

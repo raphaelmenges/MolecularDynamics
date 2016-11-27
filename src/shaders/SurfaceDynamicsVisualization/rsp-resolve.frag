@@ -32,38 +32,19 @@
 
 #version 450
 
-// Defines (no idea whether necessary)
-#define INTEL_ordering		0
-#define NV_interlock		0
-
-#define packing                 0
-#define multipass               0
-
-#define MAX_ITERATIONS          200
-
+// Defines
 #define HEAP_SIZE               32
-#define HEAP_SIZE_1p		HEAP_SIZE + 1
 #define HEAP_SIZE_1n		HEAP_SIZE - 1
-#define HEAP_SIZE_2d		HEAP_SIZE >> 1
-#define HEAP_SIZE_LOG2		log2(HEAP_SIZE)
-#define ARRAY_VS_HEAP		16
 #define INSERTION_VS_SHELL	16
-
-#define KB_SIZE                 8
-#define STENCIL_SIZE		((HEAP_SIZE < 32) ? HEAP_SIZE : 32)
-
-#define HISTOGRAM_SIZE		1024
 #define LOCAL_SIZE              32
 #define LOCAL_SIZE_1n		LOCAL_SIZE - 1
-
-#define Packed_1f               4294967295U // 0xFFFFFFFFU
 
 // Output
 out vec4 fragColor;
 
 // Input images
-layout(r32ui) readonly uniform uimage2D	image_counter;
-layout(rg32f) readonly uniform image2DArray image_peel;
+layout(r32ui, binding = 0) readonly uniform uimage2D	image_counter;
+layout(rg32f, binding = 1) readonly uniform image2DArray image_peel;
 
 // Getter for pixel count in k-Buffer
 uint getPixelFragCounter()
@@ -165,14 +146,10 @@ vec4 resolve(int num)
     for(int i = 0; i < num; i++)
     {
         vec4 fragment =  unpackUnorm4x8(floatBitsToUint(fragments[i].r));
-        //vec4 fragment =  unpackUnorm4x8(floatBitsToUint(pack));
-        //C.xyz = C.xyz + (1 - C.a) * fragment.xyz * fragment.a;
-        //C.a = (1 - fragment.a) * C.a;
-        //fragment = vec4(1,0,0,0.5);
         C.xyz 	= C.a * (fragment.a * fragment.xyz) + C.xyz;
         C.a 	= (1.0 - fragment.a) * C.a;
     }
-    return vec4(C);
+    return C;
 }
 
 // Main function
@@ -204,8 +181,8 @@ void main(void)
         }
         // fragments now contains an unsorted list of valid fragments
         // -> sort and blend!
-
-        fragColor = resolve(counterTotal);
+        vec4 color = resolve(counterTotal);
+        fragColor = vec4(color.rgb, 1.0 - color.a);
     }
     else
         discard;

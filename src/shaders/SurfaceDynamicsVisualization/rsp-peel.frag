@@ -36,32 +36,6 @@
 
 #version 450
 
-// Defines (no idea whether necessary)
-#define INTEL_ordering		0
-#define NV_interlock		0
-
-#define packing                 0
-#define multipass               0
-
-#define MAX_ITERATIONS          200
-
-#define HEAP_SIZE               32
-#define HEAP_SIZE_1p		HEAP_SIZE + 1
-#define HEAP_SIZE_1n		HEAP_SIZE - 1
-#define HEAP_SIZE_2d		HEAP_SIZE >> 1
-#define HEAP_SIZE_LOG2		log2(HEAP_SIZE)
-#define ARRAY_VS_HEAP		16
-#define INSERTION_VS_SHELL	16
-
-#define KB_SIZE                 8
-#define STENCIL_SIZE		((HEAP_SIZE < 32) ? HEAP_SIZE : 32)
-
-#define HISTOGRAM_SIZE		1024
-#define LOCAL_SIZE              32
-#define LOCAL_SIZE_1n		LOCAL_SIZE - 1
-
-#define Packed_1f               4294967295U // 0xFFFFFFFFU
-
 // Output images
 layout(binding = 2, r32ui) restrict coherent uniform uimage2D KBufferCounter;
 layout(binding = 3, rg32f) writeonly restrict uniform image2DArray KBuffer;
@@ -103,9 +77,6 @@ void submitPixelFragValueToOIT(vec4 val, float zValue)
     float C = uintBitsToFloat(packUnorm4x8(vec4(val))); // pack 32bit RGBA into single float
     int index = int(addPixelFragCounter()); // increment pixel counter for processed fragment and get valid k-Buffer index for current value
     setPixelFragValue(index, vec4(C, zValue, 0.0f, 0.0f)); // add value to k-Buffer
-
-    // TODO: Testing
-    fragColor = vec4(float((index) * 10) / 255.0, 0.0, 0.0, 1.0);
 }
 
 // Main function
@@ -194,8 +165,8 @@ void main()
     finalColor += ((0.75 * lighting) + 0.25) * pow(1.0 - dot(normal, vec3(0,0,1)), 3);
 
     // Output color into k-Buffer
-    submitPixelFragValueToOIT(vec4(finalColor, 0.75), customDepth);
-    // fragColor = vec4(finalColor, 1); // rendering it to framebuffer, too (TODO: delete)
+    submitPixelFragValueToOIT(vec4(finalColor, 0.5), customDepth);
+    fragColor = vec4(finalColor, 1); // rendering it to framebuffer, too (TODO: delete)
 
     // Set pick index to nothing
     pickIndex = vec3(0, 0, 0);
