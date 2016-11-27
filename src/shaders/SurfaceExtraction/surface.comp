@@ -59,7 +59,7 @@ layout(binding = 5, r32ui) restrict writeonly uniform uimageBuffer InternalIndic
 layout(binding = 6, r32ui) restrict writeonly uniform uimageBuffer SurfaceIndices;
 
 // ## Save as internal
-void saveAsInternal(int atomIndex)
+void saveAsInternal(const int atomIndex)
 {
     // Increment atomic counter
     uint idx = atomicCounterIncrement(InternalCount);
@@ -69,7 +69,7 @@ void saveAsInternal(int atomIndex)
 }
 
 // ## Save as surface
-void saveAsSurface(int atomIndex)
+void saveAsSurface(const int atomIndex)
 {
     // Increment atomic counter
     uint idx = atomicCounterIncrement(SurfaceCount);
@@ -80,8 +80,8 @@ void saveAsSurface(int atomIndex)
 
 // ## Check for parallelism
 bool checkParallelism(
-    vec4 plane,
-    vec4 otherPlane)
+    const vec4 plane,
+    const vec4 otherPlane)
 {
     return (1.0 <= abs(dot(plane.xyz, otherPlane.xyz)));
 }
@@ -89,8 +89,8 @@ bool checkParallelism(
 // ## Determines whether point lies in halfspace of plane direction
 // http://stackoverflow.com/questions/15688232/check-which-side-of-a-plane-points-are-on
 bool pointInHalfspaceOfPlane(
-    vec4 plane,
-    vec3 point)
+    const vec4 plane,
+    const vec3 point)
 {
     // Use negative distance of plane
     return 0 < dot(plane, vec4(point, -1));
@@ -99,8 +99,8 @@ bool pointInHalfspaceOfPlane(
 // ## Intersection line of two planes
 // http://stackoverflow.com/questions/6408670/line-of-intersection-between-two-planes
 void intersectPlanes(
-    vec4 plane,
-    vec4 otherPlane,
+    const vec4 plane,
+    const vec4 otherPlane,
     inout vec3 linePoint,
     inout vec3 lineDir)
 {
@@ -124,10 +124,10 @@ void intersectPlanes(
 // ## Part under square root of intersection line and sphere
 // https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
 float underSQRT(
-    vec3 linePoint,
-    vec3 lineDir,
-    vec3 sphereCenter,
-    float sphereRadius)
+    const vec3 linePoint,
+    const vec3 lineDir,
+    const vec3 sphereCenter,
+    const float sphereRadius)
 {
     float underSQRT1 = dot(lineDir, (linePoint - sphereCenter));
     underSQRT1 = underSQRT1 * underSQRT1;
@@ -137,7 +137,7 @@ float underSQRT(
 }
 
 // ## Function to test whether endpoint is NOT cut away. Called after cutting face list is minimized
-bool testEndpoint(vec3 endpoint, int excludeA, int excludeB)
+bool testEndpoint(const vec3 endpoint, const int excludeA, const int excludeB)
 {
     // Iterate over cuttingFaceIndices entries
     for(int i = 0; i < cuttingFaceIndicesCount; i++)
