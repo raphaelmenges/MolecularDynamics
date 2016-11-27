@@ -8,7 +8,7 @@
 const float TWO_PI = 2.0 * 3.14159265359;
 
 // Color and radius of impostor
-out vec3 vertColor;
+out vec4 vertColor;
 out float vertRadius;
 
 // Index of atom
@@ -116,7 +116,7 @@ void main()
     // Set color
     if(atomIndex == selectedIndex)
     {
-        vertColor = selectionColor;
+        vertColor = vec4(selectionColor, 1);
     }
     else
     {
@@ -133,31 +133,34 @@ void main()
         float m = v - c;
 
         // Set color
+        vec3 color;
         if(0.0 <= hDegree && hDegree < 60.0)
         {
-            vertColor = vec3(c, x, 0);
+            color = vec3(c, x, 0);
         }
         else if(60.0 <= hDegree && hDegree < 120.0)
         {
-            vertColor = vec3(x, c, 0);
+            color = vec3(x, c, 0);
         }
         else if(120.0 <= hDegree && hDegree < 180.0)
         {
-            vertColor = vec3(0, c, x);
+            color = vec3(0, c, x);
         }
         else if(180.0 <= hDegree && hDegree < 240.0)
         {
-            vertColor = vec3(0, x, c);
+            color = vec3(0, x, c);
         }
         else if(240.0 <= hDegree && hDegree < 300.0)
         {
-            vertColor = vec3(x, 0, c);
+            color = vec3(x, 0, c);
         }
         else if(300.0 <= hDegree && hDegree < 360.0)
         {
-            vertColor = vec3(c, 0, x);
+            color = vec3(c, 0, x);
         }
-        vertColor += m;
+        color += m;
+
+        vertColor = vec4(color, 1);
     }
 
     // Set index

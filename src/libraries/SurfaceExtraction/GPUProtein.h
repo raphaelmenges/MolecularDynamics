@@ -73,10 +73,10 @@ public:
     glm::vec3 getCenterOfMass(int frame) const { return mCentersOfMass.at(frame); }
 
     // Get element
-    std::string getElement(int atomIndex) const { return mElementNames.at(atomIndex); }
+    std::string getElementName(int atomIndex) const { return mElementNames.at(atomIndex); }
 
     // Get amino acid
-    std::string getAminoAcid(int atomIndex) const { return mAminoAcidsNames.at(atomIndex); }
+    std::string getAminoAcidName(int atomIndex) const { return mAminoAcidsNames.at(atomIndex); }
 
     // Get minimum initial coordinates
     glm::vec3 getMinCoordinates() const { return mMinCoordinates; }

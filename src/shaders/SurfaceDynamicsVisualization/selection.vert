@@ -5,7 +5,7 @@
 #version 430
 
 // Color and radius of impostor
-out vec3 vertColor;
+out vec4 vertColor;
 out float vertRadius;
 
 // Index of atom
@@ -94,7 +94,7 @@ void main()
     vertRadius = radii[atomIndex] + probeRadius;
 
     // Set color
-    vertColor = color;
+    vertColor = vec4(color, 1);
 
     // Set index (not used for pick index since framebuffer has no attachment for it)
     vertIndex = atomIndex;

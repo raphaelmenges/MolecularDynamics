@@ -50,7 +50,7 @@ layout(binding = 4, rg32f) writeonly restrict uniform image2DArray KBuffer;
 in vec2 uv;
 flat in float radius;
 flat in vec3 center;
-flat in vec3 color;
+flat in vec4 color;
 flat in int index;
 
 // Uniforms
@@ -166,7 +166,7 @@ void main()
     }
 
     // Some "ambient" lighting combined with specular
-    vec3 finalColor = depthDarkening * mix(color * mix(vec3(0.4, 0.45, 0.5), vec3(1.0, 1.0, 1.0), lighting), vec3(1,1,1), specular);
+    vec3 finalColor = depthDarkening * mix(color.rgb * mix(vec3(0.4, 0.45, 0.5), vec3(1.0, 1.0, 1.0), lighting), vec3(1,1,1), specular);
 
     // Rim lighting
     finalColor += ((0.75 * lighting) + 0.25) * pow(1.0 - dot(normal, vec3(0,0,1)), 3);
@@ -176,6 +176,6 @@ void main()
     finalColor = mix(finalColor, highlightColor.rgb, highlightColor.a * groupIndicator[index] * 0.5 * highlight * highlightMultiplier);
 
     // Output color into k-Buffer
-    submitPixelFragValueToOIT(vec4(finalColor, 0.75), customDepth);
+    submitPixelFragValueToOIT(vec4(finalColor, color.a), customDepth);
 }
 

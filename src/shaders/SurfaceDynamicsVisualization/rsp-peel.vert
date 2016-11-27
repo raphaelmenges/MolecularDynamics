@@ -5,7 +5,7 @@
 #version 430
 
 // Color and radius of impostor
-out vec3 vertColor;
+out vec4 vertColor;
 out float vertRadius;
 
 // Index of atom
@@ -45,11 +45,18 @@ layout(std430, binding = 6) restrict readonly buffer ColoringBuffer
    Color coloring[];
 };
 
-// Amino acid mapping
+// Amino acid mapping. Maps atom index to amino acid index
 layout(std430, binding = 7) restrict readonly buffer MappingBuffer
 {
    unsigned int mapping[];
 };
+
+// Storing layers delta for computed frames for all amino acids
+layout(std430, binding = 8) restrict readonly buffer LayersDeltaBuffer
+{
+   float layersDelta[];
+};
+
 
 // Uniforms
 uniform float probeRadius;
@@ -61,6 +68,7 @@ uniform float smoothAnimationMaxDeviation;
 uniform int frameCount;
 uniform vec3 selectionColor;
 uniform int localFrame;
+uniform int localFrameCount;
 uniform float ascensionChangeRadiusMultiplier;
 
 // Global
@@ -128,11 +136,15 @@ void main()
     // Set color
     if(atomIndex == selectedIndex)
     {
-        vertColor = selectionColor;
+        vertColor = vec4(selectionColor, 1);
     }
     else
     {
-        vertColor = vec3(coloring[atomIndex].r, coloring[atomIndex].g, coloring[atomIndex].b);
+        // Color from amino acid and alpha from delta
+        unsigned int aminoAcidIndex = mapping[atomIndex];
+        float delta = layersDelta[(aminoAcidIndex * localFrameCount) + localFrame];
+        delta = sqrt(delta); // looks better?
+        vertColor = vec4(coloring[atomIndex].r, coloring[atomIndex].g, coloring[atomIndex].b, delta);
     }
 
     // Set index

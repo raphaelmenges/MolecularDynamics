@@ -9,13 +9,13 @@ layout(points) in;
 
 layout(triangle_strip, max_vertices = 4) out;
 
-in vec3 vertColor[1];
+in vec4 vertColor[1];
 in float vertRadius[1];
 in int vertIndex[1];
 out vec2 uv;
 flat out float radius;
 flat out vec3 center;
-flat out vec3 color;
+flat out vec4 color;
 flat out int index;
 
 // Uniforms

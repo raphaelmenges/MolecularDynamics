@@ -6,6 +6,9 @@
 #include "Molecule/MDtrajLoader/Data/Protein.h"
 #include "Molecule/MDtrajLoader/Data/AtomLUT.h"
 
+// TODO: Testing
+#include <iostream>
+
 GPUProtein::GPUProtein(Protein * const pProtein)
 {
     // Create structures for CPU
@@ -80,9 +83,6 @@ GPUProtein::GPUProtein(Protein * const pProtein)
         mCentersOfMass.push_back(accPosition / atomCount);
     }
 
-    // Init SSBOs
-    initSSBOs(atomCount, frameCount);
-
     // Extract amino acids (here should be const pointers :( )
     std::vector<std::string>* pAminoAcids = pProtein->getAminoNames();
 
@@ -101,6 +101,9 @@ GPUProtein::GPUProtein(Protein * const pProtein)
 
         mAminoAcids.push_back(AminoAcid(name, minIndex, maxIndex));
     }
+
+    // Init SSBOs
+    initSSBOs(atomCount, frameCount);
 }
 
 GPUProtein::GPUProtein(const std::vector<glm::vec4>& rAtoms)
@@ -212,25 +215,18 @@ void GPUProtein::initSSBOs(int atomCount, int frameCount)
 
     // Create structure for mapping from atom index to amino acid
     std::vector<GLuint> aminoAcidMapping;
-    aminoAcidMapping.reserve(atomCount);
-    for(int i = 0; i < atomCount; i++)
+    aminoAcidMapping.resize(atomCount, 0);
+    int aminoIndex = 0;
+    for(const AminoAcid& rAminoAcid : mAminoAcids)
     {
-        // Get unqiue name of amino acid
-        std::string name = mAminoAcidsNames.at(i);
-
-        // Search for name in amino acid array (slow but works)
-        int j = 0;
-        for(const std::string& rName : mAminoAcidsNames)
+        // Use start and end index in structure to calculate mapping
+        for(int i = rAminoAcid.startIndex; i <= rAminoAcid.endIndex; i++)
         {
-            if(name == rName)
-            {
-                break;
-            }
-            j++;
+            aminoAcidMapping.at(i) = aminoIndex;
         }
 
-        // Push back index of amino acid for the current atom
-        aminoAcidMapping.push_back(j);
+        // Increment index of amino acid
+        aminoIndex++;
     }
     mAminoAcidMappingBuffer.fill(aminoAcidMapping, GL_STATIC_DRAW);
 }

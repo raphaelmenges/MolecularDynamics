@@ -5,7 +5,7 @@
 #version 430
 
 // Color and radius of impostor
-out vec3 vertColor;
+out vec4 vertColor;
 out float vertRadius;
 
 // Index of atom
@@ -128,15 +128,15 @@ void main()
     // Set color
     if(atomIndex == selectedIndex)
     {
-        vertColor = selectionColor;
+        vertColor = vec4(selectionColor, 1);
     }
     else if(inGroup)
     {
-        vertColor = vec3(1, 1, 0);
+        vertColor = vec4(1, 1, 0, 1);
     }
     else
     {
-        vertColor = vec3(0.2, 0.2, 0.2);
+        vertColor = vec4(0.2, 0.2, 0.2, 1);
     }
 
     // Set index

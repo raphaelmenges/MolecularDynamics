@@ -996,6 +996,7 @@ void SurfaceDynamicsVisualization::renderLoop()
                 residueRSPPeelProgram.update("depthDarkeningEnd", mDepthDarkeningEnd);
                 residueRSPPeelProgram.update("selectionColor", mSelectionColor);
                 residueRSPPeelProgram.update("localFrame", mFrame - mComputedStartFrame);
+                residueRSPPeelProgram.update("localFrameCount", mComputedEndFrame - mComputationStartFrame + 1);
                 residueRSPPeelProgram.update("ascensionChangeRadiusMultiplier", mAscensionChangeRadiusMultiplier);
                 residueRSPPeelProgram.update("highlightMultiplier", mRenderOutline ? 1.f : 0.f);
                 residueRSPPeelProgram.update("highlightColor", mOutlineColor);
@@ -1873,8 +1874,8 @@ void SurfaceDynamicsVisualization::renderGUI()
             if(ImGui::IsItemHovered() && mShowTooltips) { ImGui::SetTooltip("Index of selected atom."); }
             mSelectedAtom = glm::clamp(mSelectedAtom, 0, mupGPUProtein->getAtomCount() - 1);
             ImGui::Text(std::string("Index: " + std::to_string(mSelectedAtom)).c_str());
-            ImGui::Text(std::string("Element: " + mupGPUProtein->getElement(mSelectedAtom)).c_str());
-            ImGui::Text(std::string("Aminoacid: " + mupGPUProtein->getAminoAcid(mSelectedAtom)).c_str());
+            ImGui::Text(std::string("Element: " + mupGPUProtein->getElementName(mSelectedAtom)).c_str());
+            ImGui::Text(std::string("AminoAcid: " + mupGPUProtein->getAminoAcidName(mSelectedAtom)).c_str());
             if(frameComputed())
             {
                 // Layer
@@ -2294,11 +2295,11 @@ void SurfaceDynamicsVisualization::renderGUI()
                     ImGui::SameLine();
 
                     // Element of atom
-                    ImGui::Text(mupGPUProtein->getElement(atomIndex).c_str());
+                    ImGui::Text(mupGPUProtein->getElementName(atomIndex).c_str());
                     ImGui::SameLine();
 
                     // Amino acid of atom
-                    ImGui::Text(mupGPUProtein->getAminoAcid(atomIndex).c_str());
+                    ImGui::Text(mupGPUProtein->getAminoAcidName(atomIndex).c_str());
                     ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 60);
 
                     // Select that atom (use ## to add number for an unique button id)
@@ -3098,8 +3099,9 @@ void SurfaceDynamicsVisualization::updateAminoAcidsAnaylsis()
 
     // Fill buffer for residue surface proximity rendering with smoothed delta values
     int aminoAcidCount = aminoAcids.size();
+    int localFrameCount = (mComputedEndFrame - mComputedStartFrame + 1);
     std::vector<GLfloat> smoothLayerDelta;
-    smoothLayerDelta.reserve(aminoAcidCount * (mComputedEndFrame - mComputedStartFrame + 1)); // amino acid count times count of computed frames
+    smoothLayerDelta.resize(aminoAcidCount * localFrameCount, 0.f); // amino acid count times count of computed frames
 
     // Gaussian kernel
     const GLfloat gaussian[] = { 0.06136f, 0.24477f, 0.38774f, 0.24477f, 0.06136f };
@@ -3129,7 +3131,7 @@ void SurfaceDynamicsVisualization::updateAminoAcidsAnaylsis()
             }
 
             // Push back value to smoothed vector
-            smoothLayerDelta.push_back(value);
+            smoothLayerDelta.at((i * localFrameCount) + j + 1) = value; // add one because at first frame no delta available but it is much easier to have local frame count many entries
         }
     }
 
