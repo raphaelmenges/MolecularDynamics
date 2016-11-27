@@ -69,7 +69,7 @@ void GPURenderTexture::resize(GLuint width, GLuint height)
         case Type::R32UI:
         {
             std::vector<GLuint> zeros(mWidth * mHeight, 0);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_R32UI, mWidth, mHeight, 0, GL_RED, GL_UNSIGNED_INT, &zeros[0]);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_R32UI, mWidth, mHeight, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, &zeros[0]);
             break;
         }
         case Type::RG32F:
@@ -93,7 +93,7 @@ void GPURenderTexture::clear()
     switch (mType)
     {
     case Type::R32UI:
-            glClearTexImage(mTexture, 0, GL_RED, GL_UNSIGNED_INT, NULL);
+            glClearTexImage(mTexture, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, NULL);
             break;
         case Type::RG32F:
             glClearTexImage(mTexture, 0, GL_RG, GL_FLOAT, NULL);
