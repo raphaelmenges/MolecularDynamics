@@ -1714,7 +1714,7 @@ void SurfaceDynamicsVisualization::renderGUI()
             if (ImGui::CollapsingHeader("Rendering", "Rendering##Visualization", true, true))
             {
                 // Surface rendering
-                ImGui::Combo("##RenderingCombo", (int*)&mRendering, "[1] Hull\0[2] Ascension\0[3] Elements\0[4] Aminoacids\0[5] Analysis\0[6] Layers\0[7] Residue Surface Proximity");
+                ImGui::Combo("##RenderingCombo", (int*)&mRendering, "[1] Hull\0[2] Ascension\0[3] Elements\0[4] Aminoacids\0[5] Analysis\0[6] Layers\0[7] Residue Surface Proximity\0");
 
                 // Rendering of internal and surface atoms
                 if(mRendering == Rendering::HULL
